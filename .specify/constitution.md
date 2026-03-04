@@ -1,12 +1,15 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.4
-Rationale: Applied Aspire Dashboard UI requirement to cloud deployments in addition to local diagnostics.
+<!-- Sync Impact Report v1.7
+Rationale: Clarified that Blazor WASM frontend is fully orchestrated by Aspire locally; a single `dotnet run` command starts the entire application stack including API, database, and WASM frontend.
 Modified Sections:
-- Core Principles > VI. Performance, Scalability & Observability: Require Aspire Dashboard UI for local and cloud diagnostics
-- Technology Stack Requirements > Infrastructure & DevOps: Logging & Monitoring updated to include cloud dashboard UI
-- Monthly Technology Audit: Dashboard verification covers local and cloud
-Status: Approved for Aspire Dashboard UI in all environments
+- Technology Stack Requirements > Infrastructure & DevOps: Local Hosting clarified to show Aspire orchestrates both frontend and API
+- Development Workflow: Updated to emphasize all services orchestrated by Aspire locally
+- Onboarding Checklist: Simplified to single `dotnet run` command; no separate frontend build step needed for local dev
+Status: Approved for Aspire-orchestrated local development
 Previous Updates:
+- v1.6: Adopted Blazor WebAssembly (WASM) as the frontend hosting model, enabling static site hosting for the UI while maintaining containerized API in both local and cloud.
+- v1.5: Standardized containerized hosting for local development and cloud deployments using Azure Container Apps. Clarified that static hosting for the Blazor app is allowed only for Blazor WebAssembly builds.
+- v1.4: Applied Aspire Dashboard UI requirement to cloud deployments in addition to local diagnostics.
 - v1.3: Standardized telemetry on Aspire built-in OpenTelemetry for all services exporting to Application Insights and required the Aspire Dashboard UI for observability.
 - v1.2: Changed Infrastructure as Code approach from Bicep to Azure CLI. Azure CLI scripts provide scriptable, imperative infrastructure management suitable for both automation and manual deployment workflows. Works seamlessly with azd and GitHub Actions.
 - v1.1: Added local deployment optionality. Application can run entirely locally with local database or deploy to Azure. Azure services optional deployment targets. Local-first development supported with SQLite or SQL Server LocalDB.
@@ -84,11 +87,13 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)
 - **Domain-Infrastructure Interop**: EF Core value converters (FSharpValueConverters) enable transparent mapping of F# discriminated unions to database columns
 
 ### Frontend
-- **Framework**: Microsoft Blazor .NET 10 (latest stable)
+- **Framework**: Microsoft Blazor WebAssembly (WASM) .NET 10 (latest stable) — client-side compiled to WebAssembly
 - **UI Library**: Fluent UI Blazor v4.13.2 (or latest patch within v4.13.x)
-- **Authentication**: OAuth (via Microsoft.AspNetCore.Authentication.OpenIdConnect)
+- **Hosting Model**: Static site hosting for compiled Blazor WASM; serves frontend as static assets (HTML, CSS, JavaScript/WASM) from CDN or blob storage
+- **Authentication**: OAuth (via MSAL.js or Microsoft.Authentication.WebAssembly.Msal)
+- **API Communication**: HttpClient with OAuth bearer token to containerized backend API
 - **Design System**: Centralized DesignTheme with design tokens; theme colors locked to brand palette
-- **Validation**: Microsoft DataAnnotationsAttributes for form validation (see Principle VII)
+- **Validation**: Microsoft DataAnnotationsAttributes mirrored client-side (DataAnnotations attributes map to Blazor form validation)
 
 ### Data & Persistence
 - **Primary Database**: 
@@ -105,8 +110,8 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)
 
 ### Infrastructure & DevOps
 - **Hosting**: 
-  - **Local Deployment**: Aspire orchestration runs all services locally; single `dotnet run` command starts API, frontend, and database
-  - **Cloud Deployment**: Azure Container Apps (managed Kubernetes) for API and Blazor frontend
+  - **Local Deployment**: Single `dotnet run` orchestrates entire stack via Aspire: (1) Blazor WASM frontend container serving compiled static assets, (2) .NET Minimal API container, (3) SQLite/LocalDB database container. All services discoverable via Aspire AppHost; frontend connects to API via `localhost:API_PORT`
+  - **Cloud Deployment**: Blazor WASM compiled to static assets, hosted in Azure Static Web Apps or Blob Storage + CDN. Containerized API runs in Azure Container Apps
 - **Identity**: 
   - **Local Deployment**: User Secrets for local development; environment variables for configuration
   - **Cloud Deployment**: Azure Managed Identity for service-to-service authentication; no connection strings in code
@@ -114,14 +119,14 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)
   - **Local Deployment**: .NET User Secrets (development) or local environment variables (production-local)
   - **Cloud Deployment**: Azure Key Vault for database credentials, API keys, OAuth secrets
 - **Logging & Monitoring**: 
-  - **Local Deployment**: Aspire OpenTelemetry (logs, metrics, traces) with console/file exporters; Aspire Dashboard UI enabled
-  - **Cloud Deployment**: Aspire OpenTelemetry exporters to Application Insights for all services; centralized logs, metrics, traces in Application Insights; Aspire Dashboard UI deployed for cloud diagnostics
+  - **Local Deployment**: Aspire OpenTelemetry (logs, metrics, traces) with console/file exporters for backend API; browser console for frontend; Aspire Dashboard UI enabled
+  - **Cloud Deployment**: Aspire OpenTelemetry exporters to Application Insights for backend API; frontend telemetry optional (browser-side logging to Application Insights via SDK); centralized logs, metrics, traces in Application Insights; Aspire Dashboard UI deployed for cloud diagnostics
 - **CI/CD**: 
-  - **Local Deployment**: Manual `dotnet run` or local Docker Compose
+  - **Local Deployment**: Manual `dotnet run` (Aspire containers) or local Docker Compose
   - **Cloud Deployment**: GitHub Actions with Aspire and azd (Azure Developer CLI) for orchestrated deployment
 - **Deployment Artifacts**: 
-  - **Local Deployment**: Executable binaries or Docker containers
-  - **Cloud Deployment**: IaC via Azure CLI scripts (imperative infrastructure provisioning and configuration)
+  - **Local Deployment**: Aspire AppHost (`Program.cs`) defines all services (frontend, API, database); `dotnet run` builds and runs containers locally. Frontend built as part of Aspire orchestration, served by embedded HTTP container
+  - **Cloud Deployment**: Blazor WASM static assets (HTML, CSS, JS, WASM binaries) deployed to Azure Static Web Apps or Blob Storage; API containerized in Azure Container Apps via Azure CLI scripts
 
 ### Package Management & Updates
 - Check latest NuGet versions monthly; update patches for security; propose major/minor upgrades with test coverage
@@ -136,14 +141,14 @@ Each specification defines a **complete, deployable vertical slice**:
 - **API**: One or more Minimal API endpoints handling commands/queries
 - **Database**: Event table, read projection table, SQL migrations via .sqlproj
 - **Integration**: Background function or event handler to materialize projections (if applicable)
-- **Deployment**: Tested locally via Aspire, deployable to Azure Container Apps
+- **Deployment**: Tested locally via single `dotnet run` (Aspire orchestrates frontend, API, database), deployable to Azure Static Web Apps (frontend) + Azure Container Apps (API)
 
 Example: "User records a bike ride" slice includes:
-- Blazor form component (RideRecorder.razor, styled with DesignTheme, with DataAnnotationsAttributes validation)
-- POST /rides API endpoint (command handler with DataAnnotationsAttributes on DTO)
+- Blazor WASM form component (RideRecorder.razor, styled with DesignTheme, with DataAnnotationsAttributes validation) compiled and served by Aspire
+- POST /rides API endpoint (command handler with DataAnnotationsAttributes on DTO) in containerized backend
 - Events table with RideRecorded event; Projections table (RideProjection)
 - Background function listening to CES to update RideProjection
-- Aspire host configuration; Azure CLI deployment script for Container Apps
+- Aspire AppHost configuration for frontend + API + database orchestration; Azure CLI deployment scripts for Static Web Apps (frontend) and Container Apps (API)
 
 ### Definition of Done: Vertical Slice Completeness
 
@@ -154,9 +159,9 @@ A vertical slice is **production-ready** only when all items are verified:
 - [ ] All tests written and failing (red phase complete)
 - [ ] Implementation complete; all tests passing (green + refactor phases)
 - [ ] Code review: architecture compliance verified, naming conventions followed, validation discipline observed
-- [ ] Feature branch deployed locally via `dotnet run` (Aspire orchestration)
+- [ ] Feature branch deployed locally via `dotnet run` (entire Aspire stack: frontend, API, database)
 - [ ] Integration tests pass; manual E2E test via Playwright (if critical user journey)
-- [ ] All validation layers implemented: client-side (Blazor DataAnnotations), API (DTO DataAnnotations), database (constraints)
+- [ ] All validation layers implemented: client-side (Blazor WASM DataAnnotations), API (DTO DataAnnotations), database (constraints)
 - [ ] Events stored in event table with correct schema; projections materialized and queryable
 - [ ] SAMPLE_/DEMO_ data cleaned up; no test data committed to main branch
 - [ ] Deployed to Azure staging environment via GitHub Actions + azd
@@ -245,7 +250,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 4. **Implementation (Green)**: Code written to make tests pass
 5. **Refactor (Refactor)**: Code cleaned, tests still pass
 6. **Code Review**: Implementation reviewed for architecture compliance, naming, performance, validation discipline
-7. **Local Deployment**: Slice deployed locally via Aspire, tested manually with Playwright if E2E slice
+7. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
 8. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
 9. **User Acceptance**: User validates slice meets specification and data validation rules observed
 
@@ -265,6 +270,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 - [ ] NuGet packages checked via `mcp_nuget_get-latest-package-version` for security patches
 - [ ] Security patches applied immediately; major/minor versions proposed with test coverage
 - [ ] Blazor FluentUI version pinned to v4.13.x (or latest approved patch)
+- [ ] MSAL.js or Microsoft.Authentication.WebAssembly.Msal updated; OAuth integration verified
 - [ ] F# compiler version matches latest stable; discriminated union syntax up-to-date
 - [ ] EF Core value converters still compatible with F# domain types
 - [ ] Aspire OpenTelemetry exporters updated; Application Insights integration verified
@@ -296,8 +302,8 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 ### Onboarding Checklist for New Contributors
 
 1. **Read constitution** (~20 min): Understand mission, seven core principles, technology stack, development workflow
-2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire
-3. **Clone repo and bootstrap** (~5 min): `git clone` → `dotnet tool install --global specify-cli` → `dotnet run` (Aspire orchestration)
+2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why Blazor WASM
+3. **Clone repo and bootstrap** (~5 min): `git clone` → `dotnet tool install --global specify-cli` → `dotnet run` (Aspire orchestrates frontend, API, database)
 4. **Explore specification examples** (~30 min): Review `/specs/` directory; read 2–3 completed specifications to understand vertical slice completeness
 5. **Review test examples** (~20 min): Browse `/bikeTracking.Tests/Unit/` and `/bikeTracking.Tests/Integration/` to understand test patterns (F# unit tests, integration test fixtures, E2E Playwright)
 6. **Pair with contributor on first spec** (~2–4 hours): Shadow an experienced team member through red-green-refactor cycle; understand test approval and code review gates
@@ -376,5 +382,5 @@ Always commit before continuing to a new phase.
 
 ---
 
-**Version**: 1.4.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-04
+**Version**: 1.7.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-04
 
