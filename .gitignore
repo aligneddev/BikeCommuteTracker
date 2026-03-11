@@ -1,5 +1,6 @@
 # Ignore build results
-
+bin/
+obj/
 
 # User-specific files
 *.user
