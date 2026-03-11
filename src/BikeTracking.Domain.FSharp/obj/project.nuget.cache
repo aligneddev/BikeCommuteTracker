@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "qF1D3uRzuPA=",
+  "success": true,
+  "projectFilePath": "C:\\git\\personal\\speckit\\neCodeBikeTracking\\src\\BikeTracking.Domain.FSharp\\BikeTracking.Domain.FSharp.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\klogan\\.nuget\\packages\\fsharp.core\\10.0.200-servicing.26103.119\\fsharp.core.10.0.200-servicing.26103.119.nupkg.sha512"
+  ],
+  "logs": []
+}

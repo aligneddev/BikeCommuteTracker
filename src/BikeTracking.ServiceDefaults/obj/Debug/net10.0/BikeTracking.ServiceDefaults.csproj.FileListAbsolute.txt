@@ -1,0 +1,12 @@
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\bin\Debug\net10.0\BikeTracking.ServiceDefaults.deps.json
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\bin\Debug\net10.0\BikeTracking.ServiceDefaults.dll
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\bin\Debug\net10.0\BikeTracking.ServiceDefaults.pdb
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\BikeTracking.ServiceDefaults.csproj.AssemblyReference.cache
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\BikeTracking.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\BikeTracking.ServiceDefaults.AssemblyInfoInputs.cache
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\BikeTracking.ServiceDefaults.AssemblyInfo.cs
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\BikeTracking.ServiceDefaults.csproj.CoreCompileInputs.cache
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\BikeTracking.ServiceDefaults.dll
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\refint\BikeTracking.ServiceDefaults.dll
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\BikeTracking.ServiceDefaults.pdb
+C:\git\personal\speckit\neCodeBikeTracking\src\BikeTracking.ServiceDefaults\obj\Debug\net10.0\ref\BikeTracking.ServiceDefaults.dll

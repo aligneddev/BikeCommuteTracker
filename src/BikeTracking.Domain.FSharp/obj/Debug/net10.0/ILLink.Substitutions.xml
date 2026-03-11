@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <assembly fullname="BikeTracking.Domain.FSharp">
+    <resource name="FSharpSignatureData.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedData.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpSignatureDataB.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedDataB.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpOptimizationData.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedData.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpOptimizationDataB.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedDataB.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpOptimizationInfo.BikeTracking.Domain.FSharp" action="remove"></resource>
+    <resource name="FSharpSignatureInfo.BikeTracking.Domain.FSharp" action="remove"></resource>
+  </assembly>
+</linker>
