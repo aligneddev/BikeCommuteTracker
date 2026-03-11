@@ -54,21 +54,47 @@ Trade-offs: Docker/Podman required; slight learning curve. Simplifies DevOps and
 
 Data integrity is non-negotiable for financial data (savings calculations):
 
-1. **Client-side (Blazor)**: Immediate feedback; better UX responsiveness
+1. **Client-side (Aurelia 2)**: Immediate feedback; better UX responsiveness
 2. **Server-side (API)**: Prevents bypass attacks; enforces business rules
 3. **Database layer**: Last-line defense; constraints prevent corrupted data from entering event store
 
 If any layer is missing, data corruption risk rises. All three required.
 
-### Why Fluent UI Blazor (latest version)?
+### Why Aurelia 2?
 
-Fluent UI provides:
-- **Design tokens**: Centralized color, spacing, typography; enforces brand consistency
-- **Accessibility**: Built-in WCAG 2.1 AA compliance; keyboard navigation, screen reader support
-- **Responsive components**: Mobile-first design; components adapt to breakpoints
-- **Microsoft ecosystem**: Native C# integration; no JavaScript bridging complexity
+Aurelia 2 provides a lightweight, modern TypeScript-based frontend with:
 
-Trade-offs: Tied to Blazor version; updates require testing. Lock version to v4.13.x and higher as new versions are released for stability but also keeping up to date.
+- **Strong composability**: Components are simple, reusable, and testable; no framework lock-in
+- **Standards-based**: Built on modern web standards (ES modules, Web Components patterns); minimal runtime overhead
+- **Flexible deployment**: Static site hosting for local-first development; compiles to plain HTML/CSS/JavaScript with no server dependency
+- **TypeScript support**: Full type safety; integrates seamlessly with modern build tooling
+- **Validation patterns**: Native browser constraints + Aurelia validation library; official docs at https://docs.aurelia.io/
+
+Trade-offs: Smaller ecosystem than Blazor; requires JavaScript/TypeScript familiarity. Justified for high portability and low deployment friction (static site hosting) in local-first architecture.
+
+### Amendment: Why Switched from Blazor WebAssembly to Aurelia 2 (v1.9)?
+
+**Decision Date**: 2026-03-11  
+**Trigger**: User evaluation of frontend technology alternatives for local-first deployment  
+**Rationale**: 
+- Blazor WASM introduces browser download overhead (initial 2–6MB load) and requires .NET runtime download, which conflicts with mobile-first design goals
+- Aurelia 2 compiles to lightweight static assets suitable for both local and cloud-static hosting (Azure Static Web Apps)
+- TypeScript ecosystem provides strong tooling, clear separation of frontend/backend concerns, and simpler local development (no ASP.NET integration needed for frontend build)
+- Aurelia's official docs (https://docs.aurelia.io/) provide canonical implementation guidance
+
+**Changes**:
+- Constitution v1.9: All frontend references updated from Blazor WASM to Aurelia 2
+- Principle V: UI built with Aurelia 2 components + centralized theme tokens
+- Principle VII: Client-side validation switched to Aurelia 2 validation patterns
+- Frontend stack: Framework = Aurelia 2 v2.x; Authentication = MSAL.js; Hosting = static assets
+- Infrastructure: Local deployment frontend built as Aurelia app; cloud deployment as static assets in Azure Static Web Apps or Blob Storage
+
+**Impact**: 
+- No C# required for frontend; backend remains .NET 10/C# (Aspire, Minimal API, EF Core)
+- Clear technology boundary: backend (C#/.NET) handles business logic + API; frontend (TypeScript/Aurelia) handles UI
+- Simpler local onboarding: no Blazor build pipeline; TypeScript tooling familiar to web developers
+
+**Affected Specs**: Any new specs referencing frontend must target Aurelia 2; all Blazor-specific validation examples in specs are obsolete
 
 ---
 
@@ -90,5 +116,5 @@ These topics are under consideration for future constitution amendments (not yet
 
 ---
 
-**Last Review**: 2026-03-03  
-**Next Review**: 2026-04-03
+**Last Review**: 2026-03-11  
+**Next Review**: 2026-04-11

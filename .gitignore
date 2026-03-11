@@ -1,0 +1,52 @@
+# Ignore build results
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.history/
+
+# Paket
+paket-files/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Fable output
+fable-build/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# BikeCommuter.Web results
+TestResults/
+
+# Azure Pipelines
+.azure-pipelines/
+
+# Local secrets
+secrets.json
+appsettings.Development.json
+
+# Others
+*.db
+*.sqlite
+*.bak
+*.cache
+
+#Paket dependency manager
+paket-files/
+
+src/.vs/*
+
+.fake

@@ -1,12 +1,16 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.7
-Rationale: Clarified that Blazor WASM frontend is fully orchestrated by Aspire locally; a single `dotnet run` command starts the entire application stack including API, database, and WASM frontend.
+<!-- Sync Impact Report v1.9
+Rationale: Replaced Blazor WebAssembly frontend direction with Aurelia 2. Updated Principle V and all frontend-related sections for consistency. Added an explicit rule to always reference official Aurelia documentation at https://docs.aurelia.io/.
 Modified Sections:
-- Technology Stack Requirements > Infrastructure & DevOps: Local Hosting clarified to show Aspire orchestrates both frontend and API
-- Development Workflow: Updated to emphasize all services orchestrated by Aspire locally
-- Onboarding Checklist: Simplified to single `dotnet run` command; no separate frontend build step needed for local dev
-Status: Approved for Aspire-orchestrated local development
+- Core Principles > V: Frontend stack switched from Fluent UI Blazor to Aurelia 2
+- Core Principles > VII: Client-side validation references updated from Blazor/DataAnnotations to Aurelia 2 validation patterns
+- Technology Stack Requirements > Frontend: Framework, UI, hosting, API communication, validation, and documentation guidance updated for Aurelia 2
+- Development Workflow and checklists: Blazor-specific examples and validation references replaced with Aurelia 2 equivalents
+- Monthly Technology Audit and onboarding notes: Blazor-specific version checks replaced with Aurelia 2 checks
+Status: Approved — Aurelia 2 is the frontend standard; official Aurelia docs are the canonical implementation reference
 Previous Updates:
+- v1.8: Scoped Aspire Dashboard to local development only; removed cloud Aspire Dashboard requirement. Clarified local-first deployment priority with Azure as a future target. Strengthened public GitHub repository secret safety guidance.
+- v1.7: Clarified that Blazor WASM frontend is fully orchestrated by Aspire locally; a single `dotnet run` command starts the entire application stack including API, database, and WASM frontend.
 - v1.6: Adopted Blazor WebAssembly (WASM) as the frontend hosting model, enabling static site hosting for the UI while maintaining containerized API in both local and cloud.
 - v1.5: Standardized containerized hosting for local development and cloud deployments using Azure Container Apps. Clarified that static hosting for the Blazor app is allowed only for Blazor WebAssembly builds.
 - v1.4: Applied Aspire Dashboard UI requirement to cloud deployments in addition to local diagnostics.
@@ -20,13 +24,13 @@ Previous Updates:
 
 **Problem**: Commuters lack a simple, integrated way to track bike rides and visualize savings vs. driving.
 
-**Solution**: Enable users to quickly record rides with automatic weather capture, track distance/time/expenses, and visualize cumulative savings through intuitive charts and historical analysis. **Deployment Flexibility**: Application runs entirely locally (personal use) or deploys to cloud (team/shared use) with identical feature set.
+**Solution**: Enable users to quickly record rides with automatic weather capture, track distance/time/expenses, and visualize cumulative savings through intuitive charts and historical analysis. **Deployment Flexibility**: Local-only deployment is the primary target; Azure cloud deployment is planned as a future phase when multi-user or team access is needed.
 
 **Decision Record**: This constitution encodes decisions made on 2025-12-11 (and amended 2026-03-04) to avoid re-litigating:
 - Why F# for domain? Discriminated unions enforce valid states; pure functions are deterministic and testable
 - Why Event Sourcing? Provides complete audit trail, enables temporal queries for savings analysis, supports future replays
-- Why Aspire? Local-to-cloud parity enables seamless team development; optional cloud deployment via Azure or local-only hosting
-- Why Blazor + Fluent UI? Single C# codebase for frontend, responsive design, enforced accessibility standards, we may switch UI technology in the future (such as a full F# stack with Fable and Falco, maybe)
+- Why Aspire? Local-first development orchestration; Aspire simplifies the full local stack now, with optional Azure cloud deployment planned for a future phase
+- Why Aurelia 2? Lightweight, modern TypeScript frontend with strong composability, testable component architecture, and flexible static hosting for local-first development
 - Why Minimal API? Lightweight, performant, integrates seamlessly with Aspire and domain layers
 - Why local-first architecture? Users own their data locally; cloud deployment optional for sharing/collaboration
 
@@ -60,19 +64,19 @@ Red-Green-Refactor cycle is **non-negotiable**: tests written first, approved by
 
 ### V. User Experience Consistency & Accessibility
 
-All frontend UI built with Fluent UI Blazor (v4.13.2) using design tokens derived from brand palette (FFCDA4, FFB170, FF7400, D96200, A74C00). Centralized DesignTheme component enforces visual consistency. WCAG 2.1 AA compliance mandatory (semantic HTML, color contrast, keyboard navigation, screen reader support). Mobile-first responsive design (breakpoints: mobile ≤600px, tablet 601-1024px, desktop >1024px). OAuth identity integration ensures users access only their own data; public data (leaderboards, shared rides) clearly marked. Simple, intuitive UX; avoid feature creep.
+All frontend UI built with Aurelia 2 (latest stable v2.x) using design tokens derived from brand palette (FFCDA4, FFB170, FF7400, D96200, A74C00). Centralized theme tokens and reusable Aurelia components enforce visual consistency. WCAG 2.1 AA compliance mandatory (semantic HTML, color contrast, keyboard navigation, screen reader support). Mobile-first responsive design (breakpoints: mobile ≤600px, tablet 601-1024px, desktop >1024px). OAuth identity integration ensures users access only their own data; public data (leaderboards, shared rides) clearly marked. Simple, intuitive UX; avoid feature creep. **Aurelia implementation details must always be validated against official docs: https://docs.aurelia.io/**
 
 **Rationale**: Brand consistency builds trust; accessibility ensures inclusive product; responsive design reaches all devices; identity isolation ensures privacy compliance; simplicity reduces cognitive load and maintenance burden.
 
 ### VI. Performance, Scalability & Observability
 
-API response times must remain **<500ms at p95** under normal load; database indexes optimized for event queries. Static assets served via CDN (cloud) or local cache (local deployment). Background projection updates via Azure Functions (cloud) or in-process handlers (local) build read projections asynchronously; acceptable lag is eventual consistency within 5 seconds. Structured logs (JSON), metrics, and traces must use Aspire built-in OpenTelemetry for all services; any export to Application Insights must use Aspire OpenTelemetry exporters. Local deployments export to console/file sinks; cloud deployments export to Application Insights. Aspire Dashboard UI is required for local and cloud diagnostics; cloud environments must deploy the dashboard UI alongside services. Metrics tracked: API latency, event processing lag, error rates, user engagement. Aspire orchestration enables local debugging and local-only deployment; Azure Container Apps provides optional cloud scalability via Managed Identity and VNet integration.
+API response times must remain **<500ms at p95** under normal load; database indexes optimized for event queries. Static assets served via CDN (cloud) or local cache (local deployment). Background projection updates via Azure Functions (cloud) or in-process handlers (local) build read projections asynchronously; acceptable lag is eventual consistency within 5 seconds. Structured logs (JSON), metrics, and traces must use Aspire built-in OpenTelemetry for all services; any export to Application Insights must use Aspire OpenTelemetry exporters. Local deployments export to console/file sinks; cloud deployments export to Application Insights. Aspire Dashboard UI is required for local diagnostics only; cloud deployments use Application Insights exclusively for observability — do not deploy the Aspire Dashboard to cloud environments. Metrics tracked: API latency, event processing lag, error rates, user engagement. Aspire orchestration enables local debugging and local-only deployment; Azure Container Apps provides optional cloud scalability via Managed Identity and VNet integration.
 
 **Rationale**: Sub-500ms response ensures fluid UX regardless of deployment; scalable projections decouple write and read performance; structured observability enables rapid incident response; local deployment trades cloud elasticity for data ownership; cloud deployment provides autoscaling for demand spikes.
 
 ### VII. Data Validation & Integrity
 
-All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)** using Microsoft DataAnnotationsAttributes for immediate feedback and UX responsiveness; (2) **Server-side (Minimal API)** using DataAnnotationsAttributes with attribute-based validation on command/event DTOs; (3) **Database layer** via constraints (NOT NULL, UNIQUE, FOREIGN KEY, CHECK). Validation rules enforced consistently across frontend and backend—if a field is required in Blazor form, the API endpoint MUST also enforce that constraint via data annotations. No data enters the system without validation. Referenced documentation: https://learn.microsoft.com/en-us/aspnet/core/blazor/forms/validation
+All user input **MUST** be validated in three layers: (1) **Client-side (Aurelia 2)** using Aurelia form validation patterns (official Aurelia docs and standard browser constraints) for immediate feedback and UX responsiveness; (2) **Server-side (Minimal API)** using DataAnnotationsAttributes with attribute-based validation on command/event DTOs; (3) **Database layer** via constraints (NOT NULL, UNIQUE, FOREIGN KEY, CHECK). Validation rules enforced consistently across frontend and backend—if a field is required in an Aurelia form, the API endpoint MUST also enforce that constraint via data annotations. No data enters the system without validation. Referenced documentation: https://docs.aurelia.io/
 
 **Rationale**: Defense-in-depth prevents invalid data from corrupting event store or projections; client-side validation improves UX responsiveness; server-side validation prevents bypass attacks; database constraints provide last-line guarantees. Combined approach ensures data integrity without redundant checks.
 
@@ -87,13 +91,14 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)
 - **Domain-Infrastructure Interop**: EF Core value converters (FSharpValueConverters) enable transparent mapping of F# discriminated unions to database columns
 
 ### Frontend
-- **Framework**: Microsoft Blazor WebAssembly (WASM) .NET 10 (latest stable) — client-side compiled to WebAssembly
-- **UI Library**: Fluent UI Blazor v4.13.2 (or latest patch within v4.13.x)
-- **Hosting Model**: Static site hosting for compiled Blazor WASM; serves frontend as static assets (HTML, CSS, JavaScript/WASM) from CDN or blob storage
-- **Authentication**: OAuth (via MSAL.js or Microsoft.Authentication.WebAssembly.Msal)
-- **API Communication**: HttpClient with OAuth bearer token to containerized backend API
-- **Design System**: Centralized DesignTheme with design tokens; theme colors locked to brand palette
-- **Validation**: Microsoft DataAnnotationsAttributes mirrored client-side (DataAnnotations attributes map to Blazor form validation)
+- **Framework**: Aurelia 2 (latest stable v2.x) with TypeScript
+- **UI Approach**: Aurelia 2 components with centralized CSS design tokens (brand palette enforced); avoid framework lock-in to server-rendered component libraries
+- **Hosting Model**: Static site hosting for compiled Aurelia app; serves frontend as static assets (HTML, CSS, JavaScript) from CDN or blob storage
+- **Authentication**: OAuth (via MSAL.js)
+- **API Communication**: Fetch API or HttpClient-style wrapper with OAuth bearer token to containerized backend API
+- **Design System**: Centralized theme tokens and shared Aurelia component patterns; theme colors locked to brand palette
+- **Validation**: Aurelia 2 client-side validation patterns mirrored with server-side DataAnnotations and database constraints
+- **Documentation Rule**: Always reference official Aurelia documentation when implementing or reviewing frontend code: https://docs.aurelia.io/
 
 ### Data & Persistence
 - **Primary Database**: 
@@ -110,8 +115,8 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)
 
 ### Infrastructure & DevOps
 - **Hosting**: 
-  - **Local Deployment**: Single `dotnet run` orchestrates entire stack via Aspire: (1) Blazor WASM frontend container serving compiled static assets, (2) .NET Minimal API container, (3) SQLite/LocalDB database container. All services discoverable via Aspire AppHost; frontend connects to API via `localhost:API_PORT`
-  - **Cloud Deployment**: Blazor WASM compiled to static assets, hosted in Azure Static Web Apps or Blob Storage + CDN. Containerized API runs in Azure Container Apps
+  - **Local Deployment**: Single `dotnet run` orchestrates entire stack via Aspire: (1) Aurelia 2 frontend container serving compiled static assets, (2) .NET Minimal API container, (3) SQLite/LocalDB database container. All services discoverable via Aspire AppHost; frontend connects to API via `localhost:API_PORT`
+  - **Cloud Deployment**: Aurelia 2 app compiled to static assets, hosted in Azure Static Web Apps or Blob Storage + CDN. Containerized API runs in Azure Container Apps
 - **Identity**: 
   - **Local Deployment**: User Secrets for local development; environment variables for configuration
   - **Cloud Deployment**: Azure Managed Identity for service-to-service authentication; no connection strings in code
@@ -120,13 +125,13 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)
   - **Cloud Deployment**: Azure Key Vault for database credentials, API keys, OAuth secrets
 - **Logging & Monitoring**: 
   - **Local Deployment**: Aspire OpenTelemetry (logs, metrics, traces) with console/file exporters for backend API; browser console for frontend; Aspire Dashboard UI enabled
-  - **Cloud Deployment**: Aspire OpenTelemetry exporters to Application Insights for backend API; frontend telemetry optional (browser-side logging to Application Insights via SDK); centralized logs, metrics, traces in Application Insights; Aspire Dashboard UI deployed for cloud diagnostics
+  - **Cloud Deployment**: Aspire OpenTelemetry exporters to Application Insights for backend API; frontend telemetry optional (browser-side logging to Application Insights via SDK); centralized logs, metrics, traces in Application Insights
 - **CI/CD**: 
   - **Local Deployment**: Manual `dotnet run` (Aspire containers) or local Docker Compose
   - **Cloud Deployment**: GitHub Actions with Aspire and azd (Azure Developer CLI) for orchestrated deployment
 - **Deployment Artifacts**: 
   - **Local Deployment**: Aspire AppHost (`Program.cs`) defines all services (frontend, API, database); `dotnet run` builds and runs containers locally. Frontend built as part of Aspire orchestration, served by embedded HTTP container
-  - **Cloud Deployment**: Blazor WASM static assets (HTML, CSS, JS, WASM binaries) deployed to Azure Static Web Apps or Blob Storage; API containerized in Azure Container Apps via Azure CLI scripts
+  - **Cloud Deployment**: Aurelia static assets (HTML, CSS, JS bundles) deployed to Azure Static Web Apps or Blob Storage; API containerized in Azure Container Apps via Azure CLI scripts
 
 ### Package Management & Updates
 - Check latest NuGet versions monthly; update patches for security; propose major/minor upgrades with test coverage
@@ -137,18 +142,38 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Blazor)
 
 ### Specification & Vertical Slices
 Each specification defines a **complete, deployable vertical slice**:
-- **Frontend**: Blazor page + reusable components with DesignTheme styling
+- **Frontend**: Aurelia 2 page/view-model + reusable components with centralized theme token styling
 - **API**: One or more Minimal API endpoints handling commands/queries
 - **Database**: Event table, read projection table, SQL migrations via .sqlproj
 - **Integration**: Background function or event handler to materialize projections (if applicable)
 - **Deployment**: Tested locally via single `dotnet run` (Aspire orchestrates frontend, API, database), deployable to Azure Static Web Apps (frontend) + Azure Container Apps (API)
 
 Example: "User records a bike ride" slice includes:
-- Blazor WASM form component (RideRecorder.razor, styled with DesignTheme, with DataAnnotationsAttributes validation) compiled and served by Aspire
+- Aurelia 2 form component (e.g., ride-recorder.ts + ride-recorder.html, styled with centralized theme tokens, with Aurelia validation patterns) compiled and served by Aspire
 - POST /rides API endpoint (command handler with DataAnnotationsAttributes on DTO) in containerized backend
 - Events table with RideRecorded event; Projections table (RideProjection)
 - Background function listening to CES to update RideProjection
 - Aspire AppHost configuration for frontend + API + database orchestration; Azure CLI deployment scripts for Static Web Apps (frontend) and Container Apps (API)
+
+### Vertical Slice Implementation Strategy: Minimal-First Approach
+
+After the application structure is built, implementation proceeds in **vertical slices with minimal functionality first**:
+
+1. **Identify Minimal Viable Feature**: Extract the smallest, testable piece of the specification that delivers user value (e.g., "User records a basic ride with just distance and date" vs. "User records ride with weather, auto-capture, and expense associations").
+2. **Implement Minimal Functionality**: Build only what's needed for this slice to work end-to-end:
+  - Aurelia form with essential fields only
+   - API endpoint handling the core command
+   - Event and projection for persistence
+   - Database schema (migrations)
+   - No bells, whistles, or optional features
+3. **Test & Verify**: Run full test suite (unit, integration, E2E); deploy locally via `dotnet run` and manually verify the slice works as specified.
+4. **User Decision Point**: Once minimal slice is verified and working, present the user with options:
+   - **Approve Minimal & Iterate**: User approves the working slice, then we build next priority feature (additional fields, refinements, enhancement)
+   - **Expand Current Slice**: User requests additional functionality for the current slice before finalizing (e.g., "add weather capture" to the ride recording feature)
+   - **Pivot**: User validates that the minimal approach solves the problem; if solution is sufficient, ship as-is; otherwise, refine or fold into next slice
+5. **Repeat**: Each new feature/slice follows the same pattern: minimal implementation → test → user approval → expand or next slice
+
+**Rationale**: Minimal-first approach de-risks development by getting working code to user quickly; validates assumptions early; prevents over-engineering; enables user feedback to guide remaining work; reduces scope creep. Vertical slices remain deployable and testable at each iteration boundary. The Pragmatic Programmer calls this "Tracer Bullets" — get something working end-to-end before perfecting it.
 
 ### Definition of Done: Vertical Slice Completeness
 
@@ -161,7 +186,7 @@ A vertical slice is **production-ready** only when all items are verified:
 - [ ] Code review: architecture compliance verified, naming conventions followed, validation discipline observed
 - [ ] Feature branch deployed locally via `dotnet run` (entire Aspire stack: frontend, API, database)
 - [ ] Integration tests pass; manual E2E test via Playwright (if critical user journey)
-- [ ] All validation layers implemented: client-side (Blazor WASM DataAnnotations), API (DTO DataAnnotations), database (constraints)
+- [ ] All validation layers implemented: client-side (Aurelia 2 validation), API (DTO DataAnnotations), database (constraints)
 - [ ] Events stored in event table with correct schema; projections materialized and queryable
 - [ ] SAMPLE_/DEMO_ data cleaned up; no test data committed to main branch
 - [ ] Deployed to Azure staging environment via GitHub Actions + azd
@@ -259,22 +284,23 @@ Tests suggested by agent must receive explicit user approval before implementati
 #### Per-Specification Audit
 - [ ] Spec references all seven core principles in acceptance criteria
 - [ ] Event schema defined; backwards compatibility verified if updating existing events
-- [ ] Data validation implemented at three layers: client (Blazor), API (Minimal API), database (constraints)
+- [ ] Data validation implemented at three layers: client (Aurelia 2), API (Minimal API), database (constraints)
 - [ ] Test coverage for domain logic ≥85%; F# discriminated unions and ROP patterns tested
 - [ ] All SAMPLE_/DEMO_ data removed from code before merge
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
-- [ ] Validation rule consistency: if field required in Blazor, enforced in API DTOs and database constraints
+- [ ] Validation rule consistency: if field required in Aurelia form, enforced in API DTOs and database constraints
 - [ ] OAuth isolation verified: user only accesses their data; public data clearly marked
 
 #### Monthly Technology Audit
 - [ ] NuGet packages checked via `mcp_nuget_get-latest-package-version` for security patches
 - [ ] Security patches applied immediately; major/minor versions proposed with test coverage
-- [ ] Blazor FluentUI version pinned to v4.13.x (or latest approved patch)
-- [ ] MSAL.js or Microsoft.Authentication.WebAssembly.Msal updated; OAuth integration verified
+- [ ] Aurelia 2 packages pinned to approved v2.x versions; latest compatible patch evaluated monthly
+- [ ] MSAL.js updated; OAuth integration verified
+- [ ] Frontend implementation guidance verified against official Aurelia docs (https://docs.aurelia.io/)
 - [ ] F# compiler version matches latest stable; discriminated union syntax up-to-date
 - [ ] EF Core value converters still compatible with F# domain types
 - [ ] Aspire OpenTelemetry exporters updated; Application Insights integration verified
-- [ ] Aspire Dashboard UI enabled for local and cloud deployments; telemetry visible in dashboard
+- [ ] Aspire Dashboard UI enabled for local development only; local telemetry visible in Aspire dashboard; cloud observability via Application Insights
 - [ ] Azure Container Apps pricing and scaling policies reviewed
 - [ ] Key Vault access policies audited; expired certificates identified
 
@@ -290,11 +316,11 @@ Tests suggested by agent must receive explicit user approval before implementati
 Breaking these guarantees causes architectural decay and technical debt accrual:
 
 - **No Entity Framework DbContext in domain layer** — domain must remain infrastructure-agnostic. If domain needs persistence logic, use repository pattern abstracting EF.
-- **Secrets management by deployment context** — **Cloud**: all secrets in Azure Key Vault; **Local**: User Secrets or environment variables. No connection strings, API keys, or OAuth secrets in appsettings.json, code, or GitHub. Pre-commit hooks enforce this.
+- **Secrets management by deployment context** — **Cloud**: all secrets in Azure Key Vault; **Local**: User Secrets or environment variables. No connection strings, API keys, or OAuth secrets in appsettings.json, code, or GitHub. Pre-commit hooks enforce this. **⚠️ This repository is public on GitHub**: any committed secret is immediately and permanently exposed to the internet; treat any accidental secret commit as an immediate security incident requiring credential rotation.
 - **Event schema is append-only** — never mutate existing events. If schema changes needed, create new event type and version old events. Immutability is non-negotiable.
 - **F# domain types must marshal through EF Core value converters** — no raw EF entities exposed to C# API layer. C# records serve as API DTOs; converters handle F#-to-C# translation.
 - **Tests must pass before merge** — no exceptions, no "fix later" debt. CI/CD pipeline blocks merge if test suite fails.
-- **Three-layer validation enforced** — if field validated in Blazor, also validated in API DTOs and database constraints. No single-layer validation.
+- **Three-layer validation enforced** — if field validated in Aurelia form, also validated in API DTOs and database constraints. No single-layer validation.
 - **OAuth token required on all user endpoints** — anonymous access forbidden for personal data. Public data endpoints explicitly marked; separate authorization logic. (Optional for single-user local deployment; mandatory for cloud/multi-user.)
 - **SAMPLE_/DEMO_ data never in production** — automated linting prevents prefixed data from deploying. Merge blocked if test data detected.
 - **Database provider abstraction** — application code must work across SQLite (local), SQL Server LocalDB (local), and Azure SQL (cloud) without provider-specific queries. Use EF Core abstractions; avoid raw SQL unless necessary and provider-agnostic.
@@ -302,7 +328,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 ### Onboarding Checklist for New Contributors
 
 1. **Read constitution** (~20 min): Understand mission, seven core principles, technology stack, development workflow
-2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why Blazor WASM
+2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why Aurelia 2
 3. **Clone repo and bootstrap** (~5 min): `git clone` → `dotnet tool install --global specify-cli` → `dotnet run` (Aspire orchestrates frontend, API, database)
 4. **Explore specification examples** (~30 min): Review `/specs/` directory; read 2–3 completed specifications to understand vertical slice completeness
 5. **Review test examples** (~20 min): Browse `/bikeTracking.Tests/Unit/` and `/bikeTracking.Tests/Integration/` to understand test patterns (F# unit tests, integration test fixtures, E2E Playwright)
@@ -313,7 +339,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 ## Approved MCP Tools
 
 ### Documentation & Learning
-- **mcp_microsoftdocs_microsoft_docs_search** – Search Microsoft Learn for .NET, Blazor, Azure documentation
+- **mcp_microsoftdocs_microsoft_docs_search** – Search Microsoft Learn for .NET and Azure documentation
 - **mcp_microsoftdocs_microsoft_code_sample_search** – Retrieve official C# and .NET code samples
 - **mcp_microsoftdocs_microsoft_docs_fetch** – Fetch full documentation pages for detailed guidance (tutorials, prerequisites, troubleshooting)
 
@@ -337,7 +363,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 - **Playwright MCP** – End-to-end browser automation for critical user journeys; write and run Playwright test code for UI validation, form submission, and responsive design verification
 
 ### Source Control & Examples
-- **github_repo** – Search GitHub repositories for code examples and patterns (e.g., Event Sourcing with .NET, Blazor authentication)
+- **github_repo** – Search GitHub repositories for code examples and patterns (e.g., Event Sourcing with .NET, Aurelia 2 authentication)
 
 ## Governance
 
@@ -382,5 +408,5 @@ Always commit before continuing to a new phase.
 
 ---
 
-**Version**: 1.7.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-04
+**Version**: 1.9.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-11
 
