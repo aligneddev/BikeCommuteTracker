@@ -155,6 +155,10 @@ Example: "User records a bike ride" slice includes:
 - Background function listening to CES to update RideProjection
 - Aspire AppHost configuration for frontend + API + database orchestration; Azure CLI deployment scripts for Static Web Apps (frontend) and Container Apps (API)
 
+run `dotnet format .` to enforce code style; `dotnet test` to run tests; `dotnet run --project src/BikeTracking.AppHost` to start local stack; GitHub Actions for CI/CD to Azure.
+
+run Typescript linting and formatting via `npm run lint` and `npm run format` in the frontend directory.
+
 ### Vertical Slice Implementation Strategy: Minimal-First Approach
 
 After the application structure is built, implementation proceeds in **vertical slices with minimal functionality first**:
@@ -166,7 +170,7 @@ After the application structure is built, implementation proceeds in **vertical 
    - Event and projection for persistence
    - Database schema (migrations)
    - No bells, whistles, or optional features
-3. **Test & Verify**: Run full test suite (unit, integration, E2E); deploy locally via `dotnet run` and manually verify the slice works as specified.
+3. **Test & Verify**: Run full test suite (unit, integration, E2E); deploy locally via `dotnet run` and manually verify the slice works as specified.  Each slice must be fully tested (unit, integration, E2E) and user-approved before proceeding to the next slice.
 4. **User Decision Point**: Once minimal slice is verified and working, present the user with options:
    - **Approve Minimal & Iterate**: User approves the working slice, then we build next priority feature (additional fields, refinements, enhancement)
    - **Expand Current Slice**: User requests additional functionality for the current slice before finalizing (e.g., "add weather capture" to the ride recording feature)

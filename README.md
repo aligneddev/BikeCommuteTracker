@@ -1,30 +1,29 @@
 # Commute Bike Tracker
 
-Scaffolded starter structure for a local-first Bike Tracking application.
+Local-first Bike Tracking application built with .NET Aspire orchestration, .NET 10 Minimal API, F# domain modules, and an Aurelia 2 frontend.
 
-## What exists now
+## Current Feature Slice
 
-- .NET 10 Aspire AppHost orchestration
-- .NET 10 Minimal API backend with hello endpoints
-- F# domain project placeholder
-- React frontend (Vite) with a simple hello screen
-- No business logic implemented yet
-- No database schema created yet
+- Local user signup with name and PIN
+- PIN protection through salted, non-reversible hashing (PBKDF2)
+- Duplicate-name rejection using trimmed, case-insensitive normalization
+- User identification with progressive retry delay (up to 30 seconds)
+- User registration outbox with background retry until successful publication
 
-## Project structure
+## Project Structure
 
 - src/BikeTracking.AppHost - Aspire orchestration host
 - src/BikeTracking.Api - Minimal API service
-- src/BikeTracking.ServiceDefaults - Shared Aspire defaults/telemetry wiring
-- src/BikeTracking.Domain.FSharp - Domain layer starter project (F#)
-- src/BikeTracking.Frontend - React frontend app
+- src/BikeTracking.ServiceDefaults - Shared Aspire defaults and telemetry wiring
+- src/BikeTracking.Domain.FSharp - Domain event and type modules (F#)
+- src/BikeTracking.Frontend - Aurelia 2 frontend app
 
 ## Prerequisites
 
 - .NET SDK 10.x
 - Node.js 20+ and npm
 
-## Quick start
+## Quick Start
 
 1. Install frontend dependencies:
 
@@ -40,15 +39,23 @@ cd ../..
 dotnet run --project src/BikeTracking.AppHost
 ```
 
-3. Open Aspire dashboard and launch services:
-- `frontend` for the React hello screen
-- `api` for the Minimal API
+3. Open Aspire dashboard and launch:
+- frontend service for the signup and identify screen
+- api service for local identity endpoints
 
-## API starter endpoints
+## Local Identity Endpoints
 
-- `/` returns API running message
-- `/hello` returns hello message
+- GET / - API status
+- POST /api/users/signup - create local user record and queue UserRegistered event
+- POST /api/users/identify - authorize user by normalized name and PIN
 
-## Next step
+## Local Scope Boundaries
 
-Use SpecKit to define the first vertical slice before implementing features.
+- This slice is local-only and intentionally excludes OAuth and Azure hosting.
+- Name and PIN are validated on client and server.
+- PIN plaintext is never stored or emitted in events.
+- Future cloud and OAuth expansion will be delivered in a separate feature.
+
+## Next Step
+
+Continue with task execution and verification using specs/001-user-signup-pin/tasks.md.

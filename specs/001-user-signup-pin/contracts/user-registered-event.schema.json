@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://biketracking.local/contracts/user-registered-event.schema.json",
+  "title": "UserRegisteredEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "occurredAtUtc",
+    "userId",
+    "userName",
+    "source"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique event identifier."
+    },
+    "eventType": {
+      "type": "string",
+      "const": "UserRegistered"
+    },
+    "occurredAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "userId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "userName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "BikeTracking.Api"
+      ]
+    }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["pin"] },
+      { "required": ["pinHash"] },
+      { "required": ["pinSalt"] }
+    ]
+  }
+}

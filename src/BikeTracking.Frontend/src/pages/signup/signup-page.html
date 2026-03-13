@@ -1,0 +1,116 @@
+<main class="identity-flow">
+  <h1>Create and Identify User</h1>
+  <p class="intro">Local flow only: create a user with name and PIN, then identify with the same credentials.</p>
+
+  <section class="card" aria-labelledby="signup-title">
+    <h2 id="signup-title">Sign up</h2>
+
+    <form submit.trigger="submitSignup($event)" novalidate>
+      <label for="signup-name">Name</label>
+      <input id="signup-name" type="text" value.bind="signupName" autocomplete="name" />
+
+      <label for="signup-pin">PIN</label>
+      <input id="signup-pin" type="password" inputmode="numeric" maxlength="8" value.bind="signupPin" autocomplete="new-password" />
+
+      <button type="submit" disabled.bind="isSubmittingSignup">
+        ${isSubmittingSignup ? 'Creating...' : 'Create user'}
+      </button>
+    </form>
+
+    <ul if.bind="signupErrors.length > 0" class="errors" aria-live="assertive">
+      <li repeat.for="error of signupErrors">${error}</li>
+    </ul>
+
+    <p if.bind="signupMessage" class="success" aria-live="polite">${signupMessage}</p>
+  </section>
+
+  <section class="card" aria-labelledby="identify-title">
+    <h2 id="identify-title">Identify</h2>
+
+    <form submit.trigger="submitIdentify($event)" novalidate>
+      <label for="identify-name">Name</label>
+      <input id="identify-name" type="text" value.bind="identifyName" autocomplete="username" />
+
+      <label for="identify-pin">PIN</label>
+      <input id="identify-pin" type="password" inputmode="numeric" maxlength="8" value.bind="identifyPin" autocomplete="current-password" />
+
+      <button type="submit" disabled.bind="isSubmittingIdentify">
+        ${isSubmittingIdentify ? 'Checking...' : 'Identify user'}
+      </button>
+    </form>
+
+    <ul if.bind="identifyErrors.length > 0" class="errors" aria-live="assertive">
+      <li repeat.for="error of identifyErrors">${error}</li>
+    </ul>
+
+    <p if.bind="throttleMessage" class="warning" aria-live="polite">${throttleMessage}</p>
+    <p if.bind="identifyMessage" class="success" aria-live="polite">${identifyMessage}</p>
+  </section>
+</main>
+
+<style>
+  .identity-flow {
+    max-width: 44rem;
+    margin: 2rem auto;
+    padding: 0 1rem 2rem;
+    display: grid;
+    gap: 1rem;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+  }
+
+  .intro {
+    margin: 0;
+    color: #4a4a4a;
+  }
+
+  .card {
+    border: 1px solid #d9d9d9;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: grid;
+    gap: 0.75rem;
+    background: #ffffff;
+  }
+
+  form {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  input {
+    border: 1px solid #c6c6c6;
+    border-radius: 0.35rem;
+    padding: 0.6rem;
+    font-size: 1rem;
+  }
+
+  button {
+    margin-top: 0.25rem;
+    border: 0;
+    border-radius: 0.35rem;
+    padding: 0.65rem 0.85rem;
+    background: #1f5dd8;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    background: #9aa9cb;
+    cursor: not-allowed;
+  }
+
+  .errors {
+    margin: 0;
+    color: #8a0c0c;
+  }
+
+  .success {
+    margin: 0;
+    color: #136431;
+  }
+
+  .warning {
+    margin: 0;
+    color: #9a5b00;
+  }
+</style>
