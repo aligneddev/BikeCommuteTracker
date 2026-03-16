@@ -56,6 +56,17 @@ dotnet run --project src/BikeTracking.AppHost
 - PIN plaintext is never stored or emitted in events.
 - Future cloud and OAuth expansion will be delivered in a separate feature.
 
+## Local User-Machine Install Approach
+
+For local-first deployment to end-user machines, the default persistence model is a local SQLite file.
+
+- No separate database installation or database service is required.
+- The API currently defaults to a local SQLite file named biketracking.local.db.
+- Startup applies EF Core migrations automatically to create or update schema.
+- For packaged installs, place the SQLite file in a user-writable application-data folder rather than the application install directory.
+- Before schema upgrades, create a safety backup copy of the SQLite file.
+- Use SQL Server LocalDB or SQL Server Express only when local multi-user requirements exceed the single-user SQLite profile.
+
 ## Next Step
 
 Continue with task execution and verification using specs/001-user-signup-pin/tasks.md.
