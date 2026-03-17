@@ -7,13 +7,8 @@ var apiService = builder
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
-// AddViteApp was not working with Aurelia, so we use AddNodeApp to run the Vite preview server directly.
 var webFrontend = builder
-    .AddNodeApp("frontend", "../BikeTracking.Frontend", "node_modules/vite/bin/vite.js")
-    .WithNpm()
-    .WithRunScript("preview")
-    .WithHttpEndpoint(port: 4173, env: "PORT")
-    .WithEnvironment("VITE_API_BASE_URL", "http://localhost:4173")
+    .AddViteApp("frontend", "../BikeTracking.Frontend")
     .WithReference(apiService)
     .WaitFor(apiService);
 

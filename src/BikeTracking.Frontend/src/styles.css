@@ -36,7 +36,7 @@ h2 {
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
 form {
@@ -62,7 +62,7 @@ input {
 input:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  box-shadow: 0 0 0 3px rgb(0 123 255 / 10%);
 }
 
 button {
@@ -77,18 +77,17 @@ button {
   transition: background-color 0.2s;
 }
 
-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
 button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
 
+button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
 .errors {
   list-style: none;
-  padding: 0;
   margin: 0;
   background-color: #f8d7da;
   border: 1px solid #f5c6cb;
