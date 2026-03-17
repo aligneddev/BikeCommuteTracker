@@ -1,13 +1,13 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.9
-Rationale: Replaced Blazor WebAssembly frontend direction with Aurelia 2. Updated Principle V and all frontend-related sections for consistency. Added an explicit rule to always reference official Aurelia documentation at https://docs.aurelia.io/.
+<!-- Sync Impact Report v1.10
+Rationale: Replaced frontend direction with React (latest stable) + TypeScript + Vite. Updated Principle V and all frontend-related sections for consistency. Added an explicit rule to always reference official React documentation at https://react.dev/.
 Modified Sections:
-- Core Principles > V: Frontend stack switched from Fluent UI Blazor to Aurelia 2
-- Core Principles > VII: Client-side validation references updated from Blazor/DataAnnotations to Aurelia 2 validation patterns
-- Technology Stack Requirements > Frontend: Framework, UI, hosting, API communication, validation, and documentation guidance updated for Aurelia 2
-- Development Workflow and checklists: Blazor-specific examples and validation references replaced with Aurelia 2 equivalents
-- Monthly Technology Audit and onboarding notes: Blazor-specific version checks replaced with Aurelia 2 checks
-Status: Approved — Aurelia 2 is the frontend standard; official Aurelia docs are the canonical implementation reference
+- Core Principles > V: Frontend stack standardized on React
+- Core Principles > VII: Client-side validation references updated to React validation patterns
+- Technology Stack Requirements > Frontend: Framework, UI, hosting, API communication, validation, and documentation guidance updated for React
+- Development Workflow and checklists: frontend examples and validation references updated to React equivalents
+- Monthly Technology Audit and onboarding notes: frontend package/version checks aligned with React
+Status: Approved — React is the frontend standard; official React docs are the canonical implementation reference
 Previous Updates:
 - v1.8: Scoped Aspire Dashboard to local development only; removed cloud Aspire Dashboard requirement. Clarified local-first deployment priority with Azure as a future target. Strengthened public GitHub repository secret safety guidance.
 - v1.7: Clarified that Blazor WASM frontend is fully orchestrated by Aspire locally; a single `dotnet run` command starts the entire application stack including API, database, and WASM frontend.
@@ -30,7 +30,7 @@ Previous Updates:
 - Why F# for domain? Discriminated unions enforce valid states; pure functions are deterministic and testable
 - Why Event Sourcing? Provides complete audit trail, enables temporal queries for savings analysis, supports future replays
 - Why Aspire? Local-first development orchestration; Aspire simplifies the full local stack now, with optional Azure cloud deployment planned for a future phase
-- Why Aurelia 2? Lightweight, modern TypeScript frontend with strong composability, testable component architecture, and flexible static hosting for local-first development
+- Why React? Mature, widely adopted TypeScript frontend ecosystem with composable UI patterns, strong tooling, and flexible static hosting for local-first development
 - Why Minimal API? Lightweight, performant, integrates seamlessly with Aspire and domain layers
 - Why local-first architecture? Users own their data locally; cloud deployment optional for sharing/collaboration
 
@@ -64,7 +64,7 @@ Red-Green-Refactor cycle is **non-negotiable**: tests written first, approved by
 
 ### V. User Experience Consistency & Accessibility
 
-All frontend UI built with Aurelia 2 (latest stable v2.x) using design tokens derived from brand palette (FFCDA4, FFB170, FF7400, D96200, A74C00). Centralized theme tokens and reusable Aurelia components enforce visual consistency. WCAG 2.1 AA compliance mandatory (semantic HTML, color contrast, keyboard navigation, screen reader support). Mobile-first responsive design (breakpoints: mobile ≤600px, tablet 601-1024px, desktop >1024px). OAuth identity integration ensures users access only their own data; public data (leaderboards, shared rides) clearly marked. Simple, intuitive UX; avoid feature creep. **Aurelia implementation details must always be validated against official docs: https://docs.aurelia.io/**
+All frontend UI built with React (latest stable) and TypeScript using design tokens derived from brand palette (FFCDA4, FFB170, FF7400, D96200, A74C00). Centralized theme tokens and reusable React components enforce visual consistency. WCAG 2.1 AA compliance mandatory (semantic HTML, color contrast, keyboard navigation, screen reader support). Mobile-first responsive design (breakpoints: mobile ≤600px, tablet 601-1024px, desktop >1024px). OAuth identity integration ensures users access only their own data; public data (leaderboards, shared rides) clearly marked. Simple, intuitive UX; avoid feature creep. **React implementation details must always be validated against official docs: https://react.dev/**
 
 **Rationale**: Brand consistency builds trust; accessibility ensures inclusive product; responsive design reaches all devices; identity isolation ensures privacy compliance; simplicity reduces cognitive load and maintenance burden.
 
@@ -76,7 +76,7 @@ API response times must remain **<500ms at p95** under normal load; database ind
 
 ### VII. Data Validation & Integrity
 
-All user input **MUST** be validated in three layers: (1) **Client-side (Aurelia 2)** using Aurelia form validation patterns (official Aurelia docs and standard browser constraints) for immediate feedback and UX responsiveness; (2) **Server-side (Minimal API)** using DataAnnotationsAttributes with attribute-based validation on command/event DTOs; (3) **Database layer** via constraints (NOT NULL, UNIQUE, FOREIGN KEY, CHECK). Validation rules enforced consistently across frontend and backend—if a field is required in an Aurelia form, the API endpoint MUST also enforce that constraint via data annotations. No data enters the system without validation. Referenced documentation: https://docs.aurelia.io/
+All user input **MUST** be validated in three layers: (1) **Client-side (React)** using React form handling patterns and standard browser constraints for immediate feedback and UX responsiveness; (2) **Server-side (Minimal API)** using DataAnnotationsAttributes with attribute-based validation on command/event DTOs; (3) **Database layer** via constraints (NOT NULL, UNIQUE, FOREIGN KEY, CHECK). Validation rules enforced consistently across frontend and backend—if a field is required in a React form, the API endpoint MUST also enforce that constraint via data annotations. No data enters the system without validation. Referenced documentation: https://react.dev/
 
 **Rationale**: Defense-in-depth prevents invalid data from corrupting event store or projections; client-side validation improves UX responsiveness; server-side validation prevents bypass attacks; database constraints provide last-line guarantees. Combined approach ensures data integrity without redundant checks.
 
@@ -91,14 +91,14 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Aurelia
 - **Domain-Infrastructure Interop**: EF Core value converters (FSharpValueConverters) enable transparent mapping of F# discriminated unions to database columns
 
 ### Frontend
-- **Framework**: Aurelia 2 (latest stable v2.x) with TypeScript
-- **UI Approach**: Aurelia 2 components with centralized CSS design tokens (brand palette enforced); avoid framework lock-in to server-rendered component libraries
-- **Hosting Model**: Static site hosting for compiled Aurelia app; serves frontend as static assets (HTML, CSS, JavaScript) from CDN or blob storage
+- **Framework**: React (latest stable) with TypeScript + Vite
+- **UI Approach**: React components with centralized CSS design tokens (brand palette enforced); avoid framework lock-in to server-rendered component libraries
+- **Hosting Model**: Static site hosting for compiled React app; serves frontend as static assets (HTML, CSS, JavaScript) from CDN or blob storage
 - **Authentication**: OAuth (via MSAL.js)
 - **API Communication**: Fetch API or HttpClient-style wrapper with OAuth bearer token to containerized backend API
-- **Design System**: Centralized theme tokens and shared Aurelia component patterns; theme colors locked to brand palette
-- **Validation**: Aurelia 2 client-side validation patterns mirrored with server-side DataAnnotations and database constraints
-- **Documentation Rule**: Always reference official Aurelia documentation when implementing or reviewing frontend code: https://docs.aurelia.io/
+- **Design System**: Centralized theme tokens and shared React component patterns; theme colors locked to brand palette
+- **Validation**: React client-side validation patterns mirrored with server-side DataAnnotations and database constraints
+- **Documentation Rule**: Always reference official React documentation when implementing or reviewing frontend code: https://react.dev/
 
 ### Data & Persistence
 - **Primary Database**: 
@@ -115,8 +115,8 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Aurelia
 
 ### Infrastructure & DevOps
 - **Hosting**: 
-  - **Local Deployment**: Single `dotnet run` orchestrates entire stack via Aspire: (1) Aurelia 2 frontend container serving compiled static assets, (2) .NET Minimal API container, (3) SQLite/LocalDB database container. All services discoverable via Aspire AppHost; frontend connects to API via `localhost:API_PORT`
-  - **Cloud Deployment**: Aurelia 2 app compiled to static assets, hosted in Azure Static Web Apps or Blob Storage + CDN. Containerized API runs in Azure Container Apps
+  - **Local Deployment**: Single `dotnet run` orchestrates entire stack via Aspire: (1) React frontend container serving compiled static assets, (2) .NET Minimal API container, (3) SQLite/LocalDB database container. All services discoverable via Aspire AppHost; frontend connects to API via `localhost:API_PORT`
+  - **Cloud Deployment**: React app compiled to static assets, hosted in Azure Static Web Apps or Blob Storage + CDN. Containerized API runs in Azure Container Apps
 - **Identity**: 
   - **Local Deployment**: User Secrets for local development; environment variables for configuration
   - **Cloud Deployment**: Azure Managed Identity for service-to-service authentication; no connection strings in code
@@ -131,7 +131,7 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Aurelia
   - **Cloud Deployment**: GitHub Actions with Aspire and azd (Azure Developer CLI) for orchestrated deployment
 - **Deployment Artifacts**: 
   - **Local Deployment**: Aspire AppHost (`Program.cs`) defines all services (frontend, API, database); `dotnet run` builds and runs containers locally. Frontend built as part of Aspire orchestration, served by embedded HTTP container
-  - **Cloud Deployment**: Aurelia static assets (HTML, CSS, JS bundles) deployed to Azure Static Web Apps or Blob Storage; API containerized in Azure Container Apps via Azure CLI scripts
+  - **Cloud Deployment**: React static assets (HTML, CSS, JS bundles) deployed to Azure Static Web Apps or Blob Storage; API containerized in Azure Container Apps via Azure CLI scripts
 
 ### Package Management & Updates
 - Check latest NuGet versions monthly; update patches for security; propose major/minor upgrades with test coverage
@@ -142,14 +142,14 @@ All user input **MUST** be validated in three layers: (1) **Client-side (Aurelia
 
 ### Specification & Vertical Slices
 Each specification defines a **complete, deployable vertical slice**:
-- **Frontend**: Aurelia 2 page/view-model + reusable components with centralized theme token styling
+- **Frontend**: React page/component + reusable components with centralized theme token styling
 - **API**: One or more Minimal API endpoints handling commands/queries
 - **Database**: Event table, read projection table, SQL migrations via .sqlproj
 - **Integration**: Background function or event handler to materialize projections (if applicable)
 - **Deployment**: Tested locally via single `dotnet run` (Aspire orchestrates frontend, API, database), deployable to Azure Static Web Apps (frontend) + Azure Container Apps (API)
 
 Example: "User records a bike ride" slice includes:
-- Aurelia 2 form component (e.g., ride-recorder.ts + ride-recorder.html, styled with centralized theme tokens, with Aurelia validation patterns) compiled and served by Aspire
+- React form component (e.g., ride-recorder.tsx, styled with centralized theme tokens, with React validation patterns) compiled and served by Aspire
 - POST /rides API endpoint (command handler with DataAnnotationsAttributes on DTO) in containerized backend
 - Events table with RideRecorded event; Projections table (RideProjection)
 - Background function listening to CES to update RideProjection
@@ -161,7 +161,7 @@ After the application structure is built, implementation proceeds in **vertical 
 
 1. **Identify Minimal Viable Feature**: Extract the smallest, testable piece of the specification that delivers user value (e.g., "User records a basic ride with just distance and date" vs. "User records ride with weather, auto-capture, and expense associations").
 2. **Implement Minimal Functionality**: Build only what's needed for this slice to work end-to-end:
-  - Aurelia form with essential fields only
+  - React form with essential fields only
    - API endpoint handling the core command
    - Event and projection for persistence
    - Database schema (migrations)
@@ -186,7 +186,7 @@ A vertical slice is **production-ready** only when all items are verified:
 - [ ] Code review: architecture compliance verified, naming conventions followed, validation discipline observed
 - [ ] Feature branch deployed locally via `dotnet run` (entire Aspire stack: frontend, API, database)
 - [ ] Integration tests pass; manual E2E test via Playwright (if critical user journey)
-- [ ] All validation layers implemented: client-side (Aurelia 2 validation), API (DTO DataAnnotations), database (constraints)
+- [ ] All validation layers implemented: client-side (React validation), API (DTO DataAnnotations), database (constraints)
 - [ ] Events stored in event table with correct schema; projections materialized and queryable
 - [ ] SAMPLE_/DEMO_ data cleaned up; no test data committed to main branch
 - [ ] Deployed to Azure staging environment via GitHub Actions + azd
@@ -284,19 +284,19 @@ Tests suggested by agent must receive explicit user approval before implementati
 #### Per-Specification Audit
 - [ ] Spec references all seven core principles in acceptance criteria
 - [ ] Event schema defined; backwards compatibility verified if updating existing events
-- [ ] Data validation implemented at three layers: client (Aurelia 2), API (Minimal API), database (constraints)
+- [ ] Data validation implemented at three layers: client (React), API (Minimal API), database (constraints)
 - [ ] Test coverage for domain logic ≥85%; F# discriminated unions and ROP patterns tested
 - [ ] All SAMPLE_/DEMO_ data removed from code before merge
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
-- [ ] Validation rule consistency: if field required in Aurelia form, enforced in API DTOs and database constraints
+- [ ] Validation rule consistency: if field required in React form, enforced in API DTOs and database constraints
 - [ ] OAuth isolation verified: user only accesses their data; public data clearly marked
 
 #### Monthly Technology Audit
 - [ ] NuGet packages checked via `mcp_nuget_get-latest-package-version` for security patches
 - [ ] Security patches applied immediately; major/minor versions proposed with test coverage
-- [ ] Aurelia 2 packages pinned to approved v2.x versions; latest compatible patch evaluated monthly
+- [ ] React and Vite packages pinned to approved versions; latest compatible patch evaluated monthly
 - [ ] MSAL.js updated; OAuth integration verified
-- [ ] Frontend implementation guidance verified against official Aurelia docs (https://docs.aurelia.io/)
+- [ ] Frontend implementation guidance verified against official React docs (https://react.dev/)
 - [ ] F# compiler version matches latest stable; discriminated union syntax up-to-date
 - [ ] EF Core value converters still compatible with F# domain types
 - [ ] Aspire OpenTelemetry exporters updated; Application Insights integration verified
@@ -320,7 +320,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 - **Event schema is append-only** — never mutate existing events. If schema changes needed, create new event type and version old events. Immutability is non-negotiable.
 - **F# domain types must marshal through EF Core value converters** — no raw EF entities exposed to C# API layer. C# records serve as API DTOs; converters handle F#-to-C# translation.
 - **Tests must pass before merge** — no exceptions, no "fix later" debt. CI/CD pipeline blocks merge if test suite fails.
-- **Three-layer validation enforced** — if field validated in Aurelia form, also validated in API DTOs and database constraints. No single-layer validation.
+- **Three-layer validation enforced** — if field validated in React form, also validated in API DTOs and database constraints. No single-layer validation.
 - **OAuth token required on all user endpoints** — anonymous access forbidden for personal data. Public data endpoints explicitly marked; separate authorization logic. (Optional for single-user local deployment; mandatory for cloud/multi-user.)
 - **SAMPLE_/DEMO_ data never in production** — automated linting prevents prefixed data from deploying. Merge blocked if test data detected.
 - **Database provider abstraction** — application code must work across SQLite (local), SQL Server LocalDB (local), and Azure SQL (cloud) without provider-specific queries. Use EF Core abstractions; avoid raw SQL unless necessary and provider-agnostic.
@@ -328,7 +328,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 ### Onboarding Checklist for New Contributors
 
 1. **Read constitution** (~20 min): Understand mission, seven core principles, technology stack, development workflow
-2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why Aurelia 2
+2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why React
 3. **Clone repo and bootstrap** (~5 min): `git clone` → `dotnet tool install --global specify-cli` → `dotnet run` (Aspire orchestrates frontend, API, database)
 4. **Explore specification examples** (~30 min): Review `/specs/` directory; read 2–3 completed specifications to understand vertical slice completeness
 5. **Review test examples** (~20 min): Browse `/bikeTracking.Tests/Unit/` and `/bikeTracking.Tests/Integration/` to understand test patterns (F# unit tests, integration test fixtures, E2E Playwright)
@@ -363,7 +363,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 - **Playwright MCP** – End-to-end browser automation for critical user journeys; write and run Playwright test code for UI validation, form submission, and responsive design verification
 
 ### Source Control & Examples
-- **github_repo** – Search GitHub repositories for code examples and patterns (e.g., Event Sourcing with .NET, Aurelia 2 authentication)
+- **github_repo** – Search GitHub repositories for code examples and patterns (e.g., Event Sourcing with .NET, React authentication)
 
 ## Governance
 
