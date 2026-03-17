@@ -1,14 +1,14 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.10
-Rationale: Replaced frontend direction with React (latest stable) + TypeScript + Vite. Updated Principle V and all frontend-related sections for consistency. Added an explicit rule to always reference official React documentation at https://react.dev/.
+<!-- Sync Impact Report v1.10.1
+Rationale: Clarified the local deployment approach for end-user machines by standardizing SQLite local-file storage as the default profile and documenting safety expectations for storage path and upgrades.
 Modified Sections:
-- Core Principles > V: Frontend stack standardized on React
-- Core Principles > VII: Client-side validation references updated to React validation patterns
-- Technology Stack Requirements > Frontend: Framework, UI, hosting, API communication, validation, and documentation guidance updated for React
-- Development Workflow and checklists: frontend examples and validation references updated to React equivalents
-- Monthly Technology Audit and onboarding notes: frontend package/version checks aligned with React
-Status: Approved — React is the frontend standard; official React docs are the canonical implementation reference
+- Mission > Decision Record: Added rationale for SQLite local-file default on user machines
+- Technology Stack Requirements > Data & Persistence: Clarified local database default and user-machine storage profile
+- Guardrails: Added explicit local SQLite file safety rule for user-machine installs
+Status: Approved — local user-machine deployments default to SQLite local-file storage for simplicity and offline reliability
 Previous Updates:
+- v1.10: Added an explicit engineering mindset for small-batch experimentation, continuous learning, complexity management, mandatory change validation, and proactive security teaching/remediation.
+- v1.9: Replaced Blazor WebAssembly frontend direction with Aurelia 2. Updated Principle V and all frontend-related sections for consistency. Added an explicit rule to always reference official Aurelia documentation at https://docs.aurelia.io/.
 - v1.8: Scoped Aspire Dashboard to local development only; removed cloud Aspire Dashboard requirement. Clarified local-first deployment priority with Azure as a future target. Strengthened public GitHub repository secret safety guidance.
 - v1.7: Clarified that Blazor WASM frontend is fully orchestrated by Aspire locally; a single `dotnet run` command starts the entire application stack including API, database, and WASM frontend.
 - v1.6: Adopted Blazor WebAssembly (WASM) as the frontend hosting model, enabling static site hosting for the UI while maintaining containerized API in both local and cloud.
@@ -33,6 +33,7 @@ Previous Updates:
 - Why React? Mature, widely adopted TypeScript frontend ecosystem with composable UI patterns, strong tooling, and flexible static hosting for local-first development
 - Why Minimal API? Lightweight, performant, integrates seamlessly with Aspire and domain layers
 - Why local-first architecture? Users own their data locally; cloud deployment optional for sharing/collaboration
+- Why SQLite local-file default for user-machine installs? No separate database install, reliable offline operation, and simpler support/backup through a single user-owned database file
 
 For detailed amendment history, see [DECISIONS.md](./DECISIONS.md).
 
@@ -46,7 +47,7 @@ Domain logic isolated from infrastructure concerns via layered architecture alig
 
 ### II. Functional Programming (Pure & Impure Sandwich)
 
-Core calculations and business logic implemented as pure functions: distance-to-distance conversions, expense-to-savings transformations, weather-to-recommendation mappings. Pure functions have no side effects—given the same input, always return the same output. Impure edges (database reads/writes, external API calls, user input, system time) explicitly isolated at application boundaries. Handlers orchestrate pure logic within impure I/O boundaries. **F# discriminated unions and active patterns preferred for domain modeling** (domain layer uses F#); Railway Oriented Programming (Result<'T> type) for error handling; C# records used in API surface for interop.
+Core calculations and business logic implemented as pure functions: distance-to-distance conversions, expense-to-savings transformations, weather-to-recommendation mappings. Pure functions have no side effects—given the same input, always return the same output. Use immutable data structures. Impure edges (database reads/writes, external API calls, user input, system time) explicitly isolated at application boundaries. Handlers orchestrate pure logic within impure I/O boundaries. **F# discriminated unions and active patterns preferred for domain modeling** (domain layer uses F#); Railway Oriented Programming (Result<'T> type) for error handling; C# records used in API surface for interop.
 
 **Rationale**: Pure functions are trivially testable, deterministic, and composable. Side effect isolation makes dataflow explicit and reduces debugging complexity. Immutable data structures preferred where practical. F# enforces immutability and pattern matching, reducing entire categories of bugs. Discriminated unions make invalid states unrepresentable.
 
@@ -80,6 +81,14 @@ All user input **MUST** be validated in three layers: (1) **Client-side (React)*
 
 **Rationale**: Defense-in-depth prevents invalid data from corrupting event store or projections; client-side validation improves UX responsiveness; server-side validation prevents bypass attacks; database constraints provide last-line guarantees. Combined approach ensures data integrity without redundant checks.
 
+### VIII. Experimentation, Learning & Secure Validation
+
+Engineering work should prioritize experimentation in small, reversible batches to discover what software creates the best user value while keeping complexity manageable. Continuous learning is expected in every slice: document what was learned, what complexity was reduced, and what the next increment should test.
+
+Every change **MUST** be validated end-to-end before merge and before phase transitions: solution compiles, coding standards pass, automated tests confirm behavior, and deployment pipeline checks succeed. Security is a first-class requirement on every change: identify issues, explain risks and mitigations to contributors, and remediate vulnerabilities before release.
+
+**Rationale**: Small batches reduce blast radius and improve feedback speed. Continuous learning drives better product decisions under uncertainty. Mandatory validation and security remediation protect reliability, delivery confidence, and user trust.
+
 ## Technology Stack Requirements
 
 ### Backend & Orchestration
@@ -102,7 +111,7 @@ All user input **MUST** be validated in three layers: (1) **Client-side (React)*
 
 ### Data & Persistence
 - **Primary Database**: 
-  - **Local Deployment**: SQLite (single-user) or SQL Server LocalDB/Express (multi-user local)
+  - **Local Deployment**: SQLite local file database (default for single-user and user-machine installs); SQL Server LocalDB/Express optional for advanced multi-user local scenarios
   - **Cloud Deployment**: Azure SQL Database (serverless elastic pools in production)
   - **Database abstraction**: EF Core provider configured via connection string; application code database-agnostic
 - **ORM & Data Access**: Entity Framework Core (latest .NET 10 compatible version) for all database interactions; DbContext per aggregate root; repositories abstract EF Core from domain layer. EF Core value converters integrated for F# type marshaling.
@@ -112,6 +121,10 @@ All user input **MUST** be validated in three layers: (1) **Client-side (React)*
 - **Change Event Streaming**: 
   - **Local Deployment**: In-process event handlers or polling-based projection updates
   - **Cloud Deployment**: Azure SQL Change Tracking/Change Data Capture triggering Azure Functions
+- **User-Machine Install Profile (Local)**:
+  - Default to SQLite file storage with no separate database server dependency
+  - Store database file in a user-writable application-data path (not the application install directory)
+  - Apply startup migrations automatically and create a pre-migration database backup during upgrades
 
 ### Infrastructure & DevOps
 - **Hosting**: 
@@ -155,6 +168,14 @@ Example: "User records a bike ride" slice includes:
 - Background function listening to CES to update RideProjection
 - Aspire AppHost configuration for frontend + API + database orchestration; Azure CLI deployment scripts for Static Web Apps (frontend) and Container Apps (API)
 
+run `csharpier format .` to enforce code formatting (document in readme.md, `dotnet tool install csharpier -g` is needed); run `dotnet format .` (built-in .NET tool) uses .editorconfig for formatting rules and supports more granular control (e.g., namespace matching, file-scoped namespaces). 
+
+Best Practice: Use CSharpier for consistent formatting and dotnet format for linting and code style enforcement (e.g., dotnet_diagnostic.IDE0130.severity=error in .editorconfig).
+run Typescript linting and formatting via `npm run lint` and `npm run format` in the frontend directory.
+
+Test` to run tests; `dotnet run --project src/BikeTracking.AppHost` to start local stack; GitHub Actions for CI/CD to Azure.
+
+
 ### Vertical Slice Implementation Strategy: Minimal-First Approach
 
 After the application structure is built, implementation proceeds in **vertical slices with minimal functionality first**:
@@ -166,7 +187,7 @@ After the application structure is built, implementation proceeds in **vertical 
    - Event and projection for persistence
    - Database schema (migrations)
    - No bells, whistles, or optional features
-3. **Test & Verify**: Run full test suite (unit, integration, E2E); deploy locally via `dotnet run` and manually verify the slice works as specified.
+3. **Test & Verify**: Run full test suite (unit, integration, E2E); deploy locally via `dotnet run` and manually verify the slice works as specified.  Each slice must be fully tested (unit, integration, E2E) and user-approved before proceeding to the next slice.
 4. **User Decision Point**: Once minimal slice is verified and working, present the user with options:
    - **Approve Minimal & Iterate**: User approves the working slice, then we build next priority feature (additional fields, refinements, enhancement)
    - **Expand Current Slice**: User requests additional functionality for the current slice before finalizing (e.g., "add weather capture" to the ride recording feature)
@@ -184,12 +205,15 @@ A vertical slice is **production-ready** only when all items are verified:
 - [ ] All tests written and failing (red phase complete)
 - [ ] Implementation complete; all tests passing (green + refactor phases)
 - [ ] Code review: architecture compliance verified, naming conventions followed, validation discipline observed
+- [ ] Change validation complete: compile succeeds, coding standards checks pass, automated behavior tests pass
 - [ ] Feature branch deployed locally via `dotnet run` (entire Aspire stack: frontend, API, database)
 - [ ] Integration tests pass; manual E2E test via Playwright (if critical user journey)
 - [ ] All validation layers implemented: client-side (React validation), API (DTO DataAnnotations), database (constraints)
 - [ ] Events stored in event table with correct schema; projections materialized and queryable
 - [ ] SAMPLE_/DEMO_ data cleaned up; no test data committed to main branch
 - [ ] Deployed to Azure staging environment via GitHub Actions + azd
+- [ ] Pipeline deployment checks pass for the target environment
+- [ ] Security review completed; identified vulnerabilities are explained and fixed (or formally approved risk acceptance)
 - [ ] User acceptance testing completed; feature approved for production
 - [ ] Commit made to main branch with spec reference in commit message
 
@@ -275,17 +299,21 @@ Tests suggested by agent must receive explicit user approval before implementati
 4. **Implementation (Green)**: Code written to make tests pass
 5. **Refactor (Refactor)**: Code cleaned, tests still pass
 6. **Code Review**: Implementation reviewed for architecture compliance, naming, performance, validation discipline
-7. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
-8. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
-9. **User Acceptance**: User validates slice meets specification and data validation rules observed
+7. **Validation Gate**: Compile/build passes, coding standards checks pass, and automated tests validate behavior
+8. **Security Gate**: Security issues are identified, explained to contributors, and remediated or explicitly accepted by user
+9. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
+10. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
+11. **User Acceptance**: User validates slice meets specification and data validation rules observed
 
 ### Compliance Audit Checklist
 
 #### Per-Specification Audit
-- [ ] Spec references all seven core principles in acceptance criteria
+- [ ] Spec references all eight core principles in acceptance criteria
 - [ ] Event schema defined; backwards compatibility verified if updating existing events
 - [ ] Data validation implemented at three layers: client (React), API (Minimal API), database (constraints)
 - [ ] Test coverage for domain logic ≥85%; F# discriminated unions and ROP patterns tested
+- [ ] Every change validated: compile/build, coding standards, automated tests, and pipeline deployment checks
+- [ ] Security issues recognized, explained, and remediated (or explicitly accepted by user)
 - [ ] All SAMPLE_/DEMO_ data removed from code before merge
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
 - [ ] Validation rule consistency: if field required in React form, enforced in API DTOs and database constraints
@@ -324,11 +352,12 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 - **OAuth token required on all user endpoints** — anonymous access forbidden for personal data. Public data endpoints explicitly marked; separate authorization logic. (Optional for single-user local deployment; mandatory for cloud/multi-user.)
 - **SAMPLE_/DEMO_ data never in production** — automated linting prevents prefixed data from deploying. Merge blocked if test data detected.
 - **Database provider abstraction** — application code must work across SQLite (local), SQL Server LocalDB (local), and Azure SQL (cloud) without provider-specific queries. Use EF Core abstractions; avoid raw SQL unless necessary and provider-agnostic.
+- **User-machine local data safety** — local deployments on end-user machines default to SQLite local-file storage in a user-writable app-data path; do not require a separate DB server for single-user installs. Before schema migration, create a backup copy of the SQLite file.
 
 ### Onboarding Checklist for New Contributors
 
-1. **Read constitution** (~20 min): Understand mission, seven core principles, technology stack, development workflow
-2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why React
+1. **Read constitution** (~20 min): Understand mission, eight core principles, technology stack, development workflow
+2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why Aurelia 2
 3. **Clone repo and bootstrap** (~5 min): `git clone` → `dotnet tool install --global specify-cli` → `dotnet run` (Aspire orchestrates frontend, API, database)
 4. **Explore specification examples** (~30 min): Review `/specs/` directory; read 2–3 completed specifications to understand vertical slice completeness
 5. **Review test examples** (~20 min): Browse `/bikeTracking.Tests/Unit/` and `/bikeTracking.Tests/Integration/` to understand test patterns (F# unit tests, integration test fixtures, E2E Playwright)
@@ -368,7 +397,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 ## Governance
 
 ### Constitution as Governing Document
-This constitution supersedes all other project guidance. All architectural decisions, code reviews, deployment approvals, and spec acceptance gates must verify compliance with these seven core principles and technology stack requirements.
+This constitution supersedes all other project guidance. All architectural decisions, code reviews, deployment approvals, and spec acceptance gates must verify compliance with these eight core principles and technology stack requirements.
 
 ### Amendment Procedure
 Amendments must:
@@ -408,5 +437,5 @@ Always commit before continuing to a new phase.
 
 ---
 
-**Version**: 1.9.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-11
+**Version**: 1.10.1 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-16
 

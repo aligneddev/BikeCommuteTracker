@@ -40,9 +40,20 @@ appsettings.Development.json
 
 # Others
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
 *.bak
 *.cache
+node_modules/
+dist/
+build/
+coverage/
+.env*
+*.tmp
+*.swp
 
 #Paket dependency manager
 paket-files/

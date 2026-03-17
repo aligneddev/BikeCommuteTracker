@@ -1,0 +1,174 @@
+openapi: 3.0.3
+info:
+  title: BikeTracking Local User Identity API
+  version: 1.0.0
+  description: Local-first signup and identification endpoints for name and PIN authorization.
+
+paths:
+  /api/users/signup:
+    post:
+      summary: Create a local user with name and PIN
+      operationId: signupUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupSuccessResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate normalized name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/users/identify:
+    post:
+      summary: Identify and authorize local user by normalized name and PIN
+      operationId: identifyUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentifyRequest'
+      responses:
+        '200':
+          description: Authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifySuccessResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Request throttled due to repeated failures
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                minimum: 1
+              description: Seconds before next attempt is processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThrottleResponse'
+
+components:
+  schemas:
+    SignupRequest:
+      type: object
+      required:
+        - name
+        - pin
+      properties:
+        name:
+          type: string
+          description: Display name; server trims and normalizes for duplicate detection.
+        pin:
+          type: string
+          description: Numeric PIN input, validated by policy.
+
+    SignupSuccessResponse:
+      type: object
+      required:
+        - userId
+        - userName
+        - createdAtUtc
+      properties:
+        userId:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        createdAtUtc:
+          type: string
+          format: date-time
+        eventStatus:
+          type: string
+          enum:
+            - queued
+            - published
+
+    IdentifyRequest:
+      type: object
+      required:
+        - name
+        - pin
+      properties:
+        name:
+          type: string
+          description: Name compared using trimmed, case-insensitive normalization.
+        pin:
+          type: string
+
+    IdentifySuccessResponse:
+      type: object
+      required:
+        - userId
+        - userName
+        - authorized
+      properties:
+        userId:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        authorized:
+          type: boolean
+          enum: [true]
+
+    ThrottleResponse:
+      type: object
+      required:
+        - code
+        - message
+        - retryAfterSeconds
+      properties:
+        code:
+          type: string
+          enum:
+            - throttled
+        message:
+          type: string
+        retryAfterSeconds:
+          type: integer
+          minimum: 1
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string

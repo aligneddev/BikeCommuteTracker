@@ -1,7 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-})
+  server: {
+    open: !process.env.CI,
+    port: 9000,
+  },
+  plugins: [
+    react(),
+    nodePolyfills(),
+  ],
+  resolve: {
+    alias: {
+      '@': '/src',  // Path aliasing
+    }
+  },
+  css: {
+    modules: {
+      localsConvention: 'camelCase'  // CSS Modules support
+    }
+  }
+});

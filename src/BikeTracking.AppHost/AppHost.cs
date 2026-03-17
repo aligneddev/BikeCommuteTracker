@@ -1,5 +1,7 @@
 ﻿var builder = DistributedApplication.CreateBuilder(args);
 
+// API logs include outbox worker diagnostics for user-registration event publishing.
+// Check Aspire service logs for entries from OutboxPublisherService and UserRegisteredPublisher.
 var apiService = builder
     .AddProject<Projects.BikeTracking_Api>("api")
     .WithHttpHealthCheck("/health")
