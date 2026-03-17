@@ -28,7 +28,7 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 dotnet tool install csharpier -g
 ```
 
-run it with `dotnet csharpier format .` from the repo root to format all C# code.
+run it with `csharpier format .` from the repo root to format all C# code.
 
 - Helpful editor integration: VS Code CSharpier extension (`csharpier.csharpier-vscode`)
 

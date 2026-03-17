@@ -32,7 +32,7 @@ public sealed class ThrottleOptions
 
 public sealed class OutboxOptions
 {
-    public int PollIntervalSeconds { get; set; } = 5;
+    public int PollIntervalSeconds { get; set; } = 10;
     public int MaxBatchSize { get; set; } = 50;
     public int InitialBackoffSeconds { get; set; } = 1;
     public int MaxBackoffSeconds { get; set; } = 30;
