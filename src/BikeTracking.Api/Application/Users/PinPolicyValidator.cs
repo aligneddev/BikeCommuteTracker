@@ -18,7 +18,9 @@ public sealed class PinPolicyValidator(IOptions<IdentityOptions> options)
 
         if (pin.Length < _pinPolicy.MinLength || pin.Length > _pinPolicy.MaxLength)
         {
-            errors.Add($"PIN must be between {_pinPolicy.MinLength} and {_pinPolicy.MaxLength} characters.");
+            errors.Add(
+                $"PIN must be between {_pinPolicy.MinLength} and {_pinPolicy.MaxLength} characters."
+            );
         }
 
         if (_pinPolicy.NumericOnly && pin.Any(ch => !char.IsDigit(ch)))

@@ -10,14 +10,16 @@ public static class UsersEndpoints
     {
         var usersGroup = endpoints.MapGroup("/api/users");
 
-        usersGroup.MapPost("/signup", SignupAsync)
+        usersGroup
+            .MapPost("/signup", SignupAsync)
             .WithName("SignupUser")
             .WithSummary("Create a local user with name and PIN")
             .Produces<SignupSuccessResponse>(StatusCodes.Status201Created)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status409Conflict);
 
-        usersGroup.MapPost("/identify", IdentifyAsync)
+        usersGroup
+            .MapPost("/identify", IdentifyAsync)
             .WithName("IdentifyUser")
             .WithSummary("Identify local user by normalized name and PIN")
             .Produces<IdentifySuccessResponse>(StatusCodes.Status200OK)
@@ -31,7 +33,8 @@ public static class UsersEndpoints
     private static async Task<IResult> SignupAsync(
         [FromBody] SignupRequest request,
         SignupService signupService,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var result = await signupService.SignupAsync(request, cancellationToken);
 
@@ -45,24 +48,32 @@ public static class UsersEndpoints
             return Results.Conflict(result.Error);
         }
 
-        return Results.BadRequest(result.Error ?? new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed."));
+        return Results.BadRequest(
+            result.Error
+                ?? new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.")
+        );
     }
 
     private static async Task<IResult> IdentifyAsync(
         [FromBody] IdentifyRequest request,
         IdentifyService identifyService,
         HttpContext httpContext,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var result = await identifyService.IdentifyAsync(request, cancellationToken);
 
         return result.ResultType switch
         {
-            IdentifyResultType.Success when result.Response is not null => Results.Ok(result.Response),
+            IdentifyResultType.Success when result.Response is not null => Results.Ok(
+                result.Response
+            ),
             IdentifyResultType.ValidationFailed => Results.BadRequest(result.Error),
             IdentifyResultType.Unauthorized => Results.Unauthorized(),
             IdentifyResultType.Throttled => ToThrottleResult(result, httpContext),
-            _ => Results.BadRequest(new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.")),
+            _ => Results.BadRequest(
+                new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.")
+            ),
         };
     }
 
@@ -73,7 +84,8 @@ public static class UsersEndpoints
         var payload = new ThrottleResponse(
             UsersErrorCodes.Throttled,
             result.Error?.Message ?? "Too many attempts. Try again later.",
-            result.RetryAfterSeconds);
+            result.RetryAfterSeconds
+        );
 
         return Results.Json(payload, statusCode: StatusCodes.Status429TooManyRequests);
     }

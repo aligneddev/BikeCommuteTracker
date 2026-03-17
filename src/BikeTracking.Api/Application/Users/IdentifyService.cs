@@ -10,11 +10,15 @@ public sealed class IdentifyService(
     BikeTrackingDbContext dbContext,
     PinPolicyValidator pinPolicyValidator,
     IPinHasher pinHasher,
-    IOptions<IdentityOptions> identityOptions)
+    IOptions<IdentityOptions> identityOptions
+)
 {
     private readonly ThrottleOptions _throttleOptions = identityOptions.Value.Throttle;
 
-    public async Task<IdentifyResult> IdentifyAsync(IdentifyRequest request, CancellationToken cancellationToken)
+    public async Task<IdentifyResult> IdentifyAsync(
+        IdentifyRequest request,
+        CancellationToken cancellationToken
+    )
     {
         var validationErrors = ValidateRequest(request);
         if (validationErrors.Count > 0)
@@ -24,8 +28,8 @@ public sealed class IdentifyService(
 
         var normalizedName = UserNameNormalizer.Normalize(request.Name);
 
-        var user = await dbContext.Users
-            .Include(x => x.Credential)
+        var user = await dbContext
+            .Users.Include(x => x.Credential)
             .Include(x => x.AuthAttemptState)
             .SingleOrDefaultAsync(x => x.NormalizedName == normalizedName, cancellationToken);
 
@@ -51,7 +55,10 @@ public sealed class IdentifyService(
 
         if (attemptState.DelayUntilUtc is not null && attemptState.DelayUntilUtc > now)
         {
-            var retryAfterSeconds = Math.Max(1, (int)Math.Ceiling((attemptState.DelayUntilUtc.Value - now).TotalSeconds));
+            var retryAfterSeconds = Math.Max(
+                1,
+                (int)Math.Ceiling((attemptState.DelayUntilUtc.Value - now).TotalSeconds)
+            );
             return IdentifyResult.Throttled(retryAfterSeconds);
         }
 
@@ -59,7 +66,8 @@ public sealed class IdentifyService(
             request.Pin,
             user.Credential.PinSalt,
             user.Credential.PinHash,
-            user.Credential.IterationCount);
+            user.Credential.IterationCount
+        );
 
         if (pinMatches)
         {
@@ -68,7 +76,9 @@ public sealed class IdentifyService(
             attemptState.DelayUntilUtc = null;
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return IdentifyResult.Success(new IdentifySuccessResponse(user.UserId, user.DisplayName, true));
+            return IdentifyResult.Success(
+                new IdentifySuccessResponse(user.UserId, user.DisplayName, true)
+            );
         }
 
         attemptState.ConsecutiveWrongCount += 1;
@@ -112,7 +122,8 @@ public sealed record IdentifyResult(
     IdentifyResultType ResultType,
     IdentifySuccessResponse? Response,
     ErrorResponse? Error,
-    int RetryAfterSeconds = 0)
+    int RetryAfterSeconds = 0
+)
 {
     public static IdentifyResult Success(IdentifySuccessResponse response)
     {
@@ -124,7 +135,8 @@ public sealed record IdentifyResult(
         return new IdentifyResult(
             IdentifyResultType.ValidationFailed,
             null,
-            new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.", errors));
+            new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.", errors)
+        );
     }
 
     public static IdentifyResult Unauthorized()
@@ -132,7 +144,8 @@ public sealed record IdentifyResult(
         return new IdentifyResult(
             IdentifyResultType.Unauthorized,
             null,
-            new ErrorResponse(UsersErrorCodes.InvalidCredentials, "Invalid name or PIN."));
+            new ErrorResponse(UsersErrorCodes.InvalidCredentials, "Invalid name or PIN.")
+        );
     }
 
     public static IdentifyResult Throttled(int retryAfterSeconds)
@@ -141,7 +154,8 @@ public sealed record IdentifyResult(
             IdentifyResultType.Throttled,
             null,
             new ErrorResponse(UsersErrorCodes.Throttled, "Too many attempts. Try again later."),
-            retryAfterSeconds);
+            retryAfterSeconds
+        );
     }
 }
 

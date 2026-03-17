@@ -10,11 +10,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-var connectionString = builder.Configuration.GetConnectionString("BikeTracking")
+var connectionString =
+    builder.Configuration.GetConnectionString("BikeTracking")
     ?? "Data Source=biketracking.local.db";
 
 builder.Services.Configure<IdentityOptions>(builder.Configuration.GetSection("Identity"));
-builder.Services.AddDbContext<BikeTrackingDbContext>(options => options.UseSqlite(connectionString));
+builder.Services.AddDbContext<BikeTrackingDbContext>(options =>
+    options.UseSqlite(connectionString)
+);
 
 builder.Services.AddScoped<PinPolicyValidator>();
 builder.Services.AddSingleton<IPinHasher, PinHasher>();
@@ -28,10 +31,11 @@ builder.Services.AddHostedService<OutboxPublisherService>();
 builder.Services.AddHttpLogging(options =>
 {
     // Keep request/response logging metadata-only to avoid credential leakage.
-    options.LoggingFields = HttpLoggingFields.RequestMethod
-                            | HttpLoggingFields.RequestPath
-                            | HttpLoggingFields.ResponseStatusCode
-                            | HttpLoggingFields.Duration;
+    options.LoggingFields =
+        HttpLoggingFields.RequestMethod
+        | HttpLoggingFields.RequestPath
+        | HttpLoggingFields.ResponseStatusCode
+        | HttpLoggingFields.Duration;
     options.RequestBodyLogLimit = 0;
     options.ResponseBodyLogLimit = 0;
 });

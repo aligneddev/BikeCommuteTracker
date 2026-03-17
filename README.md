@@ -22,6 +22,15 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 
 - .NET SDK 10.x
 - Node.js 20+ and npm
+- CSharpier global tool (required for formatting checks):
+
+```powershell
+dotnet tool install csharpier -g
+```
+
+run it with `dotnet csharpier format .` from the repo root to format all C# code.
+
+- Helpful editor integration: VS Code CSharpier extension (`csharpier.csharpier-vscode`)
 
 ## Quick Start
 

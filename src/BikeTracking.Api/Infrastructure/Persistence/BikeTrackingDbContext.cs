@@ -2,7 +2,8 @@
 
 namespace BikeTracking.Api.Infrastructure.Persistence;
 
-public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext> options) : DbContext(options)
+public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext> options)
+    : DbContext(options)
 {
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<UserCredentialEntity> UserCredentials => Set<UserCredentialEntity>();
@@ -20,15 +21,16 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(x => x.CreatedAtUtc).IsRequired();
             entity.Property(x => x.IsActive).HasDefaultValue(true);
 
-            entity.HasIndex(x => x.NormalizedName)
-                .IsUnique();
+            entity.HasIndex(x => x.NormalizedName).IsUnique();
 
-            entity.HasOne(x => x.Credential)
+            entity
+                .HasOne(x => x.Credential)
                 .WithOne(x => x.User)
                 .HasForeignKey<UserCredentialEntity>(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(x => x.AuthAttemptState)
+            entity
+                .HasOne(x => x.AuthAttemptState)
                 .WithOne(x => x.User)
                 .HasForeignKey<AuthAttemptStateEntity>(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);

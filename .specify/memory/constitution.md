@@ -47,7 +47,7 @@ Domain logic isolated from infrastructure concerns via layered architecture alig
 
 ### II. Functional Programming (Pure & Impure Sandwich)
 
-Core calculations and business logic implemented as pure functions: distance-to-distance conversions, expense-to-savings transformations, weather-to-recommendation mappings. Pure functions have no side effects—given the same input, always return the same output. Impure edges (database reads/writes, external API calls, user input, system time) explicitly isolated at application boundaries. Handlers orchestrate pure logic within impure I/O boundaries. **F# discriminated unions and active patterns preferred for domain modeling** (domain layer uses F#); Railway Oriented Programming (Result<'T> type) for error handling; C# records used in API surface for interop.
+Core calculations and business logic implemented as pure functions: distance-to-distance conversions, expense-to-savings transformations, weather-to-recommendation mappings. Pure functions have no side effects—given the same input, always return the same output. Use immutable data structures. Impure edges (database reads/writes, external API calls, user input, system time) explicitly isolated at application boundaries. Handlers orchestrate pure logic within impure I/O boundaries. **F# discriminated unions and active patterns preferred for domain modeling** (domain layer uses F#); Railway Oriented Programming (Result<'T> type) for error handling; C# records used in API surface for interop.
 
 **Rationale**: Pure functions are trivially testable, deterministic, and composable. Side effect isolation makes dataflow explicit and reduces debugging complexity. Immutable data structures preferred where practical. F# enforces immutability and pattern matching, reducing entire categories of bugs. Discriminated unions make invalid states unrepresentable.
 
@@ -168,9 +168,13 @@ Example: "User records a bike ride" slice includes:
 - Background function listening to CES to update RideProjection
 - Aspire AppHost configuration for frontend + API + database orchestration; Azure CLI deployment scripts for Static Web Apps (frontend) and Container Apps (API)
 
-run `dotnet format .` to enforce code style; `dotnet test` to run tests; `dotnet run --project src/BikeTracking.AppHost` to start local stack; GitHub Actions for CI/CD to Azure.
+run `csharpier format .` to enforce code formatting (document in readme.md, `dotnet tool install csharpier -g` is needed); run `dotnet format .` (built-in .NET tool) uses .editorconfig for formatting rules and supports more granular control (e.g., namespace matching, file-scoped namespaces). 
 
+Best Practice: Use CSharpier for consistent formatting and dotnet format for linting and code style enforcement (e.g., dotnet_diagnostic.IDE0130.severity=error in .editorconfig).
 run Typescript linting and formatting via `npm run lint` and `npm run format` in the frontend directory.
+
+Test` to run tests; `dotnet run --project src/BikeTracking.AppHost` to start local stack; GitHub Actions for CI/CD to Azure.
+
 
 ### Vertical Slice Implementation Strategy: Minimal-First Approach
 

@@ -15,7 +15,8 @@ public readonly record struct PinHashResult(
     byte[] Salt,
     string Algorithm,
     int Iterations,
-    int CredentialVersion);
+    int CredentialVersion
+);
 
 public sealed class PinHasher(IOptions<IdentityOptions> options) : IPinHasher
 {
@@ -29,14 +30,16 @@ public sealed class PinHasher(IOptions<IdentityOptions> options) : IPinHasher
             salt,
             _hashingOptions.Iterations,
             HashAlgorithmName.SHA256,
-            _hashingOptions.HashSizeBytes);
+            _hashingOptions.HashSizeBytes
+        );
 
         return new PinHashResult(
             hash,
             salt,
             _hashingOptions.Algorithm,
             _hashingOptions.Iterations,
-            _hashingOptions.CredentialVersion);
+            _hashingOptions.CredentialVersion
+        );
     }
 
     public bool Verify(string pin, byte[] salt, byte[] expectedHash, int iterations)
@@ -46,7 +49,8 @@ public sealed class PinHasher(IOptions<IdentityOptions> options) : IPinHasher
             salt,
             iterations,
             HashAlgorithmName.SHA256,
-            expectedHash.Length);
+            expectedHash.Length
+        );
 
         return CryptographicOperations.FixedTimeEquals(computedHash, expectedHash);
     }

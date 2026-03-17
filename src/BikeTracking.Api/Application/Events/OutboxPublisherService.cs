@@ -9,7 +9,8 @@ public sealed class OutboxPublisherService(
     IOutboxStore outboxStore,
     IUserRegisteredPublisher userRegisteredPublisher,
     IOptions<IdentityOptions> identityOptions,
-    ILogger<OutboxPublisherService> logger) : BackgroundService
+    ILogger<OutboxPublisherService> logger
+) : BackgroundService
 {
     private readonly OutboxOptions _outboxOptions = identityOptions.Value.Outbox;
 
@@ -45,20 +46,38 @@ public sealed class OutboxPublisherService(
         {
             try
             {
-                if (!string.Equals(outboxEvent.EventType, UserRegisteredEventPayload.EventTypeName, StringComparison.Ordinal))
+                if (
+                    !string.Equals(
+                        outboxEvent.EventType,
+                        UserRegisteredEventPayload.EventTypeName,
+                        StringComparison.Ordinal
+                    )
+                )
                 {
-                    await outboxStore.MarkPublishedAsync(outboxEvent.OutboxEventId, DateTime.UtcNow, cancellationToken);
+                    await outboxStore.MarkPublishedAsync(
+                        outboxEvent.OutboxEventId,
+                        DateTime.UtcNow,
+                        cancellationToken
+                    );
                     continue;
                 }
 
-                var payload = JsonSerializer.Deserialize<UserRegisteredEventPayload>(outboxEvent.EventPayloadJson);
+                var payload = JsonSerializer.Deserialize<UserRegisteredEventPayload>(
+                    outboxEvent.EventPayloadJson
+                );
                 if (payload is null)
                 {
-                    throw new InvalidOperationException($"Unable to deserialize payload for outbox event {outboxEvent.OutboxEventId}.");
+                    throw new InvalidOperationException(
+                        $"Unable to deserialize payload for outbox event {outboxEvent.OutboxEventId}."
+                    );
                 }
 
                 await userRegisteredPublisher.PublishAsync(payload, cancellationToken);
-                await outboxStore.MarkPublishedAsync(outboxEvent.OutboxEventId, DateTime.UtcNow, cancellationToken);
+                await outboxStore.MarkPublishedAsync(
+                    outboxEvent.OutboxEventId,
+                    DateTime.UtcNow,
+                    cancellationToken
+                );
             }
             catch (Exception ex)
             {
@@ -71,14 +90,16 @@ public sealed class OutboxPublisherService(
                     retryCount,
                     nextAttemptUtc,
                     ex.Message,
-                    cancellationToken);
+                    cancellationToken
+                );
 
                 logger.LogWarning(
                     ex,
                     "Failed to publish outbox event {OutboxEventId}. Retrying at {NextAttemptUtc} (retry #{RetryCount}).",
                     outboxEvent.OutboxEventId,
                     nextAttemptUtc,
-                    retryCount);
+                    retryCount
+                );
             }
         }
     }
