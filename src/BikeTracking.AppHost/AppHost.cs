@@ -5,12 +5,8 @@ var apiService = builder
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
-// AddViteApp was not working with Aurelia
 var webFrontend = builder
-    .AddNodeApp("frontend", "../BikeTracking.Frontend", "node_modules/vite/bin/vite.js")
-    .WithNpm()
-    .WithRunScript("preview")
-    .WithHttpEndpoint(port: 5173, env: "PORT")
+    .AddViteApp("frontend", "../BikeTracking.Frontend")
     .WithReference(apiService)
     .WaitFor(apiService);
 
