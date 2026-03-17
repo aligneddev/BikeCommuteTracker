@@ -42,6 +42,19 @@ builder.Services.AddHttpLogging(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 
+// Allow any localhost origin so the Vite dev server and published frontend
+// can reach the API during local Aspire orchestration. The origin port varies
+// per run so we match on host only, which is safe for local-only deployment.
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy
+            .SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+    );
+});
+
 var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
@@ -51,6 +64,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 app.MapGet("/", () => Results.Ok(new { message = "Bike Tracking API is running." }));
+app.UseCors();
 app.UseHttpLogging();
 app.MapUsersEndpoints();
 app.MapDefaultEndpoints();
