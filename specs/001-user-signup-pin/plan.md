@@ -5,14 +5,14 @@
 
 ## Summary
 
-Deliver the first local identity vertical slice: a minimal Aurelia 2 signup/identify flow using name + PIN, local persistence with generated user IDs, secure PIN storage via salted non-reversible hash, progressive delay anti-bruteforce protection, and reliable `UserRegistered` event publication with retry semantics after persistence.
+Deliver the first local identity vertical slice: a minimal React signup/identify flow using name + PIN, local persistence with generated user IDs, secure PIN storage via salted non-reversible hash, progressive delay anti-bruteforce protection, and reliable `UserRegistered` event publication with retry semantics after persistence.
 
 ## Technical Context
 
-**Language/Version**: .NET 10 (C#), F# (domain project), TypeScript 5.x (Aurelia 2 frontend)  
-**Primary Dependencies**: ASP.NET Core Minimal API, Microsoft Aspire AppHost, Entity Framework Core + SQLite provider, Aurelia 2 + `@aurelia/router`, .NET `System.Security.Cryptography` (PBKDF2), background worker for outbox retry  
+**Language/Version**: .NET 10 (C#), F# (domain project), TypeScript 5.x (React 19 frontend)  
+**Primary Dependencies**: ASP.NET Core Minimal API, Microsoft Aspire AppHost, Entity Framework Core + SQLite provider, React 19 + Vite, .NET `System.Security.Cryptography` (PBKDF2), background worker for outbox retry  
 **Storage**: SQLite local database with EF Core migrations (users, credentials, attempt-state, outbox events)  
-**Testing**: xUnit integration/unit tests for API/domain, Playwright MCP for end-to-end user journeys, Aurelia component tests for form validation  
+**Testing**: xUnit integration/unit tests for API/domain, Playwright MCP for end-to-end user journeys, React component tests for form validation  
 **Target Platform**: Local development on Windows/macOS/Linux; desktop and mobile browsers for UI  
 **Project Type**: Aspire-orchestrated web application (frontend + API + local database)  
 **Performance Goals**: API endpoints <500ms p95 under normal local load; identification throttle behavior deterministic; event publication catch-up <5s typical  
@@ -31,9 +31,9 @@ Deliver the first local identity vertical slice: a minimal Aurelia 2 signup/iden
 | Functional Core / Impure Edge | PASS | Hashing, normalization, and delay calculation remain deterministic functions; DB and event publication isolated at edges. |
 | Event Sourcing & CQRS | PASS | `UserRegistered` event is immutable and drives projection/event consumers asynchronously. |
 | Quality-First (TDD) | PASS | Test plan will be created in `/speckit.tasks`; implementation remains gated on approved tests. |
-| UX Consistency & Accessibility | PASS | Aurelia 2 form flow with accessible labels, keyboard navigation, and clear validation feedback. |
+| UX Consistency & Accessibility | PASS | React form flow with accessible labels, keyboard navigation, and clear validation feedback. |
 | Performance & Observability | PASS | Response and event-lag targets align with constitution SLOs; service defaults keep telemetry enabled locally. |
-| Three-Layer Validation | PASS | Validation planned in Aurelia form, API DTO validation, and DB constraints/indexes. |
+| Three-Layer Validation | PASS | Validation planned in React form state, API DTO validation, and DB constraints/indexes. |
 
 **Gate Decision**: PASS. No constitutional violations require exception handling.
 
@@ -83,13 +83,14 @@ src/
 │   └── Library.fs
 ├── BikeTracking.Frontend/
 │   └── src/
+│       ├── App.tsx
+│       ├── main.tsx
 │       ├── pages/
 │       │   └── signup/
-│       │       ├── signup-page.ts
-│       │       └── signup-page.html
-│       ├── services/
-│       │   └── users-api.ts
-│       └── main.ts
+│       │       ├── signup-page.tsx
+│       │       └── signup-page.css
+│       └── services/
+│           └── users-api.ts
 ├── BikeTracking.AppHost/
 │   └── AppHost.cs
 └── BikeTracking.ServiceDefaults/

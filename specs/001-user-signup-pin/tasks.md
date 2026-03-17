@@ -49,16 +49,16 @@
 
 ### Implementation for User Story 1
 
-- [X] T017 [P] [US1] Build signup page view-model with client-side validation state in src/BikeTracking.Frontend/src/pages/signup/signup-page.ts
-- [X] T018 [P] [US1] Build accessible signup form markup with field-level validation bindings in src/BikeTracking.Frontend/src/pages/signup/signup-page.html
+- [X] T017 [P] [US1] Build signup page React state model with client-side validation in src/BikeTracking.Frontend/src/pages/signup/signup-page.tsx
+- [X] T018 [P] [US1] Build accessible signup form JSX with field-level validation bindings in src/BikeTracking.Frontend/src/pages/signup/signup-page.tsx
 - [X] T019 [P] [US1] Implement signup API client method in src/BikeTracking.Frontend/src/services/users-api.ts
-- [X] T020 [US1] Register signup page bootstrap in src/BikeTracking.Frontend/src/main.ts
+- [X] T020 [US1] Register signup page bootstrap in src/BikeTracking.Frontend/src/App.tsx and src/BikeTracking.Frontend/src/main.tsx
 - [X] T021 [P] [US1] Define signup request/response DTOs and duplicate-name error code in src/BikeTracking.Api/Contracts/UsersContracts.cs
 - [X] T022 [US1] Implement signup application service with normalized-name duplicate check in src/BikeTracking.Api/Application/Users/SignupService.cs
 - [X] T023 [US1] Persist User, UserCredential, and AuthAttemptState transactionally in src/BikeTracking.Api/Application/Users/SignupService.cs
 - [X] T024 [US1] Queue UserRegistered outbox event during signup transaction in src/BikeTracking.Api/Application/Users/SignupService.cs
 - [X] T025 [US1] Implement POST /api/users/signup with 201/400/409 semantics in src/BikeTracking.Api/Endpoints/UsersEndpoints.cs
-- [X] T026 [US1] Wire frontend signup submit flow and server error rendering in src/BikeTracking.Frontend/src/pages/signup/signup-page.ts
+- [X] T026 [US1] Wire frontend signup submit flow and server error rendering in src/BikeTracking.Frontend/src/pages/signup/signup-page.tsx
 
 **Checkpoint**: User Story 1 is complete and independently testable as the MVP.
 
@@ -74,13 +74,13 @@
 
 - [X] T027 [P] [US2] Define identify request/response contracts and throttle payload in src/BikeTracking.Api/Contracts/UsersContracts.cs
 - [X] T028 [P] [US2] Implement identify API client method with Retry-After handling in src/BikeTracking.Frontend/src/services/users-api.ts
-- [X] T029 [P] [US2] Add identify controls and throttle message placeholders in src/BikeTracking.Frontend/src/pages/signup/signup-page.html
+- [X] T029 [P] [US2] Add identify controls and throttle message placeholders in src/BikeTracking.Frontend/src/pages/signup/signup-page.tsx
 - [X] T030 [US2] Implement normalized-name lookup + PIN verification in src/BikeTracking.Api/Application/Users/IdentifyService.cs
 - [X] T031 [US2] Implement progressive delay calculation (1s to 30s cap) in src/BikeTracking.Api/Application/Users/IdentifyService.cs
 - [X] T032 [US2] Reset delay progression after successful identification in src/BikeTracking.Api/Application/Users/IdentifyService.cs
 - [X] T033 [US2] Implement POST /api/users/identify with 200/401/429 semantics in src/BikeTracking.Api/Endpoints/UsersEndpoints.cs
 - [X] T034 [US2] Return Retry-After header for throttled identify responses in src/BikeTracking.Api/Endpoints/UsersEndpoints.cs
-- [X] T035 [US2] Wire frontend identify submission, authorized state, and throttle UX in src/BikeTracking.Frontend/src/pages/signup/signup-page.ts
+- [X] T035 [US2] Wire frontend identify submission, authorized state, and throttle UX in src/BikeTracking.Frontend/src/pages/signup/signup-page.tsx
 
 **Checkpoint**: User Story 2 is complete and independently testable.
 
@@ -116,7 +116,7 @@
 - [X] T046 Harden API logging to exclude PIN/hash/salt data in src/BikeTracking.Api/Program.cs
 - [X] T047 [P] Add outbox worker diagnostics notes to orchestration setup in src/BikeTracking.AppHost/AppHost.cs
 - [X] T048 Run quickstart validation steps and record final verification notes in specs/001-user-signup-pin/quickstart.md
-- [X] T049 Finalize user-facing copy for validation/duplicate/throttle states in src/BikeTracking.Frontend/src/pages/signup/signup-page.html
+- [X] T049 Finalize user-facing copy for validation/duplicate/throttle states in src/BikeTracking.Frontend/src/pages/signup/signup-page.tsx
 
 ---
 

@@ -38,7 +38,7 @@
 
 ## Decision 7: Validation layering mirrors constitution requirements
 
-- Decision: Enforce name and PIN rules in three layers: Aurelia form, API DTO validation, and database constraints/indexes.
+- Decision: Enforce name and PIN rules in three layers: React form state, API DTO validation, and database constraints/indexes.
 - Rationale: Maintains constitution-mandated defense in depth and prevents invalid data from bypassing a single validation layer.
 - Alternatives considered: Client-only validation (rejected for bypass risk), API-only validation (rejected for weaker UX), DB-only validation (rejected for poor request feedback quality).
 

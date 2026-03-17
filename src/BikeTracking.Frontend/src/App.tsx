@@ -1,11 +1,12 @@
 import './App.css'
+import { SignupPage } from './pages/signup/signup-page'
 
 function App() {
   return (
-    <main className="app-shell">
+    <div className="app-shell">
       <h1>Commute Bike Tracker</h1>
-      <p>React shell is running.</p>
-    </main>
+      <SignupPage />
+    </div>
   )
 }
 

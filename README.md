@@ -1,6 +1,6 @@
 # Commute Bike Tracker
 
-Local-first Bike Tracking application built with .NET Aspire orchestration, .NET 10 Minimal API, F# domain modules, and an Aurelia 2 frontend.
+Local-first Bike Tracking application built with .NET Aspire orchestration, .NET 10 Minimal API, F# domain modules, and a React frontend.
 
 ## Current Feature Slice
 
@@ -16,7 +16,7 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 - src/BikeTracking.Api - Minimal API service
 - src/BikeTracking.ServiceDefaults - Shared Aspire defaults and telemetry wiring
 - src/BikeTracking.Domain.FSharp - Domain event and type modules (F#)
-- src/BikeTracking.Frontend - Aurelia 2 frontend app
+- src/BikeTracking.Frontend - React + Vite frontend app
 
 ## Prerequisites
 
