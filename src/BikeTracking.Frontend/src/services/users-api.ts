@@ -87,3 +87,7 @@ export function signupUser(payload: SignupRequest): Promise<ApiResult<SignupSucc
 export function identifyUser(payload: IdentifyRequest): Promise<ApiResult<IdentifySuccessResponse, ErrorResponse | ThrottleResponse>> {
   return postJson<IdentifySuccessResponse, ErrorResponse | ThrottleResponse>('/api/users/identify', payload);
 }
+
+export function loginUser(payload: IdentifyRequest): Promise<ApiResult<IdentifySuccessResponse, ErrorResponse | ThrottleResponse>> {
+  return postJson<IdentifySuccessResponse, ErrorResponse | ThrottleResponse>('/api/users/identify', payload);
+}

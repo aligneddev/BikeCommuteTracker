@@ -1,0 +1,145 @@
+openapi: "3.1.0"
+info:
+  title: BikeTracking Login API
+  description: |
+    Login contract for the User Login with PIN feature (`003-user-login`).
+    The login flow reuses the existing `/api/users/identify` endpoint from `001-user-signup-pin`.
+    No new backend endpoint is introduced in this feature — the frontend `loginUser` function
+    is an alias for `identifyUser` targeting the same endpoint.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:5436
+    description: Local development (Aspire AppHost)
+
+paths:
+  /api/users/identify:
+    post:
+      operationId: loginUser
+      summary: Authenticate a registered user by name and PIN (used as Login)
+      description: |
+        Verifies the provided name (normalized: trimmed, case-insensitive) and PIN against
+        the stored salted hash. Returns the user identity on success. Applies progressive
+        delay on consecutive incorrect PIN attempts. No new endpoint is added for login;
+        this endpoint serves as the login mechanism via the frontend login form.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              name: "Alice"
+              pin: "1234"
+      responses:
+        "200":
+          description: Login successful. Returns authenticated user identity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginSuccessResponse"
+              example:
+                userId: 1
+                userName: "Alice"
+                authorized: true
+        "400":
+          description: Validation failed (empty name or invalid PIN format).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "VALIDATION_FAILED"
+                message: "Validation failed."
+                details: ["Name is required."]
+        "401":
+          description: Unauthorized. Name not found or PIN is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "UNAUTHORIZED"
+                message: "Name or PIN is incorrect."
+        "429":
+          description: Too many consecutive failed attempts. Includes retry delay.
+          headers:
+            Retry-After:
+              description: Number of seconds to wait before retrying.
+              schema:
+                type: integer
+                minimum: 1
+                maximum: 30
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThrottleResponse"
+              example:
+                code: "throttled"
+                message: "Too many failed attempts. Try again later."
+                retryAfterSeconds: 5
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required: [name, pin]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: User's display name. Compared after trimming and case-insensitive normalization.
+          example: "Alice"
+        pin:
+          type: string
+          pattern: "^\\d{4,8}$"
+          description: Numeric PIN, 4 to 8 digits.
+          example: "1234"
+
+    LoginSuccessResponse:
+      type: object
+      required: [userId, userName, authorized]
+      properties:
+        userId:
+          type: integer
+          description: Server-assigned user ID.
+          example: 1
+        userName:
+          type: string
+          description: Authenticated user's display name.
+          example: "Alice"
+        authorized:
+          type: boolean
+          enum: [true]
+          description: Always true on a 200 response.
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error summary.
+        details:
+          type: array
+          items:
+            type: string
+          description: Optional field-level validation messages.
+
+    ThrottleResponse:
+      type: object
+      required: [code, message, retryAfterSeconds]
+      properties:
+        code:
+          type: string
+          enum: [throttled]
+        message:
+          type: string
+        retryAfterSeconds:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: Seconds to wait before attempting login again.

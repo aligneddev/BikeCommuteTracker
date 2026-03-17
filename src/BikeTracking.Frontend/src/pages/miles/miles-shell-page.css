@@ -1,0 +1,62 @@
+.miles-shell {
+  max-width: 36rem;
+  margin: 3rem auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.miles-welcome {
+  border: 1px solid #d4dbe5;
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
+}
+
+.miles-welcome h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: #152238;
+}
+
+.miles-welcome p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.miles-placeholder {
+  border: 1px dashed #bcc7d6;
+  border-radius: 0.75rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.miles-placeholder p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.logout-btn {
+  border: 1px solid #d4dbe5;
+  border-radius: 0.4rem;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.logout-btn:hover {
+  background: #f3f4f6;
+}
+
+@media (width <= 640px) {
+  .miles-shell {
+    margin: 1.5rem auto;
+  }
+}

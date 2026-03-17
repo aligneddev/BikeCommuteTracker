@@ -1,12 +1,24 @@
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/auth-context'
+import { ProtectedRoute } from './components/protected-route'
+import { LoginPage } from './pages/login/login-page'
 import { SignupPage } from './pages/signup/signup-page'
+import { MilesShellPage } from './pages/miles/miles-shell-page'
 
 function App() {
   return (
-    <div className="app-shell">
-      <h1>Commute Bike Tracker</h1>
-      <SignupPage />
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/miles" element={<MilesShellPage />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 
