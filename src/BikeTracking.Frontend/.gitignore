@@ -1,36 +1,24 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# You may want to customise this file depending on your Operating System
-# and the editor that you use.
-#
-# We recommend that you use a Global Gitignore for files that are not related
-# to the project. (https://help.github.com/articles/ignoring-files/#create-a-global-gitignore)
-
-# OS
-#
-# Ref: https://github.com/github/gitignore/blob/master/Global/macOS.gitignore
-# Ref: https://github.com/github/gitignore/blob/master/Global/Windows.gitignore
-# Ref: https://github.com/github/gitignore/blob/master/Global/Linux.gitignore
-.DS_STORE
-Thumbs.db
-
-# Editors
-#
-# Ref: https://github.com/github/gitignore/blob/master/Global
-# Ref: https://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
-# Ref: https://github.com/github/gitignore/blob/master/Global/VisualStudioCode.gitignore
-.idea
-.chrome
-/*.log
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# Dependencies
 node_modules
+dist
+dist-ssr
+*.local
 
-# Compiled files
-/dist
-/.nyc_output
-/coverage
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

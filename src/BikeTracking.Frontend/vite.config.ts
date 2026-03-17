@@ -1,19 +1,7 @@
-import { defineConfig } from 'vite';
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import aurelia from '@aurelia/vite-plugin';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
+// https://vite.dev/config/
 export default defineConfig({
-  server: {
-    open: !process.env.CI,
-    port: 9000,
-  },
-  esbuild: {
-    target: 'es2022'
-  },
-  plugins: [
-    aurelia({
-      useDev: true,
-    }),
-    nodePolyfills(),
-  ],
-});
+  plugins: [react()],
+})
