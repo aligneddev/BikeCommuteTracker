@@ -21,4 +21,14 @@ export default defineConfig({
     }),
     nodePolyfills(),
   ],
+  resolve: {
+    alias: {
+      '@': '/src',  // Path aliasing
+    }
+  },
+  css: {
+    modules: {
+      localsConvention: 'camelCase'  // CSS Modules support
+    }
+  }
 });

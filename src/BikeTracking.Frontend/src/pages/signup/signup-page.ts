@@ -1,5 +1,3 @@
-import { customElement } from '@aurelia/runtime-html';
-import template from './signup-page.html?raw';
 import {
   identifyUser,
   signupUser,
@@ -7,7 +5,6 @@ import {
   type ThrottleResponse,
 } from '../../services/users-api';
 
-@customElement({ name: 'signup-page', template })
 export class SignupPage {
   public signupName = '';
   public signupPin = '';
