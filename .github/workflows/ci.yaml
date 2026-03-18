@@ -4,8 +4,6 @@ on:
   pull_request:
       branches:
         - main
-  branch_protection_rule:
-    types: [edited, created, deleted]
     
   push:
     branches:
