@@ -32,6 +32,11 @@ export default defineConfig({
       stdout: 'pipe',
       stderr: 'pipe',
       timeout: 180000,
+      env: {
+        // Use a dedicated E2E database so test runs never touch the local dev DB.
+        // ASP.NET Core maps ConnectionStrings__<name> to ConnectionStrings[name].
+        ConnectionStrings__BikeTracking: 'Data Source=biketracking.e2e.db',
+      },
     },
     {
       command: 'npm run dev -- --host localhost --port 9000',
