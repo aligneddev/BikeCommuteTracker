@@ -2,6 +2,11 @@ name: ci
 
 on:
   pull_request:
+      branches:
+        - main
+  branch_protection_rule:
+    types: [edited, created, deleted]
+    
   push:
     branches:
       - main
@@ -24,19 +29,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET from global.json
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: src/BikeTracking.Frontend/package-lock.json
 
       - name: Restore .NET dependencies
         run: dotnet restore BikeTracking.slnx
@@ -45,27 +50,27 @@ jobs:
         run: dotnet test BikeTracking.slnx --configuration Release --no-restore --verbosity minimal
 
       - name: Install frontend dependencies
-        working-directory: BikeTracking.Frontend
+        working-directory: src/BikeTracking.Frontend
         run: npm ci
 
       - name: Install Playwright browser and system dependencies
-        working-directory: BikeTracking.Frontend
+        working-directory: src/BikeTracking.Frontend
         run: npx playwright install --with-deps chromium
 
       - name: Frontend lint
-        working-directory: BikeTracking.Frontend
+        working-directory: src/BikeTracking.Frontend
         run: npm run lint
 
       - name: Frontend build
-        working-directory: BikeTracking.Frontend
+        working-directory: src/BikeTracking.Frontend
         run: npm run build
 
       - name: Frontend unit tests
-        working-directory: BikeTracking.Frontend
+        working-directory: src/BikeTracking.Frontend
         run: npm run test:unit
 
       - name: Frontend end-to-end tests
-        working-directory: BikeTracking.Frontend
+        working-directory: src/BikeTracking.Frontend
         run: npm run test:e2e
 
       - name: Upload Playwright artifacts on failure
