@@ -86,6 +86,88 @@ dotnet run --project src/BikeTracking.AppHost
 - frontend service for the signup and identify screen
 - api service for local identity endpoints
 
+## Git Credentials Setup (DevContainer)
+### Recommended Workflow
+
+**For local development** (Windows/macOS/Linux with VS Code):
+1. Generate SSH key on host machine (one-time setup)
+2. Add public key to GitHub
+3. Use SSH URLs in Git commands
+4. Container automatically inherits SSH keys via mount
+
+**For CI/CD (GitHub Actions)**:
+- Use SSH deploy keys or GITHUB_TOKEN (built-in to Actions)
+- SSH deploy keys are safer than personal access tokens
+
+**For remote development (GitHub Codespaces, Dev Container in cloud)**:
+- Use Git credential helper + GitHub Personal Access Token
+- Or configure SSH agent forwarding if available
+
+The DevContainer is pre-configured for seamless Git operations with support for multiple credential approaches:
+
+### Option 1: SSH Keys (Recommended for Local Development)
+
+**Local development with SSH keys works automatically:**
+
+```bash
+# Inside the DevContainer terminal, SSH keys from ~/.ssh are mounted as read-only
+# Test connectivity:
+ssh -T git@github.com
+
+# Now git clone/push/pull work with SSH URLs:
+git clone git@github.com:your-org/your-repo.git
+git push origin my-branch
+```
+
+**Why this works**: The DevContainer mounts your host machine's `~/.ssh` directory into the container at `/root/.ssh` (read-only for safety). Your existing SSH keys and config are available without duplication.
+
+**First-time setup (if SSH key not yet on GitHub)**:
+1. Generate a new key on your host machine (outside container):
+   ```bash
+   ssh-keygen -t ed25519 -C "your-email@example.com"
+   ```
+2. Add the public key to your GitHub account ([GitHub SSH settings](https://github.com/settings/keys))
+3. Inside the container, test with `ssh -T git@github.com`
+
+### Option 2: Git Credential Helper (For Remote/CI Environments)
+
+If you're using **GitHub Codespaces** or another remote environment, configure the Git credential helper instead:
+
+```bash
+# Inside the container, set up credential caching
+git config --global credential.helper store
+
+# First git clone/push/pull will prompt for credentials (once)
+# Credentials are cached for future operations
+```
+
+**Or use token-based authentication** if SSH isn't available:
+```bash
+# Use a GitHub Personal Access Token (PAT)
+# GitHub will prompt for username + token on first push
+# For unattended CI/CD, use HTTPS URLs with embedded tokens (not recommended; use SSH keys instead)
+```
+
+### Option 3: SSH Agent Forwarding (For Forwarded Keys)
+
+If your SSH key is protected with a passphrase and hosted on a remote machine:
+
+```bash
+# Add to .devcontainer/devcontainer.json to forward SSH agent:
+# (requires SSH agent running on host machine)
+"forwardPorts": [22],
+"remoteEnv": {
+  "SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"
+}
+```
+
+Then inside the container:
+```bash
+ssh-add -l  # List forwarded keys
+git clone git@github.com:your-org/your-repo.git  # Use forwarded keys
+```
+
+
 ## Local Identity Endpoints
 
 - GET / - API status
