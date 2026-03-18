@@ -36,6 +36,7 @@ Previous Updates:
 - Why Minimal API? Lightweight, performant, integrates seamlessly with Aspire and domain layers
 - Why local-first architecture? Users own their data locally; cloud deployment optional for sharing/collaboration
 - Why SQLite local-file default for user-machine installs? No separate database install, reliable offline operation, and simpler support/backup through a single user-owned database file
+- **Why DevContainer (mandatory)?** Eliminates "works on my machine" problems; ensures identical development environment across all contributors; pre-configures all tooling (C#, F#, Node.js, npm, CSharpier); supports seamless onboarding; enables reproducible builds and tests; backend and frontend dependencies coexist without system-level pollution. **All development MUST occur inside the DevContainer**; no exceptions during active development.
 
 For detailed amendment history, see [DECISIONS.md](./DECISIONS.md).
 
@@ -92,6 +93,28 @@ Every change **MUST** be validated end-to-end before merge and before phase tran
 **Rationale**: Small batches reduce blast radius and improve feedback speed. Continuous learning drives better product decisions under uncertainty. Mandatory validation and security remediation protect reliability, delivery confidence, and user trust.
 
 ## Technology Stack Requirements
+
+### Development Environment (Mandatory)
+
+**All development MUST occur inside the DevContainer.** This is non-negotiable and applies to all contributors, both local and remote.
+
+- **DevContainer Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10-noble` with Node.js 24+ feature
+- **Pre-configured Tools**: .NET 10 SDK, F# compiler, Node.js 24+, npm, CSharpier (code formatter), VS Code extensions (C#, F#, ESLint, Prettier, Docker)
+- **Post-Create Setup**: Runs `postCreate.sh` to install NuGet global tools, frontend npm dependencies, and verify build
+- **Benefits**: 
+  - Eliminates "works on my machine" problems across all contributors
+  - Ensures consistent environment (C#, F#, Node.js versions)
+  - Frontend and backend tools coexist without system-level pollution
+  - Seamless onboarding for new contributors
+  - Reproducible builds and test results
+  - Simplifies CI/CD environment parity (local DevContainer mirrors GitHub Actions runner)
+- **Development Workflow**: 
+  - Open workspace in VS Code
+  - Press `Ctrl+Shift+P` → "Dev Containers: Open Folder in Container"
+  - VS Code connects to running container (takes ~2-3 min on first run)
+  - All terminals run inside container; `dotnet run`, `npm install`, `git`, etc. execute in containerized environment
+  - All source code accessible via volume mount; changes reflect immediately
+- **No Exceptions**: Local development on host machine (without DevContainer) is prohibited during active development phases. The DevContainer is the sole authorized development environment.
 
 ### Backend & Orchestration
 - **Framework**: .NET 10 Minimal API (latest stable)

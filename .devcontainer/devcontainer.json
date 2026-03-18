@@ -1,0 +1,58 @@
+{
+  "name": "Bike Tracking - Full Stack",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-10-noble",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24"
+    }
+  },
+  "containerEnv": {
+    "NODE_ENV": "development"
+  },
+  "postCreateCommand": ".devcontainer/postCreate.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "Ionide.Ionide-fsharp",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "csharpier.csharpier-vscode",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.makefile-tools"
+      ],
+      "settings": {
+        "dotnet.defaultSolutionOrFolder": "${workspaceFolder}/BikeTracking.slnx",
+        "[csharp]": {
+          "editor.defaultFormatter": "csharpier.csharpier-vscode",
+          "editor.formatOnSave": true
+        },
+        "[fsharp]": {
+          "editor.defaultFormatter": "Ionide.Ionide-fsharp",
+          "editor.formatOnSave": true
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+        "[json]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+        "eslint.validate": [
+          "javascript",
+          "typescript",
+          "typescriptreact"
+        ]
+      }
+    }
+  },
+  "mounts": [
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly"
+  ],
+  "remoteUser": "root",
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/root/.dotnet/tools"
+  }
+}

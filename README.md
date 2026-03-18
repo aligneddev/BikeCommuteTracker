@@ -20,6 +20,22 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 
 ## Prerequisites
 
+### Recommended: DevContainer (All-in-One Setup)
+
+**This project is optimized for development inside a DevContainer.** All tools, runtimes, and dependencies are pre-configured.
+
+1. Install [Visual Studio Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Open the repository in VS Code
+3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS), type "Dev Containers: Open Folder in Container", and select it
+4. VS Code will build and start the DevContainer (first run takes ~2-3 minutes)
+5. Once connected, all dependencies are ready:
+   - .NET 10 SDK
+   - Node.js 24+ with npm
+   - CSharpier for code formatting
+   - Recommended VS Code extensions pre-installed
+
+### Local Development (If Not Using DevContainer)
+
 - .NET SDK 10.x
 - Node.js 24+ and npm
 - CSharpier global tool (required for formatting checks):
@@ -34,6 +50,24 @@ run it with `csharpier format .` from the repo root to format all C# code.
 
 ## Quick Start
 
+### Inside DevContainer
+
+Once the DevContainer is connected (see Prerequisites above), all dependencies are pre-installed. Open a terminal in VS Code and run:
+
+```bash
+dotnet run --project src/BikeTracking.AppHost
+```
+
+The Aspire AppHost will:
+- Build the entire solution
+- Start the API service
+- Start the React frontend (compiled)
+- Open the Aspire Dashboard at `http://localhost:19629`
+
+From the dashboard, launch the frontend and API services.
+
+### Local Development (Without DevContainer)
+
 1. Install frontend dependencies:
 
 ```powershell
@@ -44,7 +78,7 @@ npm install
 2. Run the full local app through Aspire:
 
 ```powershell
-cd ../..
+cd ../.. 
 dotnet run --project src/BikeTracking.AppHost
 ```
 
