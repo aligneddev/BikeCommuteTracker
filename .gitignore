@@ -61,3 +61,4 @@ paket-files/
 src/.vs/*
 
 .fake
+src/BikeTracking.Frontend/test-results/.last-run.json
