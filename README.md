@@ -21,7 +21,7 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 ## Prerequisites
 
 - .NET SDK 10.x
-- Node.js 20+ and npm
+- Node.js 24+ and npm
 - CSharpier global tool (required for formatting checks):
 
 ```powershell

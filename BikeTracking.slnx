@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/BikeTracking.Api/BikeTracking.Api.csproj" />
+    <Project Path="src/BikeTracking.Api.Tests/BikeTracking.Api.Tests.csproj" />
     <Project Path="src/BikeTracking.AppHost/BikeTracking.AppHost.csproj" />
     <Project Path="src/BikeTracking.Domain.FSharp/BikeTracking.Domain.FSharp.fsproj" />
     <Project Path="src/BikeTracking.Frontend/BikeTracking.Frontend.esproj" />
