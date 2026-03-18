@@ -3,9 +3,16 @@ set -e
 
 echo "🔧 Bike Tracking DevContainer post-creation setup..."
 
+# Ensure required SDK from global.json is available before restore/build.
+bash .devcontainer/ensure-dotnet-sdk.sh
+
 # Install .NET global tools
 echo "📦 Installing .NET global tools..."
 dotnet tool install csharpier -g 2>/dev/null || dotnet tool update csharpier -g
+
+# Install Aspire CLI
+echo "📦 Installing Aspire CLI..."
+curl -sSL https://aspire.dev/install.sh | bash
 
 # Install frontend dependencies
 echo "📦 Installing frontend dependencies..."

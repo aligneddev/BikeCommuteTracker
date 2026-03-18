@@ -4,7 +4,7 @@
 
 This project uses a DevContainer for consistent local development across all team members and CI/CD environments.
 
-- **Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10-noble`
+- **Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble`
 - **Features**: .NET 10 SDK, Node.js 24+, npm, Docker
 - **Post-setup**: Automatically installs CSharpier, frontend dependencies, and builds solution
 

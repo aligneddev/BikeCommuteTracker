@@ -98,7 +98,7 @@ Every change **MUST** be validated end-to-end before merge and before phase tran
 
 **All development MUST occur inside the DevContainer.** This is non-negotiable and applies to all contributors, both local and remote.
 
-- **DevContainer Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10-noble` with Node.js 24+ feature
+- **DevContainer Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble` with Node.js 24+ feature
 - **Pre-configured Tools**: .NET 10 SDK, F# compiler, Node.js 24+, npm, CSharpier (code formatter), VS Code extensions (C#, F#, ESLint, Prettier, Docker)
 - **Post-Create Setup**: Runs `postCreate.sh` to install NuGet global tools, frontend npm dependencies, and verify build
 - **Benefits**: 

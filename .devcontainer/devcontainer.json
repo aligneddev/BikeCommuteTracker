@@ -1,6 +1,6 @@
 {
   "name": "Bike Tracking - Full Stack",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-10-noble",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
@@ -10,7 +10,7 @@
   "containerEnv": {
     "NODE_ENV": "development"
   },
-  "postCreateCommand": ".devcontainer/postCreate.sh",
+  "postCreateCommand": ".devcontainer/postCreate.sh && bash .devcontainer/ensure-dotnet-sdk.sh",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -21,7 +21,11 @@
         "esbenp.prettier-vscode",
         "csharpier.csharpier-vscode",
         "ms-azuretools.vscode-docker",
-        "ms-vscode.makefile-tools"
+        "ms-vscode.makefile-tools",
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode-remote.remote-ssh",
+        "microsoft-aspire.aspire-vscode",
+        "ms-dotnettools.csdevkit"
       ],
       "settings": {
         "dotnet.defaultSolutionOrFolder": "${workspaceFolder}/BikeTracking.slnx",
@@ -49,9 +53,6 @@
       }
     }
   },
-  "mounts": [
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly"
-  ],
   "remoteUser": "root",
   "remoteEnv": {
     "PATH": "${containerEnv:PATH}:/root/.dotnet/tools"
