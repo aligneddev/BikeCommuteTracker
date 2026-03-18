@@ -2,31 +2,11 @@ import { type FormEvent, useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   loginUser,
-  type ErrorResponse,
   type ThrottleResponse,
 } from '../../services/users-api'
 import { useAuth } from '../../context/auth-context'
+import { toErrors, validateInput } from './login-page.helpers'
 import './login-page.css'
-
-function validateInput(name: string, pin: string): string[] {
-  const errors: string[] = []
-
-  if (name.trim().length === 0) {
-    errors.push('Name is required.')
-  }
-
-  if (!/^\d{4,8}$/.test(pin)) {
-    errors.push('PIN must be numeric and 4 to 8 digits long.')
-  }
-
-  return errors
-}
-
-function toErrors(error: ErrorResponse | undefined): string[] {
-  if (!error) return ['Request failed.']
-  if (error.details && error.details.length > 0) return error.details
-  return [error.message || 'Request failed.']
-}
 
 interface LocationState {
   prefillName?: string
@@ -81,7 +61,7 @@ export function LoginPage() {
         return
       }
 
-      setErrors(toErrors(response.error as ErrorResponse | undefined))
+      setErrors(toErrors(response.error))
     } catch {
       setErrors(['Request failed. Check your connection and try again.'])
     } finally {

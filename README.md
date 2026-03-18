@@ -21,7 +21,7 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 ## Prerequisites
 
 - .NET SDK 10.x
-- Node.js 20+ and npm
+- Node.js 24+ and npm
 - CSharpier global tool (required for formatting checks):
 
 ```powershell
@@ -76,6 +76,15 @@ For local-first deployment to end-user machines, the default persistence model i
 - Before schema upgrades, create a safety backup copy of the SQLite file.
 - Use SQL Server LocalDB or SQL Server Express only when local multi-user requirements exceed the single-user SQLite profile.
 
-## Next Step
 
-Continue with task execution and verification using specs/001-user-signup-pin/tasks.md.
+## Automated Tests
+
+frontend unit tests: `npm run test:unit` (Vitest)
+
+frontend end-to-end tests: `npm run test:e2e` (Playwright)
+- These use the local SQLlite database, so they are more like integration tests. The values are thrown away after each test, but they do test the full stack of the API and database layers.
+
+backend tests: `dotnet test` from repo root (xUnit)
+
+These are ran in the .github\workflows\ci.yml pipeline on every PR
+

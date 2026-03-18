@@ -1,0 +1,87 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CI: "true"
+      DOTNET_NOLOGO: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET from global.json
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Restore .NET dependencies
+        run: dotnet restore BikeTracking.slnx
+
+      - name: Run backend tests
+        run: dotnet test BikeTracking.slnx --configuration Release --no-restore --verbosity minimal
+
+      - name: Install frontend dependencies
+        working-directory: BikeTracking.Frontend
+        run: npm ci
+
+      - name: Install Playwright browser and system dependencies
+        working-directory: BikeTracking.Frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Frontend lint
+        working-directory: BikeTracking.Frontend
+        run: npm run lint
+
+      - name: Frontend build
+        working-directory: BikeTracking.Frontend
+        run: npm run build
+
+      - name: Frontend unit tests
+        working-directory: BikeTracking.Frontend
+        run: npm run test:unit
+
+      - name: Frontend end-to-end tests
+        working-directory: BikeTracking.Frontend
+        run: npm run test:e2e
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cleanup sqlite files
+        if: always()
+        run: |
+          rm -f biketracking.local.db
+          rm -f biketracking.local.db-shm
+          rm -f biketracking.local.db-wal

@@ -1,12 +1,14 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.10.1
-Rationale: Clarified the local deployment approach for end-user machines by standardizing SQLite local-file storage as the default profile and documenting safety expectations for storage path and upgrades.
+<!-- Sync Impact Report v1.10.2
+Rationale: Codified a mandatory post-change verification command matrix so every change runs explicit checks before merge.
 Modified Sections:
-- Mission > Decision Record: Added rationale for SQLite local-file default on user machines
-- Technology Stack Requirements > Data & Persistence: Clarified local database default and user-machine storage profile
-- Guardrails: Added explicit local SQLite file safety rule for user-machine installs
-Status: Approved — local user-machine deployments default to SQLite local-file storage for simplicity and offline reliability
+- Development Workflow: Added mandatory post-change verification matrix and command requirements
+- Definition of Done: Requires matrix execution evidence for changed scope
+- Compliance Audit Checklist: Requires matrix execution and recorded evidence
+- Guardrails: Added non-negotiable requirement to run matrix commands after every change
+Status: Approved — impacted-layer checks are mandatory after any change; auth/cross-layer changes also require E2E verification
 Previous Updates:
+- v1.10.1: Clarified the local deployment approach for end-user machines by standardizing SQLite local-file storage as the default profile and documenting safety expectations for storage path and upgrades.
 - v1.10: Added an explicit engineering mindset for small-batch experimentation, continuous learning, complexity management, mandatory change validation, and proactive security teaching/remediation.
 - v1.9: Replaced Blazor WebAssembly frontend direction with Aurelia 2. Updated Principle V and all frontend-related sections for consistency. Added an explicit rule to always reference official Aurelia documentation at https://docs.aurelia.io/.
 - v1.8: Scoped Aspire Dashboard to local development only; removed cloud Aspire Dashboard requirement. Clarified local-first deployment priority with Azure as a future target. Strengthened public GitHub repository secret safety guidance.
@@ -168,12 +170,30 @@ Example: "User records a bike ride" slice includes:
 - Background function listening to CES to update RideProjection
 - Aspire AppHost configuration for frontend + API + database orchestration; Azure CLI deployment scripts for Static Web Apps (frontend) and Container Apps (API)
 
-run `csharpier format .` to enforce code formatting (document in readme.md, `dotnet tool install csharpier -g` is needed); run `dotnet format .` (built-in .NET tool) uses .editorconfig for formatting rules and supports more granular control (e.g., namespace matching, file-scoped namespaces). 
+Run `csharpier format .` to enforce code formatting (`dotnet tool install csharpier -g` is required). Run `dotnet format .` for additional .editorconfig-driven diagnostics.
 
-Best Practice: Use CSharpier for consistent formatting and dotnet format for linting and code style enforcement (e.g., dotnet_diagnostic.IDE0130.severity=error in .editorconfig).
-run Typescript linting and formatting via `npm run lint` and `npm run format` in the frontend directory.
+Best Practice: Use CSharpier for consistent formatting and dotnet format for linting/code-style enforcement (for example, dotnet_diagnostic.IDE0130.severity=error).
 
-Test` to run tests; `dotnet run --project src/BikeTracking.AppHost` to start local stack; GitHub Actions for CI/CD to Azure.
+Run TypeScript linting and formatting via `npm run lint` and `npm run format` in the frontend directory.
+
+Use `dotnet run --project src/BikeTracking.AppHost` to start the local stack; use GitHub Actions for CI/CD to Azure.
+
+### Post-Change Verification Matrix (Mandatory After Any Change)
+
+After **every** code change, run verification commands based on the changed scope. These checks are required before merge and before phase transitions.
+
+1. **Frontend-only changes** (React/TypeScript/CSS, frontend config):
+  - `cd src/BikeTracking.Frontend`
+  - `npm run lint`
+  - `npm run build`
+  - `npm run test:unit`
+2. **Backend/domain-only changes** (API, F#, persistence, .NET configuration):
+  - `dotnet test`
+3. **Authentication/login/cross-layer changes** (routes, auth context, identify endpoint/service, contracts, frontend+backend touches):
+  - Run **all impacted-layer commands** above
+  - Additionally run `cd src/BikeTracking.Frontend && npm run test:e2e`
+
+Evidence from these command runs (terminal output or CI artifacts) must be attached to the work item or PR notes.
 
 
 ### Vertical Slice Implementation Strategy: Minimal-First Approach
@@ -206,6 +226,7 @@ A vertical slice is **production-ready** only when all items are verified:
 - [ ] Implementation complete; all tests passing (green + refactor phases)
 - [ ] Code review: architecture compliance verified, naming conventions followed, validation discipline observed
 - [ ] Change validation complete: compile succeeds, coding standards checks pass, automated behavior tests pass
+- [ ] Post-change verification matrix executed for the impacted scope and evidence recorded
 - [ ] Feature branch deployed locally via `dotnet run` (entire Aspire stack: frontend, API, database)
 - [ ] Integration tests pass; manual E2E test via Playwright (if critical user journey)
 - [ ] All validation layers implemented: client-side (React validation), API (DTO DataAnnotations), database (constraints)
@@ -313,6 +334,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 - [ ] Data validation implemented at three layers: client (React), API (Minimal API), database (constraints)
 - [ ] Test coverage for domain logic ≥85%; F# discriminated unions and ROP patterns tested
 - [ ] Every change validated: compile/build, coding standards, automated tests, and pipeline deployment checks
+- [ ] Post-change verification matrix executed for the changed scope (frontend, backend/domain, or auth/cross-layer) with evidence captured
 - [ ] Security issues recognized, explained, and remediated (or explicitly accepted by user)
 - [ ] All SAMPLE_/DEMO_ data removed from code before merge
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
@@ -348,6 +370,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 - **Event schema is append-only** — never mutate existing events. If schema changes needed, create new event type and version old events. Immutability is non-negotiable.
 - **F# domain types must marshal through EF Core value converters** — no raw EF entities exposed to C# API layer. C# records serve as API DTOs; converters handle F#-to-C# translation.
 - **Tests must pass before merge** — no exceptions, no "fix later" debt. CI/CD pipeline blocks merge if test suite fails.
+- **Post-change verification matrix must run after any change** — no change is complete without executing required commands for impacted scope; auth/cross-layer changes also require `npm run test:e2e`.
 - **Three-layer validation enforced** — if field validated in React form, also validated in API DTOs and database constraints. No single-layer validation.
 - **OAuth token required on all user endpoints** — anonymous access forbidden for personal data. Public data endpoints explicitly marked; separate authorization logic. (Optional for single-user local deployment; mandatory for cloud/multi-user.)
 - **SAMPLE_/DEMO_ data never in production** — automated linting prevents prefixed data from deploying. Merge blocked if test data detected.
@@ -437,5 +460,5 @@ Always commit before continuing to a new phase.
 
 ---
 
-**Version**: 1.10.1 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-16
+**Version**: 1.10.2 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-18
 
