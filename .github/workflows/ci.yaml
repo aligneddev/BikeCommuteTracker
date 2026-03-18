@@ -4,8 +4,6 @@ on:
   pull_request:
       branches:
         - main
-  branch_protection_rule:
-    types: [edited, created, deleted]
     
   push:
     branches:
@@ -22,6 +20,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    name: Verify
     env:
       CI: "true"
       DOTNET_NOLOGO: "true"
