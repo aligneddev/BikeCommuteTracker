@@ -4,9 +4,9 @@
 
 This project uses a DevContainer for consistent local development across all team members and CI/CD environments.
 
-- **Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble`
-- **Features**: .NET 10 SDK, Node.js 24+, npm, Docker
-- **Post-setup**: Automatically installs CSharpier, frontend dependencies, and builds solution
+- **Image Build**: `.devcontainer/Dockerfile` (based on `mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble`)
+- **Features**: Node.js 24+ and GitHub CLI
+- **Post-create bootstrap**: Restores NuGet packages, runs frontend `npm ci`, and builds the solution
 
 ## Git Credentials Setup
 
@@ -86,16 +86,17 @@ git clone git@github.com:your-org/your-repo.git
 The container exports these environment variables:
 
 - `NODE_ENV=development` — Frontend runs in development mode (hot reload, source maps)
-- `PATH` — Includes `/root/.dotnet/tools` for global .NET tools (CSharpier, etc.)
+- `PATH` — Includes `/usr/local/share/dotnet-tools` and `/root/.dotnet/tools` for CLI tools (CSharpier, Aspire, etc.)
 
 ## Post-Create Setup
 
-The `.devcontainer/postCreate.sh` script runs automatically after container starts:
+The `postCreateCommand` runs automatically after container creation:
 
-1. Installs global .NET tools (CSharpier for code formatting)
-2. Installs frontend npm dependencies
-3. Restores NuGet packages
-4. Builds solution to verify environment
+1. `dotnet restore BikeTracking.slnx`
+2. `npm ci --prefix src/BikeTracking.Frontend`
+3. `dotnet build BikeTracking.slnx`
+
+SDK/tool installation (required .NET SDK, CSharpier, Aspire CLI) is baked into the image build in `.devcontainer/Dockerfile`, not installed at container start.
 
 **Output**: Terminal shows progress; container is ready when build succeeds.
 
@@ -134,8 +135,8 @@ The `.devcontainer/postCreate.sh` script runs automatically after container star
 **Symptom**: `npm: command not found` or `dotnet: command not found`
 
 **Solution**:
-- Ensure post-create script completed successfully (check terminal output)
-- Manually run: `npm install` in `src/BikeTracking.Frontend`
+- Ensure `postCreateCommand` completed successfully (check terminal output)
+- Manually run: `npm ci --prefix src/BikeTracking.Frontend`
 - Manually run: `dotnet restore` from repo root
 
 ## Security
@@ -176,7 +177,7 @@ Rebuild container: `Ctrl+Shift+P` → "Dev Containers: Rebuild Container"
 
 ### Changing Node.js or .NET Version
 
-Edit feature versions in `devcontainer.json`:
+- Change **Node.js** in `devcontainer.json` features:
 
 ```json
 "features": {
@@ -185,6 +186,8 @@ Edit feature versions in `devcontainer.json`:
   }
 }
 ```
+
+- Change **.NET SDK** in `.devcontainer/Dockerfile` by updating `REQUIRED_DOTNET_SDK_VERSION`, then rebuild the container.
 
 ### Mounting Additional Volumes
 

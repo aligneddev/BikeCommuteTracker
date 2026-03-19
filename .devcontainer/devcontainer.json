@@ -1,6 +1,9 @@
 {
   "name": "Bike Tracking - Full Stack",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble",
+  "build": {
+    "dockerfile": "devcontainer.Dockerfile",
+    "context": ".."
+  },
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
@@ -10,7 +13,7 @@
   "containerEnv": {
     "NODE_ENV": "development"
   },
-  "postCreateCommand": ".devcontainer/postCreate.sh && bash .devcontainer/ensure-dotnet-sdk.sh",
+  "postCreateCommand": "dotnet dev-certs https --trust && dotnet restore BikeTracking.slnx && npm ci --prefix src/BikeTracking.Frontend && dotnet build BikeTracking.slnx",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -55,6 +58,6 @@
   },
   "remoteUser": "root",
   "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:/root/.dotnet/tools"
+    "PATH": "${containerEnv:PATH}:/usr/local/share/dotnet-tools:/root/.dotnet/tools"
   }
 }

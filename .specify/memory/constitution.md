@@ -98,9 +98,9 @@ Every change **MUST** be validated end-to-end before merge and before phase tran
 
 **All development MUST occur inside the DevContainer.** This is non-negotiable and applies to all contributors, both local and remote.
 
-- **DevContainer Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble` with Node.js 24+ feature
+- **DevContainer Image**: Built from `.devcontainer/Dockerfile` (base `mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble`) with Node.js 24+ and GitHub CLI features
 - **Pre-configured Tools**: .NET 10 SDK, F# compiler, Node.js 24+, npm, CSharpier (code formatter), VS Code extensions (C#, F#, ESLint, Prettier, Docker)
-- **Post-Create Setup**: Runs `postCreate.sh` to install NuGet global tools, frontend npm dependencies, and verify build
+- **Post-Create Setup**: Runs `dotnet restore BikeTracking.slnx && npm ci --prefix src/BikeTracking.Frontend && dotnet build BikeTracking.slnx`; SDK and global CLI tooling are baked into the image build
 - **Benefits**: 
   - Eliminates "works on my machine" problems across all contributors
   - Ensures consistent environment (C#, F#, Node.js versions)
