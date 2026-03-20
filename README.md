@@ -20,6 +20,22 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 
 ## Prerequisites
 
+### Recommended: DevContainer (All-in-One Setup)
+
+**This project is optimized for development inside a DevContainer.** All tools, runtimes, and dependencies are pre-configured.
+
+1. Install [Visual Studio Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Open the repository in VS Code
+3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS), type "Dev Containers: Open Folder in Container", and select it
+4. VS Code will build and start the DevContainer (first run takes ~2-3 minutes)
+5. Once connected, all dependencies are ready:
+   - .NET 10 SDK
+   - Node.js 24+ with npm
+   - CSharpier for code formatting
+   - Recommended VS Code extensions pre-installed
+
+### Local Development (If Not Using DevContainer)
+
 - .NET SDK 10.x
 - Node.js 24+ and npm
 - CSharpier global tool (required for formatting checks):
@@ -34,6 +50,24 @@ run it with `csharpier format .` from the repo root to format all C# code.
 
 ## Quick Start
 
+### Inside DevContainer
+
+Once the DevContainer is connected (see Prerequisites above), all dependencies are pre-installed. Open a terminal in VS Code and run:
+
+```bash
+dotnet run --project src/BikeTracking.AppHost
+```
+
+The Aspire AppHost will:
+- Build the entire solution
+- Start the API service
+- Start the React frontend (compiled)
+- Open the Aspire Dashboard at `http://localhost:19629`
+
+From the dashboard, launch the frontend and API services.
+
+### Local Development (Without DevContainer)
+
 1. Install frontend dependencies:
 
 ```powershell
@@ -44,13 +78,51 @@ npm install
 2. Run the full local app through Aspire:
 
 ```powershell
-cd ../..
+cd ../.. 
 dotnet run --project src/BikeTracking.AppHost
 ```
 
 3. Open Aspire dashboard and launch:
 - frontend service for the signup and identify screen
 - api service for local identity endpoints
+
+## Git Credentials Setup (DevContainer)
+
+
+I did this to avoid getting commits from the wrong user. This is optional for you. If you have the straight forward setup, you don't need to mount ~/.ssh as the Forwarding should work fine. 
+
+The DevContainer mounts your host `~/.ssh` directory read-only at `/root/.ssh-host`, then copies it to `/root/.ssh` with correct permissions during `postCreateCommand`. This is necessary because SSH rejects config files with world-writable permissions (common on Windows-mounted filesystems).
+
+The SSH config can be set up for two GitHub accounts — a personal account and a company account — using named hosts:
+
+
+```
+Host github.com-personal
+  HostName github.com
+  IdentityFile ~/.ssh/youruser_github
+
+Host github.com
+  HostName github.com
+  IdentityFile ~/.ssh/yourcompany_github
+```
+
+Use the appropriate host alias when cloning:
+
+```bash
+# Personal repos
+git clone git@github.com-personal:your-username/your-repo.git
+
+# Company repos
+git clone git@github.com:omnitech-org/your-repo.git
+```
+
+Verify connectivity:
+
+```bash
+ssh -T git@github.com-personal
+ssh -T git@github.com
+```
+
 
 ## Local Identity Endpoints
 
