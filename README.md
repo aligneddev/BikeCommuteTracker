@@ -129,26 +129,9 @@ git push origin my-branch
 2. Add the public key to your GitHub account ([GitHub SSH settings](https://github.com/settings/keys))
 3. Inside the container, test with `ssh -T git@github.com`
 
-### Option 2: Git Credential Helper (For Remote/CI Environments)
-
-If you're using **GitHub Codespaces** or another remote environment, configure the Git credential helper instead:
-
-```bash
-# Inside the container, set up credential caching
-git config --global credential.helper store
-
-# First git clone/push/pull will prompt for credentials (once)
-# Credentials are cached for future operations
-```
-
-**Or use token-based authentication** if SSH isn't available:
-```bash
-# Use a GitHub Personal Access Token (PAT)
-# GitHub will prompt for username + token on first push
-# For unattended CI/CD, use HTTPS URLs with embedded tokens (not recommended; use SSH keys instead)
-```
-
 ### Option 3: SSH Agent Forwarding (For Forwarded Keys)
+You can't chmod a bind mount directly, but the clean solution is to mount to a different path and use postCreateCommand to copy and fix permissions. Here's what I'd change in devcontainer.json:
+
 
 If your SSH key is protected with a passphrase and hosted on a remote machine:
 

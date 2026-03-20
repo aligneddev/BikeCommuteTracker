@@ -13,7 +13,7 @@
   "containerEnv": {
     "NODE_ENV": "development"
   },
-  "postCreateCommand": "dotnet dev-certs https --trust && dotnet restore BikeTracking.slnx && npm ci --prefix src/BikeTracking.Frontend && dotnet build BikeTracking.slnx",
+  "postCreateCommand": "mkdir -p /root/.ssh && cp /root/.ssh-host/* /root/.ssh/ && chmod 700 /root/.ssh && chmod 600 /root/.ssh/config /root/.ssh/aligneddev_github /root/.ssh/omnitech_github && chmod 644 /root/.ssh/*.pub /root/.ssh/known_hosts 2>/dev/null; dotnet dev-certs https --trust && dotnet restore BikeTracking.slnx && npm ci --prefix src/BikeTracking.Frontend && dotnet build BikeTracking.slnx",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -28,7 +28,8 @@
         "ms-vscode-remote.remote-containers",
         "ms-vscode-remote.remote-ssh",
         "microsoft-aspire.aspire-vscode",
-        "ms-dotnettools.csdevkit"
+        "ms-dotnettools.csdevkit",
+        "eamodio.gitlens"
       ],
       "settings": {
         "dotnet.defaultSolutionOrFolder": "${workspaceFolder}/BikeTracking.slnx",
@@ -48,16 +49,17 @@
           "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
-        "eslint.validate": [
-          "javascript",
-          "typescript",
-          "typescriptreact"
-        ]
+        "eslint.validate": ["javascript", "typescript", "typescriptreact"]
       }
     }
   },
   "remoteUser": "root",
   "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:/usr/local/share/dotnet-tools:/root/.dotnet/tools"
-  }
+    "PATH": "${containerEnv:PATH}:/usr/local/share/dotnet-tools:/root/.dotnet/tools",
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
+  "mounts": [
+    "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
+    "source=/mnt/c/Users/klogan/.ssh,target=/root/.ssh-host,type=bind,readonly"
+  ]
 }
