@@ -10,76 +10,50 @@ This project uses a DevContainer for consistent local development across all tea
 
 ## Git Credentials Setup
 
-The DevContainer supports multiple credential approaches. Choose based on your environment:
+I did this to avoid getting commits from the wrong user. This is optional for you. If you have the straight forward setup, you don't need to mount ~/.ssh as the Forwarding should work fine. This is just for the edge case of having multiple GitHub accounts and needing to use different SSH keys for each.
 
-### 1. SSH Keys (Local Development - Recommended)
+The DevContainer is configured for SSH-based Git access using two GitHub accounts (personal and company). The host `~/.ssh` directory is mounted read-only at `/root/.ssh-host` and copied to `/root/.ssh` with correct permissions during container creation.
 
-**Best for**: Windows/macOS/Linux developers working locally
+### Why the copy step?
 
-**How it works**:
-- Your `~/.ssh` directory is automatically mounted (read-only) from host into container
-- SSH keys and config are available inside the container without duplication
-- Git operations (clone, push, pull) use SSH URLs seamlessly
+SSH refuses to use a config file that is world-writable, which is common when `~/.ssh` is mounted from a Windows host filesystem. Mounting to a staging path and copying to `/root/.ssh` with `chmod 600`/`700` fixes this without modifying the host files.
 
-**Setup** (one-time):
+### Multi-account SSH config
+
+The host `~/.ssh/config` defines two named GitHub hosts:
+
+```
+Host github.com-personal
+  HostName github.com
+  IdentityFile ~/.ssh/youruser_github
+
+Host github.com
+  HostName github.com
+  IdentityFile ~/.ssh/yourcompany_github
+```
+
+Use the host alias matching the account when cloning:
+
 ```bash
-# On host machine, generate SSH key if needed:
-ssh-keygen -t ed25519 -C "your-email@example.com"
+# Personal repos
+git clone git@github.com-personal:your-username/your-repo.git
 
-# Add public key to GitHub: https://github.com/settings/keys
+# Company repos
+git clone git@github.com:omnitech-org/your-repo.git
+```
 
-# Inside container, verify connectivity:
+Verify both accounts inside the container:
+
+```bash
+ssh -T git@github.com-personal
 ssh -T git@github.com
-
-# Now use SSH URLs:
-git clone git@github.com:your-org/your-repo.git
-git push origin my-branch
 ```
 
-**Why this works**: 
-- No credential prompts on every operation
-- Private key never leaves host machine
-- SSH key permissions respected inside container
-- CI/CD can use SSH deploy keys (safer than personal access tokens)
+### Prerequisites (one-time host setup)
 
-### 2. Git Credential Helper (Remote/CI Environments)
-
-**Best for**: GitHub Codespaces, cloud-hosted containers, CI/CD runners
-
-**Setup**:
-```bash
-# Inside container, enable credential caching:
-git config --global credential.helper store
-
-# First git operation will prompt for GitHub token (cached afterwards)
-git clone https://github.com/your-org/your-repo.git
-# When prompted: username=your-github-username, password=<GitHub Personal Access Token>
-```
-
-**Or use GitHub CLI**:
-```bash
-# Pre-installed in container
-gh auth login
-# Follow interactive prompts; automatically configures Git credential helper
-```
-
-### 3. SSH Agent Forwarding (Passphrase-Protected Keys on Remote Machine)
-
-**Best for**: Advanced scenarios where SSH key is on a remote server
-
-**Setup** (uncomment in `devcontainer.json`):
-```json
-"forwardPorts": [22],
-"remoteEnv": {
-  "SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"
-}
-```
-
-Then inside container:
-```bash
-ssh-add -l  # List forwarded keys
-git clone git@github.com:your-org/your-repo.git
-```
+1. SSH keys for both accounts must exist in `~/.ssh` on the host machine
+2. Both public keys must be registered in the respective GitHub accounts ([GitHub SSH settings](https://github.com/settings/keys))
+3. The `~/.ssh/config` file on the host must define the `github.com-personal` host alias as shown above
 
 ## Environment Variables
 
@@ -153,6 +127,17 @@ SDK/tool installation (required .NET SDK, CSharpier, Aspire CLI) is baked into t
 - Never commit credentials to repository
 - `.gitignore` prevents `git config --global --show-origin credential.helper` output
 - For CI/CD, use GitHub deploy keys or `GITHUB_TOKEN` environment variable
+
+Note the devcontainer.json setup with
+
+"remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/usr/local/share/dotnet-tools:/root/.dotnet/tools",
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
+  "mounts": [
+    "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
+    "source=/mnt/c/Users/klogan/.ssh,target=/root/.ssh-host,type=bind,readonly"
+  ]
 
 ### Secrets Management
 

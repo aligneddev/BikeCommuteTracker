@@ -87,67 +87,40 @@ dotnet run --project src/BikeTracking.AppHost
 - api service for local identity endpoints
 
 ## Git Credentials Setup (DevContainer)
-### Recommended Workflow
 
-**For local development** (Windows/macOS/Linux with VS Code):
-1. Generate SSH key on host machine (one-time setup)
-2. Add public key to GitHub
-3. Use SSH URLs in Git commands
-4. Container automatically inherits SSH keys via mount
 
-**For CI/CD (GitHub Actions)**:
-- Use SSH deploy keys or GITHUB_TOKEN (built-in to Actions)
-- SSH deploy keys are safer than personal access tokens
+I did this to avoid getting commits from the wrong user. This is optional for you. If you have the straight forward setup, you don't need to mount ~/.ssh as the Forwarding should work fine. 
 
-**For remote development (GitHub Codespaces, Dev Container in cloud)**:
-- Use Git credential helper + GitHub Personal Access Token
-- Or configure SSH agent forwarding if available
+The DevContainer mounts your host `~/.ssh` directory read-only at `/root/.ssh-host`, then copies it to `/root/.ssh` with correct permissions during `postCreateCommand`. This is necessary because SSH rejects config files with world-writable permissions (common on Windows-mounted filesystems).
 
-The DevContainer is pre-configured for seamless Git operations with support for multiple credential approaches:
+The SSH config can be set up for two GitHub accounts — a personal account and a company account — using named hosts:
 
-### Option 1: SSH Keys (Recommended for Local Development)
 
-**Local development with SSH keys works automatically:**
+```
+Host github.com-personal
+  HostName github.com
+  IdentityFile ~/.ssh/youruser_github
+
+Host github.com
+  HostName github.com
+  IdentityFile ~/.ssh/yourcompany_github
+```
+
+Use the appropriate host alias when cloning:
 
 ```bash
-# Inside the DevContainer terminal, SSH keys from ~/.ssh are mounted as read-only
-# Test connectivity:
+# Personal repos
+git clone git@github.com-personal:your-username/your-repo.git
+
+# Company repos
+git clone git@github.com:omnitech-org/your-repo.git
+```
+
+Verify connectivity:
+
+```bash
+ssh -T git@github.com-personal
 ssh -T git@github.com
-
-# Now git clone/push/pull work with SSH URLs:
-git clone git@github.com:your-org/your-repo.git
-git push origin my-branch
-```
-
-**Why this works**: The DevContainer mounts your host machine's `~/.ssh` directory into the container at `/root/.ssh` (read-only for safety). Your existing SSH keys and config are available without duplication.
-
-**First-time setup (if SSH key not yet on GitHub)**:
-1. Generate a new key on your host machine (outside container):
-   ```bash
-   ssh-keygen -t ed25519 -C "your-email@example.com"
-   ```
-2. Add the public key to your GitHub account ([GitHub SSH settings](https://github.com/settings/keys))
-3. Inside the container, test with `ssh -T git@github.com`
-
-### Option 3: SSH Agent Forwarding (For Forwarded Keys)
-You can't chmod a bind mount directly, but the clean solution is to mount to a different path and use postCreateCommand to copy and fix permissions. Here's what I'd change in devcontainer.json:
-
-
-If your SSH key is protected with a passphrase and hosted on a remote machine:
-
-```bash
-# Add to .devcontainer/devcontainer.json to forward SSH agent:
-# (requires SSH agent running on host machine)
-"forwardPorts": [22],
-"remoteEnv": {
-  "SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"
-}
-```
-
-Then inside the container:
-```bash
-ssh-add -l  # List forwarded keys
-git clone git@github.com:your-org/your-repo.git  # Use forwarded keys
 ```
 
 
