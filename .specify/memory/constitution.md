@@ -1,13 +1,14 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.10.2
-Rationale: Codified a mandatory post-change verification command matrix so every change runs explicit checks before merge.
+<!-- Sync Impact Report v1.11.0
+Rationale: Strengthened TDD mandate to require a strict gated sequence: plan failing tests → write failing tests → run and prove failure → user confirms failures → implement → run after each change → all tests pass → consider refactoring. User must explicitly review and approve test failures before implementation begins.
 Modified Sections:
-- Development Workflow: Added mandatory post-change verification matrix and command requirements
-- Definition of Done: Requires matrix execution evidence for changed scope
-- Compliance Audit Checklist: Requires matrix execution and recorded evidence
-- Guardrails: Added non-negotiable requirement to run matrix commands after every change
-Status: Approved — impacted-layer checks are mandatory after any change; auth/cross-layer changes also require E2E verification
+- Principle IV: Expanded from single-paragraph statement to explicit 7-step gated TDD workflow with user confirmation gate
+- Development Approval Gates: Renamed and expanded gates 2-7 to reflect the full TDD sequence; added user failure-confirmation gate
+- Definition of Done: Added user-confirmed test failures checkbox; separated green phase from refactor consideration
+- Guardrails: Added non-negotiable TDD cycle guardrail as first item
+Status: Approved — TDD cycle is strictly gated; user must confirm failing tests before implementation proceeds
 Previous Updates:
+- v1.10.2: Codified a mandatory post-change verification command matrix so every change runs explicit checks before merge.
 - v1.10.1: Clarified the local deployment approach for end-user machines by standardizing SQLite local-file storage as the default profile and documenting safety expectations for storage path and upgrades.
 - v1.10: Added an explicit engineering mindset for small-batch experimentation, continuous learning, complexity management, mandatory change validation, and proactive security teaching/remediation.
 - v1.9: Replaced Blazor WebAssembly frontend direction with Aurelia 2. Updated Principle V and all frontend-related sections for consistency. Added an explicit rule to always reference official Aurelia documentation at https://docs.aurelia.io/.
@@ -62,9 +63,19 @@ Every domain action (ride recorded, expense added, savings recalculated) generat
 
 ### IV. Quality-First Development (Test-Driven)
 
-Red-Green-Refactor cycle is **non-negotiable**: tests written first, approved by user, then fail, then implementation follows. Unit tests validate pure logic (target 85%+ coverage). Integration tests verify each vertical slice end-to-end. Contract tests ensure event schemas remain backwards compatible. Security tests validate OAuth isolation and data access. **Agent must suggest tests with rationale; user approval required before implementation.**
+Red-Green-Refactor cycle is **non-negotiable** and follows a strict, gate-controlled sequence:
 
-**Rationale**: Tests act as executable specifications; catches bugs early; refactoring confidence; documents intended behavior; prevents regressions.
+1. **Plan**: Every specification and planning phase **must** include a test plan that explicitly identifies failing tests to be written — what will fail, why, and what it proves.
+2. **Write Failing Tests**: Before any implementation code is written, the agent writes the tests that define the expected behavior. Tests are committed in failing state.
+3. **Run & Prove Failure**: The failing tests are executed and their output is shown to the user. The user **must review and confirm** that tests fail for the right reasons (not infrastructure or compilation errors — genuine behavioral failures).
+4. **Implement**: Only after user confirmation of red tests does implementation begin. Implementation must target making the failing tests pass — no speculative or extra logic.
+5. **Run After Each Change**: Tests are run after each meaningful implementation change to track incremental progress toward green.
+6. **All Tests Pass**: Implementation is complete only when all tests pass. No merge occurs until the full test suite is green.
+7. **Consider Refactoring**: Once tests are green, evaluate the implementation for clarity, duplication, and simplicity. Refactor while keeping tests green. Refactoring is optional but explicitly encouraged at this stage.
+
+Unit tests validate pure logic (target 85%+ coverage). Integration tests verify each vertical slice end-to-end. Contract tests ensure event schemas remain backwards compatible. Security tests validate OAuth isolation and data access. **Agent must suggest tests with rationale; user approval required before implementation. User must confirm test failures before implementation begins.**
+
+**Rationale**: Tests act as executable specifications; catches bugs early; refactoring confidence; documents intended behavior; prevents regressions. Requiring user review of red tests proves that tests are meaningful and not vacuously passing.
 
 ### V. User Experience Consistency & Accessibility
 
@@ -244,9 +255,11 @@ After the application structure is built, implementation proceeds in **vertical 
 A vertical slice is **production-ready** only when all items are verified:
 
 - [ ] Specification written, approved by user, linked to spec directory
-- [ ] Test plan approved (unit, integration, E2E, security, performance tests identified)
-- [ ] All tests written and failing (red phase complete)
-- [ ] Implementation complete; all tests passing (green + refactor phases)
+- [ ] Test plan approved (unit, integration, E2E, security, performance tests identified; each test's expected failure reason documented)
+- [ ] All tests written and failing (red phase complete); failing test output shown to user
+- [ ] **User confirmed test failures**: user reviewed failing test output and approved that failures are behavioral, not structural
+- [ ] Implementation complete; all tests run after each meaningful change; all tests passing (green phase complete)
+- [ ] Refactoring considered: implementation evaluated for clarity/duplication/simplicity with tests green; any refactoring applied with tests still passing
 - [ ] Code review: architecture compliance verified, naming conventions followed, validation discipline observed
 - [ ] Change validation complete: compile succeeds, coding standards checks pass, automated behavior tests pass
 - [ ] Post-change verification matrix executed for the impacted scope and evidence recorded
@@ -338,16 +351,18 @@ Tests suggested by agent must receive explicit user approval before implementati
 ### Development Approval Gates
 
 1. **Specification Approved**: Spec document completed and user-approved before coding
-2. **Tests Approved**: Agent proposes tests; user approves test plan
-3. **Tests Fail (Red)**: Proposed tests run and fail without implementation
-4. **Implementation (Green)**: Code written to make tests pass
-5. **Refactor (Refactor)**: Code cleaned, tests still pass
-6. **Code Review**: Implementation reviewed for architecture compliance, naming, performance, validation discipline
-7. **Validation Gate**: Compile/build passes, coding standards checks pass, and automated tests validate behavior
-8. **Security Gate**: Security issues are identified, explained to contributors, and remediated or explicitly accepted by user
-9. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
-10. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
-11. **User Acceptance**: User validates slice meets specification and data validation rules observed
+2. **Test Plan Approved**: Agent proposes all tests (unit, integration, E2E, security) with rationale for each; test plan explicitly identifies what each test proves and why it will initially fail; user approves the test plan before any code is written
+3. **Failing Tests Written**: Agent writes the tests exactly as approved; no implementation code written yet
+4. **Tests Run & Failures Confirmed by User**: Agent runs the tests and displays the full failure output; **user reviews and explicitly confirms** that tests fail for the right behavioral reasons (not build errors); this gate cannot be bypassed — user approval required before proceeding
+5. **Implementation (Green)**: Code written incrementally to make failing tests pass; tests run after each meaningful change to track progress; no speculative or extra logic added beyond what tests require
+6. **All Tests Pass**: Implementation is complete only when the full test suite is green; agent displays passing test output
+7. **Refactor (Consider)**: With tests green, evaluate the implementation for clarity, duplication, and simplicity; refactor if warranted while keeping tests green; explicitly present refactoring opportunities to user even if skipped
+8. **Code Review**: Implementation reviewed for architecture compliance, naming, performance, validation discipline
+9. **Validation Gate**: Compile/build passes, coding standards checks pass, and automated tests validate behavior
+10. **Security Gate**: Security issues are identified, explained to contributors, and remediated or explicitly accepted by user
+11. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
+12. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
+13. **User Acceptance**: User validates slice meets specification and data validation rules observed
 
 ### Compliance Audit Checklist
 
@@ -388,6 +403,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 
 Breaking these guarantees causes architectural decay and technical debt accrual:
 
+- **TDD cycle is strictly gated and non-negotiable** — implementation code must never be written before failing tests exist, have been run, and the user has reviewed and confirmed the failures. The sequence is always: plan tests → write tests → run and prove failure → get user confirmation → implement → run after each change → verify all pass → consider refactoring. Skipping or reordering any step is prohibited.
 - **No Entity Framework DbContext in domain layer** — domain must remain infrastructure-agnostic. If domain needs persistence logic, use repository pattern abstracting EF.
 - **Secrets management by deployment context** — **Cloud**: all secrets in Azure Key Vault; **Local**: User Secrets or environment variables. No connection strings, API keys, or OAuth secrets in appsettings.json, code, or GitHub. Pre-commit hooks enforce this. **⚠️ This repository is public on GitHub**: any committed secret is immediately and permanently exposed to the internet; treat any accidental secret commit as an immediate security incident requiring credential rotation.
 - **Event schema is append-only** — never mutate existing events. If schema changes needed, create new event type and version old events. Immutability is non-negotiable.
@@ -483,5 +499,5 @@ Always commit before continuing to a new phase.
 
 ---
 
-**Version**: 1.10.2 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-18
+**Version**: 1.11.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-20
 
