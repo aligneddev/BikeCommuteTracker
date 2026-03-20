@@ -88,6 +88,13 @@ dotnet run --project src/BikeTracking.AppHost
 
 ## Git Credentials Setup (DevContainer)
 
+https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials was very helpful.
+
+# Make sure you're running as an Administrator on your Windows host to manage the ssh-agent service:
+Set-Service ssh-agent -StartupType Automatic
+Start-Service ssh-agent
+Get-Service ssh-agent
+
 
 I did this to avoid getting commits from the wrong user. This is optional for you. If you have the straight forward setup, you don't need to mount ~/.ssh as the Forwarding should work fine. 
 
