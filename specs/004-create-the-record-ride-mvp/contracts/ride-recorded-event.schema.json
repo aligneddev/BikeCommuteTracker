@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://biketracking.local/contracts/ride-recorded-event.schema.json",
+  "title": "RideRecordedEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "occurredAtUtc",
+    "riderId",
+    "rideDateTimeLocal",
+    "miles",
+    "source"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "description": "Unique event identifier."
+    },
+    "eventType": {
+      "type": "string",
+      "const": "RideRecorded"
+    },
+    "occurredAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "riderId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "rideDateTimeLocal": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "miles": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "rideMinutes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "temperature": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["BikeTracking.Api"]
+    }
+  }
+}
