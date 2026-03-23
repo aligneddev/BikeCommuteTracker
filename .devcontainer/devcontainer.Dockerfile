@@ -4,6 +4,11 @@ FROM mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+RUN curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarn-archive-keyring.gpg
+
+# Install podman
+RUN apt-get update && apt-get install -y podman && rm -rf /var/lib/apt/lists/*
+
 ARG REQUIRED_DOTNET_SDK_VERSION=10.0.200
 
 # Ensure the SDK version from global.json is available in the image.
