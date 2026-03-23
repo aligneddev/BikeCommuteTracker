@@ -1,13 +1,17 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.11.0
-Rationale: Strengthened TDD mandate to require a strict gated sequence: plan failing tests → write failing tests → run and prove failure → user confirms failures → implement → run after each change → all tests pass → consider refactoring. User must explicitly review and approve test failures before implementation begins.
+<!-- Sync Impact Report v1.12.0
+Rationale: Added explicit modularity and contract-first collaboration governance so teams can deliver independently in parallel while preserving interoperability through stable interfaces and versioned contracts.
 Modified Sections:
-- Principle IV: Expanded from single-paragraph statement to explicit 7-step gated TDD workflow with user confirmation gate
-- Development Approval Gates: Renamed and expanded gates 2-7 to reflect the full TDD sequence; added user failure-confirmation gate
-- Definition of Done: Added user-confirmed test failures checkbox; separated green phase from refactor consideration
-- Guardrails: Added non-negotiable TDD cycle guardrail as first item
-Status: Approved — TDD cycle is strictly gated; user must confirm failing tests before implementation proceeds
+- Principle IX: Added explicit Modularity, Interfaces & Contract-First Collaboration principle
+- Development Workflow: Added contract-first parallel delivery guidance
+- Definition of Done: Added interface/contract compatibility verification requirement
+- Testing Strategy: Added integration contract-compatibility testing expectation
+- Development Approval Gates: Added contract boundary freeze gate before implementation
+- Compliance Audit Checklist: Added modular boundary and contract compatibility checks
+- Guardrails: Added non-negotiable interface/contract boundary rules for cross-module integration
+Status: Approved — modular architecture and contract-first parallel delivery are now constitutional requirements
 Previous Updates:
+- v1.11.0: Strengthened TDD mandate with a strict gated red-green-refactor workflow requiring explicit user confirmation of failing tests before implementation.
 - v1.10.2: Codified a mandatory post-change verification command matrix so every change runs explicit checks before merge.
 - v1.10.1: Clarified the local deployment approach for end-user machines by standardizing SQLite local-file storage as the default profile and documenting safety expectations for storage path and upgrades.
 - v1.10: Added an explicit engineering mindset for small-batch experimentation, continuous learning, complexity management, mandatory change validation, and proactive security teaching/remediation.
@@ -102,6 +106,12 @@ Engineering work should prioritize experimentation in small, reversible batches 
 Every change **MUST** be validated end-to-end before merge and before phase transitions: solution compiles, coding standards pass, automated tests confirm behavior, and deployment pipeline checks succeed. Security is a first-class requirement on every change: identify issues, explain risks and mitigations to contributors, and remediate vulnerabilities before release.
 
 **Rationale**: Small batches reduce blast radius and improve feedback speed. Continuous learning drives better product decisions under uncertainty. Mandatory validation and security remediation protect reliability, delivery confidence, and user trust.
+
+### IX. Modularity, Interfaces & Contract-First Collaboration
+
+System capabilities must be split into cohesive modules with explicit ownership and clear boundaries (for example: identity, rides, projections, analytics, frontend feature areas). Cross-module collaboration must occur through stable interfaces and versioned contracts (API schemas, event schemas, shared DTO contracts), not by direct internal coupling. Teams should define and agree contracts first, then implement modules independently in parallel; integration happens against contracts with compatibility tests before merge. Contract evolution must be backwards compatible by default and versioned when breaking changes are unavoidable.
+
+**Rationale**: Strong module boundaries reduce coordination overhead, minimize merge conflicts, and allow teams to move in parallel without blocking each other. Contract-first integration preserves system cohesion as complexity grows and enables safer incremental delivery.
 
 ## Technology Stack Requirements
 
@@ -212,6 +222,17 @@ Run TypeScript linting and formatting via `npm run lint` and `npm run format` in
 
 Use `dotnet run --project src/BikeTracking.AppHost` to start the local stack; use GitHub Actions for CI/CD to Azure.
 
+### Contract-First Parallel Delivery
+
+For features spanning multiple modules, delivery must be organized for parallel execution:
+
+1. Define integration seams up front (command/query APIs, event contracts, shared value contracts) and record contract owners.
+2. Freeze a first-pass contract for the slice before implementation starts; changes after freeze require explicit review from impacted owners.
+3. Implement producers and consumers in parallel against contract tests/stubs, not each other's internal code.
+4. Run contract compatibility tests in CI for both directions (provider and consumer) before integration merge.
+
+This contract-first workflow complements vertical slices and the TDD gates; it does not replace them.
+
 ### Post-Change Verification Matrix (Mandatory After Any Change)
 
 After **every** code change, run verification commands based on the changed scope. These checks are required before merge and before phase transitions.
@@ -267,6 +288,7 @@ A vertical slice is **production-ready** only when all items are verified:
 - [ ] Integration tests pass; manual E2E test via Playwright (if critical user journey)
 - [ ] All validation layers implemented: client-side (React validation), API (DTO DataAnnotations), database (constraints)
 - [ ] Events stored in event table with correct schema; projections materialized and queryable
+- [ ] Module boundaries preserved; cross-module interactions occur only via approved interfaces/contracts with compatibility evidence
 - [ ] SAMPLE_/DEMO_ data cleaned up; no test data committed to main branch
 - [ ] Deployed to Azure staging environment via GitHub Actions + azd
 - [ ] Pipeline deployment checks pass for the target environment
@@ -320,6 +342,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 - F# domain types successfully marshaled through EF Core value converters
 - Validation attributes enforced on API endpoints
 - F# command handlers compose with C# infrastructure (repositories, services)
+- Cross-module API/event contracts validated for provider-consumer compatibility
 
 **Contract Tests** (event schema stability)
 - Event schema versioning
@@ -352,27 +375,30 @@ Tests suggested by agent must receive explicit user approval before implementati
 
 1. **Specification Approved**: Spec document completed and user-approved before coding
 2. **Test Plan Approved**: Agent proposes all tests (unit, integration, E2E, security) with rationale for each; test plan explicitly identifies what each test proves and why it will initially fail; user approves the test plan before any code is written
-3. **Failing Tests Written**: Agent writes the tests exactly as approved; no implementation code written yet
-4. **Tests Run & Failures Confirmed by User**: Agent runs the tests and displays the full failure output; **user reviews and explicitly confirms** that tests fail for the right behavioral reasons (not build errors); this gate cannot be bypassed — user approval required before proceeding
-5. **Implementation (Green)**: Code written incrementally to make failing tests pass; tests run after each meaningful change to track progress; no speculative or extra logic added beyond what tests require
-6. **All Tests Pass**: Implementation is complete only when the full test suite is green; agent displays passing test output
-7. **Refactor (Consider)**: With tests green, evaluate the implementation for clarity, duplication, and simplicity; refactor if warranted while keeping tests green; explicitly present refactoring opportunities to user even if skipped
-8. **Code Review**: Implementation reviewed for architecture compliance, naming, performance, validation discipline
-9. **Validation Gate**: Compile/build passes, coding standards checks pass, and automated tests validate behavior
-10. **Security Gate**: Security issues are identified, explained to contributors, and remediated or explicitly accepted by user
-11. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
-12. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
-13. **User Acceptance**: User validates slice meets specification and data validation rules observed
+3. **Contract Boundaries Frozen**: Module interfaces and integration contracts are agreed, versioned, and owner-approved before implementation begins; this enables parallel execution without internal coupling
+4. **Failing Tests Written**: Agent writes the tests exactly as approved; no implementation code written yet
+5. **Tests Run & Failures Confirmed by User**: Agent runs the tests and displays the full failure output; **user reviews and explicitly confirms** that tests fail for the right behavioral reasons (not build errors); this gate cannot be bypassed — user approval required before proceeding
+6. **Implementation (Green)**: Code written incrementally to make failing tests pass; tests run after each meaningful change to track progress; no speculative or extra logic added beyond what tests require
+7. **All Tests Pass**: Implementation is complete only when the full test suite is green; agent displays passing test output
+8. **Refactor (Consider)**: With tests green, evaluate the implementation for clarity, duplication, and simplicity; refactor if warranted while keeping tests green; explicitly present refactoring opportunities to user even if skipped
+9. **Code Review**: Implementation reviewed for architecture compliance, naming, performance, validation discipline
+10. **Validation Gate**: Compile/build passes, coding standards checks pass, and automated tests validate behavior
+11. **Security Gate**: Security issues are identified, explained to contributors, and remediated or explicitly accepted by user
+12. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
+13. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
+14. **User Acceptance**: User validates slice meets specification and data validation rules observed
 
 ### Compliance Audit Checklist
 
 #### Per-Specification Audit
-- [ ] Spec references all eight core principles in acceptance criteria
+- [ ] Spec references all nine core principles in acceptance criteria
 - [ ] Event schema defined; backwards compatibility verified if updating existing events
 - [ ] Data validation implemented at three layers: client (React), API (Minimal API), database (constraints)
 - [ ] Test coverage for domain logic ≥85%; F# discriminated unions and ROP patterns tested
 - [ ] Every change validated: compile/build, coding standards, automated tests, and pipeline deployment checks
 - [ ] Post-change verification matrix executed for the changed scope (frontend, backend/domain, or auth/cross-layer) with evidence captured
+- [ ] Module boundaries documented; cross-module integrations use approved interfaces/contracts only
+- [ ] Contract compatibility tests executed for changed APIs/events (provider and consumer)
 - [ ] Security issues recognized, explained, and remediated (or explicitly accepted by user)
 - [ ] All SAMPLE_/DEMO_ data removed from code before merge
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
@@ -396,6 +422,8 @@ Tests suggested by agent must receive explicit user approval before implementati
 - [ ] Clean Architecture layers remain isolated (domain → infrastructure decoupling verified)
 - [ ] Event sourcing invariants maintained: events append-only, no mutation
 - [ ] CQRS separation enforced: write path (commands) and read path (projections) distinct
+- [ ] Module boundaries remain cohesive and independently deployable/testable where applicable
+- [ ] Interface and contract versioning strategy enforced across APIs/events
 - [ ] Performance SLOs verified: API <500ms p95, projection lag <5s
 - [ ] Observability dashboards in Application Insights show active monitoring
 
@@ -404,6 +432,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 Breaking these guarantees causes architectural decay and technical debt accrual:
 
 - **TDD cycle is strictly gated and non-negotiable** — implementation code must never be written before failing tests exist, have been run, and the user has reviewed and confirmed the failures. The sequence is always: plan tests → write tests → run and prove failure → get user confirmation → implement → run after each change → verify all pass → consider refactoring. Skipping or reordering any step is prohibited.
+- **Cross-module work is contract-first and interface-bound** — teams must integrate through explicit interfaces and versioned contracts only; direct coupling to another module's internal implementation is prohibited.
 - **No Entity Framework DbContext in domain layer** — domain must remain infrastructure-agnostic. If domain needs persistence logic, use repository pattern abstracting EF.
 - **Secrets management by deployment context** — **Cloud**: all secrets in Azure Key Vault; **Local**: User Secrets or environment variables. No connection strings, API keys, or OAuth secrets in appsettings.json, code, or GitHub. Pre-commit hooks enforce this. **⚠️ This repository is public on GitHub**: any committed secret is immediately and permanently exposed to the internet; treat any accidental secret commit as an immediate security incident requiring credential rotation.
 - **Event schema is append-only** — never mutate existing events. If schema changes needed, create new event type and version old events. Immutability is non-negotiable.
@@ -418,7 +447,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 
 ### Onboarding Checklist for New Contributors
 
-1. **Read constitution** (~20 min): Understand mission, eight core principles, technology stack, development workflow
+1. **Read constitution** (~20 min): Understand mission, nine core principles, technology stack, development workflow
 2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why Aurelia 2
 3. **Clone repo and bootstrap** (~5 min): `git clone` → `dotnet tool install --global specify-cli` → `dotnet run` (Aspire orchestrates frontend, API, database)
 4. **Explore specification examples** (~30 min): Review `/specs/` directory; read 2–3 completed specifications to understand vertical slice completeness
@@ -459,7 +488,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 ## Governance
 
 ### Constitution as Governing Document
-This constitution supersedes all other project guidance. All architectural decisions, code reviews, deployment approvals, and spec acceptance gates must verify compliance with these eight core principles and technology stack requirements.
+This constitution supersedes all other project guidance. All architectural decisions, code reviews, deployment approvals, and spec acceptance gates must verify compliance with these nine core principles and technology stack requirements.
 
 ### Amendment Procedure
 Amendments must:
@@ -499,5 +528,5 @@ Always commit before continuing to a new phase.
 
 ---
 
-**Version**: 1.11.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-20
+**Version**: 1.12.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-23
 
