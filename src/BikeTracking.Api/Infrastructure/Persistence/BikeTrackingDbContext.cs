@@ -95,7 +95,8 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             );
 
             // Index for efficient defaults query
-            entity.HasIndex(x => new { x.RiderId, x.CreatedAtUtc })
+            entity
+                .HasIndex(x => new { x.RiderId, x.CreatedAtUtc })
                 .IsDescending(false, true)
                 .HasDatabaseName("IX_Rides_RiderId_CreatedAtUtc_Desc");
 

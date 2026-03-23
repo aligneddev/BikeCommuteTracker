@@ -34,7 +34,8 @@ public static class RidesEndpoints
         [FromBody] RecordRideRequest request,
         HttpContext context,
         RecordRideService recordRideService,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -44,7 +45,10 @@ public static class RidesEndpoints
                 return Results.Unauthorized();
 
             var (rideId, eventPayload) = await recordRideService.ExecuteAsync(
-                riderId, request, cancellationToken);
+                riderId,
+                request,
+                cancellationToken
+            );
 
             var response = new RecordRideSuccessResponse(
                 RideId: rideId,
@@ -61,14 +65,17 @@ public static class RidesEndpoints
         }
         catch
         {
-            return Results.BadRequest(new ErrorResponse("ERROR", "An error occurred while recording the ride"));
+            return Results.BadRequest(
+                new ErrorResponse("ERROR", "An error occurred while recording the ride")
+            );
         }
     }
 
     private static async Task<IResult> GetRideDefaults(
         HttpContext context,
         GetRideDefaultsService getDefaultsService,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -81,7 +88,9 @@ public static class RidesEndpoints
         }
         catch
         {
-            return Results.BadRequest(new ErrorResponse("ERROR", "An error occurred while retrieving defaults"));
+            return Results.BadRequest(
+                new ErrorResponse("ERROR", "An error occurred while retrieving defaults")
+            );
         }
     }
 }

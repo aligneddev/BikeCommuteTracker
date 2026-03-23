@@ -21,7 +21,8 @@ public sealed record RideRecordedEventPayload(
         decimal miles,
         int? rideMinutes = null,
         decimal? temperature = null,
-        DateTime? occurredAtUtc = null)
+        DateTime? occurredAtUtc = null
+    )
     {
         return new RideRecordedEventPayload(
             EventId: Guid.NewGuid().ToString(),

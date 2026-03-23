@@ -10,7 +10,12 @@ public sealed class RidesPersistenceTests
     public async Task DbContext_CanSaveRideEntity_WithAllFields()
     {
         using var context = CreateDbContext();
-        var user = new UserEntity { DisplayName = "Alice", NormalizedName = "alice", CreatedAtUtc = DateTime.UtcNow };
+        var user = new UserEntity
+        {
+            DisplayName = "Alice",
+            NormalizedName = "alice",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
@@ -21,7 +26,7 @@ public sealed class RidesPersistenceTests
             Miles = 10.5m,
             RideMinutes = 45,
             Temperature = 72m,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
 
         context.Rides.Add(ride);
@@ -39,7 +44,12 @@ public sealed class RidesPersistenceTests
     public async Task DbContext_AllowsNullOptionalFields()
     {
         using var context = CreateDbContext();
-        var user = new UserEntity { DisplayName = "Bob", NormalizedName = "bob", CreatedAtUtc = DateTime.UtcNow };
+        var user = new UserEntity
+        {
+            DisplayName = "Bob",
+            NormalizedName = "bob",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
@@ -50,7 +60,7 @@ public sealed class RidesPersistenceTests
             Miles = 5m,
             RideMinutes = null,
             Temperature = null,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
 
         context.Rides.Add(ride);
@@ -62,11 +72,18 @@ public sealed class RidesPersistenceTests
         Assert.Null(retrieved.Temperature);
     }
 
-    [Fact(Skip = "In-memory database does not enforce check constraints; tests pass against SQL Server")]
+    [Fact(
+        Skip = "In-memory database does not enforce check constraints; tests pass against SQL Server"
+    )]
     public async Task DbContext_EnforcesCheckConstraint_MilesGreaterThanZero()
     {
         using var context = CreateDbContext();
-        var user = new UserEntity { DisplayName = "Charlie", NormalizedName = "charlie", CreatedAtUtc = DateTime.UtcNow };
+        var user = new UserEntity
+        {
+            DisplayName = "Charlie",
+            NormalizedName = "charlie",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
@@ -75,7 +92,7 @@ public sealed class RidesPersistenceTests
             RiderId = (int)user.UserId,
             RideDateTimeLocal = DateTime.Now,
             Miles = 0m,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
 
         context.Rides.Add(ride);

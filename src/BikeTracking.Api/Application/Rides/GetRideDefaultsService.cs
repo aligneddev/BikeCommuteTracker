@@ -13,11 +13,12 @@ public class GetRideDefaultsService(BikeTrackingDbContext dbContext)
     /// </summary>
     public async Task<RideDefaultsResponse> ExecuteAsync(
         long riderId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // Query latest ride for this rider
-        var lastRide = await _dbContext.Rides
-            .Where(r => r.RiderId == riderId)
+        var lastRide = await _dbContext
+            .Rides.Where(r => r.RiderId == riderId)
             .OrderByDescending(r => r.CreatedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 

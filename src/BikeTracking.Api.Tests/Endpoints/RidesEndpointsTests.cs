@@ -26,11 +26,7 @@ public sealed class RidesEndpointsTests
             Temperature: 72m
         );
 
-        var response = await host.Client.PostWithAuthAsync(
-            "/api/rides",
-            request,
-            userId
-        );
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<RecordRideSuccessResponse>();
@@ -46,16 +42,9 @@ public sealed class RidesEndpointsTests
         await using var host = await RecordRideApiHost.StartAsync();
         var userId = await host.SeedUserAsync("Bob");
 
-        var request = new RecordRideRequest(
-            RideDateTimeLocal: DateTime.Now,
-            Miles: 5.0m
-        );
+        var request = new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: 5.0m);
 
-        var response = await host.Client.PostWithAuthAsync(
-            "/api/rides",
-            request,
-            userId
-        );
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<RecordRideSuccessResponse>();
@@ -69,16 +58,9 @@ public sealed class RidesEndpointsTests
         await using var host = await RecordRideApiHost.StartAsync();
         var userId = await host.SeedUserAsync("Charlie");
 
-        var request = new RecordRideRequest(
-            RideDateTimeLocal: DateTime.Now,
-            Miles: -1m
-        );
+        var request = new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: -1m);
 
-        var response = await host.Client.PostWithAuthAsync(
-            "/api/rides",
-            request,
-            userId
-        );
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -95,11 +77,7 @@ public sealed class RidesEndpointsTests
             RideMinutes: -5
         );
 
-        var response = await host.Client.PostWithAuthAsync(
-            "/api/rides",
-            request,
-            userId
-        );
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -109,10 +87,7 @@ public sealed class RidesEndpointsTests
     {
         await using var host = await RecordRideApiHost.StartAsync();
 
-        var request = new RecordRideRequest(
-            RideDateTimeLocal: DateTime.Now,
-            Miles: 10m
-        );
+        var request = new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: 10m);
 
         var response = await host.Client.PostAsJsonAsync("/api/rides", request);
 
@@ -178,10 +153,14 @@ public sealed class RidesEndpointsTests
             builder.Services.AddDbContext<BikeTrackingDbContext>(options =>
                 options.UseInMemoryDatabase(databaseName)
             );
-            builder.Services.AddAuthentication("test")
-                .AddScheme<TestAuthenticationSchemeOptions, TestAuthenticationHandler>("test", _ => { });
+            builder
+                .Services.AddAuthentication("test")
+                .AddScheme<TestAuthenticationSchemeOptions, TestAuthenticationHandler>(
+                    "test",
+                    _ => { }
+                );
             builder.Services.AddAuthorization();
-            
+
             // Add Rides services
             builder.Services.AddScoped<RecordRideService>();
             builder.Services.AddScoped<GetRideDefaultsService>();
@@ -217,7 +196,8 @@ public sealed class RidesEndpointsTests
             long userId,
             decimal miles,
             int? rideMinutes = null,
-            decimal? temperature = null)
+            decimal? temperature = null
+        )
         {
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
@@ -229,7 +209,7 @@ public sealed class RidesEndpointsTests
                 Miles = miles,
                 RideMinutes = rideMinutes,
                 Temperature = temperature,
-                CreatedAtUtc = DateTime.UtcNow
+                CreatedAtUtc = DateTime.UtcNow,
             };
 
             dbContext.Add(ride);
@@ -246,31 +226,37 @@ public sealed class RidesEndpointsTests
     }
 }
 
-internal class TestAuthenticationSchemeOptions : Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions
-{
-}
+internal class TestAuthenticationSchemeOptions
+    : Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions { }
 
-internal class TestAuthenticationHandler : Microsoft.AspNetCore.Authentication.AuthenticationHandler<TestAuthenticationSchemeOptions>
+internal class TestAuthenticationHandler
+    : Microsoft.AspNetCore.Authentication.AuthenticationHandler<TestAuthenticationSchemeOptions>
 {
     public TestAuthenticationHandler(
         Microsoft.Extensions.Options.IOptionsMonitor<TestAuthenticationSchemeOptions> options,
         Microsoft.Extensions.Logging.ILoggerFactory logger,
-        System.Text.Encodings.Web.UrlEncoder encoder)
-        : base(options, logger, encoder)
-    {
-    }
+        System.Text.Encodings.Web.UrlEncoder encoder
+    )
+        : base(options, logger, encoder) { }
 
     protected override Task<Microsoft.AspNetCore.Authentication.AuthenticateResult> HandleAuthenticateAsync()
     {
         var userIdString = Request.Headers["X-User-Id"].FirstOrDefault();
         if (string.IsNullOrEmpty(userIdString))
-            return Task.FromResult(Microsoft.AspNetCore.Authentication.AuthenticateResult.NoResult());
+            return Task.FromResult(
+                Microsoft.AspNetCore.Authentication.AuthenticateResult.NoResult()
+            );
 
         var claims = new[] { new Claim("sub", userIdString) };
         var identity = new ClaimsIdentity(claims, Scheme.Name);
         var principal = new System.Security.Principal.GenericPrincipal(identity, null);
-        var ticket = new Microsoft.AspNetCore.Authentication.AuthenticationTicket(principal, Scheme.Name);
-        return Task.FromResult(Microsoft.AspNetCore.Authentication.AuthenticateResult.Success(ticket));
+        var ticket = new Microsoft.AspNetCore.Authentication.AuthenticationTicket(
+            principal,
+            Scheme.Name
+        );
+        return Task.FromResult(
+            Microsoft.AspNetCore.Authentication.AuthenticateResult.Success(ticket)
+        );
     }
 }
 
@@ -280,11 +266,12 @@ internal static class HttpClientExtensions
         this HttpClient client,
         string requestUri,
         T value,
-        long userId)
+        long userId
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
         {
-            Content = JsonContent.Create(value)
+            Content = JsonContent.Create(value),
         };
         request.Headers.Add("X-User-Id", userId.ToString());
         return await client.SendAsync(request);
@@ -293,7 +280,8 @@ internal static class HttpClientExtensions
     public static async Task<HttpResponseMessage> GetWithAuthAsync(
         this HttpClient client,
         string requestUri,
-        long userId)
+        long userId
+    )
     {
         var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
         request.Headers.Add("X-User-Id", userId.ToString());

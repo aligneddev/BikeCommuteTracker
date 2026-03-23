@@ -6,9 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BikeTracking.Api.Application.Rides;
 
-public class RecordRideService(
-    BikeTrackingDbContext dbContext,
-    ILogger<RecordRideService> logger)
+public class RecordRideService(BikeTrackingDbContext dbContext, ILogger<RecordRideService> logger)
 {
     private readonly BikeTrackingDbContext _dbContext = dbContext;
     private readonly ILogger<RecordRideService> _logger = logger;
@@ -19,12 +17,13 @@ public class RecordRideService(
     public async Task<(int rideId, RideRecordedEventPayload eventPayload)> ExecuteAsync(
         long riderId,
         RecordRideRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // Validation
         if (request.Miles <= 0)
             throw new ArgumentException("Miles must be greater than 0");
-        
+
         if (request.RideMinutes.HasValue && request.RideMinutes <= 0)
             throw new ArgumentException("Ride minutes must be greater than 0");
 
@@ -36,7 +35,7 @@ public class RecordRideService(
             Miles = request.Miles,
             RideMinutes = request.RideMinutes,
             Temperature = request.Temperature,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
 
         _dbContext.Rides.Add(rideEntity);
@@ -54,7 +53,8 @@ public class RecordRideService(
         _logger.LogInformation(
             "Recorded ride {RideId} for rider {RiderId}",
             rideEntity.Id,
-            riderId);
+            riderId
+        );
 
         return (rideEntity.Id, eventPayload);
     }
