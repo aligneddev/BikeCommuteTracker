@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Infrastructure.Persistence;
 
@@ -9,6 +10,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<UserCredentialEntity> UserCredentials => Set<UserCredentialEntity>();
     public DbSet<AuthAttemptStateEntity> AuthAttemptStates => Set<AuthAttemptStateEntity>();
     public DbSet<OutboxEventEntity> OutboxEvents => Set<OutboxEventEntity>();
+    public DbSet<RideEntity> Rides => Set<RideEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +76,35 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
 
             entity.HasIndex(x => new { x.PublishedAtUtc, x.NextAttemptUtc });
             entity.HasIndex(x => new { x.AggregateType, x.AggregateId });
+        });
+
+        modelBuilder.Entity<RideEntity>(entity =>
+        {
+            entity.ToTable("Rides");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.RiderId).IsRequired();
+            entity.Property(x => x.RideDateTimeLocal).IsRequired();
+            entity.Property(x => x.Miles).IsRequired();
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+
+            // Check constraints
+            entity.HasCheckConstraint("CK_Rides_Miles_GreaterThanZero", "\"Miles\" > 0");
+            entity.HasCheckConstraint(
+                "CK_Rides_RideMinutes_GreaterThanZero",
+                "\"RideMinutes\" IS NULL OR \"RideMinutes\" > 0"
+            );
+
+            // Index for efficient defaults query
+            entity.HasIndex(x => new { x.RiderId, x.CreatedAtUtc })
+                .IsDescending(false, true)
+                .HasDatabaseName("IX_Rides_RiderId_CreatedAtUtc_Desc");
+
+            // Foreign key to Users
+            entity
+                .HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(x => x.RiderId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

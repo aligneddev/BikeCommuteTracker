@@ -1,4 +1,5 @@
 ﻿using BikeTracking.Api.Application.Events;
+using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Endpoints;
 using BikeTracking.Api.Infrastructure.Persistence;
@@ -23,6 +24,9 @@ builder.Services.AddScoped<PinPolicyValidator>();
 builder.Services.AddSingleton<IPinHasher, PinHasher>();
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<IdentifyService>();
+
+builder.Services.AddScoped<RecordRideService>();
+builder.Services.AddScoped<GetRideDefaultsService>();
 
 builder.Services.AddSingleton<IOutboxStore, EfOutboxStore>();
 builder.Services.AddSingleton<IUserRegisteredPublisher, UserRegisteredPublisher>();
@@ -67,6 +71,7 @@ app.MapGet("/", () => Results.Ok(new { message = "Bike Tracking API is running."
 app.UseCors();
 app.UseHttpLogging();
 app.MapUsersEndpoints();
+app.MapRidesEndpoints();
 app.MapDefaultEndpoints();
 
 app.Run();

@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/protected-route'
 import { LoginPage } from './pages/login/login-page'
 import { SignupPage } from './pages/signup/signup-page'
 import { MilesShellPage } from './pages/miles/miles-shell-page'
+import { RecordRidePage } from './pages/RecordRidePage'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/miles" element={<MilesShellPage />} />
+            <Route path="/rides/record" element={<RecordRidePage />} />
           </Route>
         </Routes>
       </AuthProvider>
