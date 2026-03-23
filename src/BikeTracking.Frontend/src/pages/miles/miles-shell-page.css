@@ -39,22 +39,6 @@
   font-size: 1rem;
 }
 
-.logout-btn {
-  border: 1px solid #d4dbe5;
-  border-radius: 0.4rem;
-  padding: 0.65rem 1rem;
-  background: transparent;
-  color: #374151;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  justify-self: start;
-}
-
-.logout-btn:hover {
-  background: #f3f4f6;
-}
-
 @media (width <= 640px) {
   .miles-shell {
     margin: 1.5rem auto;
