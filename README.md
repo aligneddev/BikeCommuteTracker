@@ -86,6 +86,13 @@ dotnet run --project src/BikeTracking.AppHost
 - frontend service for the signup and identify screen
 - api service for local identity endpoints
 
+
+## Aspire Update
+
+https://aspire.dev/whats-new/aspire-13-2/#-upgrade-to-aspire-132
+`aspire update --self`
+`aspire update`
+
 ## Git Credentials Setup (DevContainer)
 
 https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials was very helpful.
