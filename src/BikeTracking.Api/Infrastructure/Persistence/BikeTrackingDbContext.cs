@@ -14,89 +14,95 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<UserEntity>(entity =>
+        modelBuilder.Entity<UserEntity>(static entity =>
         {
             entity.ToTable("Users");
-            entity.HasKey(x => x.UserId);
-            entity.Property(x => x.DisplayName).IsRequired().HasMaxLength(120);
-            entity.Property(x => x.NormalizedName).IsRequired().HasMaxLength(120);
-            entity.Property(x => x.CreatedAtUtc).IsRequired();
-            entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.HasKey(static x => x.UserId);
+            entity.Property(static x => x.DisplayName).IsRequired().HasMaxLength(120);
+            entity.Property(static x => x.NormalizedName).IsRequired().HasMaxLength(120);
+            entity.Property(static x => x.CreatedAtUtc).IsRequired();
+            entity.Property(static x => x.IsActive).HasDefaultValue(true);
 
-            entity.HasIndex(x => x.NormalizedName).IsUnique();
+            entity.HasIndex(static x => x.NormalizedName).IsUnique();
 
             entity
-                .HasOne(x => x.Credential)
-                .WithOne(x => x.User)
-                .HasForeignKey<UserCredentialEntity>(x => x.UserId)
+                .HasOne(static x => x.Credential)
+                .WithOne(static x => x.User)
+                .HasForeignKey<UserCredentialEntity>(static x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity
-                .HasOne(x => x.AuthAttemptState)
-                .WithOne(x => x.User)
-                .HasForeignKey<AuthAttemptStateEntity>(x => x.UserId)
+                .HasOne(static x => x.AuthAttemptState)
+                .WithOne(static x => x.User)
+                .HasForeignKey<AuthAttemptStateEntity>(static x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<UserCredentialEntity>(entity =>
+        modelBuilder.Entity<UserCredentialEntity>(static entity =>
         {
             entity.ToTable("UserCredentials");
-            entity.HasKey(x => x.UserCredentialId);
-            entity.Property(x => x.PinHash).IsRequired();
-            entity.Property(x => x.PinSalt).IsRequired();
-            entity.Property(x => x.HashAlgorithm).IsRequired().HasMaxLength(64);
-            entity.Property(x => x.IterationCount).IsRequired();
-            entity.Property(x => x.CredentialVersion).IsRequired();
-            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+            entity.HasKey(static x => x.UserCredentialId);
+            entity.Property(static x => x.PinHash).IsRequired();
+            entity.Property(static x => x.PinSalt).IsRequired();
+            entity.Property(static x => x.HashAlgorithm).IsRequired().HasMaxLength(64);
+            entity.Property(static x => x.IterationCount).IsRequired();
+            entity.Property(static x => x.CredentialVersion).IsRequired();
+            entity.Property(static x => x.UpdatedAtUtc).IsRequired();
         });
 
-        modelBuilder.Entity<AuthAttemptStateEntity>(entity =>
+        modelBuilder.Entity<AuthAttemptStateEntity>(static entity =>
         {
             entity.ToTable("AuthAttemptStates");
-            entity.HasKey(x => x.UserId);
-            entity.Property(x => x.ConsecutiveWrongCount).HasDefaultValue(0);
-            entity.Property(x => x.LastWrongAttemptUtc);
-            entity.Property(x => x.DelayUntilUtc);
-            entity.Property(x => x.LastSuccessfulAuthUtc);
+            entity.HasKey(static x => x.UserId);
+            entity.Property(static x => x.ConsecutiveWrongCount).HasDefaultValue(0);
+            entity.Property(static x => x.LastWrongAttemptUtc);
+            entity.Property(static x => x.DelayUntilUtc);
+            entity.Property(static x => x.LastSuccessfulAuthUtc);
         });
 
-        modelBuilder.Entity<OutboxEventEntity>(entity =>
+        modelBuilder.Entity<OutboxEventEntity>(static entity =>
         {
             entity.ToTable("OutboxEvents");
-            entity.HasKey(x => x.OutboxEventId);
-            entity.Property(x => x.AggregateType).IsRequired().HasMaxLength(64);
-            entity.Property(x => x.AggregateId).IsRequired();
-            entity.Property(x => x.EventType).IsRequired().HasMaxLength(128);
-            entity.Property(x => x.EventPayloadJson).IsRequired();
-            entity.Property(x => x.OccurredAtUtc).IsRequired();
-            entity.Property(x => x.RetryCount).HasDefaultValue(0);
-            entity.Property(x => x.NextAttemptUtc).IsRequired();
-            entity.Property(x => x.PublishedAtUtc);
-            entity.Property(x => x.LastError).HasMaxLength(2048);
+            entity.HasKey(static x => x.OutboxEventId);
+            entity.Property(static x => x.AggregateType).IsRequired().HasMaxLength(64);
+            entity.Property(static x => x.AggregateId).IsRequired();
+            entity.Property(static x => x.EventType).IsRequired().HasMaxLength(128);
+            entity.Property(static x => x.EventPayloadJson).IsRequired();
+            entity.Property(static x => x.OccurredAtUtc).IsRequired();
+            entity.Property(static x => x.RetryCount).HasDefaultValue(0);
+            entity.Property(static x => x.NextAttemptUtc).IsRequired();
+            entity.Property(static x => x.PublishedAtUtc);
+            entity.Property(static x => x.LastError).HasMaxLength(2048);
 
-            entity.HasIndex(x => new { x.PublishedAtUtc, x.NextAttemptUtc });
-            entity.HasIndex(x => new { x.AggregateType, x.AggregateId });
+            entity.HasIndex(static x => new { x.PublishedAtUtc, x.NextAttemptUtc });
+            entity.HasIndex(static x => new { x.AggregateType, x.AggregateId });
         });
 
-        modelBuilder.Entity<RideEntity>(entity =>
+        modelBuilder.Entity<RideEntity>(static entity =>
         {
-            entity.ToTable("Rides");
-            entity.HasKey(x => x.Id);
-            entity.Property(x => x.RiderId).IsRequired();
-            entity.Property(x => x.RideDateTimeLocal).IsRequired();
-            entity.Property(x => x.Miles).IsRequired();
-            entity.Property(x => x.CreatedAtUtc).IsRequired();
-
-            // Check constraints
-            entity.HasCheckConstraint("CK_Rides_Miles_GreaterThanZero", "\"Miles\" > 0");
-            entity.HasCheckConstraint(
-                "CK_Rides_RideMinutes_GreaterThanZero",
-                "\"RideMinutes\" IS NULL OR \"RideMinutes\" > 0"
+            entity.ToTable(
+                "Rides",
+                static tableBuilder =>
+                {
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_Miles_GreaterThanZero",
+                        "\"Miles\" > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_RideMinutes_GreaterThanZero",
+                        "\"RideMinutes\" IS NULL OR \"RideMinutes\" > 0"
+                    );
+                }
             );
+            entity.HasKey(static x => x.Id);
+            entity.Property(static x => x.RiderId).IsRequired();
+            entity.Property(static x => x.RideDateTimeLocal).IsRequired();
+            entity.Property(static x => x.Miles).IsRequired();
+            entity.Property(static x => x.CreatedAtUtc).IsRequired();
 
             // Index for efficient defaults query
             entity
-                .HasIndex(x => new { x.RiderId, x.CreatedAtUtc })
+                .HasIndex(static x => new { x.RiderId, x.CreatedAtUtc })
                 .IsDescending(false, true)
                 .HasDatabaseName("IX_Rides_RiderId_CreatedAtUtc_Desc");
 
@@ -104,7 +110,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity
                 .HasOne<UserEntity>()
                 .WithMany()
-                .HasForeignKey(x => x.RiderId)
+                .HasForeignKey(static x => x.RiderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
