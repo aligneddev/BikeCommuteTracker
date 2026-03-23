@@ -14,7 +14,7 @@
     "NODE_ENV": "development",
     "SSL_CERT_DIR": "/root/.aspnet/dev-certs/trust:/usr/lib/ssl/certs"
   },
-  "postCreateCommand": "mkdir -p /root/.ssh && cp /root/.ssh-host/* /root/.ssh/ && chmod 700 /root/.ssh && chmod 600 /root/.ssh/config /root/.ssh/aligneddev_github /root/.ssh/omnitech_github && chmod 644 /root/.ssh/*.pub /root/.ssh/known_hosts 2>/dev/null; curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarn-archive-keyring.gpg && apt-get update && dotnet dev-certs https --trust && dotnet restore BikeTracking.slnx && npm ci --prefix src/BikeTracking.Frontend && dotnet build BikeTracking.slnx",
+  "postCreateCommand": "mkdir -p /root/.ssh && cp /root/.ssh-host/* /root/.ssh/ && chmod 700 /root/.ssh && chmod 600 /root/.ssh/config /root/.ssh/aligneddev_github /root/.ssh/omnitech_github && chmod 644 /root/.ssh/*.pub /root/.ssh/known_hosts 2>/dev/null; dotnet dev-certs https --trust && dotnet tool restore && dotnet restore BikeTracking.slnx && npm ci --prefix src/BikeTracking.Frontend && dotnet build BikeTracking.slnx",
   "customizations": {
     "vscode": {
       "extensions": [

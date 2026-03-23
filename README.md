@@ -167,3 +167,8 @@ backend tests: `dotnet test` from repo root (xUnit)
 
 These are ran in the .github\workflows\ci.yml pipeline on every PR
 
+in the devcontainer I had to use
+`curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarn-archive-keyring.gpg && apt-get update`
+
+and `npx playwright install-deps` to get the tests working. 
+
