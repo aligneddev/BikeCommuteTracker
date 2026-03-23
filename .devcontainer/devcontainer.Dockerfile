@@ -17,8 +17,7 @@ RUN if dotnet --list-sdks | grep -q "^${REQUIRED_DOTNET_SDK_VERSION}"; then \
     fi
 
 # Install required CLI tools once at image build time.
-RUN mkdir -p /usr/local/share/dotnet-tools && \
-    dotnet tool install csharpier --tool-path /usr/local/share/dotnet-tools
+RUN dotnet tool restore
     
 RUN curl -fsSL https://aspire.dev/install.sh | bash
 
