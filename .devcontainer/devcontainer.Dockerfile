@@ -50,5 +50,7 @@ RUN dotnet tool restore && dotnet restore BikeTracking.slnx
 # ~/.npm is outside the workspace bind mount, so the cache persists at runtime,
 # making postCreateCommand "npm ci" fast without re-downloading packages.
 COPY src/BikeTracking.Frontend/package.json src/BikeTracking.Frontend/package-lock.json /tmp/npm-warmup/
-RUN npm ci --prefix /tmp/npm-warmup && rm -rf /tmp/npm-warmup
+RUN npm ci --prefix /tmp/npm-warmup \
+    && npm exec --prefix /tmp/npm-warmup -- playwright install \
+    && rm -rf /tmp/npm-warmup
 
