@@ -43,9 +43,9 @@ test.describe("004-record-ride e2e", () => {
     await page
       .getByLabel(/date & time/i)
       .fill(toDateTimeLocalValue(new Date()));
-    await page.getByLabel(/miles/i).fill("12.34");
-    await page.getByLabel(/duration/i).fill("41");
-    await page.getByLabel(/temperature/i).fill("68");
+    await page.locator("#miles").fill("12.34");
+    await page.locator("#rideMinutes").fill("41");
+    await page.locator("#temperature").fill("68");
     await page.getByRole("button", { name: "Record Ride" }).click();
 
     await expect(page.getByText(/ride recorded successfully/i)).toBeVisible();
@@ -61,9 +61,9 @@ test.describe("004-record-ride e2e", () => {
     await page
       .getByLabel(/date & time/i)
       .fill(toDateTimeLocalValue(new Date()));
-    await page.getByLabel(/miles/i).fill("9.75");
-    await page.getByLabel(/duration/i).fill("35");
-    await page.getByLabel(/temperature/i).fill("61");
+    await page.locator("#miles").fill("9.75");
+    await page.locator("#rideMinutes").fill("35");
+    await page.locator("#temperature").fill("61");
     await page.getByRole("button", { name: "Record Ride" }).click();
     await expect(page.getByText(/ride recorded successfully/i)).toBeVisible();
 
@@ -71,8 +71,8 @@ test.describe("004-record-ride e2e", () => {
     await page.getByRole("link", { name: "Record Ride" }).click();
     await expect(page).toHaveURL("/rides/record");
 
-    await expect(page.getByLabel(/miles/i)).toHaveValue("9.75");
-    await expect(page.getByLabel(/duration/i)).toHaveValue("35");
-    await expect(page.getByLabel(/temperature/i)).toHaveValue("61");
+    await expect(page.locator("#miles")).toHaveValue("9.75");
+    await expect(page.locator("#rideMinutes")).toHaveValue("35");
+    await expect(page.locator("#temperature")).toHaveValue("61");
   });
 });
