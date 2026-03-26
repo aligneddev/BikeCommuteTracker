@@ -3,7 +3,8 @@ import { expect, test, type Page } from "@playwright/test";
 const TEST_PIN = "87654321";
 
 function uniqueUser(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  const suffix = crypto.getRandomValues(new Uint32Array(1))[0];
+  return `${prefix}-${Date.now()}-${suffix}`;
 }
 
 function toDateTimeLocalValue(date: Date): string {
