@@ -5,16 +5,14 @@
     "context": ".."
   },
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "24"
-    },
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "containerEnv": {
     "NODE_ENV": "development",
+    "ASPIRE_CONTAINER_RUNTIME": "podman",
     "SSL_CERT_DIR": "/root/.aspnet/dev-certs/trust:/usr/lib/ssl/certs"
   },
-  "postCreateCommand": "export ASPIRE_CONTAINER_RUNTIME=podman && mkdir -p /root/.ssh && cp /root/.ssh-host/* /root/.ssh/ && chmod 700 /root/.ssh && chmod 600 /root/.ssh/config /root/.ssh/aligneddev_github /root/.ssh/omnitech_github && chmod 644 /root/.ssh/*.pub /root/.ssh/known_hosts 2>/dev/null; dotnet dev-certs https --trust && dotnet tool restore && dotnet restore BikeTracking.slnx && dotnet build BikeTracking.slnx && npm ci --prefix src/BikeTracking.Frontend",
+  "postCreateCommand": "mkdir -p /root/.ssh && cp /root/.ssh-host/* /root/.ssh/ && chmod 700 /root/.ssh && chmod 600 /root/.ssh/config /root/.ssh/aligneddev_github /root/.ssh/omnitech_github && chmod 644 /root/.ssh/*.pub /root/.ssh/known_hosts 2>/dev/null; dotnet dev-certs https --trust && npm ci --prefix src/BikeTracking.Frontend",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -53,17 +51,25 @@
           "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
-        "eslint.validate": ["javascript", "typescript", "typescriptreact"]
+        "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+        "dotnetAcquisitionExtension.existingDotnetPath": [
+          {
+            "extensionId": "ms-dotnettools.csdevkit",
+            "path": "/usr/share/dotnet"
+          },
+          {
+            "extensionId": "ms-dotnettools.csharp",
+            "path": "/usr/share/dotnet"
+          }
+        ]
       }
     }
   },
   "remoteUser": "root",
   "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:/usr/local/share/dotnet-tools:/root/.dotnet/tools",
-    "SSH_AUTH_SOCK": "/ssh-agent"
+    "PATH": "${containerEnv:PATH}:/usr/local/share/dotnet-tools:/root/.dotnet/tools"
   },
   "mounts": [
-    "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
     "source=/mnt/c/Users/klogan/.ssh,target=/root/.ssh-host,type=bind,readonly"
   ]
 }

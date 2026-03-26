@@ -6,7 +6,7 @@ This project uses a DevContainer for consistent local development across all tea
 
 - **Image Build**: `.devcontainer/Dockerfile` (based on `mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble`)
 - **Features**: Node.js 24+ and GitHub CLI
-- **Post-create bootstrap**: Restores NuGet packages, runs frontend `npm ci`, and builds the solution
+- **Post-create bootstrap**: Configures SSH permissions, trusts dev HTTPS certs, and installs frontend dependencies
 
 ## Git Credentials Setup
 
@@ -66,11 +66,11 @@ The container exports these environment variables:
 
 The `postCreateCommand` runs automatically after container creation:
 
-1. `dotnet restore BikeTracking.slnx`
-2. `npm ci --prefix src/BikeTracking.Frontend`
-3. `dotnet build BikeTracking.slnx`
+1. Copies mounted host SSH files from `/root/.ssh-host` to `/root/.ssh` and applies secure file permissions
+2. `dotnet dev-certs https --trust`
+3. `npm ci --prefix src/BikeTracking.Frontend`
 
-SDK/tool installation (required .NET SDK, CSharpier, Aspire CLI) is baked into the image build in `.devcontainer/Dockerfile`, not installed at container start.
+SDK/tool installation and .NET dependency restore are baked into the image build in `.devcontainer/devcontainer.Dockerfile`, not installed at container start.
 
 **Output**: Terminal shows progress; container is ready when build succeeds.
 
