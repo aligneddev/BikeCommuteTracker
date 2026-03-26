@@ -160,13 +160,14 @@ public sealed class RidesApplicationServiceTests
         };
         context.Users.Add(user);
 
-        // Add rides
+        // Add rides with one in prior month so thisMonth assertions stay deterministic.
         var today = DateTime.Now;
+        var previousMonth = today.AddMonths(-1);
         context.Rides.AddRange(
             new RideEntity
             {
                 RiderId = user.UserId,
-                RideDateTimeLocal = today.AddDays(-10),
+                RideDateTimeLocal = previousMonth,
                 Miles = 10m,
                 CreatedAtUtc = DateTime.UtcNow,
             },

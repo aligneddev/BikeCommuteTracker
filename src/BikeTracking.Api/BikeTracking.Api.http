@@ -1,6 +1,42 @@
 @ApiService_HostAddress = http://localhost:5436
+@RiderId = 1
 
-GET {{ApiService_HostAddress}}/weatherforecast/
+### API health
+GET {{ApiService_HostAddress}}/
 Accept: application/json
 
-###
+### Record a ride
+POST {{ApiService_HostAddress}}/api/rides
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "rideDateTimeLocal": "2026-03-26T07:30:00",
+  "miles": 18.4,
+  "rideMinutes": 58,
+  "temperature": 54
+}
+
+### Get ride defaults
+GET {{ApiService_HostAddress}}/api/rides/defaults
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Get unfiltered ride history
+GET {{ApiService_HostAddress}}/api/rides/history?page=1&pageSize=25
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Get filtered ride history (inclusive from/to)
+GET {{ApiService_HostAddress}}/api/rides/history?from=2026-03-01&to=2026-03-31&page=1&pageSize=25
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Edge case: invalid date range (expects 400)
+GET {{ApiService_HostAddress}}/api/rides/history?from=2026-03-31&to=2026-03-01&page=1&pageSize=25
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Edge case: unauthenticated history request (expects 401)
+GET {{ApiService_HostAddress}}/api/rides/history?page=1&pageSize=25
+Accept: application/json

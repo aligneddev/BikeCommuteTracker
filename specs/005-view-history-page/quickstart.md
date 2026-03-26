@@ -76,3 +76,20 @@ Cross-layer (history + dashboard changes):
 cd src/BikeTracking.Frontend
 npm run test:e2e
 ```
+
+## Implementation Notes (Executed)
+
+- History route implemented at `/rides/history` in frontend app router.
+- `GET /api/rides/history` supports `from`, `to`, `page`, and `pageSize` with inclusive date filters.
+- Dashboard (`/miles`) now reuses `MileageSummaryCard` for `thisYear` and `allTime` summaries.
+- Shared formatting helpers live in `src/pages/miles/history-page.helpers.ts`.
+- For rapid verification during development, run targeted tests:
+
+```bash
+cd src/BikeTracking.Frontend
+npm run test:unit -- --run src/pages/HistoryPage.test.tsx src/pages/miles/miles-shell-page.test.tsx src/services/ridesService.test.ts
+```
+
+```bash
+dotnet test src/BikeTracking.Api.Tests/BikeTracking.Api.Tests.csproj --filter "FullyQualifiedName~GetRideHistory"
+```

@@ -166,6 +166,31 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
+    public async Task GetRideHistory_WithDateRangeFilter_ReturnsFilteredRows()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Harper");
+
+        await host.RecordRideAsync(userId, miles: 10m);
+        await host.RecordRideAsync(userId, miles: 5m);
+
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"/api/rides/history?from={today:yyyy-MM-dd}&to={today:yyyy-MM-dd}"
+        );
+        request.Headers.Add("X-User-Id", userId.ToString());
+
+        var response = await host.Client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RideHistoryResponse>();
+        Assert.NotNull(payload);
+        Assert.True(payload.TotalRows >= 1);
+        Assert.True(payload.FilteredTotal.Miles > 0);
+    }
+
+    [Fact]
     public async Task GetRideHistory_WithoutRides_ReturnsEmptyWithZeroSummaries()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -198,7 +223,10 @@ public sealed class RidesEndpointsTests
         await using var host = await RecordRideApiHost.StartAsync();
         var userId = await host.SeedUserAsync("Ivy");
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/rides/history?from=2025-12-31&to=2025-01-01");
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "/api/rides/history?from=2025-12-31&to=2025-01-01"
+        );
         request.Headers.Add("X-User-Id", userId.ToString());
         var response = await host.Client.SendAsync(request);
 
