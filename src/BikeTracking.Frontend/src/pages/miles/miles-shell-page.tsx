@@ -2,16 +2,13 @@ import { useAuth } from '../../context/auth-context'
 import './miles-shell-page.css'
 
 export function MilesShellPage() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
 
   return (
     <main className="miles-shell">
       <div className="miles-welcome">
         <h1>Welcome, {user?.userName}.</h1>
         <p>Your miles dashboard is coming soon.</p>
-        <button type="button" className="logout-btn" onClick={logout}>
-          Log out
-        </button>
       </div>
 
       <div className="miles-placeholder" aria-label="Miles content placeholder">

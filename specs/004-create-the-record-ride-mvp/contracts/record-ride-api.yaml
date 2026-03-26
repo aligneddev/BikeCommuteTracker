@@ -1,0 +1,138 @@
+openapi: 3.0.3
+info:
+  title: BikeTracking Ride Recording API
+  version: 1.0.0
+  description: Authenticated ride recording and rider default value retrieval.
+
+paths:
+  /api/rides:
+    post:
+      summary: Record a ride event for the authenticated rider
+      operationId: recordRide
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordRideRequest'
+      responses:
+        '201':
+          description: Ride recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordRideSuccessResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/rides/defaults:
+    get:
+      summary: Get record-ride form defaults for the authenticated rider
+      operationId: getRideDefaults
+      responses:
+        '200':
+          description: Defaults resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RideDefaultsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    RecordRideRequest:
+      type: object
+      required:
+        - rideDateTimeLocal
+        - miles
+      properties:
+        rideDateTimeLocal:
+          type: string
+          format: date-time
+          description: Date/time entered by the rider.
+        miles:
+          type: number
+          exclusiveMinimum: 0
+        rideMinutes:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Optional duration in minutes.
+        temperature:
+          type: number
+          nullable: true
+          description: Optional ambient temperature in app-configured unit.
+
+    RecordRideSuccessResponse:
+      type: object
+      required:
+        - rideId
+        - riderId
+        - savedAtUtc
+        - eventStatus
+      properties:
+        rideId:
+          type: integer
+          format: int64
+        riderId:
+          type: integer
+          format: int64
+        savedAtUtc:
+          type: string
+          format: date-time
+        eventStatus:
+          type: string
+          enum:
+            - queued
+            - published
+
+    RideDefaultsResponse:
+      type: object
+      required:
+        - hasPreviousRide
+        - defaultRideDateTimeLocal
+      properties:
+        hasPreviousRide:
+          type: boolean
+        defaultRideDateTimeLocal:
+          type: string
+          format: date-time
+        defaultMiles:
+          type: number
+          nullable: true
+        defaultRideMinutes:
+          type: integer
+          nullable: true
+        defaultTemperature:
+          type: number
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string

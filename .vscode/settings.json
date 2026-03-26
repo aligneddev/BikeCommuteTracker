@@ -9,6 +9,16 @@
     "chat.tools.terminal.autoApprove": {
         ".specify/scripts/bash/": true,
         ".specify/scripts/powershell/": true
-    }
+    },
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "Local",
+            "group": "BikeCommuter",
+            "database": "${workspaceFolder:neCodeBikeTracking}/src/BikeTracking.Api/biketracking.local.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
 }
 
