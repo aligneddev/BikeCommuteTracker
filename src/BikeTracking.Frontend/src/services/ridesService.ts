@@ -20,6 +20,47 @@ export interface RideDefaultsResponse {
   defaultRideDateTimeLocal: string;
 }
 
+/**
+ * Aggregated miles and ride count for a defined period (thisMonth, thisYear, allTime, or filtered).
+ */
+export interface MileageSummary {
+  miles: number;
+  rideCount: number;
+  period: "thisMonth" | "thisYear" | "allTime" | "filtered";
+}
+
+/**
+ * A single ride row for display in the history grid.
+ */
+export interface RideHistoryRow {
+  rideId: number;
+  rideDateTimeLocal: string;
+  miles: number;
+  rideMinutes?: number;
+  temperature?: number;
+}
+
+/**
+ * Nested container for summary totals by period.
+ */
+export interface RideHistorySummaries {
+  thisMonth: MileageSummary;
+  thisYear: MileageSummary;
+  allTime: MileageSummary;
+}
+
+/**
+ * Full response for GET /api/rides/history endpoint: summaries + filtered total + paged rows.
+ */
+export interface RideHistoryResponse {
+  summaries: RideHistorySummaries;
+  filteredTotal: MileageSummary;
+  rides: RideHistoryRow[];
+  page: number;
+  pageSize: number;
+  totalRows: number;
+}
+
 const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
     /\/$/,
@@ -94,4 +135,69 @@ export async function getRideDefaults(): Promise<RideDefaultsResponse> {
   }
 
   return response.json();
+}
+
+/**
+ * Query parameters for ride history filtering and pagination.
+ */
+export interface GetRideHistoryParams {
+  from?: string; // ISO date string (YYYY-MM-DD)
+  to?: string; // ISO date string (YYYY-MM-DD)
+  page?: number;
+  pageSize?: number;
+}
+
+/**
+ * Serialize query parameters for ride history fetch.
+ */
+function serializeRideHistoryParams(params: GetRideHistoryParams): string {
+  const searchParams = new URLSearchParams();
+
+  if (params.from) {
+    searchParams.set("from", params.from);
+  }
+  if (params.to) {
+    searchParams.set("to", params.to);
+  }
+  if (params.page !== undefined && params.page > 0) {
+    searchParams.set("page", params.page.toString());
+  }
+  if (params.pageSize !== undefined && params.pageSize > 0) {
+    searchParams.set("pageSize", params.pageSize.toString());
+  }
+
+  return searchParams.toString();
+}
+
+/**
+ * Fetch ride history with optional date range filtering and pagination.
+ * @param params Query parameters for filtering and pagination
+ * @returns Ride history response with summaries, filtered rides, and pagination info
+ */
+export async function getRideHistory(
+  params: GetRideHistoryParams = {},
+): Promise<RideHistoryResponse> {
+  const queryString = serializeRideHistoryParams(params);
+  const url = queryString
+    ? `${API_BASE_URL}/api/rides/history?${queryString}`
+    : `${API_BASE_URL}/api/rides/history`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const errorMsg = await parseErrorMessage(
+      response,
+      "Failed to fetch ride history",
+    );
+    // Provide specific error message for invalid date range
+    if (response.status === 400 && errorMsg.includes("date range")) {
+      throw new Error(errorMsg);
+    }
+    throw new Error(errorMsg);
+  }
+
+  return response.json() as Promise<RideHistoryResponse>;
 }

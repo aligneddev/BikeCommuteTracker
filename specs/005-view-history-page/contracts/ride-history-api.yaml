@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: BikeTracking Ride History API
+  version: 1.0.0
+  description: Authenticated ride history query with summaries and date-range filtering.
+
+paths:
+  /api/rides/history:
+    get:
+      summary: Get ride history rows with summary totals for the authenticated rider
+      operationId: getRideHistory
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          required: false
+          description: Inclusive start date filter in rider-local date semantics.
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          required: false
+          description: Inclusive end date filter in rider-local date semantics.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 25
+          required: false
+      responses:
+        '200':
+          description: History and summaries resolved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RideHistoryResponse'
+        '400':
+          description: Invalid query parameters (e.g., from > to)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    MileageSummary:
+      type: object
+      required:
+        - miles
+        - rideCount
+        - period
+      properties:
+        miles:
+          type: number
+          minimum: 0
+        rideCount:
+          type: integer
+          minimum: 0
+        period:
+          type: string
+          enum:
+            - thisMonth
+            - thisYear
+            - allTime
+            - filtered
+          description: The time period this summary represents.
+
+    RideHistoryRow:
+      type: object
+      required:
+        - rideId
+        - rideDateTimeLocal
+        - miles
+      properties:
+        rideId:
+          type: integer
+          format: int64
+        rideDateTimeLocal:
+          type: string
+          format: date-time
+        miles:
+          type: number
+          exclusiveMinimum: 0
+        rideMinutes:
+          type: integer
+          nullable: true
+          minimum: 1
+        temperature:
+          type: number
+          nullable: true
+
+    RideHistoryResponse:
+      type: object
+      required:
+        - summaries
+        - filteredTotal
+        - rides
+        - page
+        - pageSize
+        - totalRows
+      properties:
+        summaries:
+          type: object
+          required:
+            - thisMonth
+            - thisYear
+            - allTime
+          properties:
+            thisMonth:
+              $ref: '#/components/schemas/MileageSummary'
+            thisYear:
+              $ref: '#/components/schemas/MileageSummary'
+            allTime:
+              $ref: '#/components/schemas/MileageSummary'
+        filteredTotal:
+          $ref: '#/components/schemas/MileageSummary'
+        rides:
+          type: array
+          items:
+            $ref: '#/components/schemas/RideHistoryRow'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 200
+        totalRows:
+          type: integer
+          minimum: 0
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string

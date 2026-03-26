@@ -135,6 +135,20 @@ function ConvertTo-CleanBranchName {
     
     return $Name.ToLower() -replace '[^a-z0-9]', '-' -replace '-{2,}', '-' -replace '^-', '' -replace '-$', ''
 }
+
+function Limit-BranchSuffixWords {
+    param(
+        [string]$Suffix,
+        [int]$MaxWords = 4
+    )
+
+    $parts = ($Suffix -split '-') | Where-Object { $_ }
+    if ($parts.Count -le $MaxWords) {
+        return ($parts -join '-')
+    }
+
+    return (($parts | Select-Object -First $MaxWords) -join '-')
+}
 $fallbackRoot = (Find-RepositoryRoot -StartDir $PSScriptRoot)
 if (-not $fallbackRoot) {
     Write-Error "Error: Could not determine repository root. Please run this script from within the repository."
@@ -211,6 +225,9 @@ if ($ShortName) {
     # Generate from description with smart filtering
     $branchSuffix = Get-BranchName -Description $featureDesc
 }
+
+# Enforce a consistent word cap for branch suffixes.
+$branchSuffix = Limit-BranchSuffixWords -Suffix $branchSuffix -MaxWords 4
 
 # Determine branch number
 if ($Number -eq 0) {

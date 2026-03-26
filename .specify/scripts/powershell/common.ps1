@@ -84,6 +84,16 @@ function Test-FeatureBranch {
         Write-Output "Feature branches should be named like: 001-feature-name"
         return $false
     }
+
+    # Enforce max 4 words in branch suffix (after the numeric prefix).
+    $suffix = $Branch -replace '^[0-9]{3}-', ''
+    $suffixParts = ($suffix -split '-') | Where-Object { $_ }
+    if ($suffixParts.Count -gt 4) {
+        Write-Output "ERROR: Feature branch suffix exceeds 4 words. Current branch: $Branch"
+        Write-Output "Feature branches must use max 4 words after the numeric prefix (e.g., 005-view-history-page)."
+        return $false
+    }
+
     return $true
 }
 
