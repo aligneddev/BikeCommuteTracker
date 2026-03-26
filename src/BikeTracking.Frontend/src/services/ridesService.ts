@@ -20,35 +20,77 @@ export interface RideDefaultsResponse {
   defaultRideDateTimeLocal: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
+    /\/$/,
+    "",
+  ) ?? "http://localhost:5436";
+const SESSION_KEY = "bike_tracking_auth_session";
+
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) {
+      return headers;
+    }
+
+    const parsed = JSON.parse(raw) as { userId?: number };
+    if (typeof parsed.userId === "number" && parsed.userId > 0) {
+      headers["X-User-Id"] = parsed.userId.toString();
+    }
+  } catch {
+    // Ignore malformed session payloads and continue unauthenticated.
+  }
+
+  return headers;
+}
+
+async function parseErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const payload = (await response.json()) as { message?: string };
+    if (payload.message && payload.message.length > 0) {
+      return payload.message;
+    }
+  } catch {
+    // Response was not JSON.
+  }
+
+  return fallback;
+}
 
 export async function recordRide(
   request: RecordRideRequest,
 ): Promise<RecordRideSuccessResponse> {
-  const response = await fetch(`${API_BASE}/rides`, {
+  const response = await fetch(`${API_BASE_URL}/api/rides`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(request),
-    credentials: "include",
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to record ride");
+    throw new Error(await parseErrorMessage(response, "Failed to record ride"));
   }
 
   return response.json();
 }
 
 export async function getRideDefaults(): Promise<RideDefaultsResponse> {
-  const response = await fetch(`${API_BASE}/rides/defaults`, {
+  const response = await fetch(`${API_BASE_URL}/api/rides/defaults`, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch ride defaults");
+    throw new Error(
+      await parseErrorMessage(response, "Failed to fetch ride defaults"),
+    );
   }
 
   return response.json();

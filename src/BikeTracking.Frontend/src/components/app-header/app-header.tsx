@@ -16,7 +16,7 @@ export function AppHeader() {
           <NavLink
             to="/miles"
             className={({ isActive }) =>
-              isActive ? 'nav-link nav-link--active' : 'nav-link'
+              isActive ? 'nav-link nav-link-active' : 'nav-link'
             }
           >
             Dashboard
@@ -24,7 +24,7 @@ export function AppHeader() {
           <NavLink
             to="/rides/record"
             className={({ isActive }) =>
-              isActive ? 'nav-link nav-link--active' : 'nav-link'
+              isActive ? 'nav-link nav-link-active' : 'nav-link'
             }
           >
             Record Ride

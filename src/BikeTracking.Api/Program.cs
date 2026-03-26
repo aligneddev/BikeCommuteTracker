@@ -25,6 +25,14 @@ builder.Services.AddSingleton<IPinHasher, PinHasher>();
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<IdentifyService>();
 
+builder
+    .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)
+    .AddScheme<UserIdHeaderAuthenticationSchemeOptions, UserIdHeaderAuthenticationHandler>(
+        UserIdHeaderAuthenticationHandler.SchemeName,
+        _ => { }
+    );
+builder.Services.AddAuthorization();
+
 builder.Services.AddScoped<RecordRideService>();
 builder.Services.AddScoped<GetRideDefaultsService>();
 
@@ -70,6 +78,8 @@ await using (var scope = app.Services.CreateAsyncScope())
 app.MapGet("/", () => Results.Ok(new { message = "Bike Tracking API is running." }));
 app.UseCors();
 app.UseHttpLogging();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapUsersEndpoints();
 app.MapRidesEndpoints();
 app.MapDefaultEndpoints();
