@@ -158,6 +158,14 @@ public sealed class EditRideService(
             return EditRideResult.Failure("VALIDATION_FAILED", "Miles must be greater than 0.");
         }
 
+        if (request.Miles > 200)
+        {
+            return EditRideResult.Failure(
+                "VALIDATION_FAILED",
+                "Miles must be less than or equal to 200."
+            );
+        }
+
         if (request.RideMinutes.HasValue && request.RideMinutes <= 0)
         {
             return EditRideResult.Failure(

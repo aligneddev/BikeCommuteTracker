@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement an authenticated Record Ride vertical slice that lets riders submit required date/time and miles, optionally submit minutes and temperature, and persist each successful submission as an immutable `RideRecorded` event payload via the existing outbox event pipeline. Deliver a React page with smart defaults (`now` for date/time and last ride values for optional defaults), plus Minimal API command/query endpoints and persistence support aligned with the current architecture.
+Implement an authenticated Record Ride vertical slice that lets riders submit required date/time and miles, optionally submit minutes and temperature, and persist each successful submission as an immutable `RideRecorded` event payload via the existing outbox event pipeline. Deliver a React page with smart defaults (`now` for date/time and last ride values for optional defaults), plus Minimal API command/query endpoints and persistence support aligned with the current architecture. Validation includes miles > 0 and <= 200.
 
 ## Technical Context
 
@@ -16,7 +16,7 @@ Implement an authenticated Record Ride vertical slice that lets riders submit re
 **Target Platform**: Linux DevContainer local development, browser frontend, containerized local orchestration via Aspire
 **Project Type**: Web application (React frontend + .NET Minimal API backend)  
 **Performance Goals**: API response under 500ms p95 for ride record/defaults endpoints; defaults query should be single-latest lookup per rider  
-**Constraints**: Must preserve exact submitted values; miles > 0 and optional rideMinutes > 0 when provided; maintain auth isolation and retry-friendly UX  
+**Constraints**: Must preserve exact submitted values; miles > 0 and <= 200 and optional rideMinutes > 0 when provided; maintain auth isolation and retry-friendly UX  
 **Scale/Scope**: MVP feature for authenticated riders, single-user local-first profile, many rides per rider over time
 
 ## Constitution Check
@@ -43,7 +43,7 @@ No constitutional violations identified; no complexity exceptions required.
 |------|--------|-------|
 | Architecture and boundaries preserved | PASS | Data model and contracts keep read/write concerns separated (`/api/rides` and `/api/rides/defaults`). |
 | Event contract discipline | PASS | Dedicated `RideRecorded` JSON schema and API contract defined in feature contracts. |
-| Validation depth | PASS | Validation rules documented in data model and surfaced in API/UX quickstart steps. |
+| Validation depth | PASS | Validation rules documented in data model and surfaced in API/UX quickstart steps, including miles upper bound <= 200. |
 | UX consistency/accessibility | PASS | Route is authenticated, field semantics explicit, and success/error feedback required. |
 | Verification and testing discipline | PASS WITH ACTION | Execution commands documented; strict red-green sequence remains required in tasks phase. |
 

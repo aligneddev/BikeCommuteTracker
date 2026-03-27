@@ -5,7 +5,7 @@
 
 ## Summary
 
-Add an authenticated, table-driven ride edit vertical slice on the History page that allows single-row edit/save/cancel flows, validates ride fields, prevents silent overwrite conflicts, and keeps all affected mileage summaries synchronized after successful edits by appending immutable `RideEdited` events and rebuilding read-side projections.
+Add an authenticated, table-driven ride edit vertical slice on the History page that allows single-row edit/save/cancel flows, validates ride fields (including miles > 0 and <= 200), prevents silent overwrite conflicts, and keeps all affected mileage summaries synchronized after successful edits by appending immutable `RideEdited` events and rebuilding read-side projections.
 
 ## Technical Context
 
@@ -43,7 +43,7 @@ No constitutional violations identified.
 |------|--------|-------|
 | Architecture and boundaries preserved | PASS | Data model and contracts keep write-side edit flow decoupled from read projections. |
 | Contract discipline | PASS | Edit endpoint and `RideEdited` event schemas are documented and versioned pre-implementation. |
-| Validation depth | PASS | Invalid numeric, required field, and conflict scenarios are explicitly modeled. |
+| Validation depth | PASS | Invalid numeric, required field, miles upper bound (<= 200), and conflict scenarios are explicitly modeled. |
 | UX consistency/accessibility | PASS | Edit state, error feedback, and confirmation flow are specified as explicit user-visible states. |
 | Mandatory verification matrix | PASS WITH ACTION | Quickstart includes required backend/frontend/e2e command set for this cross-layer feature. |
 

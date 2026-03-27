@@ -87,6 +87,27 @@ public sealed class RidesApplicationServiceTests
     }
 
     [Fact]
+    public async Task RecordRideService_ValidatesMilesLessThanOrEqualToTwoHundred()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Cara",
+            NormalizedName = "cara",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var service = new RecordRideService(context, null!);
+        var request = new RecordRideRequest(DateTime.Now, 201m);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.ExecuteAsync(user.UserId, request)
+        );
+    }
+
+    [Fact]
     public async Task GetRideDefaultsService_ReturnsDefaultsForNewRider()
     {
         using var context = CreateDbContext();

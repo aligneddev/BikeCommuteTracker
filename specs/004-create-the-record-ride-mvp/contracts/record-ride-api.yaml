@@ -68,6 +68,7 @@ components:
         miles:
           type: number
           exclusiveMinimum: 0
+          maximum: 200
         rideMinutes:
           type: integer
           nullable: true

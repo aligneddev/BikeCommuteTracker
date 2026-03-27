@@ -30,7 +30,7 @@ Create foundational files, contracts, and folder structure. Verify no compilatio
 - `ErrorResponse` (message, errors collection)
 
 **Validation Rules** (embed in DTO):
-- `miles` must be > 0 (use `[Range(0.01, double.MaxValue)]` or custom validator)
+- `miles` must be > 0 and <= 200 (use `[Range(0.01, 200)]` or custom validator)
 - `rideMinutes` nullable integer, > 0 when provided
 - `temperature` nullable number
 - `rideDateTimeLocal` required, valid date-time format
@@ -140,7 +140,7 @@ Define all tests for the feature. Tests must fail before implementation. Confirm
    - Assert response is 201
 
 3. **PostRecordRide_WithInvalidMiles_Returns400**
-   - POST `/api/rides` with miles <= 0
+  - POST `/api/rides` with miles <= 0 or miles > 200
    - Assert response is 400
    - Assert error message reflects validation failure
 
@@ -359,7 +359,7 @@ Implement backend services, persistence, and endpoints to turn failing tests gre
 - `RecordRideRequest`
   - Add `[Required]` to rideDateTimeLocal
   - Add `[Required]` to miles
-  - Add `[Range(0.01, double.MaxValue)]` to miles
+  - Add `[Range(0.01, 200)]` to miles
   - Add optional rideMinutes with `[Range(1, int.MaxValue)]` when provided
   - Add optional temperature with no validation (any number allowed)
 
@@ -397,7 +397,7 @@ Implement backend services, persistence, and endpoints to turn failing tests gre
    - Add `DbSet<RideEntity> Rides { get; set; }`
    - Configure entity mapping in OnModelCreating:
      - Mark Id as primary key
-     - Add check constraint: `Miles > 0`
+  - Add check constraint: `Miles > 0 AND Miles <= 200`
      - Add check constraint: `RideMinutes > 0 OR RideMinutes IS NULL`
      - Add foreign key to Users
      - Create index on (RiderId, CreatedAtUtc) descending for efficient defaults query

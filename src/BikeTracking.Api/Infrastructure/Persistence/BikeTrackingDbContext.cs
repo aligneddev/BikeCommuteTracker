@@ -86,7 +86,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                 {
                     tableBuilder.HasCheckConstraint(
                         "CK_Rides_Miles_GreaterThanZero",
-                        "\"Miles\" > 0"
+                        "CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200"
                     );
                     tableBuilder.HasCheckConstraint(
                         "CK_Rides_RideMinutes_GreaterThanZero",

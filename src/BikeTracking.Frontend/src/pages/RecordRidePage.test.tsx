@@ -113,6 +113,34 @@ describe('RecordRidePage', () => {
     })
   })
 
+  it('should show validation error for miles above maximum', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      const milesInput = screen.getByLabelText(/miles/i) as HTMLInputElement
+      fireEvent.change(milesInput, { target: { value: '201' } })
+
+      const submitButton = screen.getByRole('button', { name: /record ride/i })
+      fireEvent.click(submitButton)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/miles must be less than or equal to 200/i)
+      ).toBeInTheDocument()
+      expect(mockRecordRide).not.toHaveBeenCalled()
+    })
+  })
+
   it('should show success message on successful submit', async () => {
     mockGetRideDefaults.mockResolvedValue({
       hasPreviousRide: false,

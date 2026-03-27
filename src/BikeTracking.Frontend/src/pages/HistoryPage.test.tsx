@@ -377,6 +377,51 @@ describe('HistoryPage', () => {
     })
   })
 
+  it('should block save and show validation message for miles above maximum', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 5, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 5, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 5, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 5, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 31,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 5,
+          rideMinutes: 30,
+          temperature: 70,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+
+    const milesInput = screen.getByRole('spinbutton', {
+      name: /miles/i,
+    }) as HTMLInputElement
+
+    fireEvent.change(milesInput, { target: { value: '201' } })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /miles must be less than or equal to 200/i
+      )
+      expect(mockEditRide).not.toHaveBeenCalled()
+    })
+  })
+
   it('should show conflict error and keep edit mode on stale version response', async () => {
     mockGetRideHistory.mockResolvedValue({
       summaries: {

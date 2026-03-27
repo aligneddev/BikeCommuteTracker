@@ -66,6 +66,19 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
+    public async Task PostRecordRide_WithMilesAboveMaximum_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Cleo");
+
+        var request = new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: 200.01m);
+
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PostRecordRide_WithInvalidRideMinutes_Returns400()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -272,6 +285,26 @@ public sealed class RidesEndpointsTests
         var request = new EditRideRequest(
             RideDateTimeLocal: DateTime.Now,
             Miles: 0m,
+            RideMinutes: null,
+            Temperature: null,
+            ExpectedVersion: 1
+        );
+
+        var response = await host.Client.PutWithAuthAsync($"/api/rides/{rideId}", request, userId);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEditRide_WithMilesAboveMaximum_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Liam");
+        var rideId = await host.RecordRideAsync(userId, miles: 8.5m);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 250m,
             RideMinutes: null,
             Temperature: null,
             ExpectedVersion: 1

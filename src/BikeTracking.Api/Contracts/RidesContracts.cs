@@ -5,7 +5,11 @@ namespace BikeTracking.Api.Contracts;
 public sealed record RecordRideRequest(
     [property: Required(ErrorMessage = "Ride date/time is required")] DateTime RideDateTimeLocal,
     [property: Required(ErrorMessage = "Miles is required")]
-    [property: Range(0.01, double.MaxValue, ErrorMessage = "Miles must be greater than 0")]
+    [property: Range(
+        0.01,
+        200,
+        ErrorMessage = "Miles must be greater than 0 and less than or equal to 200"
+    )]
         decimal Miles,
     [property: Range(1, int.MaxValue, ErrorMessage = "Ride minutes must be greater than 0")]
         int? RideMinutes = null,
@@ -30,7 +34,11 @@ public sealed record RideDefaultsResponse(
 public sealed record EditRideRequest(
     [property: Required(ErrorMessage = "Ride date/time is required")] DateTime RideDateTimeLocal,
     [property: Required(ErrorMessage = "Miles is required")]
-    [property: Range(0.01, double.MaxValue, ErrorMessage = "Miles must be greater than 0")]
+    [property: Range(
+        0.01,
+        200,
+        ErrorMessage = "Miles must be greater than 0 and less than or equal to 200"
+    )]
         decimal Miles,
     [property: Range(1, int.MaxValue, ErrorMessage = "Ride minutes must be greater than 0")]
         int? RideMinutes,

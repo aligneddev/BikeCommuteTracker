@@ -153,6 +153,11 @@ export function HistoryPage() {
       return
     }
 
+    if (milesValue > 200) {
+      setError('Miles must be less than or equal to 200')
+      return
+    }
+
     const result = await editRide(ride.rideId, {
       rideDateTimeLocal: ride.rideDateTimeLocal,
       miles: milesValue,

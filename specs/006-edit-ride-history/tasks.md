@@ -131,6 +131,15 @@
 - [X] T052 Run frontend E2E verification for ride edit flow in src/BikeTracking.Frontend/tests/e2e/edit-ride-history.spec.ts
 - [X] T053 [P] Update implementation notes and execution guidance in specs/006-edit-ride-history/quickstart.md
 
+### Post-Planning Scope Update: Miles Upper Bound
+
+**Purpose**: Add explicit validation so edited ride miles must be 200 or less.
+
+- [X] T054 [P] [US2] Add endpoint test for 400 validation error when miles > 200 in src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs
+- [X] T055 [P] [US2] Add frontend test for inline validation error when miles > 200 in src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx
+- [X] T056 [US2] Update backend DTO/domain validation to reject miles > 200 with clear message in src/BikeTracking.Api/Contracts/RidesContracts.cs
+- [X] T057 [US2] Update client-side row validation to block save when miles > 200 in src/BikeTracking.Frontend/src/pages/HistoryPage.tsx
+
 ---
 
 ## Dependencies & Execution Order
