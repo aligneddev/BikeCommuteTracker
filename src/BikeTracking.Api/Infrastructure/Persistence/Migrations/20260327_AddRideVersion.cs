@@ -1,3 +1,5 @@
+using BikeTracking.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,6 +7,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(BikeTrackingDbContext))]
+    [Migration("20260327000000_AddRideVersion")]
     public partial class AddRideVersion : Migration
     {
         /// <inheritdoc />

@@ -4,6 +4,7 @@ using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Endpoints;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Security;
+using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,17 +18,7 @@ var connectionString =
 
 builder.Services.Configure<IdentityOptions>(builder.Configuration.GetSection("Identity"));
 builder.Services.AddDbContext<BikeTrackingDbContext>(options =>
-    options
-        .UseSqlite(connectionString)
-        .ConfigureWarnings(w =>
-            w.Ignore(
-                Microsoft
-                    .EntityFrameworkCore
-                    .Diagnostics
-                    .RelationalEventId
-                    .PendingModelChangesWarning
-            )
-        )
+    options.UseSqlite(connectionString)
 );
 
 builder.Services.AddScoped<PinPolicyValidator>();
@@ -81,19 +72,29 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+if (Environment.GetEnvironmentVariable("PLAYWRIGHT_E2E") == "1")
+{
+    try
+    {
+        var sqliteBuilder = new SqliteConnectionStringBuilder(connectionString);
+        var dataSource = sqliteBuilder.DataSource;
+        if (!Path.IsPathRooted(dataSource))
+        {
+            dataSource = Path.GetFullPath(dataSource, AppContext.BaseDirectory);
+        }
+
+        app.Logger.LogInformation("Playwright E2E DB: {DataSource}", dataSource);
+    }
+    catch
+    {
+        app.Logger.LogInformation("Playwright E2E DB connection string configured.");
+    }
+}
+
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
-    // For development/test: use EnsureCreatedAsync to apply code-first schema directly
-    // In production, use MigrateAsync with proper migrations assembly configuration
-    if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("test"))
-    {
-        await dbContext.Database.EnsureCreatedAsync();
-    }
-    else
-    {
-        await dbContext.Database.MigrateAsync();
-    }
+    await dbContext.Database.MigrateAsync();
 }
 
 app.MapGet("/", () => Results.Ok(new { message = "Bike Tracking API is running." }));

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { loginUser, signupUser, uniqueUser } from "./support/auth-helpers";
 
 /**
  * T014 - E2E Smoke Test: User Login
@@ -17,21 +18,12 @@ import { test, expect, type Page } from "@playwright/test";
 
 const TEST_PIN = "87654321";
 
-function uniqueUser(prefix: string): string {
-  const suffix = crypto.getRandomValues(new Uint32Array(1))[0];
-  return `${prefix}-${Date.now()}-${suffix}`;
-}
-
 async function createUserViaSignup(
   page: Page,
   userName: string,
   pin: string,
 ): Promise<void> {
-  await page.goto("/signup");
-  await page.getByLabel("Name").fill(userName);
-  await page.getByLabel("PIN").fill(pin);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL("/login");
+  await signupUser(page, userName, pin);
   await expect(page.getByLabel("Name")).toHaveValue(userName);
 }
 
@@ -63,10 +55,7 @@ test.describe("003-user-login smoke tests", () => {
     const userName = uniqueUser("e2e-login-ok");
     await createUserViaSignup(page, userName, TEST_PIN);
 
-    await page.getByLabel("Name").fill(userName);
-    await page.getByLabel("PIN").fill(TEST_PIN);
-    await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page).toHaveURL("/miles");
+    await loginUser(page, userName, TEST_PIN);
     await expect(page.getByText(`Welcome, ${userName}`)).toBeVisible();
   });
 
@@ -74,10 +63,7 @@ test.describe("003-user-login smoke tests", () => {
     const userName = uniqueUser("e2e-logout");
     await createUserViaSignup(page, userName, TEST_PIN);
 
-    await page.getByLabel("Name").fill(userName);
-    await page.getByLabel("PIN").fill(TEST_PIN);
-    await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page).toHaveURL("/miles");
+    await loginUser(page, userName, TEST_PIN);
 
     // Logout
     await page.getByRole("button", { name: "Log out" }).click();

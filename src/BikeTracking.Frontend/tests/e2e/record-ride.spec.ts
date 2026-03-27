@@ -1,71 +1,30 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { createAndLoginUser, uniqueUser } from "./support/auth-helpers";
+import { recordRide } from "./support/ride-helpers";
 
 const TEST_PIN = "87654321";
-
-function uniqueUser(prefix: string): string {
-  const suffix = crypto.getRandomValues(new Uint32Array(1))[0];
-  return `${prefix}-${Date.now()}-${suffix}`;
-}
-
-function toDateTimeLocalValue(date: Date): string {
-  const pad = (value: number): string => value.toString().padStart(2, "0");
-
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate(),
-  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-async function createAndLoginUser(
-  page: Page,
-  userName: string,
-  pin: string,
-): Promise<void> {
-  await page.goto("/signup");
-  await page.getByLabel("Name").fill(userName);
-  await page.getByLabel("PIN").fill(pin);
-  await page.getByRole("button", { name: "Create account" }).click();
-
-  await expect(page).toHaveURL("/login");
-  await page.getByLabel("Name").fill(userName);
-  await page.getByLabel("PIN").fill(pin);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL("/miles");
-}
 
 test.describe("004-record-ride e2e", () => {
   test("records a ride from the record page", async ({ page }) => {
     const userName = uniqueUser("e2e-record-ride");
     await createAndLoginUser(page, userName, TEST_PIN);
 
-    await page.getByRole("link", { name: "Record Ride" }).click();
-    await expect(page).toHaveURL("/rides/record");
-
-    await page
-      .getByLabel(/date & time/i)
-      .fill(toDateTimeLocalValue(new Date()));
-    await page.locator("#miles").fill("12.34");
-    await page.locator("#rideMinutes").fill("41");
-    await page.locator("#temperature").fill("68");
-    await page.getByRole("button", { name: "Record Ride" }).click();
-
-    await expect(page.getByText(/ride recorded successfully/i)).toBeVisible();
+    await recordRide(page, {
+      miles: "12.34",
+      rideMinutes: "41",
+      temperature: "68",
+    });
   });
 
   test("prefills defaults from the previous ride", async ({ page }) => {
     const userName = uniqueUser("e2e-ride-defaults");
     await createAndLoginUser(page, userName, TEST_PIN);
 
-    await page.goto("/rides/record");
-    await expect(page).toHaveURL("/rides/record");
-
-    await page
-      .getByLabel(/date & time/i)
-      .fill(toDateTimeLocalValue(new Date()));
-    await page.locator("#miles").fill("9.75");
-    await page.locator("#rideMinutes").fill("35");
-    await page.locator("#temperature").fill("61");
-    await page.getByRole("button", { name: "Record Ride" }).click();
-    await expect(page.getByText(/ride recorded successfully/i)).toBeVisible();
+    await recordRide(page, {
+      miles: "9.75",
+      rideMinutes: "35",
+      temperature: "61",
+    });
 
     await page.goto("/miles");
     await page.getByRole("link", { name: "Record Ride" }).click();

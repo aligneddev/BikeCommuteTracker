@@ -65,6 +65,12 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<decimal?>("Temperature")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Version")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1)
+                        .IsConcurrencyToken();
+
                     b.HasKey("Id");
 
                     b.HasIndex("RiderId", "CreatedAtUtc")

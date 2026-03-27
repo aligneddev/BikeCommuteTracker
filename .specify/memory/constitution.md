@@ -10,7 +10,7 @@ Modified Sections:
 - Compliance Audit Checklist: Added modular boundary and contract compatibility checks
 - Guardrails: Added non-negotiable interface/contract boundary rules for cross-module integration
 Status: Approved — modular architecture and contract-first parallel delivery are now constitutional requirements
-Current Update (v1.12.1): Added mandatory commit gates at each TDD gate transition and at phase completion.
+Current Update (v1.12.2): Added mandatory spec-completion gate requiring database migrations to be applied and E2E tests to pass before a spec can be marked done.
 Previous Updates:
 - v1.11.0: Strengthened TDD mandate with a strict gated red-green-refactor workflow requiring explicit user confirmation of failing tests before implementation.
 - v1.10.2: Codified a mandatory post-change verification command matrix so every change runs explicit checks before merge.
@@ -393,6 +393,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 13. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
 14. **User Acceptance**: User validates slice meets specification and data validation rules observed
 15. **Phase Completion Commit**: Before starting the next phase, create a dedicated phase-completion commit that includes completed tasks and verification evidence for that phase
+16. **Spec Completion Gate**: Before marking any specification as done, database migrations for that spec must be applied successfully to the target local runtime database and the spec's end-to-end (Playwright) tests must run green
 
 ### Compliance Audit Checklist
 
@@ -408,6 +409,8 @@ Tests suggested by agent must receive explicit user approval before implementati
 - [ ] Security issues recognized, explained, and remediated (or explicitly accepted by user)
 - [ ] TDD gate commits created: red baseline commit, green commit, and separate refactor commit when applicable
 - [ ] Phase completion commit created before moving to the next phase
+- [ ] Database migrations for the spec are created and applied successfully to the runtime database used for validation
+- [ ] Spec-level E2E (Playwright) suite executed and passing before spec marked complete
 - [ ] All SAMPLE_/DEMO_ data removed from code before merge
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
 - [ ] Validation rule consistency: if field required in React form, enforced in API DTOs and database constraints
@@ -441,6 +444,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 
 - **TDD cycle is strictly gated and non-negotiable** — implementation code must never be written before failing tests exist, have been run, and the user has reviewed and confirmed the failures. The sequence is always: plan tests → write tests → run and prove failure → get user confirmation → implement → run after each change → verify all pass → consider refactoring. Skipping or reordering any step is prohibited.
 - **Commit gates are mandatory for TDD and phase transitions** — every TDD gate transition requires a commit (red, green, and refactor when performed), and every completed phase requires a dedicated phase-completion commit before proceeding.
+- **Spec completion requires migration + E2E gates** — a spec cannot be marked done until its database migrations are applied to the runtime database and its Playwright E2E scenarios pass.
 - **Expected-flow C# logic uses Result, not exceptions** — validation, not-found, conflict, and authorization business outcomes must be returned via typed Result objects (including error code/message metadata). Throwing exceptions for these expected outcomes is prohibited; exceptions are only for truly unexpected failures.
 - **Cross-module work is contract-first and interface-bound** — teams must integrate through explicit interfaces and versioned contracts only; direct coupling to another module's internal implementation is prohibited.
 - **No Entity Framework DbContext in domain layer** — domain must remain infrastructure-agnostic. If domain needs persistence logic, use repository pattern abstracting EF.
@@ -538,5 +542,5 @@ Always commit at each TDD gate and before continuing to a new phase.
 
 ---
 
-**Version**: 1.12.1 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-27
+**Version**: 1.12.2 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-27
 
