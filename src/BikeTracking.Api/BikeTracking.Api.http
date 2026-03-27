@@ -40,3 +40,46 @@ X-User-Id: {{RiderId}}
 ### Edge case: unauthenticated history request (expects 401)
 GET {{ApiService_HostAddress}}/api/rides/history?page=1&pageSize=25
 Accept: application/json
+
+###############################################################################
+### Edit Ride Scenarios (spec-006-edit-ride-history)
+###############################################################################
+
+### Edit ride (successful update with version match)
+PUT {{ApiService_HostAddress}}/api/rides/1
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "rideDateTimeLocal": "2026-03-26T08:00:00",
+  "miles": 19.5,
+  "rideMinutes": 62,
+  "temperature": 56,
+  "expectedVersion": 1
+}
+
+### Edit ride (validation error: miles <= 0)
+PUT {{ApiService_HostAddress}}/api/rides/1
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "rideDateTimeLocal": "2026-03-26T08:00:00",
+  "miles": 0,
+  "rideMinutes": null,
+  "temperature": null,
+  "expectedVersion": 1
+}
+
+### Edit ride (version conflict: stale expectedVersion)
+PUT {{ApiService_HostAddress}}/api/rides/1
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "rideDateTimeLocal": "2026-03-26T09:00:00",
+  "miles": 20.0,
+  "rideMinutes": 65,
+  "temperature": 58,
+  "expectedVersion": 99
+}

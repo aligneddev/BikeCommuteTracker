@@ -124,12 +124,12 @@
 
 **Purpose**: Complete verification matrix, docs alignment, and end-to-end confidence checks.
 
-- [ ] T048 [P] Add API HTTP examples for successful edit, validation error, and conflict in src/BikeTracking.Api/BikeTracking.Api.http
-- [ ] T049 [P] Add or update Playwright E2E scenario for edit-from-history journey in src/BikeTracking.Frontend/tests/e2e/edit-ride-history.spec.ts
-- [ ] T050 Run backend verification suite in BikeTracking.slnx
-- [ ] T051 Run frontend lint/build/unit verification in src/BikeTracking.Frontend/package.json
-- [ ] T052 Run frontend E2E verification for ride edit flow in src/BikeTracking.Frontend/tests/e2e/edit-ride-history.spec.ts
-- [ ] T053 [P] Update implementation notes and execution guidance in specs/006-edit-ride-history/quickstart.md
+- [X] T048 [P] Add API HTTP examples for successful edit, validation error, and conflict in src/BikeTracking.Api/BikeTracking.Api.http
+- [X] T049 [P] Add or update Playwright E2E scenario for edit-from-history journey in src/BikeTracking.Frontend/tests/e2e/edit-ride-history.spec.ts
+- [X] T050 Run backend verification suite in BikeTracking.slnx
+- [X] T051 Run frontend lint/build/unit verification in src/BikeTracking.Frontend/package.json
+- [X] T052 Run frontend E2E verification for ride edit flow in src/BikeTracking.Frontend/tests/e2e/edit-ride-history.spec.ts
+- [X] T053 [P] Update implementation notes and execution guidance in specs/006-edit-ride-history/quickstart.md
 
 ---
 
