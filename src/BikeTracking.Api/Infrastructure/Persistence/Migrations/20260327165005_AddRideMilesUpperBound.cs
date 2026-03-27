@@ -12,12 +12,14 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.DropCheckConstraint(
                 name: "CK_Rides_Miles_GreaterThanZero",
-                table: "Rides");
+                table: "Rides"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Rides_Miles_GreaterThanZero",
                 table: "Rides",
-                sql: "\"Miles\" > 0 AND \"Miles\" <= 200");
+                sql: "\"Miles\" > 0 AND \"Miles\" <= 200"
+            );
         }
 
         /// <inheritdoc />
@@ -25,12 +27,14 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.DropCheckConstraint(
                 name: "CK_Rides_Miles_GreaterThanZero",
-                table: "Rides");
+                table: "Rides"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Rides_Miles_GreaterThanZero",
                 table: "Rides",
-                sql: "\"Miles\" > 0");
+                sql: "\"Miles\" > 0"
+            );
         }
     }
 }

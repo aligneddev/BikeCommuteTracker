@@ -4,8 +4,8 @@ using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Endpoints;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Security;
-using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
