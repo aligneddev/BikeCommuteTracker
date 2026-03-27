@@ -35,6 +35,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<RecordRideService>();
 builder.Services.AddScoped<GetRideDefaultsService>();
+builder.Services.AddScoped<GetRideHistoryService>();
 
 builder.Services.AddSingleton<IOutboxStore, EfOutboxStore>();
 builder.Services.AddSingleton<IUserRegisteredPublisher, UserRegisteredPublisher>();

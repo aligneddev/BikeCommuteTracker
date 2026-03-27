@@ -3,9 +3,13 @@ import * as ridesService from "./ridesService";
 
 const fetchMock = vi.fn<typeof fetch>();
 
-function jsonResponse(body: unknown, ok: boolean): Response {
+function jsonResponse(
+  body: unknown,
+  ok: boolean,
+  status: number = 200,
+): Response {
   return new Response(JSON.stringify(body), {
-    status: ok ? 200 : 400,
+    status: ok ? status : status,
     headers: { "Content-Type": "application/json" },
   });
 }
@@ -75,7 +79,7 @@ describe("ridesService", () => {
 
   it("should throw on 400 response", async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ message: "Validation failed" }, false),
+      jsonResponse({ message: "Validation failed" }, false, 400),
     );
 
     const request = {
@@ -104,5 +108,107 @@ describe("ridesService", () => {
     );
     expect(result).toEqual(response);
     expect(result.defaultMiles).toBe(10.5);
+  });
+
+  it("should fetch ride history and return typed response", async () => {
+    const response: ridesService.RideHistoryResponse = {
+      summaries: {
+        thisMonth: { miles: 12.5, rideCount: 2, period: "thisMonth" },
+        thisYear: { miles: 68.4, rideCount: 9, period: "thisYear" },
+        allTime: { miles: 140.2, rideCount: 20, period: "allTime" },
+      },
+      filteredTotal: { miles: 140.2, rideCount: 20, period: "filtered" },
+      rides: [
+        {
+          rideId: 1,
+          rideDateTimeLocal: "2026-03-20T10:30:00",
+          miles: 12.5,
+          rideMinutes: 35,
+          temperature: 61,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    };
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(response, true));
+
+    const result = await ridesService.getRideHistory();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/rides/history"),
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(result).toEqual(response);
+  });
+
+  it("should serialize from/to query parameters for ride history", async () => {
+    const response: ridesService.RideHistoryResponse = {
+      summaries: {
+        thisMonth: { miles: 0, rideCount: 0, period: "thisMonth" },
+        thisYear: { miles: 0, rideCount: 0, period: "thisYear" },
+        allTime: { miles: 0, rideCount: 0, period: "allTime" },
+      },
+      filteredTotal: { miles: 0, rideCount: 0, period: "filtered" },
+      rides: [],
+      page: 1,
+      pageSize: 25,
+      totalRows: 0,
+    };
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(response, true));
+
+    await ridesService.getRideHistory({
+      from: "2026-03-01",
+      to: "2026-03-31",
+      page: 2,
+      pageSize: 10,
+    });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("from=2026-03-01");
+    expect(url).toContain("to=2026-03-31");
+    expect(url).toContain("page=2");
+    expect(url).toContain("pageSize=10");
+  });
+
+  it("should provide thisYear and allTime summaries for dashboard usage", async () => {
+    const response: ridesService.RideHistoryResponse = {
+      summaries: {
+        thisMonth: { miles: 0, rideCount: 0, period: "thisMonth" },
+        thisYear: { miles: 210.5, rideCount: 22, period: "thisYear" },
+        allTime: { miles: 950.25, rideCount: 88, period: "allTime" },
+      },
+      filteredTotal: { miles: 950.25, rideCount: 88, period: "filtered" },
+      rides: [],
+      page: 1,
+      pageSize: 1,
+      totalRows: 0,
+    };
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(response, true));
+
+    const result = await ridesService.getRideHistory({ page: 1, pageSize: 1 });
+
+    expect(result.summaries.thisYear.miles).toBe(210.5);
+    expect(result.summaries.allTime.miles).toBe(950.25);
+  });
+
+  it("should throw API error for invalid date range", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          code: "INVALID_DATE_RANGE",
+          message: "Invalid date range: from date must be <= to date",
+        },
+        false,
+        400,
+      ),
+    );
+
+    await expect(
+      ridesService.getRideHistory({ from: "2026-03-31", to: "2026-03-01" }),
+    ).rejects.toThrow(/date range/i);
   });
 });

@@ -29,6 +29,14 @@ export function AppHeader() {
           >
             Record Ride
           </NavLink>
+          <NavLink
+            to="/rides/history"
+            className={({ isActive }) =>
+              isActive ? 'nav-link nav-link-active' : 'nav-link'
+            }
+          >
+            Ride History
+          </NavLink>
         </nav>
 
         <div className="app-header-user">

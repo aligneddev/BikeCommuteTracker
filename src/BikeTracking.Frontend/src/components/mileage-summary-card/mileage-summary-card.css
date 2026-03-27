@@ -1,0 +1,56 @@
+.mileage-summary-card {
+  background: #fff;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mileage-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mileage-summary-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.mileage-summary-indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.mileage-summary-indicator-this-month {
+  background: #0ea5e9;
+}
+
+.mileage-summary-indicator-this-year {
+  background: #22c55e;
+}
+
+.mileage-summary-indicator-all-time {
+  background: #f59e0b;
+}
+
+.mileage-summary-indicator-filtered {
+  background: #6366f1;
+}
+
+.mileage-summary-miles {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.mileage-summary-count {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+}

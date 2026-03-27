@@ -26,3 +26,40 @@ public sealed record RideDefaultsResponse(
     int? DefaultRideMinutes = null,
     decimal? DefaultTemperature = null
 );
+
+/// <summary>
+/// Aggregated miles and ride count for a defined period (thisMonth, thisYear, allTime, or filtered).
+/// </summary>
+public sealed record MileageSummary(decimal Miles, int RideCount, string Period);
+
+/// <summary>
+/// A single ride row for display in the history grid.
+/// </summary>
+public sealed record RideHistoryRow(
+    long RideId,
+    DateTime RideDateTimeLocal,
+    decimal Miles,
+    int? RideMinutes = null,
+    decimal? Temperature = null
+);
+
+/// <summary>
+/// Nested container for summary totals by period.
+/// </summary>
+public sealed record RideHistorySummaries(
+    MileageSummary ThisMonth,
+    MileageSummary ThisYear,
+    MileageSummary AllTime
+);
+
+/// <summary>
+/// Full response for GET /api/rides/history endpoint: summaries + filtered total + paged rows.
+/// </summary>
+public sealed record RideHistoryResponse(
+    RideHistorySummaries Summaries,
+    MileageSummary FilteredTotal,
+    IReadOnlyList<RideHistoryRow> Rides,
+    int Page,
+    int PageSize,
+    int TotalRows
+);
