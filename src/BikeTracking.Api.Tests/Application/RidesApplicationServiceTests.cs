@@ -328,6 +328,62 @@ public sealed class RidesApplicationServiceTests
         Assert.Equal(5, result.TotalRows);
     }
 
+    [Fact]
+    public async Task EditRideService_WithValidRequest_UpdatesRideVersionAndQueuesOutboxEvent()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Kara",
+            NormalizedName = "kara",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+
+        var ride = new RideEntity
+        {
+            RiderId = user.UserId,
+            RideDateTimeLocal = DateTime.Now.AddHours(-1),
+            Miles = 9.5m,
+            RideMinutes = 40,
+            Temperature = 64m,
+            Version = 1,
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Rides.Add(ride);
+        await context.SaveChangesAsync();
+
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<EditRideService>();
+        var service = new EditRideService(context, logger);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 12m,
+            RideMinutes: 48,
+            Temperature: 66m,
+            ExpectedVersion: 1
+        );
+
+        var result = await service.ExecuteAsync(user.UserId, ride.Id, request);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Response);
+
+        Assert.Equal(ride.Id, result.Response!.RideId);
+        Assert.Equal(2, result.Response.NewVersion);
+
+        var updatedRide = await context.Rides.SingleAsync(r => r.Id == ride.Id);
+        Assert.Equal(12m, updatedRide.Miles);
+        Assert.Equal(48, updatedRide.RideMinutes);
+        Assert.Equal(66m, updatedRide.Temperature);
+        Assert.Equal(2, updatedRide.Version);
+
+        var outboxEvents = await context.OutboxEvents.ToListAsync();
+        Assert.Single(outboxEvents);
+        Assert.Equal("RideEdited", outboxEvents[0].EventType);
+    }
+
     private static BikeTrackingDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<BikeTrackingDbContext>()

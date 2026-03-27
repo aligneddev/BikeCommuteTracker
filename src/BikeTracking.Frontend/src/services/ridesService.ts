@@ -20,6 +20,36 @@ export interface RideDefaultsResponse {
   defaultRideDateTimeLocal: string;
 }
 
+export interface EditRideRequest {
+  rideDateTimeLocal: string;
+  miles: number;
+  rideMinutes?: number;
+  temperature?: number;
+  expectedVersion: number;
+}
+
+export interface EditRideResponse {
+  rideId: number;
+  newVersion: number;
+  message: string;
+}
+
+export interface EditRideConflictResponse {
+  code: "RIDE_VERSION_CONFLICT";
+  message: string;
+  currentVersion: number;
+}
+
+export interface EditRideErrorResult {
+  code: string;
+  message: string;
+  currentVersion?: number;
+}
+
+export type EditRideResult =
+  | { ok: true; value: EditRideResponse }
+  | { ok: false; error: EditRideErrorResult };
+
 /**
  * Aggregated miles and ride count for a defined period (thisMonth, thisYear, allTime, or filtered).
  */
@@ -135,6 +165,58 @@ export async function getRideDefaults(): Promise<RideDefaultsResponse> {
   }
 
   return response.json();
+}
+
+export async function editRide(
+  rideId: number,
+  request: EditRideRequest,
+): Promise<EditRideResult> {
+  const response = await fetch(`${API_BASE_URL}/api/rides/${rideId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(request),
+  });
+
+  if (response.ok) {
+    return { ok: true, value: (await response.json()) as EditRideResponse };
+  }
+
+  try {
+    if (response.status === 409) {
+      const payload = (await response.json()) as EditRideConflictResponse;
+      return {
+        ok: false,
+        error: {
+          code: payload.code,
+          message: payload.message,
+          currentVersion: payload.currentVersion,
+        },
+      };
+    }
+
+    const payload = (await response.json()) as {
+      code?: string;
+      message?: string;
+      currentVersion?: number;
+    };
+
+    return {
+      ok: false,
+      error: {
+        code: payload.code ?? `HTTP_${response.status}`,
+        message: payload.message ?? "Failed to edit ride",
+        currentVersion: payload.currentVersion,
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      error: {
+        code: `HTTP_${response.status}`,
+        message: "Failed to edit ride",
+      },
+    };
+  }
 }
 
 /**

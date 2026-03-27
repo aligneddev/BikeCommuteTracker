@@ -98,6 +98,11 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.RiderId).IsRequired();
             entity.Property(static x => x.RideDateTimeLocal).IsRequired();
             entity.Property(static x => x.Miles).IsRequired();
+            entity
+                .Property(static x => x.Version)
+                .IsRequired()
+                .HasDefaultValue(1)
+                .IsConcurrencyToken();
             entity.Property(static x => x.CreatedAtUtc).IsRequired();
 
             // Index for efficient defaults query

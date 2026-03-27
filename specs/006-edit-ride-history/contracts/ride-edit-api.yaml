@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: BikeTracking Ride Edit API
+  version: 1.0.0
+  description: Authenticated ride row edit command endpoint for history table editing.
+
+paths:
+  /api/rides/{rideId}:
+    put:
+      summary: Edit an existing ride for the authenticated rider
+      operationId: editRide
+      parameters:
+        - in: path
+          name: rideId
+          required: true
+          description: Identifier of the ride row being edited.
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditRideRequest'
+      responses:
+        '200':
+          description: Ride edit accepted and persisted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditRideResponse'
+        '400':
+          description: Validation failure for submitted fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Ride does not belong to authenticated rider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Ride not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Edit conflict due to stale expected version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditConflictResponse'
+
+components:
+  schemas:
+    EditRideRequest:
+      type: object
+      required:
+        - rideDateTimeLocal
+        - miles
+        - expectedVersion
+      properties:
+        rideDateTimeLocal:
+          type: string
+          format: date-time
+          description: Rider-local ride date/time value.
+        miles:
+          type: number
+          exclusiveMinimum: 0
+        rideMinutes:
+          type: integer
+          nullable: true
+          minimum: 1
+        temperature:
+          type: number
+          nullable: true
+        expectedVersion:
+          type: integer
+          minimum: 1
+          description: Optimistic concurrency token for stale-write protection.
+
+    EditRideResponse:
+      type: object
+      required:
+        - rideId
+        - newVersion
+        - message
+      properties:
+        rideId:
+          type: integer
+          format: int64
+        newVersion:
+          type: integer
+          minimum: 1
+        message:
+          type: string
+      example:
+        rideId: 42
+        newVersion: 3
+        message: Ride updated successfully.
+
+    EditConflictResponse:
+      type: object
+      required:
+        - code
+        - message
+        - currentVersion
+      properties:
+        code:
+          type: string
+          enum: [RIDE_VERSION_CONFLICT]
+        message:
+          type: string
+        currentVersion:
+          type: integer
+          minimum: 1
+      example:
+        code: RIDE_VERSION_CONFLICT
+        message: Ride was modified by another request. Refresh and try again.
+        currentVersion: 4
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string

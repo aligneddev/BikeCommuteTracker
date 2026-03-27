@@ -4,7 +4,7 @@ import type {
   RideHistoryResponse,
   RideHistoryRow,
 } from '../services/ridesService'
-import { getRideHistory } from '../services/ridesService'
+import { editRide, getRideHistory } from '../services/ridesService'
 import { MileageSummaryCard } from '../components/mileage-summary-card/mileage-summary-card'
 import {
   formatMiles,
@@ -14,7 +14,23 @@ import {
 } from './miles/history-page.helpers'
 import './HistoryPage.css'
 
-function HistoryTable({ rides }: { rides: RideHistoryRow[] }) {
+function HistoryTable({
+  rides,
+  editingRideId,
+  editedMiles,
+  onStartEdit,
+  onEditedMilesChange,
+  onSaveEdit,
+  onCancelEdit,
+}: {
+  rides: RideHistoryRow[]
+  editingRideId: number | null
+  editedMiles: string
+  onStartEdit: (ride: RideHistoryRow) => void
+  onEditedMilesChange: (value: string) => void
+  onSaveEdit: (ride: RideHistoryRow) => void
+  onCancelEdit: () => void
+}) {
   if (rides.length === 0) {
     return <p className="history-page-empty">No rides found for this rider.</p>
   }
@@ -27,15 +43,51 @@ function HistoryTable({ rides }: { rides: RideHistoryRow[] }) {
           <th scope="col">Miles</th>
           <th scope="col">Duration</th>
           <th scope="col">Temperature</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
         {rides.map((ride) => (
           <tr key={ride.rideId}>
             <td>{formatRideDate(ride.rideDateTimeLocal)}</td>
-            <td>{formatMiles(ride.miles)}</td>
+            <td>
+              {editingRideId === ride.rideId ? (
+                <div className="history-page-inline-editor">
+                  <label htmlFor={`edit-ride-miles-${ride.rideId}`}>Miles</label>
+                  <input
+                    id={`edit-ride-miles-${ride.rideId}`}
+                    type="number"
+                    step="0.1"
+                    value={editedMiles}
+                    onChange={(event) => onEditedMilesChange(event.target.value)}
+                  />
+                </div>
+              ) : (
+                formatMiles(ride.miles)
+              )}
+            </td>
             <td>{formatRideDuration(ride.rideMinutes) || 'N/A'}</td>
             <td>{formatTemperature(ride.temperature) || 'N/A'}</td>
+            <td>
+              {editingRideId === ride.rideId ? (
+                <div className="history-page-edit-actions">
+                  <button type="button" className="history-page-edit-button" onClick={() => onSaveEdit(ride)}>
+                    Save
+                  </button>
+                  <button type="button" className="history-page-edit-button" onClick={onCancelEdit}>
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="history-page-edit-button"
+                  onClick={() => onStartEdit(ride)}
+                >
+                  Edit
+                </button>
+              )}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -49,6 +101,8 @@ export function HistoryPage() {
   const [error, setError] = useState<string>('')
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
+  const [editingRideId, setEditingRideId] = useState<number | null>(null)
+  const [editedMiles, setEditedMiles] = useState<string>('')
 
   async function loadHistory(params: GetRideHistoryParams): Promise<void> {
     setIsLoading(true)
@@ -81,6 +135,48 @@ export function HistoryPage() {
   }, [data])
 
   const hasActiveFilter = fromDate.length > 0 || toDate.length > 0
+
+  function handleStartEdit(ride: RideHistoryRow): void {
+    setEditingRideId(ride.rideId)
+    setEditedMiles(ride.miles.toFixed(1))
+  }
+
+  function handleCancelEdit(): void {
+    setEditingRideId(null)
+    setEditedMiles('')
+  }
+
+  async function handleSaveEdit(ride: RideHistoryRow): Promise<void> {
+    const milesValue = Number(editedMiles)
+    if (!Number.isFinite(milesValue) || milesValue <= 0) {
+      setError('Miles must be greater than 0')
+      return
+    }
+
+    const result = await editRide(ride.rideId, {
+      rideDateTimeLocal: ride.rideDateTimeLocal,
+      miles: milesValue,
+      rideMinutes: ride.rideMinutes,
+      temperature: ride.temperature,
+      // Version tokens are added to history rows in later tasks; use baseline v1 for now.
+      expectedVersion: 1,
+    })
+
+    if (!result.ok) {
+      const { code, message, currentVersion } = result.error
+      if (code === 'RIDE_VERSION_CONFLICT') {
+        const versionInfo = currentVersion ? ` Current version: ${currentVersion}.` : ''
+        setError(`${message}${versionInfo}`)
+      } else {
+        setError(message)
+      }
+      return
+    }
+
+    setError('')
+    setEditingRideId(null)
+    setEditedMiles('')
+  }
 
   async function handleApplyFilter(): Promise<void> {
     if (fromDate && toDate && fromDate > toDate) {
@@ -143,7 +239,11 @@ export function HistoryPage() {
       </section>
 
       {isLoading ? <p>Loading history...</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="history-page-error">
+          {error}
+        </p>
+      ) : null}
 
       {summaries ? (
         <section className="history-page-summaries" aria-label="Ride summaries">
@@ -163,7 +263,15 @@ export function HistoryPage() {
       </section>
 
       <section className="history-page-grid" aria-label="Ride history grid">
-        <HistoryTable rides={data?.rides ?? []} />
+        <HistoryTable
+          rides={data?.rides ?? []}
+          editingRideId={editingRideId}
+          editedMiles={editedMiles}
+          onStartEdit={handleStartEdit}
+          onEditedMilesChange={setEditedMiles}
+          onSaveEdit={(ride) => void handleSaveEdit(ride)}
+          onCancelEdit={handleCancelEdit}
+        />
       </section>
     </main>
   )

@@ -27,6 +27,20 @@ public sealed record RideDefaultsResponse(
     decimal? DefaultTemperature = null
 );
 
+public sealed record EditRideRequest(
+    [property: Required(ErrorMessage = "Ride date/time is required")] DateTime RideDateTimeLocal,
+    [property: Required(ErrorMessage = "Miles is required")]
+    [property: Range(0.01, double.MaxValue, ErrorMessage = "Miles must be greater than 0")]
+        decimal Miles,
+    [property: Range(1, int.MaxValue, ErrorMessage = "Ride minutes must be greater than 0")]
+        int? RideMinutes,
+    decimal? Temperature,
+    [property: Range(1, int.MaxValue, ErrorMessage = "Expected version must be at least 1")]
+        int ExpectedVersion
+);
+
+public sealed record EditRideResponse(long RideId, int NewVersion, string Message);
+
 /// <summary>
 /// Aggregated miles and ride count for a defined period (thisMonth, thisYear, allTime, or filtered).
 /// </summary>

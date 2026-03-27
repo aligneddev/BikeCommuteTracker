@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://biketracking.local/schemas/ride-edited-event.schema.json",
+  "title": "RideEditedEvent",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "occurredAtUtc",
+    "riderId",
+    "rideId",
+    "previousVersion",
+    "newVersion",
+    "rideDateTimeLocal",
+    "miles"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "RideEdited"
+    },
+    "occurredAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "riderId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rideId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "previousVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "newVersion": {
+      "type": "integer",
+      "minimum": 2,
+      "description": "Must be exactly previousVersion + 1 as enforced by application logic."
+    },
+    "rideDateTimeLocal": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "miles": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "rideMinutes": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "temperature": {
+      "type": ["number", "null"]
+    }
+  },
+  "additionalProperties": false
+}
