@@ -1,5 +1,5 @@
 .mileage-summary-card {
-  background: #ffffff;
+  background: #fff;
   border: 1px solid #dbe2ea;
   border-radius: 12px;
   padding: 1rem;
@@ -7,49 +7,49 @@
   gap: 0.35rem;
 }
 
-.mileage-summary-card__header {
+.mileage-summary-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.mileage-summary-card__header h2 {
+.mileage-summary-header h2 {
   margin: 0;
   font-size: 1rem;
   color: #0f172a;
 }
 
-.mileage-summary-card__indicator {
+.mileage-summary-indicator {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 999px;
   display: inline-block;
 }
 
-.mileage-summary-card__indicator--thisMonth {
+.mileage-summary-indicator-this-month {
   background: #0ea5e9;
 }
 
-.mileage-summary-card__indicator--thisYear {
+.mileage-summary-indicator-this-year {
   background: #22c55e;
 }
 
-.mileage-summary-card__indicator--allTime {
+.mileage-summary-indicator-all-time {
   background: #f59e0b;
 }
 
-.mileage-summary-card__indicator--filtered {
+.mileage-summary-indicator-filtered {
   background: #6366f1;
 }
 
-.mileage-summary-card__miles {
+.mileage-summary-miles {
   margin: 0;
   font-size: 1.4rem;
   font-weight: 700;
   color: #111827;
 }
 
-.mileage-summary-card__count {
+.mileage-summary-count {
   margin: 0;
   font-size: 0.9rem;
   color: #4b5563;

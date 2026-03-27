@@ -116,11 +116,11 @@
 
 **Purpose**: Final quality, verification, and consistency checks across stories.
 
-- [ ] T042 [P] Add API endpoint sample usage and edge-case examples in src/BikeTracking.Api/BikeTracking.Api.http
-- [ ] T043 Run backend verification suite in BikeTracking.slnx
-- [ ] T044 Run frontend lint/build/unit verification in src/BikeTracking.Frontend/package.json
-- [ ] T045 Run frontend e2e verification for history/dashboard flow in src/BikeTracking.Frontend/tests/e2e/record-ride.spec.ts
-- [ ] T046 [P] Update quickstart execution notes with any implementation-specific command deltas in specs/005-view-history-page/quickstart.md
+- [X] T042 [P] Add API endpoint sample usage and edge-case examples in src/BikeTracking.Api/BikeTracking.Api.http
+- [X] T043 Run backend verification suite in BikeTracking.slnx
+- [X] T044 Run frontend lint/build/unit verification in src/BikeTracking.Frontend/package.json
+- [X] T045 Run frontend e2e verification for history/dashboard flow in src/BikeTracking.Frontend/tests/e2e/record-ride.spec.ts
+- [X] T046 [P] Update quickstart execution notes with any implementation-specific command deltas in specs/005-view-history-page/quickstart.md
 
 ---
 

@@ -16,11 +16,11 @@ import './HistoryPage.css'
 
 function HistoryTable({ rides }: { rides: RideHistoryRow[] }) {
   if (rides.length === 0) {
-    return <p className="history-page__empty">No rides found for this rider.</p>
+    return <p className="history-page-empty">No rides found for this rider.</p>
   }
 
   return (
-    <table className="history-page__table" aria-label="Ride history table">
+    <table className="history-page-table" aria-label="Ride history table">
       <thead>
         <tr>
           <th scope="col">Date</th>
@@ -104,12 +104,12 @@ export function HistoryPage() {
 
   return (
     <main className="history-page">
-      <header className="history-page__header">
+      <header className="history-page-header">
         <h1>Ride History</h1>
       </header>
 
-      <section className="history-page__filters" aria-label="Date range filters">
-        <div className="history-page__filter-field">
+      <section className="history-page-filters" aria-label="Date range filters">
+        <div className="history-page-filter-field">
           <label htmlFor="history-from-date">From</label>
           <input
             id="history-from-date"
@@ -118,7 +118,7 @@ export function HistoryPage() {
             onChange={(event) => setFromDate(event.target.value)}
           />
         </div>
-        <div className="history-page__filter-field">
+        <div className="history-page-filter-field">
           <label htmlFor="history-to-date">To</label>
           <input
             id="history-to-date"
@@ -127,13 +127,13 @@ export function HistoryPage() {
             onChange={(event) => setToDate(event.target.value)}
           />
         </div>
-        <div className="history-page__filter-actions">
+        <div className="history-page-filter-actions">
           <button type="button" onClick={() => void handleApplyFilter()}>
             Apply Filter
           </button>
           <button
             type="button"
-            className="history-page__clear-button"
+            className="history-page-clear-button"
             onClick={() => void handleClearFilter()}
             disabled={!hasActiveFilter}
           >
@@ -146,7 +146,7 @@ export function HistoryPage() {
       {error ? <p role="alert">{error}</p> : null}
 
       {summaries ? (
-        <section className="history-page__summaries" aria-label="Ride summaries">
+        <section className="history-page-summaries" aria-label="Ride summaries">
           {summaries.map((item) => (
             <MileageSummaryCard
               key={item.summary.period}
@@ -157,12 +157,12 @@ export function HistoryPage() {
         </section>
       ) : null}
 
-      <section className="history-page__total" aria-label="Visible total miles">
+      <section className="history-page-total" aria-label="Visible total miles">
         <h2>Total Miles (Visible)</h2>
         <p>{formatMiles(data?.filteredTotal.miles ?? 0)}</p>
       </section>
 
-      <section className="history-page__grid" aria-label="Ride history grid">
+      <section className="history-page-grid" aria-label="Ride history grid">
         <HistoryTable rides={data?.rides ?? []} />
       </section>
     </main>
