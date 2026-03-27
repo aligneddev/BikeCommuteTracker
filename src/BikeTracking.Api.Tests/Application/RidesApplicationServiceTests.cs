@@ -384,6 +384,63 @@ public sealed class RidesApplicationServiceTests
         Assert.Equal("RideEdited", outboxEvents[0].EventType);
     }
 
+    [Fact]
+    public async Task GetRideHistoryService_RecalculatesSummariesAfterRideEdit()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Lena",
+            NormalizedName = "lena",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+
+        var rideDate = DateTime.Now.Date.AddHours(8);
+        var ride = new RideEntity
+        {
+            RiderId = user.UserId,
+            RideDateTimeLocal = rideDate,
+            Miles = 5m,
+            RideMinutes = 30,
+            Temperature = 60m,
+            Version = 1,
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Rides.Add(ride);
+        await context.SaveChangesAsync();
+
+        var historyService = new GetRideHistoryService(context);
+        var beforeEdit = await historyService.GetRideHistoryAsync(user.UserId, null, null);
+        Assert.Equal(5m, beforeEdit.Summaries.AllTime.Miles);
+        Assert.Equal(5m, beforeEdit.FilteredTotal.Miles);
+
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var editLogger = loggerFactory.CreateLogger<EditRideService>();
+        var editService = new EditRideService(context, editLogger);
+
+        var editResult = await editService.ExecuteAsync(
+            user.UserId,
+            ride.Id,
+            new EditRideRequest(
+                RideDateTimeLocal: rideDate,
+                Miles: 9.5m,
+                RideMinutes: 34,
+                Temperature: 62m,
+                ExpectedVersion: 1
+            )
+        );
+
+        Assert.True(editResult.IsSuccess);
+
+        var afterEdit = await historyService.GetRideHistoryAsync(user.UserId, null, null);
+        Assert.Equal(9.5m, afterEdit.Summaries.AllTime.Miles);
+        Assert.Equal(9.5m, afterEdit.Summaries.ThisMonth.Miles);
+        Assert.Equal(9.5m, afterEdit.FilteredTotal.Miles);
+        Assert.Single(afterEdit.Rides);
+        Assert.Equal(9.5m, afterEdit.Rides[0].Miles);
+    }
+
     private static BikeTrackingDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<BikeTrackingDbContext>()

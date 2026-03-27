@@ -103,18 +103,18 @@
 
 ### Tests for User Story 3 (TDD - write and fail first)
 
-- [ ] T039 [P] [US3] Add backend service test for summary recalculation after ride edit event in src/BikeTracking.Api.Tests/Application/RidesApplicationServiceTests.cs
-- [ ] T040 [P] [US3] Add backend endpoint test for edited values appearing in subsequent history query results in src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs
-- [ ] T041 [P] [US3] Add frontend test for totals refresh after successful row edit with active filter in src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx
-- [ ] T042 [US3] Run backend and frontend US3 tests to capture failing baseline in src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx
+- [X] T039 [P] [US3] Add backend service test for summary recalculation after ride edit event in src/BikeTracking.Api.Tests/Application/RidesApplicationServiceTests.cs
+- [X] T040 [P] [US3] Add backend endpoint test for edited values appearing in subsequent history query results in src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs
+- [X] T041 [P] [US3] Add frontend test for totals refresh after successful row edit with active filter in src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx
+- [X] T042 [US3] Run backend and frontend US3 tests to capture failing baseline in src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx
 
 ### Implementation for User Story 3
 
-- [ ] T043 [US3] Apply RideEdited event changes to ride projection read model update flow in src/BikeTracking.Api/Application/Rides/EditRideService.cs
-- [ ] T044 [US3] Ensure history query aggregates use latest edited values in src/BikeTracking.Api/Application/Rides/GetRideHistoryService.cs
-- [ ] T045 [US3] Trigger post-save history refresh preserving active filters and pagination in src/BikeTracking.Frontend/src/pages/HistoryPage.tsx
-- [ ] T046 [US3] Update visible total and summary card rendering from refreshed server response in src/BikeTracking.Frontend/src/pages/HistoryPage.tsx
-- [ ] T047 [US3] Re-run US3 tests to green and refactor safely in src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx
+- [X] T043 [US3] Apply RideEdited event changes to ride projection read model update flow in src/BikeTracking.Api/Application/Rides/EditRideService.cs
+- [X] T044 [US3] Ensure history query aggregates use latest edited values in src/BikeTracking.Api/Application/Rides/GetRideHistoryService.cs
+- [X] T045 [US3] Trigger post-save history refresh preserving active filters and pagination in src/BikeTracking.Frontend/src/pages/HistoryPage.tsx
+- [X] T046 [US3] Update visible total and summary card rendering from refreshed server response in src/BikeTracking.Frontend/src/pages/HistoryPage.tsx
+- [X] T047 [US3] Re-run US3 tests to green and refactor safely in src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx
 
 **Checkpoint**: All user stories are independently functional.
 

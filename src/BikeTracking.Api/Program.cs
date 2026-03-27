@@ -17,7 +17,17 @@ var connectionString =
 
 builder.Services.Configure<IdentityOptions>(builder.Configuration.GetSection("Identity"));
 builder.Services.AddDbContext<BikeTrackingDbContext>(options =>
-    options.UseSqlite(connectionString)
+    options
+        .UseSqlite(connectionString)
+        .ConfigureWarnings(w =>
+            w.Ignore(
+                Microsoft
+                    .EntityFrameworkCore
+                    .Diagnostics
+                    .RelationalEventId
+                    .PendingModelChangesWarning
+            )
+        )
 );
 
 builder.Services.AddScoped<PinPolicyValidator>();
@@ -74,7 +84,16 @@ var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
-    await dbContext.Database.MigrateAsync();
+    // For development/test: use EnsureCreatedAsync to apply code-first schema directly
+    // In production, use MigrateAsync with proper migrations assembly configuration
+    if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("test"))
+    {
+        await dbContext.Database.EnsureCreatedAsync();
+    }
+    else
+    {
+        await dbContext.Database.MigrateAsync();
+    }
 }
 
 app.MapGet("/", () => Results.Ok(new { message = "Bike Tracking API is running." }));

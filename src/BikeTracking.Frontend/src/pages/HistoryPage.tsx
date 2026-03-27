@@ -176,6 +176,13 @@ export function HistoryPage() {
     setError('')
     setEditingRideId(null)
     setEditedMiles('')
+
+    await loadHistory({
+      from: fromDate || undefined,
+      to: toDate || undefined,
+      page: data?.page ?? 1,
+      pageSize: data?.pageSize ?? 25,
+    })
   }
 
   async function handleApplyFilter(): Promise<void> {

@@ -421,4 +421,124 @@ describe('HistoryPage', () => {
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
     })
   })
+
+  it('should refresh filtered totals and summaries after a successful edit save', async () => {
+    mockGetRideHistory
+      .mockResolvedValueOnce({
+        summaries: {
+          thisMonth: { miles: 5, rideCount: 1, period: 'thisMonth' },
+          thisYear: { miles: 5, rideCount: 1, period: 'thisYear' },
+          allTime: { miles: 5, rideCount: 1, period: 'allTime' },
+        },
+        filteredTotal: { miles: 5, rideCount: 1, period: 'filtered' },
+        rides: [
+          {
+            rideId: 8,
+            rideDateTimeLocal: '2026-03-20T10:30:00',
+            miles: 5,
+            rideMinutes: 30,
+            temperature: 70,
+          },
+        ],
+        page: 1,
+        pageSize: 25,
+        totalRows: 1,
+      })
+      .mockResolvedValueOnce({
+        summaries: {
+          thisMonth: { miles: 5, rideCount: 1, period: 'thisMonth' },
+          thisYear: { miles: 5, rideCount: 1, period: 'thisYear' },
+          allTime: { miles: 5, rideCount: 1, period: 'allTime' },
+        },
+        filteredTotal: { miles: 5, rideCount: 1, period: 'filtered' },
+        rides: [
+          {
+            rideId: 8,
+            rideDateTimeLocal: '2026-03-20T10:30:00',
+            miles: 5,
+            rideMinutes: 30,
+            temperature: 70,
+          },
+        ],
+        page: 1,
+        pageSize: 25,
+        totalRows: 1,
+      })
+      .mockResolvedValueOnce({
+        summaries: {
+          thisMonth: { miles: 8.5, rideCount: 1, period: 'thisMonth' },
+          thisYear: { miles: 8.5, rideCount: 1, period: 'thisYear' },
+          allTime: { miles: 8.5, rideCount: 1, period: 'allTime' },
+        },
+        filteredTotal: { miles: 8.5, rideCount: 1, period: 'filtered' },
+        rides: [
+          {
+            rideId: 8,
+            rideDateTimeLocal: '2026-03-20T10:30:00',
+            miles: 8.5,
+            rideMinutes: 30,
+            temperature: 70,
+          },
+        ],
+        page: 1,
+        pageSize: 25,
+        totalRows: 1,
+      })
+
+    mockEditRide.mockResolvedValue({
+      ok: true,
+      value: {
+        rideId: 8,
+        newVersion: 2,
+        message: 'Ride updated successfully.',
+      },
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(mockGetRideHistory).toHaveBeenCalledWith({ page: 1, pageSize: 25 })
+    })
+
+    fireEvent.change(screen.getByLabelText(/^From$/i), {
+      target: { value: '2026-03-01' },
+    })
+    fireEvent.change(screen.getByLabelText(/^To$/i), {
+      target: { value: '2026-03-31' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /apply filter/i }))
+
+    await waitFor(() => {
+      expect(mockGetRideHistory).toHaveBeenLastCalledWith({
+        from: '2026-03-01',
+        to: '2026-03-31',
+        page: 1,
+        pageSize: 25,
+      })
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+
+    const milesInput = screen.getByRole('spinbutton', {
+      name: /miles/i,
+    }) as HTMLInputElement
+    fireEvent.change(milesInput, { target: { value: '8.5' } })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(mockGetRideHistory).toHaveBeenLastCalledWith({
+        from: '2026-03-01',
+        to: '2026-03-31',
+        page: 1,
+        pageSize: 25,
+      })
+    })
+
+    await waitFor(() => {
+      const totalSection = screen.getByLabelText(/visible total miles/i)
+      expect(within(totalSection).getByText('8.5 mi')).toBeInTheDocument()
+      const summaries = screen.getByLabelText(/ride summaries/i)
+      expect(within(summaries).getAllByText('8.5 mi')).toHaveLength(3)
+    })
+  })
 })

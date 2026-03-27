@@ -29,7 +29,7 @@ From `src/BikeTracking.Frontend`:
 - **Build:** `npm run build`
 - **Lint:** `npm run lint` (ESLint + Stylelint)
 - **Unit tests:** `npm run test:unit` (Vitest; use `--ui` flag for interactive mode)
-- **E2E tests:** `npm run test:e2e` (Playwright; runs against live API/DB)
+- **E2E tests:** `npm run test:e2e` (Playwright; runs against live API/DB). You must start the application with Aspire before running E2E tests.
 - **Watch unit tests:** `npm run test:unit:watch`
 
 ### CI Validation
