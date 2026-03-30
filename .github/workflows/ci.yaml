@@ -15,6 +15,9 @@ permissions:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
+  
+runs:
+  using: 'node24'
 
 jobs:
   verify:
