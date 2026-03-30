@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { MileageSummaryCard } from '../../components/mileage-summary-card/mileage-summary-card'
 import { useAuth } from '../../context/auth-context'
 import type { RideHistoryResponse } from '../../services/ridesService'
@@ -52,6 +53,9 @@ export function MilesShellPage() {
 
       <div className="miles-placeholder" aria-label="Miles content placeholder">
         <p>Ride history and trends can be explored from the History page.</p>
+        <p>
+          Manage your profile assumptions from <Link to="/settings">Settings</Link>.
+        </p>
       </div>
     </main>
   )

@@ -25,6 +25,7 @@ builder.Services.AddScoped<PinPolicyValidator>();
 builder.Services.AddSingleton<IPinHasher, PinHasher>();
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<IdentifyService>();
+builder.Services.AddScoped<UserSettingsService>();
 
 builder
     .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)

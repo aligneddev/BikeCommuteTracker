@@ -5,6 +5,7 @@ using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Endpoints;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 
@@ -95,6 +96,174 @@ public sealed class UsersEndpointsTests
         Assert.Equal(payload.RetryAfterSeconds.ToString(), retryAfterHeader);
     }
 
+    [Fact]
+    public async Task GetUserSettings_Returns401_WithoutAuthentication()
+    {
+        await using var host = await IdentifyApiHost.StartAsync();
+
+        var response = await host.Client.GetAsync("/api/users/me/settings");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutThenGetUserSettings_ReturnsPersistedValues_ForAuthenticatedUser()
+    {
+        await using var host = await IdentifyApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Casey", "1234");
+
+        var putResponse = await host.Client.PutWithAuthAsync(
+            "/api/users/me/settings",
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 31.5m,
+                YearlyGoalMiles: 1800m,
+                OilChangePrice: 89.99m,
+                MileageRateCents: 67.5m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null
+            ),
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
+
+        var getResponse = await host.Client.GetWithAuthAsync("/api/users/me/settings", userId);
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var payload = await getResponse.Content.ReadFromJsonAsync<UserSettingsResponse>();
+        Assert.NotNull(payload);
+        Assert.True(payload.HasSettings);
+        Assert.Equal(31.5m, payload.Settings.AverageCarMpg);
+        Assert.Equal(1800m, payload.Settings.YearlyGoalMiles);
+    }
+
+    [Fact]
+    public async Task PutThenGetUserSettings_PersistsLocationCoordinates_ForAuthenticatedUser()
+    {
+        await using var host = await IdentifyApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("LocationCase", "1234");
+
+        var putResponse = await host.Client.PutWithAuthAsync(
+            "/api/users/me/settings",
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 31.5m,
+                YearlyGoalMiles: 1800m,
+                OilChangePrice: 89.99m,
+                MileageRateCents: 67.5m,
+                LocationLabel: "Downtown Office",
+                Latitude: 42.3601m,
+                Longitude: -71.0589m
+            ),
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
+
+        var getResponse = await host.Client.GetWithAuthAsync("/api/users/me/settings", userId);
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var payload = await getResponse.Content.ReadFromJsonAsync<UserSettingsResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("Downtown Office", payload.Settings.LocationLabel);
+        Assert.Equal(42.3601m, payload.Settings.Latitude);
+        Assert.Equal(-71.0589m, payload.Settings.Longitude);
+    }
+
+    [Fact]
+    public async Task PutUserSettings_ClearsExplicitlyNullField_ForAuthenticatedUser()
+    {
+        await using var host = await IdentifyApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("ClearFieldCase", "1234");
+
+        var firstPut = await host.Client.PutWithAuthAsync(
+            "/api/users/me/settings",
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 29.5m,
+                YearlyGoalMiles: 1100m,
+                OilChangePrice: 75m,
+                MileageRateCents: 51m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null
+            ),
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, firstPut.StatusCode);
+
+        var secondPut = await host.Client.PutWithAuthAsync(
+            "/api/users/me/settings",
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: null,
+                YearlyGoalMiles: 1100m,
+                OilChangePrice: 75m,
+                MileageRateCents: 51m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null
+            ),
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, secondPut.StatusCode);
+
+        var getResponse = await host.Client.GetWithAuthAsync("/api/users/me/settings", userId);
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var payload = await getResponse.Content.ReadFromJsonAsync<UserSettingsResponse>();
+        Assert.NotNull(payload);
+        Assert.Null(payload.Settings.AverageCarMpg);
+        Assert.Equal(1100m, payload.Settings.YearlyGoalMiles);
+    }
+
+    [Fact]
+    public async Task GetUserSettings_ReturnsRiderScopedValues_ForEachAuthenticatedUser()
+    {
+        await using var host = await IdentifyApiHost.StartAsync();
+        var firstUserId = await host.SeedUserAsync("ScopeUserOne", "1234");
+        var secondUserId = await host.SeedUserAsync("ScopeUserTwo", "1234");
+
+        await host.Client.PutWithAuthAsync(
+            "/api/users/me/settings",
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 20m,
+                YearlyGoalMiles: 900m,
+                OilChangePrice: 50m,
+                MileageRateCents: 40m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null
+            ),
+            firstUserId
+        );
+
+        await host.Client.PutWithAuthAsync(
+            "/api/users/me/settings",
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 33m,
+                YearlyGoalMiles: 2100m,
+                OilChangePrice: 92m,
+                MileageRateCents: 68m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null
+            ),
+            secondUserId
+        );
+
+        var firstGet = await host.Client.GetWithAuthAsync("/api/users/me/settings", firstUserId);
+        var secondGet = await host.Client.GetWithAuthAsync("/api/users/me/settings", secondUserId);
+
+        var firstPayload = await firstGet.Content.ReadFromJsonAsync<UserSettingsResponse>();
+        var secondPayload = await secondGet.Content.ReadFromJsonAsync<UserSettingsResponse>();
+
+        Assert.NotNull(firstPayload);
+        Assert.NotNull(secondPayload);
+        Assert.Equal(20m, firstPayload.Settings.AverageCarMpg);
+        Assert.Equal(33m, secondPayload.Settings.AverageCarMpg);
+    }
+
     private sealed class IdentifyApiHost(WebApplication app) : IAsyncDisposable
     {
         public HttpClient Client { get; } = app.GetTestClient();
@@ -113,8 +282,18 @@ public sealed class UsersEndpointsTests
             builder.Services.AddSingleton<IPinHasher, PinHasher>();
             builder.Services.AddScoped<SignupService>();
             builder.Services.AddScoped<IdentifyService>();
+            builder.Services.AddScoped<UserSettingsService>();
+            builder
+                .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)
+                .AddScheme<
+                    UserIdHeaderAuthenticationSchemeOptions,
+                    UserIdHeaderAuthenticationHandler
+                >(UserIdHeaderAuthenticationHandler.SchemeName, _ => { });
+            builder.Services.AddAuthorization();
 
             var app = builder.Build();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.MapUsersEndpoints();
             await app.StartAsync();
 

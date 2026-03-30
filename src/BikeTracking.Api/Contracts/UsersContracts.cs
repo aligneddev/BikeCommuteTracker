@@ -13,6 +13,29 @@ public sealed record IdentifyRequest(string Name, string Pin);
 
 public sealed record IdentifySuccessResponse(long UserId, string UserName, bool Authorized);
 
+public sealed record UserSettingsUpsertRequest(
+    decimal? AverageCarMpg,
+    decimal? YearlyGoalMiles,
+    decimal? OilChangePrice,
+    decimal? MileageRateCents,
+    string? LocationLabel,
+    decimal? Latitude,
+    decimal? Longitude
+);
+
+public sealed record UserSettingsView(
+    decimal? AverageCarMpg,
+    decimal? YearlyGoalMiles,
+    decimal? OilChangePrice,
+    decimal? MileageRateCents,
+    string? LocationLabel,
+    decimal? Latitude,
+    decimal? Longitude,
+    DateTime? UpdatedAtUtc
+);
+
+public sealed record UserSettingsResponse(bool HasSettings, UserSettingsView Settings);
+
 public sealed record ErrorResponse(
     string Code,
     string Message,
@@ -55,4 +78,5 @@ public static class UsersErrorCodes
     public const string NameAlreadyExists = "name_already_exists";
     public const string InvalidCredentials = "invalid_credentials";
     public const string Throttled = "throttled";
+    public const string SettingsNotFound = "settings_not_found";
 }
