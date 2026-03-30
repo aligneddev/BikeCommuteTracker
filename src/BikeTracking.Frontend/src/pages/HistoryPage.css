@@ -143,6 +143,20 @@
   background: #eef2f7;
 }
 
+.history-page-delete-button {
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.history-page-delete-button:hover {
+  background: #fee2e2;
+}
+
 .history-page-inline-editor {
   display: grid;
   gap: 0.25rem;

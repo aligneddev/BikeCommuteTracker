@@ -38,6 +38,7 @@ builder.Services.AddScoped<RecordRideService>();
 builder.Services.AddScoped<GetRideDefaultsService>();
 builder.Services.AddScoped<GetRideHistoryService>();
 builder.Services.AddScoped<EditRideService>();
+builder.Services.AddScoped<DeleteRideService>();
 
 builder.Services.AddSingleton<IOutboxStore, EfOutboxStore>();
 builder.Services.AddSingleton<IUserRegisteredPublisher, UserRegisteredPublisher>();

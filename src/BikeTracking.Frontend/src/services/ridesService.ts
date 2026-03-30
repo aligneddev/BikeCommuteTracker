@@ -46,6 +46,22 @@ export interface EditRideErrorResult {
   currentVersion?: number;
 }
 
+export interface DeleteRideSuccessResponse {
+  rideId: number;
+  deletedAt: string;
+  message: string;
+  isIdempotent?: boolean;
+}
+
+export interface DeleteRideErrorResult {
+  code: string;
+  message: string;
+}
+
+export type DeleteRideResult =
+  | { ok: true; value: DeleteRideSuccessResponse }
+  | { ok: false; error: DeleteRideErrorResult };
+
 export type EditRideResult =
   | { ok: true; value: EditRideResponse }
   | { ok: false; error: EditRideErrorResult };
@@ -214,6 +230,44 @@ export async function editRide(
       error: {
         code: `HTTP_${response.status}`,
         message: "Failed to edit ride",
+      },
+    };
+  }
+}
+
+export async function deleteRide(rideId: number): Promise<DeleteRideResult> {
+  const response = await fetch(`${API_BASE_URL}/api/rides/${rideId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (response.ok) {
+    return {
+      ok: true,
+      value: (await response.json()) as DeleteRideSuccessResponse,
+    };
+  }
+
+  try {
+    const payload = (await response.json()) as {
+      code?: string;
+      error?: string;
+      message?: string;
+    };
+
+    return {
+      ok: false,
+      error: {
+        code: payload.code ?? payload.error ?? `HTTP_${response.status}`,
+        message: payload.message ?? "Failed to delete ride",
+      },
+    };
+  } catch {
+    return {
+      ok: false,
+      error: {
+        code: `HTTP_${response.status}`,
+        message: "Failed to delete ride",
       },
     };
   }
