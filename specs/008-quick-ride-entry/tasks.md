@@ -1,6 +1,6 @@
 # Tasks: Quick Ride Entry from Past Rides
 
-**Input**: Design documents from `/specs/001-quick-ride-entry/`  
+**Input**: Design documents from `/specs/008-quick-ride-entry/`  
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/quick-ride-options-api.yaml
 
 **Tests**: Tests are included because this feature plan requires a TDD-first workflow.
@@ -10,7 +10,7 @@
 **Purpose**: Align feature docs and local API playground artifacts before implementation.
 
 - [X] T001 Update API playground examples for quick options in src/BikeTracking.Api/BikeTracking.Api.http
-- [X] T002 Sync quick options contract notes in specs/001-quick-ride-entry/quickstart.md
+- [X] T002 Sync quick options contract notes in specs/008-quick-ride-entry/quickstart.md
 
 ---
 
@@ -108,8 +108,8 @@
 **Purpose**: Final consistency, docs, and full verification across all stories.
 
 - [X] T033 [P] Add quick options request helper coverage updates in src/BikeTracking.Frontend/tests/e2e/support/ride-helpers.ts
-- [X] T034 [P] Update feature docs and acceptance notes in specs/001-quick-ride-entry/quickstart.md
-- [X] T035 Run full verification matrix commands from specs/001-quick-ride-entry/quickstart.md and record results in specs/001-quick-ride-entry/tasks.md
+- [X] T034 [P] Update feature docs and acceptance notes in specs/008-quick-ride-entry/quickstart.md
+- [X] T035 Run full verification matrix commands from specs/008-quick-ride-entry/quickstart.md and record results in specs/008-quick-ride-entry/tasks.md
 
 ### Verification Results
 

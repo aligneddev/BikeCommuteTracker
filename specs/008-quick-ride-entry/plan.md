@@ -1,7 +1,7 @@
 # Implementation Plan: Quick Ride Entry from Past Rides
 
-**Branch**: `001-quick-ride-entry` | **Date**: 2026-03-30 | **Spec**: `/specs/001-quick-ride-entry/spec.md`
-**Input**: Feature specification from `/specs/001-quick-ride-entry/spec.md`
+**Branch**: `008-quick-ride-entry` | **Date**: 2026-03-30 | **Spec**: `/specs/008-quick-ride-entry/spec.md`
+**Input**: Feature specification from `/specs/008-quick-ride-entry/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
@@ -54,7 +54,7 @@ No constitutional violations identified.
 ### Documentation (this feature)
 
 ```text
-specs/001-quick-ride-entry/
+specs/008-quick-ride-entry/
 ├── plan.md
 ├── research.md
 ├── data-model.md

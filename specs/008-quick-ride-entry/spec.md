@@ -1,6 +1,6 @@
 # Feature Specification: Quick Ride Entry from Past Rides
 
-**Feature Branch**: `001-quick-ride-entry`  
+**Feature Branch**: `008-quick-ride-entry`  
 **Created**: 2026-03-30  
 **Status**: Draft  
 **Input**: User description: "Enable quick ride entry by allowing the user to pick from up to 5 distinct past rides. Copy in miles and duration when the user selects one. Many times my rides are the same most days."

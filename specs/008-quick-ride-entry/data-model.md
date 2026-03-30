@@ -1,7 +1,7 @@
 # Data Model: Quick Ride Entry from Past Rides
 
 **Feature**: Quick Ride Entry from Past Rides (001)  
-**Branch**: `001-quick-ride-entry`  
+**Branch**: `008-quick-ride-entry`  
 **Date**: 2026-03-30  
 **Phase**: Phase 1 - Design & Contracts
 

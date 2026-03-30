@@ -1,7 +1,7 @@
 # Quickstart: Quick Ride Entry from Past Rides
 
 **Feature**: Quick Ride Entry from Past Rides  
-**Branch**: `001-quick-ride-entry`  
+**Branch**: `008-quick-ride-entry`  
 **Date**: 2026-03-30
 
 ## Quick Reference
