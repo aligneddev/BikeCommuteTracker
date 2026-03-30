@@ -196,7 +196,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 1: Delete a Ride from History (P1)
 
-- [ ] T070 [P] [US1] Write failing tests for RideDeleteDialog component in `src/BikeTracking.Frontend/tests/components/RideDeleteDialog.test.tsx`
+- [X] T070 [P] [US1] Write failing tests for RideDeleteDialog component in `src/BikeTracking.Frontend/tests/components/RideDeleteDialog.test.tsx`
   - Test 1: Dialog is hidden by default (not rendered or style display: none)
   - Test 2: Dialog shows when isOpen prop is true, displays ride date, distance, and notes
   - Test 3: Cancel button hides dialog without API call (onCancel callback triggered)
@@ -206,21 +206,21 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
   - Test 7: Confirm button is disabled during API call (loading state)
   - Expected outcome: All tests FAIL (component not yet created)
 
-- [ ] T071 [P] [US1] Write failing tests for deleteRide service in `src/BikeTracking.Frontend/tests/services/rideService.test.ts`
+- [X] T071 [P] [US1] Write failing tests for deleteRide service in `src/BikeTracking.Frontend/tests/services/rideService.test.ts`
   - Test 1: `deleteRide(rideId)` calls DELETE /api/rides/{rideId} with auth token
   - Test 2: Success response (200) returns parsed JSON with rideId and deletedAt
   - Test 3: Error response (403, 404, etc.) throws with error message
   - Test 4: Missing auth token results in error
   - Expected outcome: All tests FAIL (service not yet updated)
 
-- [ ] T072 [P] [US1] Write failing integration tests for delete in history page in `src/BikeTracking.Frontend/tests/pages/HistoryPage.test.tsx`
+- [X] T072 [P] [US1] Write failing integration tests for delete in history page in `src/BikeTracking.Frontend/tests/pages/HistoryPage.test.tsx`
   - Test 1: Delete button visible on each ride row
   - Test 2: Clicking delete button shows dialog
   - Test 3: After confirming delete, ride disappears from table
   - Test 4: After delete, history page queries API and refreshes ride list
   - Expected outcome: All tests FAIL
 
-- [ ] T073 [US1] Implement RideDeleteDialog component in `src/BikeTracking.Frontend/src/components/RideDeleteDialog/RideDeleteDialog.tsx`
+- [X] T073 [US1] Implement RideDeleteDialog component in `src/BikeTracking.Frontend/src/components/RideDeleteDialog/RideDeleteDialog.tsx`
   - Props interface:
     ```typescript
     interface RideDeleteDialogProps {
@@ -245,7 +245,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
   - Import React 19 hooks (useState). NO inline styles; use CSS file with Stylelint compliance.
   - Run: `npm run test:unit -- RideDeleteDialog` to pass T070
 
-- [ ] T074 [US1] Implement deleteRide service in `src/BikeTracking.Frontend/src/services/rideService.ts`
+- [X] T074 [US1] Implement deleteRide service in `src/BikeTracking.Frontend/src/services/rideService.ts`
   - Add function:
     ```typescript
     export async function deleteRide(rideId: string): Promise<{ rideId: string; deletedAt: string }> {
@@ -269,7 +269,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 2: Prevent Accidental Ride Deletion (P2)
 
-- [ ] T080 [US2] Integrate RideDeleteDialog into HistoryPage in `src/BikeTracking.Frontend/src/pages/HistoryPage.tsx`
+- [X] T080 [US2] Integrate RideDeleteDialog into HistoryPage in `src/BikeTracking.Frontend/src/pages/HistoryPage.tsx`
   - Add state: `const [deleteDialogState, setDeleteDialogState] = useState<{ ride: Ride | null; isOpen: boolean }>({ ride: null, isOpen: false });`
   - Add delete button to each ride row in table (icon or text "Delete")
   - On delete click: populate dialoge state with ride and set isOpen = true
@@ -280,7 +280,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
   - Add keyboard: Escape key closes dialog without delete
   - Run: `npm run test:unit -- HistoryPage` to pass T072
 
-- [ ] T081 [US2] Add "Delete" button styling to ride rows in `src/BikeTracking.Frontend/src/pages/HistoryPage.css`
+- [X] T081 [US2] Add "Delete" button styling to ride rows in `src/BikeTracking.Frontend/src/pages/HistoryPage.css`
   - Delete button: danger/red color on hover, cursor pointer, confirm icon (🗑️ or text)
   - Dialog styling: modal with backdrop, center-aligned, shadow, 400px max-width
   - Use Stylelint to validate (no inline styles)
@@ -289,13 +289,13 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 3: Maintain Accurate Totals After Deletion (P3)
 
-- [ ] T090 [P] [US3] Write failing tests for totals update after delete in `src/BikeTracking.Frontend/tests/pages/HistoryPage.test.tsx` (extend T072)
+- [X] T090 [P] [US3] Write failing tests for totals update after delete in `src/BikeTracking.Frontend/tests/pages/HistoryPage.test.tsx` (extend T072)
   - Test 1: Before delete, monthly total is 100mi
   - Test 2: Delete 25mi ride, monthly total updates to 75mi
   - Test 3: Delete all rides, monthly total is 0mi
   - Expected outcome: All tests FAIL (totals not refreshed after delete)
 
-- [ ] T091 [US3] Refresh totals after successful delete in HistoryPage in `src/BikeTracking.Frontend/src/pages/HistoryPage.tsx`
+- [X] T091 [US3] Refresh totals after successful delete in HistoryPage in `src/BikeTracking.Frontend/src/pages/HistoryPage.tsx`
   - On delete success, re-query totals API: `const totals = await fetchRideTotals(startDate, endDate);`
   - Update totals state: `setTotals(totals);`
   - This ensures month/year/all-time/filtered totals display latest values
@@ -305,7 +305,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ## Phase 6: Integration Testing
 
-- [ ] T100 [P] Write E2E test for delete ride flow in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts`
+- [X] T100 [P] Write E2E test for delete ride flow in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts`
   - Scenario: User signup → record 3 rides → delete middle ride → verify removed + totals updated
   - Steps:
     1. Sign up with name "TestUser" + PIN "1234"
@@ -322,17 +322,17 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
     12. Refresh page, verify ride 2 still absent
   - Expected outcome: All assertions pass
 
-- [ ] T101 [P] Write E2E test for delete with cancellation in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts` (same file)
+- [X] T101 [P] Write E2E test for delete with cancellation in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts` (same file)
   - Scenario: User opens delete dialog and cancels
   - Steps: Similar to T100 up to step 9, but click "Cancel"
   - Verify dialog closes, ride remains in table, total unchanged
 
-- [ ] T102 [P] Write E2E test for idempotent delete in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts`
+- [X] T102 [P] Write E2E test for idempotent delete in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts`
   - Scenario: Manual re-submit of DELETE request after successful first delete
   - Steps: Sign up → record ride → delete successfully → manually fetch DELETE API with same rideId
   - Verify: Second DELETE returns 200 OK with isIdempotent: true, ride still absent from table
 
-- [ ] T103 [P] Write E2E test for cross-user delete prevention in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts`
+- [X] T103 [P] Write E2E test for cross-user delete prevention in `src/BikeTracking.Frontend/tests/e2e/DeleteRide.spec.ts`
   - Scenario: User A signs up, User B attempts to delete User A's ride
   - Steps:
     1. Sign up as User A, record ride
@@ -342,7 +342,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
     5. Verify in User A's session that ride still exists
   - Note: May require test setup to handle multi-user state
 
-- [ ] T104 Run full E2E test suite
+- [X] T104 Run full E2E test suite
   - Command: `cd src/BikeTracking.Frontend && npm run test:e2e`
   - Prerequisite: Aspire + API running (`dotnet run --project src/BikeTracking.AppHost` in another terminal)
   - All tests in T100, T101, T102, T103 PASS
@@ -351,26 +351,26 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ## Phase 7: Polish & Verification
 
-- [ ] T110 [P] Format code with CSharpier
+- [X] T110 [P] Format code with CSharpier
   - Command: `csharpier format .`
   - Ensures C# code follows project conventions
   - Files affected: DeleteRide.cs, DeleteRideHandler.cs, Event handlers, Tests
 
-- [ ] T111 [P] Run eslint and stylelint on frontend
+- [X] T111 [P] Run eslint and stylelint on frontend
   - Command: `cd src/BikeTracking.Frontend && npm run lint`
   - Fixes any TypeScript/CSS violations
   - Files affected: RideDeleteDialog.tsx, HistoryPage.tsx, CSS files, Service, Tests
 
-- [ ] T112 [P] Run full backend test suite
+- [X] T112 [P] Run full backend test suite
   - Command: `dotnet test BikeTracking.slnx -k "Delete|delete"`
   - Ensures all delete-related tests pass (T010, T012, T030, T040-T042, T060)
   - Coverage: Domain (F#), API (C#), Tests
 
-- [ ] T113 [P] Run full frontend test suite
+- [X] T113 [P] Run full frontend test suite
   - Command: `cd src/BikeTracking.Frontend && npm run test:unit`
   - Ensures component, service, and page tests pass (T070-T072, T090)
 
-- [ ] T114 Build frontend for production
+- [X] T114 Build frontend for production
   - Command: `cd src/BikeTracking.Frontend && npm run build`
   - Verify no TypeScript errors, all imports resolve
   - Check bundle size (should be minimal addition for dialog component)

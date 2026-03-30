@@ -46,24 +46,8 @@ public sealed class DeleteRideService(
 
     public async Task<DeleteRideResult> ExecuteAsync(long riderId, long rideId)
     {
-        var ride = await dbContext.Rides.Where(r => r.Id == rideId).SingleOrDefaultAsync();
-
-        if (ride is null)
-        {
-            return DeleteRideResult.Failure("RIDE_NOT_FOUND", $"Ride {rideId} was not found.");
-        }
-
-        if (ride.RiderId != riderId)
-        {
-            return DeleteRideResult.Failure(
-                "NOT_RIDE_OWNER",
-                $"Ride {rideId} does not belong to the authenticated rider."
-            );
-        }
-
-        var utcNow = DateTime.UtcNow;
-
-        // Check if ride was already deleted (idempotency)
+        // Check if ride was already deleted (idempotency) before querying live rides.
+        // This allows repeat requests to succeed even after the row is removed.
         var existingDeleteEvent = await dbContext
             .OutboxEvents.Where(e =>
                 e.AggregateType == "Ride"
@@ -86,6 +70,23 @@ public sealed class DeleteRideService(
             return DeleteRideResult.SuccessIdempotent(idempotentResponse);
         }
 
+        var ride = await dbContext.Rides.Where(r => r.Id == rideId).SingleOrDefaultAsync();
+
+        if (ride is null)
+        {
+            return DeleteRideResult.Failure("RIDE_NOT_FOUND", $"Ride {rideId} was not found.");
+        }
+
+        if (ride.RiderId != riderId)
+        {
+            return DeleteRideResult.Failure(
+                "NOT_RIDE_OWNER",
+                $"Ride {rideId} does not belong to the authenticated rider."
+            );
+        }
+
+        var utcNow = DateTime.UtcNow;
+
         var eventPayload = RideDeletedEventPayload.Create(
             riderId: riderId,
             rideId: ride.Id,
@@ -106,6 +107,9 @@ public sealed class DeleteRideService(
                 LastError = null,
             }
         );
+
+        // Remove from current read model so history and totals update immediately.
+        dbContext.Rides.Remove(ride);
 
         try
         {

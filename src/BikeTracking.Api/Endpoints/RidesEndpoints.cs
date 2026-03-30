@@ -253,7 +253,8 @@ public static class RidesEndpoints
                 return Results.Ok(result.Response);
             }
 
-            var error = result.Error ?? new DeleteRideService.DeleteRideError("ERROR", "Unknown error.");
+            var error =
+                result.Error ?? new DeleteRideService.DeleteRideError("ERROR", "Unknown error.");
 
             return error.Code switch
             {

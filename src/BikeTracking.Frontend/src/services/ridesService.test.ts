@@ -211,4 +211,54 @@ describe("ridesService", () => {
       ridesService.getRideHistory({ from: "2026-03-31", to: "2026-03-01" }),
     ).rejects.toThrow(/date range/i);
   });
+
+  it("should call DELETE /api/rides/{id} and return success payload", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          rideId: 123,
+          deletedAt: "2026-03-30T14:22:15Z",
+          message: "Ride deleted successfully.",
+          isIdempotent: false,
+        },
+        true,
+      ),
+    );
+
+    const result = await ridesService.deleteRide(123);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/rides/123"),
+      expect.objectContaining({
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.rideId).toBe(123);
+      expect(result.value.message).toMatch(/deleted/i);
+    }
+  });
+
+  it("should return structured error payload for delete failures", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          code: "NOT_RIDE_OWNER",
+          message: "You do not have permission to delete this ride.",
+        },
+        false,
+        403,
+      ),
+    );
+
+    const result = await ridesService.deleteRide(999);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("NOT_RIDE_OWNER");
+      expect(result.error.message).toMatch(/permission/i);
+    }
+  });
 });

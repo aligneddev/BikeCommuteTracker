@@ -4,7 +4,8 @@ import type {
   RideHistoryResponse,
   RideHistoryRow,
 } from '../services/ridesService'
-import { editRide, getRideHistory } from '../services/ridesService'
+import { deleteRide, editRide, getRideHistory } from '../services/ridesService'
+import { RideDeleteDialog } from '../components/RideDeleteDialog/RideDeleteDialog'
 import { MileageSummaryCard } from '../components/mileage-summary-card/mileage-summary-card'
 import {
   formatMiles,
@@ -22,6 +23,7 @@ function HistoryTable({
   onEditedMilesChange,
   onSaveEdit,
   onCancelEdit,
+  onStartDelete,
 }: {
   rides: RideHistoryRow[]
   editingRideId: number | null
@@ -30,6 +32,7 @@ function HistoryTable({
   onEditedMilesChange: (value: string) => void
   onSaveEdit: (ride: RideHistoryRow) => void
   onCancelEdit: () => void
+  onStartDelete: (ride: RideHistoryRow) => void
 }) {
   if (rides.length === 0) {
     return <p className="history-page-empty">No rides found for this rider.</p>
@@ -79,13 +82,22 @@ function HistoryTable({
                   </button>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  className="history-page-edit-button"
-                  onClick={() => onStartEdit(ride)}
-                >
-                  Edit
-                </button>
+                <div className="history-page-edit-actions">
+                  <button
+                    type="button"
+                    className="history-page-edit-button"
+                    onClick={() => onStartEdit(ride)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="history-page-delete-button"
+                    onClick={() => onStartDelete(ride)}
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
             </td>
           </tr>
@@ -103,6 +115,7 @@ export function HistoryPage() {
   const [toDate, setToDate] = useState<string>('')
   const [editingRideId, setEditingRideId] = useState<number | null>(null)
   const [editedMiles, setEditedMiles] = useState<string>('')
+  const [ridePendingDelete, setRidePendingDelete] = useState<RideHistoryRow | null>(null)
 
   async function loadHistory(params: GetRideHistoryParams): Promise<void> {
     setIsLoading(true)
@@ -181,6 +194,37 @@ export function HistoryPage() {
     setError('')
     setEditingRideId(null)
     setEditedMiles('')
+
+    await loadHistory({
+      from: fromDate || undefined,
+      to: toDate || undefined,
+      page: data?.page ?? 1,
+      pageSize: data?.pageSize ?? 25,
+    })
+  }
+
+  function handleStartDelete(ride: RideHistoryRow): void {
+    setRidePendingDelete(ride)
+    setError('')
+  }
+
+  function handleCancelDelete(): void {
+    setRidePendingDelete(null)
+  }
+
+  async function handleConfirmDelete(): Promise<void> {
+    if (!ridePendingDelete) {
+      return
+    }
+
+    const result = await deleteRide(ridePendingDelete.rideId)
+    if (!result.ok) {
+      setError(result.error.message)
+      throw new Error(result.error.message)
+    }
+
+    setError('')
+    setRidePendingDelete(null)
 
     await loadHistory({
       from: fromDate || undefined,
@@ -283,8 +327,17 @@ export function HistoryPage() {
           onEditedMilesChange={setEditedMiles}
           onSaveEdit={(ride) => void handleSaveEdit(ride)}
           onCancelEdit={handleCancelEdit}
+          onStartDelete={handleStartDelete}
         />
       </section>
+
+      <RideDeleteDialog
+        key={ridePendingDelete ? `delete-${ridePendingDelete.rideId}` : 'delete-closed'}
+        isOpen={ridePendingDelete !== null}
+        ride={ridePendingDelete}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </main>
   )
 }

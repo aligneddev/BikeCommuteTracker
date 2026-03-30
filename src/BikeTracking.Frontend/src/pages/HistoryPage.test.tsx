@@ -6,14 +6,25 @@ import * as ridesService from '../services/ridesService'
 vi.mock('../services/ridesService', () => ({
   getRideHistory: vi.fn(),
   editRide: vi.fn(),
+  deleteRide: vi.fn(),
 }))
 
 const mockGetRideHistory = vi.mocked(ridesService.getRideHistory)
 const mockEditRide = vi.mocked(ridesService.editRide)
+const mockDeleteRide = vi.mocked(ridesService.deleteRide)
 
 describe('HistoryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockDeleteRide.mockResolvedValue({
+      ok: true,
+      value: {
+        rideId: 1,
+        deletedAt: '2026-03-30T14:22:15Z',
+        message: 'Ride deleted successfully.',
+        isIdempotent: false,
+      },
+    })
   })
 
   it('should render summary tiles for thisMonth, thisYear, and allTime', async () => {
@@ -584,6 +595,140 @@ describe('HistoryPage', () => {
       expect(within(totalSection).getByText('8.5 mi')).toBeInTheDocument()
       const summaries = screen.getByLabelText(/ride summaries/i)
       expect(within(summaries).getAllByText('8.5 mi')).toHaveLength(3)
+    })
+  })
+
+  it('should open delete confirmation dialog and cancel without deleting', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 10, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 10, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 10, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 10, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 12,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 10,
+          rideMinutes: 30,
+          temperature: 70,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0])
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: /delete ride confirmation/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: /delete ride confirmation/i }),
+      ).not.toBeInTheDocument()
+      expect(mockDeleteRide).not.toHaveBeenCalled()
+    })
+  })
+
+  it('should delete ride and reload history with active filters', async () => {
+    mockGetRideHistory
+      .mockResolvedValueOnce({
+        summaries: {
+          thisMonth: { miles: 30, rideCount: 2, period: 'thisMonth' },
+          thisYear: { miles: 30, rideCount: 2, period: 'thisYear' },
+          allTime: { miles: 30, rideCount: 2, period: 'allTime' },
+        },
+        filteredTotal: { miles: 30, rideCount: 2, period: 'filtered' },
+        rides: [
+          {
+            rideId: 1,
+            rideDateTimeLocal: '2026-03-10T10:30:00',
+            miles: 10,
+            rideMinutes: 30,
+            temperature: 70,
+          },
+          {
+            rideId: 2,
+            rideDateTimeLocal: '2026-03-20T10:30:00',
+            miles: 20,
+            rideMinutes: 40,
+            temperature: 72,
+          },
+        ],
+        page: 1,
+        pageSize: 25,
+        totalRows: 2,
+      })
+      .mockResolvedValueOnce({
+        summaries: {
+          thisMonth: { miles: 20, rideCount: 1, period: 'thisMonth' },
+          thisYear: { miles: 20, rideCount: 1, period: 'thisYear' },
+          allTime: { miles: 20, rideCount: 1, period: 'allTime' },
+        },
+        filteredTotal: { miles: 20, rideCount: 1, period: 'filtered' },
+        rides: [
+          {
+            rideId: 2,
+            rideDateTimeLocal: '2026-03-20T10:30:00',
+            miles: 20,
+            rideMinutes: 40,
+            temperature: 72,
+          },
+        ],
+        page: 1,
+        pageSize: 25,
+        totalRows: 1,
+      })
+
+    mockDeleteRide.mockResolvedValue({
+      ok: true,
+      value: {
+        rideId: 1,
+        deletedAt: '2026-03-30T14:22:15Z',
+        message: 'Ride deleted successfully.',
+      },
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(mockGetRideHistory).toHaveBeenCalledWith({ page: 1, pageSize: 25 })
+    })
+
+    fireEvent.change(screen.getByLabelText(/^From$/i), {
+      target: { value: '2026-03-01' },
+    })
+    fireEvent.change(screen.getByLabelText(/^To$/i), {
+      target: { value: '2026-03-31' },
+    })
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0])
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: /delete ride confirmation/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /confirm delete/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteRide).toHaveBeenCalledWith(1)
+      expect(mockGetRideHistory).toHaveBeenLastCalledWith({
+        from: '2026-03-01',
+        to: '2026-03-31',
+        page: 1,
+        pageSize: 25,
+      })
     })
   })
 })

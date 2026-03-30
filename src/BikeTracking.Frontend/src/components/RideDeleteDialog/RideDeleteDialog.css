@@ -1,0 +1,79 @@
+.ride-delete-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 40%);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.ride-delete-dialog {
+  width: min(100%, 420px);
+  background: #fff;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.ride-delete-dialog h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.ride-delete-dialog-warning {
+  margin: 0;
+  color: #7f1d1d;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+.ride-delete-dialog-details {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ride-delete-dialog-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ride-delete-dialog-details dt {
+  color: #334155;
+  font-weight: 600;
+}
+
+.ride-delete-dialog-details dd {
+  margin: 0;
+}
+
+.ride-delete-dialog-error {
+  margin: 0;
+  color: #991b1b;
+}
+
+.ride-delete-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ride-delete-dialog-actions button {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.45rem 0.8rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ride-delete-dialog-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
