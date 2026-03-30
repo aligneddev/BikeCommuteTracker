@@ -34,7 +34,6 @@ public sealed class GetQuickRideOptionsService(BikeTrackingDbContext dbContext)
                 group.Max(ride => ride.RideDateTimeLocal)
             ))
             .OrderByDescending(option => option.LastUsedAtLocal)
-            .AsNoTracking()
             .Take(5)
             .ToList();
 
