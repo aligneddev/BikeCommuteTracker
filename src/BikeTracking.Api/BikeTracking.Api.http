@@ -22,6 +22,11 @@ GET {{ApiService_HostAddress}}/api/rides/defaults
 Accept: application/json
 X-User-Id: {{RiderId}}
 
+### Get quick ride options
+GET {{ApiService_HostAddress}}/api/rides/quick-options
+Accept: application/json
+X-User-Id: {{RiderId}}
+
 ### Get unfiltered ride history
 GET {{ApiService_HostAddress}}/api/rides/history?page=1&pageSize=25
 Accept: application/json

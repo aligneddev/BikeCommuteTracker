@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createAndLoginUser, uniqueUser } from "./support/auth-helpers";
-import { recordRide } from "./support/ride-helpers";
+import { recordRide, selectQuickRideOption } from "./support/ride-helpers";
 
 const TEST_PIN = "87654321";
 
@@ -33,5 +33,28 @@ test.describe("004-record-ride e2e", () => {
     await expect(page.locator("#miles")).toHaveValue("9.75");
     await expect(page.locator("#rideMinutes")).toHaveValue("35");
     await expect(page.locator("#temperature")).toHaveValue("61");
+  });
+
+  test("allows editing quick-option copied values before save", async ({
+    page,
+  }) => {
+    const userName = uniqueUser("e2e-quick-option-edit");
+    await createAndLoginUser(page, userName, TEST_PIN);
+
+    await recordRide(page, {
+      miles: "8.50",
+      rideMinutes: "30",
+      temperature: "60",
+    });
+
+    await page.goto("/rides/record");
+
+    await selectQuickRideOption(page, /8\.5 mi\s*-\s*30 min/i);
+
+    await page.locator("#miles").fill("9.25");
+    await page.locator("#rideMinutes").fill("33");
+
+    await page.getByRole("button", { name: "Record Ride" }).click();
+    await expect(page.getByText(/ride recorded successfully/i)).toBeVisible();
   });
 });

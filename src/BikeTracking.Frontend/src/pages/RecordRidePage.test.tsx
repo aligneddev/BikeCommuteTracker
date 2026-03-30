@@ -6,17 +6,23 @@ import { RecordRidePage } from '../pages/RecordRidePage'
 // Mock the ridesService
 vi.mock('../services/ridesService', () => ({
   getRideDefaults: vi.fn(),
+  getQuickRideOptions: vi.fn(),
   recordRide: vi.fn(),
 }))
 
 import * as ridesService from '../services/ridesService'
 
 const mockGetRideDefaults = vi.mocked(ridesService.getRideDefaults)
+const mockGetQuickRideOptions = vi.mocked(ridesService.getQuickRideOptions)
 const mockRecordRide = vi.mocked(ridesService.recordRide)
 
 describe('RecordRidePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetQuickRideOptions.mockResolvedValue({
+      options: [],
+      generatedAtUtc: new Date().toISOString(),
+    })
   })
 
   it('should render form fields', async () => {
@@ -198,6 +204,201 @@ describe('RecordRidePage', () => {
       expect(milesInput.value).toBe('10')
       // The component surfaces error.message from the rejection
       expect(screen.getByText(/server error/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should render quick ride options when available', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetQuickRideOptions.mockResolvedValue({
+      options: [
+        {
+          miles: 10.5,
+          rideMinutes: 40,
+          lastUsedAtLocal: new Date().toISOString(),
+        },
+      ],
+      generatedAtUtc: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /10\.5 mi .* 40 min/i })).toBeInTheDocument()
+    })
+  })
+
+  it('should prefill miles and duration when quick option selected', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetQuickRideOptions.mockResolvedValue({
+      options: [
+        {
+          miles: 9.25,
+          rideMinutes: 33,
+          lastUsedAtLocal: new Date().toISOString(),
+        },
+      ],
+      generatedAtUtc: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    const optionButton = await screen.findByRole('button', {
+      name: /9\.25 mi .* 33 min/i,
+    })
+    fireEvent.click(optionButton)
+
+    const milesInput = screen.getByLabelText(/miles/i) as HTMLInputElement
+    const minutesInput = screen.getByLabelText(/duration/i) as HTMLInputElement
+
+    expect(milesInput.value).toBe('9.25')
+    expect(minutesInput.value).toBe('33')
+    expect(mockRecordRide).not.toHaveBeenCalled()
+  })
+
+  it('should allow editing copied values and submit edited payload', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetQuickRideOptions.mockResolvedValue({
+      options: [
+        {
+          miles: 7.5,
+          rideMinutes: 25,
+          lastUsedAtLocal: new Date().toISOString(),
+        },
+      ],
+      generatedAtUtc: new Date().toISOString(),
+    })
+    mockRecordRide.mockResolvedValue({
+      rideId: 222,
+      riderId: 1,
+      savedAtUtc: new Date().toISOString(),
+      eventStatus: 'Queued',
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    const optionButton = await screen.findByRole('button', {
+      name: /7\.5 mi .* 25 min/i,
+    })
+    fireEvent.click(optionButton)
+
+    const milesInput = screen.getByLabelText(/miles/i) as HTMLInputElement
+    const minutesInput = screen.getByLabelText(/duration/i) as HTMLInputElement
+
+    fireEvent.change(milesInput, { target: { value: '8.25' } })
+    fireEvent.change(minutesInput, { target: { value: '29' } })
+
+    const submitButton = screen.getByRole('button', { name: /record ride/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockRecordRide).toHaveBeenCalledWith(
+        expect.objectContaining({
+          miles: 8.25,
+          rideMinutes: 29,
+        })
+      )
+    })
+  })
+
+  it('should block submit when copied miles is cleared', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetQuickRideOptions.mockResolvedValue({
+      options: [
+        {
+          miles: 6.4,
+          rideMinutes: 22,
+          lastUsedAtLocal: new Date().toISOString(),
+        },
+      ],
+      generatedAtUtc: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    const optionButton = await screen.findByRole('button', {
+      name: /6\.4 mi .* 22 min/i,
+    })
+    fireEvent.click(optionButton)
+
+    const milesInput = screen.getByLabelText(/miles/i) as HTMLInputElement
+    fireEvent.change(milesInput, { target: { value: '' } })
+
+    const submitButton = screen.getByRole('button', { name: /record ride/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockRecordRide).not.toHaveBeenCalled()
+      expect(screen.getByText(/miles must be greater than 0/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should not render quick ride options section when no options exist', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetQuickRideOptions.mockResolvedValue({
+      options: [],
+      generatedAtUtc: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/miles/i)).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: /quick ride options/i })).not.toBeInTheDocument()
+    })
+  })
+
+  it('should keep manual entry available when quick options fetch fails', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetQuickRideOptions.mockRejectedValue(new Error('Quick options unavailable'))
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/miles/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /record ride/i })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: /quick ride options/i })).not.toBeInTheDocument()
     })
   })
 })

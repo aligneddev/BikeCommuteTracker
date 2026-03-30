@@ -28,6 +28,14 @@ public static class RidesEndpoints
             .RequireAuthorization();
 
         group
+            .MapGet("/quick-options", GetQuickRideOptions)
+            .WithName("GetQuickRideOptions")
+            .WithSummary("Get quick ride options for the authenticated rider")
+            .Produces<QuickRideOptionsResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization();
+
+        group
             .MapGet("/history", GetRideHistory)
             .WithName("GetRideHistory")
             .WithSummary("Get authenticated rider ride history with summaries and filtering")
@@ -171,6 +179,29 @@ public static class RidesEndpoints
         {
             return Results.BadRequest(
                 new ErrorResponse("ERROR", "An error occurred while retrieving ride history")
+            );
+        }
+    }
+
+    private static async Task<IResult> GetQuickRideOptions(
+        HttpContext context,
+        GetQuickRideOptionsService quickRideOptionsService,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var userIdString = context.User.FindFirst("sub")?.Value;
+            if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+                return Results.Unauthorized();
+
+            var response = await quickRideOptionsService.ExecuteAsync(riderId, cancellationToken);
+            return Results.Ok(response);
+        }
+        catch
+        {
+            return Results.BadRequest(
+                new ErrorResponse("ERROR", "An error occurred while retrieving quick ride options")
             );
         }
     }

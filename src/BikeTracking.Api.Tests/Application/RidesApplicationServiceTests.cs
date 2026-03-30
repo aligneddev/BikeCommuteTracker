@@ -167,6 +167,152 @@ public sealed class RidesApplicationServiceTests
         Assert.Equal(72m, defaults.DefaultTemperature);
     }
 
+    [Fact]
+    public async Task GetQuickRideOptionsService_ReturnsOnlyAuthenticatedRiderOptions()
+    {
+        using var context = CreateDbContext();
+        var riderA = new UserEntity
+        {
+            DisplayName = "Quick Rider A",
+            NormalizedName = "quick rider a",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        var riderB = new UserEntity
+        {
+            DisplayName = "Quick Rider B",
+            NormalizedName = "quick rider b",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.AddRange(riderA, riderB);
+        await context.SaveChangesAsync();
+
+        context.Rides.AddRange(
+            new RideEntity
+            {
+                RiderId = riderA.UserId,
+                RideDateTimeLocal = DateTime.Now.AddDays(-1),
+                Miles = 8m,
+                RideMinutes = 30,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = riderA.UserId,
+                RideDateTimeLocal = DateTime.Now,
+                Miles = 9m,
+                RideMinutes = 35,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = riderB.UserId,
+                RideDateTimeLocal = DateTime.Now,
+                Miles = 50m,
+                RideMinutes = 120,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var service = new GetQuickRideOptionsService(context);
+        var response = await service.ExecuteAsync(riderA.UserId);
+
+        Assert.NotNull(response);
+        foreach (var option in response.Options)
+        {
+            Assert.True(option.Miles < 20m);
+            Assert.True(option.RideMinutes < 60);
+        }
+    }
+
+    [Fact]
+    public async Task GetQuickRideOptionsService_DeduplicatesByMilesAndRideMinutes_AndOrdersByMostRecent()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Quick Rider Distinct",
+            NormalizedName = "quick rider distinct",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var now = DateTime.Now;
+        context.Rides.AddRange(
+            new RideEntity
+            {
+                RiderId = user.UserId,
+                RideDateTimeLocal = now.AddDays(-3),
+                Miles = 10m,
+                RideMinutes = 30,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = user.UserId,
+                RideDateTimeLocal = now.AddDays(-1),
+                Miles = 10m,
+                RideMinutes = 30,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = user.UserId,
+                RideDateTimeLocal = now,
+                Miles = 8m,
+                RideMinutes = 25,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var service = new GetQuickRideOptionsService(context);
+        var response = await service.ExecuteAsync(user.UserId);
+
+        Assert.Equal(2, response.Options.Count);
+        Assert.Equal(8m, response.Options[0].Miles);
+        Assert.Equal(25, response.Options[0].RideMinutes);
+        Assert.Equal(10m, response.Options[1].Miles);
+        Assert.Equal(30, response.Options[1].RideMinutes);
+    }
+
+    [Fact]
+    public async Task GetQuickRideOptionsService_ReturnsAtMostFiveDistinctOptions()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Quick Rider Limit",
+            NormalizedName = "quick rider limit",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var now = DateTime.Now;
+        for (var index = 0; index < 6; index++)
+        {
+            context.Rides.Add(
+                new RideEntity
+                {
+                    RiderId = user.UserId,
+                    RideDateTimeLocal = now.AddDays(-index),
+                    Miles = 5m + index,
+                    RideMinutes = 20 + index,
+                    CreatedAtUtc = DateTime.UtcNow,
+                }
+            );
+        }
+
+        await context.SaveChangesAsync();
+
+        var service = new GetQuickRideOptionsService(context);
+        var response = await service.ExecuteAsync(user.UserId);
+
+        Assert.Equal(5, response.Options.Count);
+    }
+
     // History service tests
 
     [Fact]

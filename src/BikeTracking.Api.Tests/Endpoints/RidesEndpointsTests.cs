@@ -153,6 +153,63 @@ public sealed class RidesEndpointsTests
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GetQuickRideOptions_WithAuth_Returns200()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("QuickOptionsUser");
+        await host.RecordRideAsync(userId, miles: 11.5m, rideMinutes: 39, temperature: 65m);
+
+        var response = await host.Client.GetWithAuthAsync("/api/rides/quick-options", userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<QuickRideOptionsResponse>();
+        Assert.NotNull(payload);
+        Assert.NotNull(payload.Options);
+        Assert.NotEmpty(payload.Options);
+    }
+
+    [Fact]
+    public async Task GetQuickRideOptions_WithoutAuth_Returns401()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+
+        var response = await host.Client.GetAsync("/api/rides/quick-options");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetQuickRideOptions_ExcludesRidesWithoutRideMinutes()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("QuickOptionsIncomplete");
+        await host.RecordRideAsync(userId, miles: 11.5m, rideMinutes: 39, temperature: 65m);
+        await host.RecordRideAsync(userId, miles: 7.25m, rideMinutes: null, temperature: 55m);
+
+        var response = await host.Client.GetWithAuthAsync("/api/rides/quick-options", userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<QuickRideOptionsResponse>();
+        Assert.NotNull(payload);
+        Assert.All(payload.Options, option => Assert.True(option.RideMinutes > 0));
+        Assert.DoesNotContain(payload.Options, option => option.Miles == 7.25m);
+    }
+
+    [Fact]
+    public async Task GetQuickRideOptions_WithoutEligibleRides_ReturnsEmptyOptionsArray()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("QuickOptionsEmpty");
+
+        var response = await host.Client.GetWithAuthAsync("/api/rides/quick-options", userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<QuickRideOptionsResponse>();
+        Assert.NotNull(payload);
+        Assert.Empty(payload.Options);
+    }
+
     // History endpoint tests
 
     [Fact]
@@ -423,6 +480,7 @@ public sealed class RidesEndpointsTests
             // Add Rides services
             builder.Services.AddScoped<RecordRideService>();
             builder.Services.AddScoped<GetRideDefaultsService>();
+            builder.Services.AddScoped<GetQuickRideOptionsService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
 
