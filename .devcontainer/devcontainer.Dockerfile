@@ -51,6 +51,6 @@ RUN dotnet tool restore && dotnet restore BikeTracking.slnx
 # making postCreateCommand "npm ci" fast without re-downloading packages.
 COPY src/BikeTracking.Frontend/package.json src/BikeTracking.Frontend/package-lock.json /tmp/npm-warmup/
 RUN npm ci --prefix /tmp/npm-warmup \
-    && npm exec --prefix /tmp/npm-warmup -- playwright install \
+  && npm exec --prefix /tmp/npm-warmup -- playwright install --with-deps chromium \
     && rm -rf /tmp/npm-warmup
 
