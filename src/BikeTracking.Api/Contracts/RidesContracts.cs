@@ -49,6 +49,12 @@ public sealed record EditRideRequest(
 
 public sealed record EditRideResponse(long RideId, int NewVersion, string Message);
 
+public sealed record DeleteRideResponse(
+    long RideId,
+    DateTime DeletedAtUtc,
+    bool IsIdempotent = false
+);
+
 /// <summary>
 /// Aggregated miles and ride count for a defined period (thisMonth, thisYear, allTime, or filtered).
 /// </summary>

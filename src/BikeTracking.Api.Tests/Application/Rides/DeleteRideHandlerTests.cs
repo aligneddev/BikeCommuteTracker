@@ -1,11 +1,11 @@
 namespace BikeTracking.Api.Tests.Application.Rides;
 
-using Xunit;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Xunit;
 
 /// <summary>
 /// TDD RED-GREEN: Tests for delete handler logic.
@@ -34,10 +34,10 @@ public class DeleteRideHandlerTests
         // Arrange
         var dbContext = CreateInMemoryDbContext();
         var handler = new DeleteRideHandler(dbContext, CreateMockLogger());
-        
+
         long userId = 42;
         long rideId = 100;
-        
+
         // Create a test ride
         var ride = new RideEntity
         {
@@ -45,7 +45,7 @@ public class DeleteRideHandlerTests
             RiderId = userId,
             RideDateTimeLocal = DateTime.Now,
             Miles = 5.5m,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
         dbContext.Rides.Add(ride);
         await dbContext.SaveChangesAsync();
@@ -66,7 +66,7 @@ public class DeleteRideHandlerTests
         // Arrange
         var dbContext = CreateInMemoryDbContext();
         var handler = new DeleteRideHandler(dbContext, CreateMockLogger());
-        
+
         long userId = 42;
         long nonExistentRideId = 9999;
 
@@ -85,11 +85,11 @@ public class DeleteRideHandlerTests
         // Arrange
         var dbContext = CreateInMemoryDbContext();
         var handler = new DeleteRideHandler(dbContext, CreateMockLogger());
-        
+
         long rideOwnerId = 42;
         long attackerId = 99;
         long rideId = 100;
-        
+
         // Create ride owned by rideOwnerId
         var ride = new RideEntity
         {
@@ -97,7 +97,7 @@ public class DeleteRideHandlerTests
             RiderId = rideOwnerId,
             RideDateTimeLocal = DateTime.Now,
             Miles = 5.5m,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
         dbContext.Rides.Add(ride);
         await dbContext.SaveChangesAsync();
@@ -117,10 +117,10 @@ public class DeleteRideHandlerTests
         // Arrange
         var dbContext = CreateInMemoryDbContext();
         var handler = new DeleteRideHandler(dbContext, CreateMockLogger());
-        
+
         long userId = 42;
         long rideId = 100;
-        
+
         // Create and delete a ride once
         var ride = new RideEntity
         {
@@ -128,7 +128,7 @@ public class DeleteRideHandlerTests
             RiderId = userId,
             RideDateTimeLocal = DateTime.Now,
             Miles = 5.5m,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
         dbContext.Rides.Add(ride);
         await dbContext.SaveChangesAsync();
@@ -152,17 +152,17 @@ public class DeleteRideHandlerTests
         // Arrange
         var dbContext = CreateInMemoryDbContext();
         var handler = new DeleteRideHandler(dbContext, CreateMockLogger());
-        
+
         long userId = 42;
         long rideId = 100;
-        
+
         var ride = new RideEntity
         {
             Id = (int)rideId,
             RiderId = userId,
             RideDateTimeLocal = DateTime.Now,
             Miles = 5.5m,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
         };
         dbContext.Rides.Add(ride);
         await dbContext.SaveChangesAsync();
@@ -173,8 +173,8 @@ public class DeleteRideHandlerTests
         // Assert
         Assert.True(result.IsSuccess);
         // Verify outbox entry was created
-        var outboxEntries = await dbContext.OutboxEvents
-            .Where(x => x.EventType == "RideDeleted" && x.AggregateId == rideId)
+        var outboxEntries = await dbContext
+            .OutboxEvents.Where(x => x.EventType == "RideDeleted" && x.AggregateId == rideId)
             .ToListAsync();
         Assert.NotEmpty(outboxEntries);
     }

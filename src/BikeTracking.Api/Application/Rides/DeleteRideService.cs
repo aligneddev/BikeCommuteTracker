@@ -1,5 +1,6 @@
 using System.Text.Json;
 using BikeTracking.Api.Application.Events;
+using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -7,52 +8,43 @@ using Microsoft.Extensions.Logging;
 
 namespace BikeTracking.Api.Application.Rides;
 
-public sealed class DeleteRideHandler(
+public sealed class DeleteRideService(
     BikeTrackingDbContext dbContext,
-    ILogger<DeleteRideHandler> logger
+    ILogger<DeleteRideService> logger
 )
 {
     public sealed record DeleteRideError(string Code, string Message);
 
     public sealed record DeleteRideResult(
         bool IsSuccess,
-        long RideId,
-        long UserId,
-        DateTime DeletedAt,
-        bool IsIdempotent = false,
-        string? ErrorCode = null,
-        DeleteRideError? Error = null
+        DeleteRideResponse? Response,
+        RideDeletedEventPayload? EventPayload,
+        DeleteRideError? Error
     )
     {
-        public static DeleteRideResult Success(long rideId, long userId, DateTime deletedAt)
+        public static DeleteRideResult Success(
+            DeleteRideResponse response,
+            RideDeletedEventPayload eventPayload
+        )
         {
-            return new DeleteRideResult(true, rideId, userId, deletedAt, false, null, null);
+            return new DeleteRideResult(true, response, eventPayload, null);
         }
 
         public static DeleteRideResult SuccessIdempotent(
-            long rideId,
-            long userId,
-            DateTime deletedAt
+            DeleteRideResponse response,
+            RideDeletedEventPayload? eventPayload = null
         )
         {
-            return new DeleteRideResult(true, rideId, userId, deletedAt, true, null, null);
+            return new DeleteRideResult(true, response, eventPayload, null);
         }
 
         public static DeleteRideResult Failure(string code, string message)
         {
-            return new DeleteRideResult(
-                false,
-                0,
-                0,
-                default,
-                false,
-                code,
-                new DeleteRideError(code, message)
-            );
+            return new DeleteRideResult(false, null, null, new DeleteRideError(code, message));
         }
     }
 
-    public async Task<DeleteRideResult> DeleteRideAsync(long userId, long rideId)
+    public async Task<DeleteRideResult> ExecuteAsync(long riderId, long rideId)
     {
         var ride = await dbContext.Rides.Where(r => r.Id == rideId).SingleOrDefaultAsync();
 
@@ -61,7 +53,7 @@ public sealed class DeleteRideHandler(
             return DeleteRideResult.Failure("RIDE_NOT_FOUND", $"Ride {rideId} was not found.");
         }
 
-        if (ride.RiderId != userId)
+        if (ride.RiderId != riderId)
         {
             return DeleteRideResult.Failure(
                 "NOT_RIDE_OWNER",
@@ -86,15 +78,16 @@ public sealed class DeleteRideHandler(
                 "Delete event already exists for ride {RideId}. Returning idempotent success.",
                 rideId
             );
-            return DeleteRideResult.SuccessIdempotent(
-                rideId,
-                userId,
-                existingDeleteEvent.OccurredAtUtc
+            var idempotentResponse = new DeleteRideResponse(
+                RideId: rideId,
+                DeletedAtUtc: existingDeleteEvent.OccurredAtUtc,
+                IsIdempotent: true
             );
+            return DeleteRideResult.SuccessIdempotent(idempotentResponse);
         }
 
         var eventPayload = RideDeletedEventPayload.Create(
-            riderId: userId,
+            riderId: riderId,
             rideId: ride.Id,
             deletedAtUtc: utcNow
         );
@@ -124,8 +117,13 @@ public sealed class DeleteRideHandler(
             throw;
         }
 
-        logger.LogInformation("Deleted ride {RideId} for rider {RiderId}", ride.Id, userId);
+        logger.LogInformation("Deleted ride {RideId} for rider {RiderId}", ride.Id, riderId);
 
-        return DeleteRideResult.Success(rideId, userId, utcNow);
+        var response = new DeleteRideResponse(
+            RideId: rideId,
+            DeletedAtUtc: utcNow,
+            IsIdempotent: false
+        );
+        return DeleteRideResult.Success(response, eventPayload);
     }
 }

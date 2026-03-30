@@ -48,6 +48,17 @@ public static class RidesEndpoints
             .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
             .RequireAuthorization();
 
+        group
+            .MapDelete("/{rideId:long}", DeleteRide)
+            .WithName("DeleteRide")
+            .WithSummary("Delete an existing ride for the authenticated rider")
+            .Produces<DeleteRideResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status403Forbidden)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .RequireAuthorization();
+
         return endpoints;
     }
 
@@ -218,6 +229,46 @@ public static class RidesEndpoints
         {
             return Results.BadRequest(
                 new ErrorResponse("ERROR", "An error occurred while editing the ride")
+            );
+        }
+    }
+
+    private static async Task<IResult> DeleteRide(
+        [FromRoute] long rideId,
+        HttpContext context,
+        [FromServices] DeleteRideService deleteRideService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        try
+        {
+            var result = await deleteRideService.ExecuteAsync(riderId, rideId);
+
+            if (result.IsSuccess && result.Response is not null)
+            {
+                return Results.Ok(result.Response);
+            }
+
+            var error = result.Error ?? new DeleteRideService.DeleteRideError("ERROR", "Unknown error.");
+
+            return error.Code switch
+            {
+                "RIDE_NOT_FOUND" => Results.NotFound(new ErrorResponse(error.Code, error.Message)),
+                "NOT_RIDE_OWNER" => Results.Json(
+                    new ErrorResponse(error.Code, error.Message),
+                    statusCode: StatusCodes.Status403Forbidden
+                ),
+                _ => Results.BadRequest(new ErrorResponse(error.Code, error.Message)),
+            };
+        }
+        catch
+        {
+            return Results.BadRequest(
+                new ErrorResponse("ERROR", "An error occurred while deleting the ride")
             );
         }
     }
