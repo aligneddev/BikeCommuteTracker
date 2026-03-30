@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RideDeleted Event",
+  "description": "Event emitted when a user deletes a ride from their history. Immutable and append-only.",
+  "type": "object",
+  "required": ["eventType", "rideId", "userId", "deletedAt", "deletedBy"],
+  "properties": {
+    "eventType": {
+      "type": "string",
+      "enum": ["RideDeleted"],
+      "description": "Event type identifier"
+    },
+    "rideId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of the ride being deleted",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "userId": {
+      "type": "string",
+      "description": "ID of the ride owner (user who created the ride). Must match deletedBy for user-initiated deletions.",
+      "example": "user-42"
+    },
+    "deletedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the deletion was persisted to the event store. Set by the server.",
+      "example": "2026-03-30T14:22:15Z"
+    },
+    "deletedBy": {
+      "type": "string",
+      "description": "ID of the user who requested the deletion. In the current design, always equals userId. Future use: may differ if admin deletion is implemented.",
+      "example": "user-42"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "eventType": "RideDeleted",
+      "rideId": "550e8400-e29b-41d4-a716-446655440000",
+      "userId": "user-42",
+      "deletedAt": "2026-03-30T14:22:15Z",
+      "deletedBy": "user-42"
+    },
+    {
+      "eventType": "RideDeleted",
+      "rideId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "userId": "user-99",
+      "deletedAt": "2026-03-30T10:05:30Z",
+      "deletedBy": "user-99"
+    }
+  ],
+  "notes": {
+    "immutability": "This event is immutable. Once persisted to the event store, it is never modified or deleted.",
+    "audit": "This event is retained indefinitely in the event store for compliance and temporal queries.",
+    "idempotency": "Multiple deletion requests for the same ride will only append one RideDeleted event. Subsequent requests return idempotent success without appending duplicate events.",
+    "backwards_compatibility": "Future versions may allow deletedBy to differ from userId (e.g., for admin deletion). Consumers should not assume they are always equal.",
+    "related_events": ["RideCreated", "RideEdited"]
+  }
+}

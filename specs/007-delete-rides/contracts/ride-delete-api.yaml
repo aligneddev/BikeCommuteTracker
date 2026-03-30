@@ -1,0 +1,191 @@
+openapi: 3.0.0
+info:
+  title: Bike Tracking - Ride Delete API
+  version: 1.0.0
+  description: Delete endpoint for removing rides from a user's history
+  contact:
+    name: Bike Tracking Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:5000/api
+    description: Local development (Aspire)
+  - url: https://api.biketracking.local/api
+    description: User machine (deployed)
+
+paths:
+  /rides/{rideId}:
+    delete:
+      summary: Delete a ride
+      description: |
+        Delete a ride from the authenticated user's history. Returns 200 OK even if the ride
+        is already deleted (idempotent). Requires valid authentication token.
+      operationId: deleteRide
+      tags:
+        - Rides
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          description: UUID of the ride to delete (e.g., 550e8400-e29b-41d4-a716-446655440000)
+          schema:
+            type: string
+            format: uuid
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ride deleted successfully or already deleted (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteRideSuccessResponse'
+              examples:
+                success:
+                  summary: Successful deletion
+                  value:
+                    rideId: 550e8400-e29b-41d4-a716-446655440000
+                    deletedAt: "2026-03-30T14:22:15Z"
+                    message: Ride deleted successfully.
+                    isIdempotent: false
+                idempotent:
+                  summary: Already deleted (idempotent)
+                  value:
+                    rideId: 550e8400-e29b-41d4-a716-446655440000
+                    deletedAt: "2026-03-30T13:15:00Z"
+                    message: Ride was already deleted.
+                    isIdempotent: true
+        '400':
+          description: Invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                badUuid:
+                  summary: Malformed UUID
+                  value:
+                    error: INVALID_RIDE_ID
+                    message: Invalid ride ID format. Must be a valid UUID.
+                    rideId: not-a-uuid
+                    timestamp: "2026-03-30T14:22:15Z"
+        '401':
+          description: Authentication required or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                noAuth:
+                  summary: Missing authorization header
+                  value:
+                    error: MISSING_AUTH
+                    message: Authorization header is required.
+                    timestamp: "2026-03-30T14:22:15Z"
+                badToken:
+                  summary: Expired or invalid token
+                  value:
+                    error: INVALID_TOKEN
+                    message: The provided token is expired or malformed.
+                    timestamp: "2026-03-30T14:22:15Z"
+        '403':
+          description: User not authorized to delete this ride
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: NOT_RIDE_OWNER
+                message: You do not have permission to delete this ride.
+                rideId: 550e8400-e29b-41d4-a716-446655440000
+                timestamp: "2026-03-30T14:22:15Z"
+        '404':
+          description: Ride not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: RIDE_NOT_FOUND
+                message: No ride found with the specified ID.
+                rideId: 550e8400-e29b-41d4-a716-446655440000
+                timestamp: "2026-03-30T14:22:15Z"
+        '500':
+          description: Server error (e.g., database or outbox failure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: OUTBOX_ERROR
+                message: Failed to persist deletion event. Please try again later.
+                timestamp: "2026-03-30T14:22:15Z"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from user login. Include in Authorization header as "Bearer {token}"
+
+  schemas:
+    DeleteRideSuccessResponse:
+      type: object
+      required:
+        - rideId
+        - deletedAt
+        - message
+      properties:
+        rideId:
+          type: string
+          format: uuid
+          description: ID of the deleted ride
+          example: 550e8400-e29b-41d4-a716-446655440000
+        deletedAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when the ride was deleted
+          example: "2026-03-30T14:22:15Z"
+        message:
+          type: string
+          description: Success message
+          example: Ride deleted successfully.
+        isIdempotent:
+          type: boolean
+          description: Whether this was an idempotent response (ride was already deleted)
+          example: false
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - INVALID_RIDE_ID
+            - MISSING_AUTH
+            - INVALID_TOKEN
+            - NOT_RIDE_OWNER
+            - RIDE_NOT_FOUND
+            - OUTBOX_ERROR
+          description: Machine-readable error code
+          example: NOT_RIDE_OWNER
+        message:
+          type: string
+          description: Human-readable error message
+          example: You do not have permission to delete this ride.
+        rideId:
+          type: string
+          format: uuid
+          description: The ride ID from the request (may be null if request malformed)
+          example: 550e8400-e29b-41d4-a716-446655440000
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: UTC timestamp of the error
+          example: "2026-03-30T14:22:15Z"
