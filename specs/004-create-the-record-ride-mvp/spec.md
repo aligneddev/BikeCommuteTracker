@@ -71,7 +71,7 @@ As a rider, I want to save a ride without duration or temperature when I do not 
 - **FR-006**: System MUST default optional ride minutes to the most recently saved ride minutes value for that rider when one exists.
 - **FR-007**: System MUST default optional temperature to the most recently saved temperature value for that rider when one exists.
 - **FR-008**: System MUST allow submission when optional ride minutes and optional temperature are blank.
-- **FR-009**: System MUST validate that miles is greater than zero.
+- **FR-009**: System MUST validate that miles is greater than zero and less than or equal to 200.
 - **FR-010**: System MUST validate that optional ride minutes, when provided, is greater than zero.
 - **FR-011**: System MUST persist each submitted ride to the database as a new ride event associated with the submitting rider.
 - **FR-012**: System MUST preserve the exact submitted ride date/time and numeric values in persisted ride event data.
@@ -99,4 +99,4 @@ As a rider, I want to save a ride without duration or temperature when I do not 
 - **SC-003**: 100% of page loads default date/time to the current moment.
 - **SC-004**: 100% of page loads for riders with prior data prefill miles from the rider's last saved ride.
 - **SC-005**: 100% of successful submissions allow optional minutes and temperature to be omitted.
-- **SC-006**: For invalid numeric input (non-positive miles or non-positive optional minutes), 100% of submissions are blocked with a visible validation message.
+- **SC-006**: For invalid numeric input (non-positive miles, miles above 200, or non-positive optional minutes), 100% of submissions are blocked with a visible validation message.

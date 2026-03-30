@@ -8,7 +8,11 @@
     },
     "chat.tools.terminal.autoApprove": {
         ".specify/scripts/bash/": true,
-        ".specify/scripts/powershell/": true
+        ".specify/scripts/powershell/": true,
+        "/^cd /workspaces/neCodeBikeTracking && pwsh \\.specify/scripts/powershell/check-prerequisites\\.ps1 -Json$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     },
     "sqltools.connections": [
         {

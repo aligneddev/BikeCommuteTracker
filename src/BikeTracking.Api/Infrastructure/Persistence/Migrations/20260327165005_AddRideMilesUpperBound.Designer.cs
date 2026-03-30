@@ -3,6 +3,7 @@ using System;
 using BikeTracking.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(BikeTrackingDbContext))]
-    partial class BikeTrackingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327165005_AddRideMilesUpperBound")]
+    partial class AddRideMilesUpperBound
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -79,7 +82,7 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Rides", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Rides_Miles_GreaterThanZero", "CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200");
+                            t.HasCheckConstraint("CK_Rides_Miles_GreaterThanZero", "\"Miles\" > 0 AND \"Miles\" <= 200");
 
                             t.HasCheckConstraint("CK_Rides_RideMinutes_GreaterThanZero", "\"RideMinutes\" IS NULL OR \"RideMinutes\" > 0");
                         });

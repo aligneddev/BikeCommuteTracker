@@ -53,6 +53,11 @@ export function RecordRidePage() {
       return
     }
 
+    if (milesNum > 200) {
+      setErrorMessage('Miles must be less than or equal to 200')
+      return
+    }
+
     if (rideMinutes && parseInt(rideMinutes) <= 0) {
       setErrorMessage('Ride minutes must be greater than 0')
       return

@@ -36,6 +36,18 @@ public static class RidesEndpoints
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .RequireAuthorization();
 
+        group
+            .MapPut("/{rideId:long}", PutEditRide)
+            .WithName("EditRide")
+            .WithSummary("Edit an existing ride for the authenticated rider")
+            .Produces<EditRideResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status403Forbidden)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
+            .RequireAuthorization();
+
         return endpoints;
     }
 
@@ -120,7 +132,8 @@ public static class RidesEndpoints
                 return Results.Unauthorized();
 
             // Parse date query parameters
-            DateOnly? fromDate = null, toDate = null;
+            DateOnly? fromDate = null,
+                toDate = null;
 
             if (!string.IsNullOrWhiteSpace(from) && DateOnly.TryParse(from, out var parsedFrom))
                 fromDate = parsedFrom;
@@ -147,6 +160,64 @@ public static class RidesEndpoints
         {
             return Results.BadRequest(
                 new ErrorResponse("ERROR", "An error occurred while retrieving ride history")
+            );
+        }
+    }
+
+    private static async Task<IResult> PutEditRide(
+        [FromRoute] long rideId,
+        [FromBody] EditRideRequest request,
+        HttpContext context,
+        [FromServices] EditRideService editRideService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        try
+        {
+            var result = await editRideService.ExecuteAsync(
+                riderId,
+                rideId,
+                request,
+                cancellationToken
+            );
+
+            if (result.IsSuccess && result.Response is not null)
+            {
+                return Results.Ok(result.Response);
+            }
+
+            var error =
+                result.Error ?? new EditRideService.EditRideError("ERROR", "Unknown error.");
+
+            return error.Code switch
+            {
+                "VALIDATION_FAILED" => Results.BadRequest(
+                    new ErrorResponse(error.Code, error.Message)
+                ),
+                "FORBIDDEN" => Results.Json(
+                    new ErrorResponse(error.Code, error.Message),
+                    statusCode: StatusCodes.Status403Forbidden
+                ),
+                "RIDE_NOT_FOUND" => Results.NotFound(new ErrorResponse(error.Code, error.Message)),
+                "RIDE_VERSION_CONFLICT" => Results.Conflict(
+                    new
+                    {
+                        code = error.Code,
+                        message = error.Message,
+                        currentVersion = error.CurrentVersion,
+                    }
+                ),
+                _ => Results.BadRequest(new ErrorResponse(error.Code, error.Message)),
+            };
+        }
+        catch
+        {
+            return Results.BadRequest(
+                new ErrorResponse("ERROR", "An error occurred while editing the ride")
             );
         }
     }

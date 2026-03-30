@@ -5,6 +5,7 @@ using BikeTracking.Api.Endpoints;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +37,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<RecordRideService>();
 builder.Services.AddScoped<GetRideDefaultsService>();
 builder.Services.AddScoped<GetRideHistoryService>();
+builder.Services.AddScoped<EditRideService>();
 
 builder.Services.AddSingleton<IOutboxStore, EfOutboxStore>();
 builder.Services.AddSingleton<IUserRegisteredPublisher, UserRegisteredPublisher>();
@@ -69,6 +71,25 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+if (Environment.GetEnvironmentVariable("PLAYWRIGHT_E2E") == "1")
+{
+    try
+    {
+        var sqliteBuilder = new SqliteConnectionStringBuilder(connectionString);
+        var dataSource = sqliteBuilder.DataSource;
+        if (!Path.IsPathRooted(dataSource))
+        {
+            dataSource = Path.GetFullPath(dataSource, AppContext.BaseDirectory);
+        }
+
+        app.Logger.LogInformation("Playwright E2E DB: {DataSource}", dataSource);
+    }
+    catch
+    {
+        app.Logger.LogInformation("Playwright E2E DB connection string configured.");
+    }
+}
 
 await using (var scope = app.Services.CreateAsyncScope())
 {

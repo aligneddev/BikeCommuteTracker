@@ -66,6 +66,19 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
+    public async Task PostRecordRide_WithMilesAboveMaximum_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Cleo");
+
+        var request = new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: 200.01m);
+
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PostRecordRide_WithInvalidRideMinutes_Returns400()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -233,6 +246,159 @@ public sealed class RidesEndpointsTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task PutEditRide_WithValidRequest_Returns200AndUpdatedVersion()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Jules");
+        var rideId = await host.RecordRideAsync(
+            userId,
+            miles: 8.5m,
+            rideMinutes: 30,
+            temperature: 65m
+        );
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now.AddMinutes(-10),
+            Miles: 11.25m,
+            RideMinutes: 42,
+            Temperature: 68m,
+            ExpectedVersion: 1
+        );
+
+        var response = await host.Client.PutWithAuthAsync($"/api/rides/{rideId}", request, userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<EditRideResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(rideId, payload.RideId);
+        Assert.Equal(2, payload.NewVersion);
+    }
+
+    [Fact]
+    public async Task PutEditRide_WithInvalidPayload_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Luca");
+        var rideId = await host.RecordRideAsync(userId, miles: 8.5m);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 0m,
+            RideMinutes: null,
+            Temperature: null,
+            ExpectedVersion: 1
+        );
+
+        var response = await host.Client.PutWithAuthAsync($"/api/rides/{rideId}", request, userId);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEditRide_WithMilesAboveMaximum_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Liam");
+        var rideId = await host.RecordRideAsync(userId, miles: 8.5m);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 250m,
+            RideMinutes: null,
+            Temperature: null,
+            ExpectedVersion: 1
+        );
+
+        var response = await host.Client.PutWithAuthAsync($"/api/rides/{rideId}", request, userId);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEditRide_ForDifferentRiderRide_Returns403()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var ownerId = await host.SeedUserAsync("Mira");
+        var otherUserId = await host.SeedUserAsync("Noah");
+        var rideId = await host.RecordRideAsync(ownerId, miles: 8.5m);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 10.2m,
+            RideMinutes: 39,
+            Temperature: 67m,
+            ExpectedVersion: 1
+        );
+
+        var response = await host.Client.PutWithAuthAsync(
+            $"/api/rides/{rideId}",
+            request,
+            otherUserId
+        );
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEditRide_WithStaleExpectedVersion_Returns409()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Omar");
+        var rideId = await host.RecordRideAsync(userId, miles: 8.5m);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 10.2m,
+            RideMinutes: 39,
+            Temperature: 67m,
+            ExpectedVersion: 99
+        );
+
+        var response = await host.Client.PutWithAuthAsync($"/api/rides/{rideId}", request, userId);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEditRide_ThenGetHistory_ReturnsEditedMilesInRowsAndTotals()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Pia");
+        var rideId = await host.RecordRideAsync(
+            userId,
+            miles: 6.0m,
+            rideMinutes: 31,
+            temperature: 64m
+        );
+
+        var editRequest = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 10.25m,
+            RideMinutes: 35,
+            Temperature: 67m,
+            ExpectedVersion: 1
+        );
+
+        var editResponse = await host.Client.PutWithAuthAsync(
+            $"/api/rides/{rideId}",
+            editRequest,
+            userId
+        );
+        Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+
+        var historyResponse = await host.Client.GetWithAuthAsync("/api/rides/history", userId);
+        Assert.Equal(HttpStatusCode.OK, historyResponse.StatusCode);
+
+        var payload = await historyResponse.Content.ReadFromJsonAsync<RideHistoryResponse>();
+        Assert.NotNull(payload);
+
+        var editedRide = Assert.Single(payload.Rides, r => r.RideId == rideId);
+        Assert.Equal(10.25m, editedRide.Miles);
+        Assert.Equal(10.25m, payload.FilteredTotal.Miles);
+        Assert.Equal(10.25m, payload.Summaries.AllTime.Miles);
+    }
+
     private sealed class RecordRideApiHost(WebApplication app) : IAsyncDisposable
     {
         public HttpClient Client { get; } = app.GetTestClient();
@@ -258,6 +424,7 @@ public sealed class RidesEndpointsTests
             builder.Services.AddScoped<RecordRideService>();
             builder.Services.AddScoped<GetRideDefaultsService>();
             builder.Services.AddScoped<GetRideHistoryService>();
+            builder.Services.AddScoped<EditRideService>();
 
             var app = builder.Build();
             app.UseAuthentication();
@@ -378,6 +545,21 @@ internal static class HttpClientExtensions
     )
     {
         var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        request.Headers.Add("X-User-Id", userId.ToString());
+        return await client.SendAsync(request);
+    }
+
+    public static async Task<HttpResponseMessage> PutWithAuthAsync<T>(
+        this HttpClient client,
+        string requestUri,
+        T value,
+        long userId
+    )
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, requestUri)
+        {
+            Content = JsonContent.Create(value),
+        };
         request.Headers.Add("X-User-Id", userId.ToString());
         return await client.SendAsync(request);
     }

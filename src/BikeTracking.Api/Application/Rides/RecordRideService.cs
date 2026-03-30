@@ -24,6 +24,9 @@ public class RecordRideService(BikeTrackingDbContext dbContext, ILogger<RecordRi
         if (request.Miles <= 0)
             throw new ArgumentException("Miles must be greater than 0");
 
+        if (request.Miles > 200)
+            throw new ArgumentException("Miles must be less than or equal to 200");
+
         if (request.RideMinutes.HasValue && request.RideMinutes <= 0)
             throw new ArgumentException("Ride minutes must be greater than 0");
 

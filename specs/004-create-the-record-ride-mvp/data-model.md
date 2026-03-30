@@ -16,7 +16,7 @@ Represents user-submitted form data sent to the API.
 |-------|------|----------|------------|-------|
 | riderId | integer | Yes | >= 1 | Derived from authenticated session context |
 | rideDateTimeLocal | string (date-time) | Yes | Valid date-time | Exact user-entered value |
-| miles | number | Yes | > 0 | Decimal precision up to 2 places |
+| miles | number | Yes | > 0 and <= 200 | Decimal precision up to 2 places |
 | rideMinutes | integer | No | > 0 when provided | Optional duration |
 | temperature | number | No | none | Optional ambient temperature in existing app unit |
 

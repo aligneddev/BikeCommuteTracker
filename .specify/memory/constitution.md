@@ -10,6 +10,7 @@ Modified Sections:
 - Compliance Audit Checklist: Added modular boundary and contract compatibility checks
 - Guardrails: Added non-negotiable interface/contract boundary rules for cross-module integration
 Status: Approved — modular architecture and contract-first parallel delivery are now constitutional requirements
+Current Update (v1.12.2): Added mandatory spec-completion gate requiring database migrations to be applied and E2E tests to pass before a spec can be marked done.
 Previous Updates:
 - v1.11.0: Strengthened TDD mandate with a strict gated red-green-refactor workflow requiring explicit user confirmation of failing tests before implementation.
 - v1.10.2: Codified a mandatory post-change verification command matrix so every change runs explicit checks before merge.
@@ -55,7 +56,7 @@ Domain logic isolated from infrastructure concerns via layered architecture alig
 
 ### II. Functional Programming (Pure & Impure Sandwich)
 
-Core calculations and business logic implemented as pure functions: distance-to-distance conversions, expense-to-savings transformations, weather-to-recommendation mappings. Pure functions have no side effects—given the same input, always return the same output. Use immutable data structures. Impure edges (database reads/writes, external API calls, user input, system time) explicitly isolated at application boundaries. Handlers orchestrate pure logic within impure I/O boundaries. **F# discriminated unions and active patterns preferred for domain modeling** (domain layer uses F#); Railway Oriented Programming (Result<'T> type) for error handling; C# records used in API surface for interop.
+Core calculations and business logic implemented as pure functions: distance-to-distance conversions, expense-to-savings transformations, weather-to-recommendation mappings. Pure functions have no side effects—given the same input, always return the same output. Use immutable data structures. Impure edges (database reads/writes, external API calls, user input, system time) explicitly isolated at application boundaries. Handlers orchestrate pure logic within impure I/O boundaries. **F# discriminated unions and active patterns preferred for domain modeling** (domain layer uses F#); Railway Oriented Programming (Result<'T> type) for error handling; C# records used in API surface for interop. **C# expected business/validation/conflict flows MUST use explicit Result-style return values and MUST NOT use exceptions for routine control flow. Exceptions are reserved for unexpected/exceptional failures only.**
 
 **Rationale**: Pure functions are trivially testable, deterministic, and composable. Side effect isolation makes dataflow explicit and reduces debugging complexity. Immutable data structures preferred where practical. F# enforces immutability and pattern matching, reducing entire categories of bugs. Discriminated unions make invalid states unrepresentable.
 
@@ -76,6 +77,9 @@ Red-Green-Refactor cycle is **non-negotiable** and follows a strict, gate-contro
 5. **Run After Each Change**: Tests are run after each meaningful implementation change to track incremental progress toward green.
 6. **All Tests Pass**: Implementation is complete only when all tests pass. No merge occurs until the full test suite is green.
 7. **Consider Refactoring**: Once tests are green, evaluate the implementation for clarity, duplication, and simplicity. Refactor while keeping tests green. Refactoring is optional but explicitly encouraged at this stage.
+8. **Commit At Each TDD Gate**: Commits are mandatory at each TDD gate transition with clear gate intent in the message. Required checkpoints: (a) red baseline committed after failing tests are written and user confirms failures, (b) green implementation committed when approved tests pass, (c) refactor committed separately when refactoring is performed.
+
+TDD commit messages must include gate and spec/task context (for example: "TDD-RED: spec-006 ride history edit conflict tests" or "TDD-GREEN: spec-006 make edit totals refresh pass").
 
 Unit tests validate pure logic (target 85%+ coverage). Integration tests verify each vertical slice end-to-end. Contract tests ensure event schemas remain backwards compatible. Security tests validate OAuth isolation and data access. **Agent must suggest tests with rationale; user approval required before implementation. User must confirm test failures before implementation begins.**
 
@@ -141,6 +145,7 @@ System capabilities must be split into cohesive modules with explicit ownership 
 - **Framework**: .NET 10 Minimal API (latest stable)
 - **Orchestration**: Microsoft Aspire (latest stable) for local and cloud development
 - **Language (API Layer)**: C# (latest language features: records, pattern matching, async/await, follow .editorconfig for code formatting)
+- **Language (API Layer)**: C# (latest language features: records, pattern matching, async/await, follow .editorconfig for code formatting); expected-flow outcomes MUST be represented with explicit Result objects rather than exception-driven control flow
 - **Language (Domain Layer)**: F# (latest stable) for domain entities, events, value objects, services, and command handlers. Discriminated unions, active patterns, and Railway Oriented Programming pattern used for domain modeling and error handling.
 - **NuGet Discipline**: All packages must be checked monthly for updates; security patches applied immediately; major versions reviewed for breaking changes before upgrade
 - **Domain-Infrastructure Interop**: EF Core value converters (FSharpValueConverters) enable transparent mapping of F# discriminated unions to database columns
@@ -387,6 +392,8 @@ Tests suggested by agent must receive explicit user approval before implementati
 12. **Local Deployment**: Slice deployed locally in containers via Aspire, tested manually with Playwright if E2E slice
 13. **Azure Deployment**: Slice deployed to Azure Container Apps via GitHub Actions + azd
 14. **User Acceptance**: User validates slice meets specification and data validation rules observed
+15. **Phase Completion Commit**: Before starting the next phase, create a dedicated phase-completion commit that includes completed tasks and verification evidence for that phase
+16. **Spec Completion Gate**: Before marking any specification as done, database migrations for that spec must be applied successfully to the target local runtime database and the spec's end-to-end (Playwright) tests must run green
 
 ### Compliance Audit Checklist
 
@@ -400,6 +407,10 @@ Tests suggested by agent must receive explicit user approval before implementati
 - [ ] Module boundaries documented; cross-module integrations use approved interfaces/contracts only
 - [ ] Contract compatibility tests executed for changed APIs/events (provider and consumer)
 - [ ] Security issues recognized, explained, and remediated (or explicitly accepted by user)
+- [ ] TDD gate commits created: red baseline commit, green commit, and separate refactor commit when applicable
+- [ ] Phase completion commit created before moving to the next phase
+- [ ] Database migrations for the spec are created and applied successfully to the runtime database used for validation
+- [ ] Spec-level E2E (Playwright) suite executed and passing before spec marked complete
 - [ ] All SAMPLE_/DEMO_ data removed from code before merge
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
 - [ ] Validation rule consistency: if field required in React form, enforced in API DTOs and database constraints
@@ -432,6 +443,9 @@ Tests suggested by agent must receive explicit user approval before implementati
 Breaking these guarantees causes architectural decay and technical debt accrual:
 
 - **TDD cycle is strictly gated and non-negotiable** — implementation code must never be written before failing tests exist, have been run, and the user has reviewed and confirmed the failures. The sequence is always: plan tests → write tests → run and prove failure → get user confirmation → implement → run after each change → verify all pass → consider refactoring. Skipping or reordering any step is prohibited.
+- **Commit gates are mandatory for TDD and phase transitions** — every TDD gate transition requires a commit (red, green, and refactor when performed), and every completed phase requires a dedicated phase-completion commit before proceeding.
+- **Spec completion requires migration + E2E gates** — a spec cannot be marked done until its database migrations are applied to the runtime database and its Playwright E2E scenarios pass.
+- **Expected-flow C# logic uses Result, not exceptions** — validation, not-found, conflict, and authorization business outcomes must be returned via typed Result objects (including error code/message metadata). Throwing exceptions for these expected outcomes is prohibited; exceptions are only for truly unexpected failures.
 - **Cross-module work is contract-first and interface-bound** — teams must integrate through explicit interfaces and versioned contracts only; direct coupling to another module's internal implementation is prohibited.
 - **No Entity Framework DbContext in domain layer** — domain must remain infrastructure-agnostic. If domain needs persistence logic, use repository pattern abstracting EF.
 - **Secrets management by deployment context** — **Cloud**: all secrets in Azure Key Vault; **Local**: User Secrets or environment variables. No connection strings, API keys, or OAuth secrets in appsettings.json, code, or GitHub. Pre-commit hooks enforce this. **⚠️ This repository is public on GitHub**: any committed secret is immediately and permanently exposed to the internet; treat any accidental secret commit as an immediate security incident requiring credential rotation.
@@ -518,7 +532,7 @@ All SpecKit templates must reflect this constitution:
 ### Runtime Guidance
 Development workflow guidance documented in [README.md](../../README.md) and .github/prompts/ directory. This constitution establishes governance; runtime prompts add context and tool references.
 
-Always commit before continuing to a new phase.
+Always commit at each TDD gate and before continuing to a new phase.
 
 ### Related Documents
 - **[DECISIONS.md](./DECISIONS.md)**: Amendment history, version changelog, rationale for major decisions
@@ -528,5 +542,5 @@ Always commit before continuing to a new phase.
 
 ---
 
-**Version**: 1.12.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-23
+**Version**: 1.12.2 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-27
 
