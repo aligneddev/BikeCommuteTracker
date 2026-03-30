@@ -1,17 +1,28 @@
 import { useEffect, useState } from 'react'
-import type { RecordRideRequest } from '../services/ridesService'
-import { recordRide, getRideDefaults } from '../services/ridesService'
+import type { QuickRideOption, RecordRideRequest } from '../services/ridesService'
+import { getQuickRideOptions, recordRide, getRideDefaults } from '../services/ridesService'
 
 export function RecordRidePage() {
   const [rideDateTimeLocal, setRideDateTimeLocal] = useState<string>('')
   const [miles, setMiles] = useState<string>('')
   const [rideMinutes, setRideMinutes] = useState<string>('')
   const [temperature, setTemperature] = useState<string>('')
+  const [quickRideOptions, setQuickRideOptions] = useState<QuickRideOption[]>([])
 
   const [loading, setLoading] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string>('')
+
+  const loadQuickRideOptions = async () => {
+    try {
+      const quickOptionsResponse = await getQuickRideOptions()
+      setQuickRideOptions(quickOptionsResponse.options)
+    } catch (error) {
+      setQuickRideOptions([])
+      console.error('Failed to load quick ride options:', error)
+    }
+  }
 
   useEffect(() => {
     const initializeDefaults = async () => {
@@ -33,6 +44,10 @@ export function RecordRidePage() {
         }
       } catch (error) {
         console.error('Failed to load defaults:', error)
+      }
+
+      try {
+        await loadQuickRideOptions()
       } finally {
         setLoading(false)
       }
@@ -40,6 +55,11 @@ export function RecordRidePage() {
 
     initializeDefaults()
   }, [])
+
+  const applyQuickRideOption = (option: QuickRideOption) => {
+    setMiles(option.miles.toString())
+    setRideMinutes(option.rideMinutes.toString())
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,6 +94,7 @@ export function RecordRidePage() {
 
       const response = await recordRide(request)
       setSuccessMessage(`Ride recorded successfully (ID: ${response.rideId})`)
+      await loadQuickRideOptions()
 
       // Keep form values but clear after delay
       setTimeout(() => {
@@ -102,6 +123,23 @@ export function RecordRidePage() {
       {successMessage && <div className="success-message">{successMessage}</div>}
       {errorMessage && <div className="error-message">{errorMessage}</div>}
 
+      {quickRideOptions.length > 0 && (
+        <section aria-label="Quick ride options" className="quick-ride-options">
+          <h2>Quick Ride Options</h2>
+          <div className="quick-ride-options-list">
+            {quickRideOptions.map((option, index) => (
+              <button
+                key={`${option.miles}-${option.rideMinutes}-${option.lastUsedAtLocal}-${index}`}
+                type="button"
+                onClick={() => applyQuickRideOption(option)}
+              >
+                {`${option.miles} mi - ${option.rideMinutes} min`}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="rideDateTimeLocal">Date & Time</label>
@@ -121,7 +159,16 @@ export function RecordRidePage() {
             type="number"
             step="0.01"
             value={miles}
-            onChange={(e) => setMiles(e.target.value)}
+            onChange={(e) => {
+              setMiles(e.target.value)
+              if (errorMessage.length > 0) {
+                setErrorMessage('')
+              }
+            }}
+            onInvalid={(e) => {
+              e.preventDefault()
+              setErrorMessage('Miles must be greater than 0')
+            }}
             required
           />
         </div>

@@ -31,6 +31,13 @@ public sealed record RideDefaultsResponse(
     decimal? DefaultTemperature = null
 );
 
+public sealed record QuickRideOption(decimal Miles, int RideMinutes, DateTime LastUsedAtLocal);
+
+public sealed record QuickRideOptionsResponse(
+    IReadOnlyList<QuickRideOption> Options,
+    DateTime GeneratedAtUtc
+);
+
 public sealed record EditRideRequest(
     [property: Required(ErrorMessage = "Ride date/time is required")] DateTime RideDateTimeLocal,
     [property: Required(ErrorMessage = "Miles is required")]

@@ -20,6 +20,17 @@ export interface RideDefaultsResponse {
   defaultRideDateTimeLocal: string;
 }
 
+export interface QuickRideOption {
+  miles: number;
+  rideMinutes: number;
+  lastUsedAtLocal: string;
+}
+
+export interface QuickRideOptionsResponse {
+  options: QuickRideOption[];
+  generatedAtUtc: string;
+}
+
 export interface EditRideRequest {
   rideDateTimeLocal: string;
   miles: number;
@@ -177,6 +188,21 @@ export async function getRideDefaults(): Promise<RideDefaultsResponse> {
   if (!response.ok) {
     throw new Error(
       await parseErrorMessage(response, "Failed to fetch ride defaults"),
+    );
+  }
+
+  return response.json();
+}
+
+export async function getQuickRideOptions(): Promise<QuickRideOptionsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/rides/quick-options`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await parseErrorMessage(response, "Failed to fetch quick ride options"),
     );
   }
 

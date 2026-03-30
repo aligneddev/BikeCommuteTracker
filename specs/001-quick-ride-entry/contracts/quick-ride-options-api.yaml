@@ -1,0 +1,81 @@
+openapi: 3.0.3
+info:
+  title: BikeTracking Quick Ride Options API
+  version: 1.0.0
+  description: Authenticated quick-entry options for record-ride prefill.
+
+paths:
+  /api/rides/quick-options:
+    get:
+      summary: Get up to 5 distinct quick ride options for the authenticated rider
+      operationId: getQuickRideOptions
+      responses:
+        '200':
+          description: Quick options resolved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickRideOptionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected retrieval failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    QuickRideOption:
+      type: object
+      required:
+        - miles
+        - rideMinutes
+        - lastUsedAtLocal
+      properties:
+        miles:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 200
+        rideMinutes:
+          type: integer
+          minimum: 1
+        lastUsedAtLocal:
+          type: string
+          format: date-time
+          description: Most recent local ride date/time for this miles-duration pair.
+
+    QuickRideOptionsResponse:
+      type: object
+      required:
+        - options
+        - generatedAtUtc
+      properties:
+        options:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/QuickRideOption'
+        generatedAtUtc:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
