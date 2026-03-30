@@ -46,6 +46,40 @@ X-User-Id: {{RiderId}}
 GET {{ApiService_HostAddress}}/api/rides/history?page=1&pageSize=25
 Accept: application/json
 
+### Get user settings (expects 200 for authenticated rider)
+GET {{ApiService_HostAddress}}/api/users/me/settings
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Save user settings (create or update)
+PUT {{ApiService_HostAddress}}/api/users/me/settings
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "averageCarMpg": 31.5,
+  "yearlyGoalMiles": 1800,
+  "oilChangePrice": 89.99,
+  "mileageRateCents": 67.5,
+  "locationLabel": "Downtown Office",
+  "latitude": 42.3601,
+  "longitude": -71.0589
+}
+
+### Save user settings (partial fields)
+PUT {{ApiService_HostAddress}}/api/users/me/settings
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "averageCarMpg": 33.1,
+  "mileageRateCents": 70.0
+}
+
+### Edge case: unauthenticated settings request (expects 401)
+GET {{ApiService_HostAddress}}/api/users/me/settings
+Accept: application/json
+
 ###############################################################################
 ### Edit Ride Scenarios (spec-006-edit-ride-history)
 ###############################################################################

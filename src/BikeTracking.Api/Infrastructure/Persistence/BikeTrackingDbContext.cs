@@ -11,6 +11,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<AuthAttemptStateEntity> AuthAttemptStates => Set<AuthAttemptStateEntity>();
     public DbSet<OutboxEventEntity> OutboxEvents => Set<OutboxEventEntity>();
     public DbSet<RideEntity> Rides => Set<RideEntity>();
+    public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -116,6 +117,56 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                 .HasOne<UserEntity>()
                 .WithMany()
                 .HasForeignKey(static x => x.RiderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserSettingsEntity>(static entity =>
+        {
+            entity.ToTable(
+                "UserSettings",
+                static tableBuilder =>
+                {
+                    tableBuilder.HasCheckConstraint(
+                        "CK_UserSettings_AverageCarMpg_Positive",
+                        "\"AverageCarMpg\" IS NULL OR CAST(\"AverageCarMpg\" AS REAL) > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_UserSettings_YearlyGoalMiles_Positive",
+                        "\"YearlyGoalMiles\" IS NULL OR CAST(\"YearlyGoalMiles\" AS REAL) > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_UserSettings_OilChangePrice_Positive",
+                        "\"OilChangePrice\" IS NULL OR CAST(\"OilChangePrice\" AS REAL) > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_UserSettings_MileageRateCents_Positive",
+                        "\"MileageRateCents\" IS NULL OR CAST(\"MileageRateCents\" AS REAL) > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_UserSettings_Latitude_Range",
+                        "\"Latitude\" IS NULL OR (CAST(\"Latitude\" AS REAL) >= -90 AND CAST(\"Latitude\" AS REAL) <= 90)"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_UserSettings_Longitude_Range",
+                        "\"Longitude\" IS NULL OR (CAST(\"Longitude\" AS REAL) >= -180 AND CAST(\"Longitude\" AS REAL) <= 180)"
+                    );
+                }
+            );
+
+            entity.HasKey(static x => x.UserId);
+            entity.Property(static x => x.AverageCarMpg);
+            entity.Property(static x => x.YearlyGoalMiles);
+            entity.Property(static x => x.OilChangePrice);
+            entity.Property(static x => x.MileageRateCents);
+            entity.Property(static x => x.LocationLabel).HasMaxLength(200);
+            entity.Property(static x => x.Latitude);
+            entity.Property(static x => x.Longitude);
+            entity.Property(static x => x.UpdatedAtUtc).IsRequired();
+
+            entity
+                .HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(static x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

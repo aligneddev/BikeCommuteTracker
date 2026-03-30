@@ -1,4 +1,5 @@
-﻿using BikeTracking.Api.Application.Users;
+﻿using System.Text.Json;
+using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,6 +7,8 @@ namespace BikeTracking.Api.Endpoints;
 
 public static class UsersEndpoints
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public static IEndpointRouteBuilder MapUsersEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var usersGroup = endpoints.MapGroup("/api/users");
@@ -26,6 +29,23 @@ public static class UsersEndpoints
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ThrottleResponse>(StatusCodes.Status429TooManyRequests);
+
+        var meGroup = endpoints.MapGroup("/api/users/me").RequireAuthorization();
+
+        meGroup
+            .MapGet("/settings", GetUserSettings)
+            .WithName("GetUserSettings")
+            .WithSummary("Get per-user settings for the authenticated rider")
+            .Produces<UserSettingsResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
+
+        meGroup
+            .MapPut("/settings", PutUserSettings)
+            .WithName("PutUserSettings")
+            .WithSummary("Save per-user settings for the authenticated rider")
+            .Produces<UserSettingsResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }
@@ -88,5 +108,71 @@ public static class UsersEndpoints
         );
 
         return Results.Json(payload, statusCode: StatusCodes.Status429TooManyRequests);
+    }
+
+    private static async Task<IResult> GetUserSettings(
+        HttpContext context,
+        UserSettingsService userSettingsService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        var result = await userSettingsService.GetAsync(riderId, cancellationToken);
+        if (result.IsSuccess && result.Response is not null)
+            return Results.Ok(result.Response);
+
+        return Results.BadRequest(
+            result.Error
+                ?? new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.")
+        );
+    }
+
+    private static async Task<IResult> PutUserSettings(
+        HttpContext context,
+        [FromBody] JsonElement requestBody,
+        UserSettingsService userSettingsService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        if (requestBody.ValueKind is not JsonValueKind.Object)
+        {
+            return Results.BadRequest(
+                new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.")
+            );
+        }
+
+        var request = requestBody.Deserialize<UserSettingsUpsertRequest>(JsonOptions);
+        if (request is null)
+        {
+            return Results.BadRequest(
+                new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.")
+            );
+        }
+
+        var providedFields = requestBody
+            .EnumerateObject()
+            .Select(x => x.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var result = await userSettingsService.SaveAsync(
+            riderId,
+            request,
+            cancellationToken,
+            providedFields
+        );
+        if (result.IsSuccess && result.Response is not null)
+            return Results.Ok(result.Response);
+
+        return Results.BadRequest(
+            result.Error
+                ?? new ErrorResponse(UsersErrorCodes.ValidationFailed, "Validation failed.")
+        );
     }
 }

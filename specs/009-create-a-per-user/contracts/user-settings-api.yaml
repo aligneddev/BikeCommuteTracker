@@ -1,0 +1,152 @@
+openapi: 3.0.3
+info:
+  title: BikeTracking User Settings API
+  version: 1.0.0
+  description: Authenticated rider-scoped settings retrieval and save contract.
+
+paths:
+  /api/users/me/settings:
+    get:
+      summary: Get per-user settings for the authenticated rider
+      operationId: getUserSettings
+      responses:
+        '200':
+          description: Settings resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettingsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Save per-user settings for the authenticated rider
+      operationId: saveUserSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettingsUpsertRequest'
+      responses:
+        '200':
+          description: Settings saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettingsResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    UserSettingsUpsertRequest:
+      type: object
+      properties:
+        averageCarMpg:
+          type: number
+          nullable: true
+          exclusiveMinimum: 0
+        yearlyGoalMiles:
+          type: number
+          nullable: true
+          exclusiveMinimum: 0
+        oilChangePrice:
+          type: number
+          nullable: true
+          exclusiveMinimum: 0
+        mileageRateCents:
+          type: number
+          nullable: true
+          exclusiveMinimum: 0
+          description: Rate value expressed in cents per mile.
+        locationLabel:
+          type: string
+          nullable: true
+          maxLength: 200
+        latitude:
+          type: number
+          nullable: true
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          nullable: true
+          minimum: -180
+          maximum: 180
+
+    UserSettingsView:
+      type: object
+      required:
+        - averageCarMpg
+        - yearlyGoalMiles
+        - oilChangePrice
+        - mileageRateCents
+        - locationLabel
+        - latitude
+        - longitude
+        - updatedAtUtc
+      properties:
+        averageCarMpg:
+          type: number
+          nullable: true
+        yearlyGoalMiles:
+          type: number
+          nullable: true
+        oilChangePrice:
+          type: number
+          nullable: true
+        mileageRateCents:
+          type: number
+          nullable: true
+        locationLabel:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        updatedAtUtc:
+          type: string
+          format: date-time
+
+    UserSettingsResponse:
+      type: object
+      required:
+        - hasSettings
+        - settings
+      properties:
+        hasSettings:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/UserSettingsView'
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string

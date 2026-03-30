@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { BrowserRouter } from 'react-router-dom'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MilesShellPage } from './miles-shell-page'
 import * as ridesService from '../../services/ridesService'
@@ -32,7 +33,11 @@ describe('MilesShellPage', () => {
       totalRows: 0,
     })
 
-    render(<MilesShellPage />)
+    render(
+      <BrowserRouter>
+        <MilesShellPage />
+      </BrowserRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/this year/i)).toBeInTheDocument()
@@ -56,10 +61,45 @@ describe('MilesShellPage', () => {
       totalRows: 0,
     })
 
-    render(<MilesShellPage />)
+    render(
+      <BrowserRouter>
+        <MilesShellPage />
+      </BrowserRouter>
+    )
 
     await waitFor(() => {
       expect(mockGetRideHistory).toHaveBeenCalledWith({ page: 1, pageSize: 1 })
+    })
+  })
+
+  it('renders a Settings navigation link in the placeholder region', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 0, rideCount: 0, period: 'thisMonth' },
+        thisYear: { miles: 0, rideCount: 0, period: 'thisYear' },
+        allTime: { miles: 0, rideCount: 0, period: 'allTime' },
+      },
+      filteredTotal: { miles: 0, rideCount: 0, period: 'filtered' },
+      rides: [],
+      page: 1,
+      pageSize: 1,
+      totalRows: 0,
+    })
+
+    render(
+      <BrowserRouter>
+        <MilesShellPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute(
+        'href',
+        '/settings'
+      )
+      expect(
+        screen.getByLabelText(/miles content placeholder/i)
+      ).toBeInTheDocument()
     })
   })
 })
