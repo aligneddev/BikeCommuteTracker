@@ -16,7 +16,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ## Phase 1: Setup & Verification
 
-- [ ] T001 Verify dev environment and dependencies
+- [X] T001 Verify dev environment and dependencies
   - Confirm .NET 10 SDK, Node 24+, npm, and Docker available
   - Run: `dotnet run --project src/BikeTracking.AppHost` (verify Aspire loads)
   - Run: `cd src/BikeTracking.Frontend && npm ci` (verify frontend deps)
@@ -26,22 +26,22 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ## Phase 2: Contracts & Infrastructure
 
-- [ ] T002 [P] Review and document delete endpoint contract
+- [X] T002 [P] Review and document delete endpoint contract
   - Reference: [contracts/ride-delete-api.yaml](./contracts/ride-delete-api.yaml)
   - Verify OpenAPI schema defines request/response for DELETE /api/rides/{rideId}
   - Document in task notes: endpoint path, auth header requirement, response codes (200, 400, 401, 403, 404)
 
-- [ ] T003 [P] Review and document RideDeleted event contract
+- [X] T003 [P] Review and document RideDeleted event contract
   - Reference: [contracts/ride-deleted-event.schema.json](./contracts/ride-deleted-event.schema.json)
   - Verify JSON schema includes UserId, RideId, DeletedAt, DeletedBy
   - Confirm immutability (no mutation, append-only event)
 
-- [ ] T004 Verify EF Core infrastructure supports event outbox
+- [X] T004 Verify EF Core infrastructure supports event outbox
   - Check: `src/BikeTracking.Api/Infrastructure/Persistence/` for outbox table definition
   - Confirm migration exists for outbox table (RideDeleted events will be published via same pipeline as other events)
   - No new migration required if outbox already exists; note if migration is needed
 
-- [ ] T005 [P] Verify existing projection refresh infrastructure from Feature 006
+- [X] T005 [P] Verify existing projection refresh infrastructure from Feature 006
   - Check: `src/BikeTracking.Api/Application/` for event handlers that rebuild read-side projections
   - Confirm rides history view and totals projections exist
   - Document the handler pattern used (e.g., IEventHandler<T>)
@@ -52,27 +52,27 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 1: Delete a Ride from History (P1)
 
-- [ ] T010 [US1] Write failing tests for RideDeleted event definition in `src/BikeTracking.Domain.FSharp.Tests/Users/RideDeletedTests.fs`
+- [X] T010 [US1] Write failing tests for RideDeleted event definition in `src/BikeTracking.Domain.FSharp.Tests/Users/RideDeletedTests.fs`
   - Test 1: RideDeleted event can be created with valid UserId, RideId, DeletedAt, DeletedBy
   - Test 2: RideDeleted event fields are immutable (cannot modify after creation)
   - Test 3: RideDeleted event serialization/deserialization works (JSON round-trip)
   - Expected outcome: All tests FAIL (event not yet defined)
   - Save test file path in task notes
 
-- [ ] T011 [US1] Implement RideDeleted event definition in `src/BikeTracking.Domain.FSharp/Users/Rides.fs`
+- [X] T011 [US1] Implement RideDeleted event definition in `src/BikeTracking.Domain.FSharp/Users/Rides.fs`
   - Add F# discriminated union variant for RideDeleted (add to existing event union if present)
   - Include fields: UserId (string), RideId (string), DeletedAt (DateTime), DeletedBy (string)
   - Use DataContract/DataMember attributes for serialization
   - Run: `dotnet test src/BikeTracking.Domain.FSharp.Tests/` to pass T010 tests
 
-- [ ] T012 [US1] Write failing tests for delete command handler in `src/BikeTracking.Domain.FSharp.Tests/Users/RideDeleteHandlerTests.fs`
+- [X] T012 [US1] Write failing tests for delete command handler in `src/BikeTracking.Domain.FSharp.Tests/Users/RideDeleteHandlerTests.fs`
   - Test 1: Deleting a live ride produces RideDeleted event
   - Test 2: Deleting a ride already marked deleted is idempotent (no duplicate event)
   - Test 3: Attempting to delete a nonexistent ride returns error
   - Test 4: Delete handler validates ride belongs to requesting user (returns auth error if mismatch)
   - Expected outcome: All tests FAIL (handler not yet implemented)
 
-- [ ] T013 [US1] Implement delete command handler in `src/BikeTracking.Domain.FSharp/Users/Rides.fs`
+- [X] T013 [US1] Implement delete command handler in `src/BikeTracking.Domain.FSharp/Users/Rides.fs`
   - Create pure function: `deleteRide: userId -> rideId -> rideHistory -> Result<RideDeleted, Error>`
   - Logic:
     - Look up ride in history by rideId
@@ -86,7 +86,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 2: Prevent Accidental Ride Deletion (P2) — *Frontend focus; domain tests implicit via US1*
 
-- [ ] T020 [US2] Extend delete handler tests to verify deletion confirmation state machine
+- [X] T020 [US2] Extend delete handler tests to verify deletion confirmation state machine
   - Test: Verify deleted ride cannot be edited (edit handler checks for RideDeleted event first)
   - Note: This test ensures domain-level immutability of deletion
   - Run: `dotnet test src/BikeTracking.Domain.FSharp.Tests/`
@@ -95,13 +95,13 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 3: Maintain Accurate Totals After Deletion (P3)
 
-- [ ] T030 [US3] Write failing tests for totals projection update on RideDeleted event in `src/BikeTracking.Api.Tests/Infrastructure/TotalsProjectionTests.cs`
+- [X] T030 [US3] Write failing tests for totals projection update on RideDeleted event in `src/BikeTracking.Api.Tests/Infrastructure/TotalsProjectionTests.cs`
   - Test 1: When RideDeleted event is published, month/year/all-time totals decrease by deleted ride's distance
   - Test 2: Deleted ride removed from history projection (query returns no row for deleted ride)
   - Test 3: Filtered totals (e.g., last 30 days) exclude deleted rides
   - Expected outcome: Tests FAIL (handler not yet implemented)
 
-- [ ] T031 [US3] Implement totals projection handler for RideDeleted in `src/BikeTracking.Api/Application/Rides/ProjectionHandlers.cs`
+- [X] T031 [US3] Implement totals projection handler for RideDeleted in `src/BikeTracking.Api/Application/Rides/ProjectionHandlers.cs`
   - Create handler: `OnRideDeletedAsync(RideDeleted @event)`
   - Logic:
     - Query history projection, remove row where rideId = event.RideId
@@ -116,25 +116,25 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 1: Delete a Ride from History (P1)
 
-- [ ] T040 [US1] Write failing authorization tests for DELETE endpoint in `src/BikeTracking.Api.Tests/Endpoints/Rides/DeleteRideTests.cs`
+- [X] T040 [US1] Write failing authorization tests for DELETE endpoint in `src/BikeTracking.Api.Tests/Endpoints/Rides/DeleteRideTests.cs`
   - Test 1: DELETE with missing Authorization header → 401 Unauthorized
   - Test 2: DELETE with invalid token → 401 Unauthorized
   - Test 3: DELETE /api/rides/{rideId} as different user (token owner ≠ ride owner) → 403 Forbidden with error code `NOT_RIDE_OWNER`
   - Test 4: DELETE with malformed UUID in path → 400 Bad Request with error code `INVALID_RIDE_ID`
   - Expected outcome: All tests FAIL (endpoint not yet implemented)
 
-- [ ] T041 [US1] Write failing endpoint tests for DELETE success flow in `src/BikeTracking.Api.Tests/Endpoints/Rides/DeleteRideTests.cs` (same file as T040)
+- [X] T041 [US1] Write failing endpoint tests for DELETE success flow in `src/BikeTracking.Api.Tests/Endpoints/Rides/DeleteRideTests.cs` (same file as T040)
   - Test 1: DELETE valid ride owned by authenticated user → 200 OK with response containing rideId, deletedAt timestamp
   - Test 2: DELETE nonexistent ride → 404 Not Found with error code `RIDE_NOT_FOUND`
   - Test 3: DELETE ride already deleted (idempotency) → 200 OK with isIdempotent: true flag
   - Expected outcome: All tests FAIL
 
-- [ ] T042 [US1] Write failing tests for delete command handler in `src/BikeTracking.Api.Tests/Application/DeleteRideHandlerTests.cs`
+- [X] T042 [US1] Write failing tests for delete command handler in `src/BikeTracking.Api.Tests/Application/DeleteRideHandlerTests.cs`
   - Test 1: Handler creates outbox entry with RideDeleted event
   - Test 2: Outbox event includes correct metadata (EventType, UserId, RideId, Timestamp)
   - Expected outcome: All tests FAIL (handler not yet implemented)
 
-- [ ] T043 [US1] Implement DELETE endpoint in `src/BikeTracking.Api/Endpoints/Rides/DeleteRide.cs`
+- [X] T043 [US1] Implement DELETE endpoint in `src/BikeTracking.Api/Endpoints/Rides/DeleteRide.cs`
   - Route: `DELETE /api/rides/{rideId}`
   - Handler signature: `async Task<IResult> DeleteRideAsync(string rideId, HttpContext context, IDeleteRideHandler handler)`
   - Validation:
@@ -149,7 +149,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
   - Register endpoint in: `src/BikeTracking.Api/Program.cs` under MapRidesEndpoints()
   - Run: `dotnet test src/BikeTracking.Api.Tests/Endpoints/Rides/DeleteRideTests.cs` to pass T040, T041
 
-- [ ] T044 [US1] Implement delete command handler in `src/BikeTracking.Api/Application/Rides/DeleteRideHandler.cs`
+- [X] T044 [US1] Implement delete command handler in `src/BikeTracking.Api/Application/Rides/DeleteRideHandler.cs`
   - Signature: `interface IDeleteRideHandler { Task<DeleteRideResult> DeleteRideAsync(string userId, string rideId); }`
   - Dependencies: EF Core DbContext, domain handler, outbox publisher
   - Logic:
@@ -167,7 +167,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 2: Prevent Accidental Ride Deletion (P2) — *API-level validation implicit in US1*
 
-- [ ] T050 [US2] Add error response contract for DELETE endpoint
+- [X] T050 [US2] Add error response contract for DELETE endpoint
   - Document in `src/BikeTracking.Api/Contracts/DeleteRideErrorResponse.cs`
   - Fields: ErrorCode (enum: MISSING_AUTH, INVALID_TOKEN, NOT_RIDE_OWNER, INVALID_RIDE_ID, RIDE_NOT_FOUND, INTERNAL_ERROR), Message (string), Details (string?, optional)
   - Ensure responses are deterministic and testable
@@ -176,14 +176,14 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
 
 ### User Story 3: Maintain Accurate Totals After Deletion (P3)
 
-- [ ] T060 [US3] Write failing integration tests for totals refresh after delete in `src/BikeTracking.Api.Tests/Endpoints/Rides/DeleteRideIntegrationTests.cs`
+- [X] T060 [US3] Write failing integration tests for totals refresh after delete in `src/BikeTracking.Api.Tests/Endpoints/Rides/DeleteRideIntegrationTests.cs`
   - Setup: Create user, record 3 rides (5mi, 10mi, 15mi = 30mi total)
   - Test 1: Delete middle ride (10mi) → query totals → should be 20mi (5+15)
   - Test 2: Delete remaining rides one by one → final total 0mi
   - Test 3: With date filter, delete ride in date range → filtered total updates correctly
   - Expected outcome: Tests FAIL (projections not yet refreshing on delete)
 
-- [ ] T061 [US3] Register RideDeleted handler in projection pipeline in `src/BikeTracking.Api/Application/Rides/EventHandlers.cs`
+- [X] T061 [US3] Register RideDeleted handler in projection pipeline in `src/BikeTracking.Api/Application/Rides/EventHandlers.cs`
   - Add: `public class RideDeletedProjectionHandler : INotificationHandler<RideDeletedEvent> { ... }`
   - Logic: trigger T031 handler (totals recalculation)
   - Register in DI: `services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly))`
@@ -375,12 +375,12 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
   - Verify no TypeScript errors, all imports resolve
   - Check bundle size (should be minimal addition for dialog component)
 
-- [ ] T115 [P] Document API changes in OpenAPI/Swagger
+- [X] T115 [P] Document API changes in OpenAPI/Swagger
   - Verify DELETE endpoint is registered and appears in Aspire Dashboard Swagger UI
   - Test: `dotnet run --project src/BikeTracking.AppHost` → navigate to http://localhost:19629 → launch Swagger
   - Confirm DELETE /api/rides/{rideId} is listed with correct parameters, responses, auth
 
-- [ ] T116 [P] Manual smoke test of delete flow
+- [X] T116 [P] Manual smoke test of delete flow
   - Command: `dotnet run --project src/BikeTracking.AppHost`
   - Steps:
     1. Sign up with test credentials
@@ -394,7 +394,7 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
     9. Refresh page—deleted ride still absent
     10. Try deleting same ride again via DevTools → verify 200 OK with isIdempotent: true
 
-- [ ] T117 [P] Document edge cases and known issues
+- [X] T117 [P] Document edge cases and known issues
   - Create/update: `docs/007-delete-rides-edge-cases.md`
   - Document behaviors for:
     - Empty history after delete all
@@ -404,26 +404,26 @@ Implement a complete ride deletion feature with immutable event sourcing, triple
     - Totals precision (rounding, decimals)
   - Flag any unresolved issues for future sprints
 
-- [ ] T118 Run final validation checklist
+- [X] T118 Run final validation checklist
   - Verify all acceptance scenarios from spec pass:
-    - [ ] US1 AC1: Delete confirmation dialog shown
-    - [ ] US1 AC2: Confirm deletes ride, success shown
-    - [ ] US1 AC3: Cancel keeps ride in history
-    - [ ] US2 AC1: Dialog shows ride details + warning
-    - [ ] US2 AC2: Cancel/dismiss returns to history
-    - [ ] US2 AC3: Delete one ride, others remain
-    - [ ] US3 AC1: Totals recalculated after delete
-    - [ ] US3 AC2: Filtered totals updated
-    - [ ] US3 AC3: Month + all-time totals decrease
+    - [X] US1 AC1: Delete confirmation dialog shown
+    - [X] US1 AC2: Confirm deletes ride, success shown
+    - [X] US1 AC3: Cancel keeps ride in history
+    - [X] US2 AC1: Dialog shows ride details + warning
+    - [X] US2 AC2: Cancel/dismiss returns to history
+    - [X] US2 AC3: Delete one ride, others remain
+    - [X] US3 AC1: Totals recalculated after delete
+    - [X] US3 AC2: Filtered totals updated
+    - [X] US3 AC3: Month + all-time totals decrease
   - All acceptance criteria PASS
 
-- [ ] T119 Code review checklist
-  - [ ] F# domain logic (Rides.fs): Pure functions, no side effects, immutable records
-  - [ ] C# API (DeleteRide.cs, DeleteRideHandler.cs): Minimal API style, DI proper, error responses typed
-  - [ ] React components (RideDeleteDialog.tsx): React 19 hooks, explicit types (NO `any`), no inline CSS
-  - [ ] TypeScript service (rideService.ts): Async/await, error handling, typed Promises
-  - [ ] Tests: TDD red-green flow followed, tests are meaningful (not vacuous)
-  - [ ] Documentation: Quickstart updated with delete flow, contracts in place
+- [X] T119 Code review checklist
+  - [X] F# domain logic (Rides.fs): Pure functions, no side effects, immutable records
+  - [X] C# API (DeleteRide.cs, DeleteRideHandler.cs): Minimal API style, DI proper, error responses typed
+  - [X] React components (RideDeleteDialog.tsx): React 19 hooks, explicit types (NO `any`), no inline CSS
+  - [X] TypeScript service (rideService.ts): Async/await, error handling, typed Promises
+  - [X] Tests: TDD red-green flow followed, tests are meaningful (not vacuous)
+  - [X] Documentation: Quickstart updated with delete flow, contracts in place
 
 ---
 
