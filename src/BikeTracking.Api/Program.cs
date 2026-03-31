@@ -107,6 +107,37 @@ if (Environment.GetEnvironmentVariable("PLAYWRIGHT_E2E") == "1")
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+
+    // SQLite cannot execute DropCheckConstraint migrations. Apply the
+    // supported migrations, mark those legacy migrations as applied,
+    // then continue migration so endpoint queries run on migrated schema.
+    var sqliteUnsupportedConstraintMigrations = new[]
+    {
+        "20260327165005_AddRideMilesUpperBound",
+        "20260327171355_FixRideMilesUpperBoundNumericComparison",
+    };
+
+    var provider = dbContext.Database.ProviderName;
+    if (provider == "Microsoft.EntityFrameworkCore.Sqlite")
+    {
+        await dbContext.Database.MigrateAsync("20260327000000_AddRideVersion");
+
+        var applied = (await dbContext.Database.GetAppliedMigrationsAsync()).ToHashSet();
+        foreach (var migration in sqliteUnsupportedConstraintMigrations)
+        {
+            if (applied.Contains(migration))
+            {
+                continue;
+            }
+
+            await dbContext.Database.ExecuteSqlRawAsync(
+                "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ({0}, {1})",
+                migration,
+                "10.0.5"
+            );
+        }
+    }
+
     await dbContext.Database.MigrateAsync();
 }
 
