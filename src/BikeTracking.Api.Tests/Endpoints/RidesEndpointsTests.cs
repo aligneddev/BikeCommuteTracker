@@ -130,7 +130,13 @@ public sealed class RidesEndpointsTests
         var userId = await host.SeedUserAsync("Frank");
 
         // Record a ride
-        await host.RecordRideAsync(userId, miles: 10.5m, rideMinutes: 45, temperature: 72m);
+        await host.RecordRideAsync(
+            userId,
+            miles: 10.5m,
+            rideMinutes: 45,
+            temperature: 72m,
+            gasPricePerGallon: 3.4999m
+        );
 
         var response = await host.Client.GetWithAuthAsync("/api/rides/defaults", userId);
 
@@ -141,6 +147,101 @@ public sealed class RidesEndpointsTests
         Assert.Equal(10.5m, payload.DefaultMiles);
         Assert.Equal(45, payload.DefaultRideMinutes);
         Assert.Equal(72m, payload.DefaultTemperature);
+        Assert.Equal(3.4999m, payload.DefaultGasPricePerGallon);
+    }
+
+    [Fact]
+    public async Task GetGasPrice_WithValidDate_ReturnsShape()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceUser");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/gas-price?date=2026-03-31",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<GasPriceResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("2026-03-31", payload.Date);
+    }
+
+    [Fact]
+    public async Task GetGasPrice_WithInvalidDate_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceBadDate");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/gas-price?date=not-a-date",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetGasPrice_WithoutAuth_Returns401()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+
+        var response = await host.Client.GetAsync("/api/rides/gas-price?date=2026-03-31");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostRecordRide_WithGasPrice_PersistsGasPrice()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPricePersist");
+
+        var request = new RecordRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 10.5m,
+            RideMinutes: 45,
+            Temperature: 72m,
+            GasPricePerGallon: 3.2777m
+        );
+
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RecordRideSuccessResponse>();
+        Assert.NotNull(payload);
+
+        using var scope = host.App.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+        var ride = await dbContext.Rides.SingleAsync(r => r.Id == payload.RideId);
+        Assert.Equal(3.2777m, ride.GasPricePerGallon);
+    }
+
+    [Fact]
+    public async Task PostRecordRide_WithNullGasPrice_PersistsNull()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceNull");
+
+        var request = new RecordRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 5.0m,
+            RideMinutes: null,
+            Temperature: null,
+            GasPricePerGallon: null
+        );
+
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RecordRideSuccessResponse>();
+        Assert.NotNull(payload);
+
+        using var scope = host.App.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+        var ride = await dbContext.Rides.SingleAsync(r => r.Id == payload.RideId);
+        Assert.Null(ride.GasPricePerGallon);
     }
 
     [Fact]
@@ -333,6 +434,58 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
+    public async Task PutEditRide_WithGasPrice_StoresGasPrice()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceEdit");
+        var rideId = await host.RecordRideAsync(userId, miles: 8.5m, gasPricePerGallon: 3.0000m);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 10.25m,
+            RideMinutes: 39,
+            Temperature: 68m,
+            ExpectedVersion: 1,
+            GasPricePerGallon: 3.5555m
+        );
+
+        var response = await host.Client.PutWithAuthAsync($"/api/rides/{rideId}", request, userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = host.App.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+        var ride = await dbContext.Rides.SingleAsync(r => r.Id == rideId);
+        Assert.Equal(3.5555m, ride.GasPricePerGallon);
+    }
+
+    [Fact]
+    public async Task PutEditRide_WithNullGasPrice_StoresNull()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceEditNull");
+        var rideId = await host.RecordRideAsync(userId, miles: 8.5m, gasPricePerGallon: 3.0000m);
+
+        var request = new EditRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 9.25m,
+            RideMinutes: 33,
+            Temperature: 68m,
+            ExpectedVersion: 1,
+            GasPricePerGallon: null
+        );
+
+        var response = await host.Client.PutWithAuthAsync($"/api/rides/{rideId}", request, userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = host.App.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+        var ride = await dbContext.Rides.SingleAsync(r => r.Id == rideId);
+        Assert.Null(ride.GasPricePerGallon);
+    }
+
+    [Fact]
     public async Task PutEditRide_WithInvalidPayload_Returns400()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -456,9 +609,35 @@ public sealed class RidesEndpointsTests
         Assert.Equal(10.25m, payload.Summaries.AllTime.Miles);
     }
 
-    private sealed class RecordRideApiHost(WebApplication app) : IAsyncDisposable
+    [Fact]
+    public async Task GetRideHistory_ContainsGasPricePerGallon()
     {
-        public HttpClient Client { get; } = app.GetTestClient();
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceHistory");
+        var rideId = await host.RecordRideAsync(userId, miles: 6.0m, gasPricePerGallon: 3.4444m);
+
+        var response = await host.Client.GetWithAuthAsync("/api/rides/history", userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RideHistoryResponse>();
+        Assert.NotNull(payload);
+        var ride = Assert.Single(payload.Rides, r => r.RideId == rideId);
+        Assert.Equal(3.4444m, ride.GasPricePerGallon);
+    }
+
+    private sealed class RecordRideApiHost : IAsyncDisposable
+    {
+        private readonly WebApplication _app;
+
+        public RecordRideApiHost(WebApplication app)
+        {
+            _app = app;
+            App = app;
+            Client = app.GetTestClient();
+        }
+
+        public WebApplication App { get; }
+        public HttpClient Client { get; }
 
         public static async Task<RecordRideApiHost> StartAsync()
         {
@@ -483,6 +662,7 @@ public sealed class RidesEndpointsTests
             builder.Services.AddScoped<GetQuickRideOptionsService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
+            builder.Services.AddScoped<IGasPriceLookupService, StubGasPriceLookupService>();
 
             var app = builder.Build();
             app.UseAuthentication();
@@ -495,7 +675,7 @@ public sealed class RidesEndpointsTests
 
         public async Task<long> SeedUserAsync(string displayName)
         {
-            using var scope = app.Services.CreateScope();
+            using var scope = _app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
 
             var user = new UserEntity
@@ -515,10 +695,11 @@ public sealed class RidesEndpointsTests
             long userId,
             decimal miles,
             int? rideMinutes = null,
-            decimal? temperature = null
+            decimal? temperature = null,
+            decimal? gasPricePerGallon = null
         )
         {
-            using var scope = app.Services.CreateScope();
+            using var scope = _app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
 
             var ride = new RideEntity
@@ -528,6 +709,7 @@ public sealed class RidesEndpointsTests
                 Miles = miles,
                 RideMinutes = rideMinutes,
                 Temperature = temperature,
+                GasPricePerGallon = gasPricePerGallon,
                 CreatedAtUtc = DateTime.UtcNow,
             };
 
@@ -539,8 +721,8 @@ public sealed class RidesEndpointsTests
         public async ValueTask DisposeAsync()
         {
             Client.Dispose();
-            await app.StopAsync();
-            await app.DisposeAsync();
+            await _app.StopAsync();
+            await _app.DisposeAsync();
         }
     }
 }
@@ -620,5 +802,21 @@ internal static class HttpClientExtensions
         };
         request.Headers.Add("X-User-Id", userId.ToString());
         return await client.SendAsync(request);
+    }
+}
+
+internal sealed class StubGasPriceLookupService : IGasPriceLookupService
+{
+    public Task<decimal?> GetOrFetchAsync(
+        DateOnly date,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (date == new DateOnly(2026, 3, 31))
+        {
+            return Task.FromResult<decimal?>(3.1860m);
+        }
+
+        return Task.FromResult<decimal?>(null);
     }
 }

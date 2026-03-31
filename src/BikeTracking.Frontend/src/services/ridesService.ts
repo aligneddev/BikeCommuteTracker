@@ -3,6 +3,7 @@ export interface RecordRideRequest {
   miles: number;
   rideMinutes?: number;
   temperature?: number;
+  gasPricePerGallon?: number;
 }
 
 export interface RecordRideSuccessResponse {
@@ -17,7 +18,15 @@ export interface RideDefaultsResponse {
   defaultMiles?: number;
   defaultRideMinutes?: number;
   defaultTemperature?: number;
+  defaultGasPricePerGallon?: number;
   defaultRideDateTimeLocal: string;
+}
+
+export interface GasPriceResponse {
+  date: string;
+  pricePerGallon: number | null;
+  isAvailable: boolean;
+  dataSource: string | null;
 }
 
 export interface QuickRideOption {
@@ -36,6 +45,7 @@ export interface EditRideRequest {
   miles: number;
   rideMinutes?: number;
   temperature?: number;
+  gasPricePerGallon?: number;
   expectedVersion: number;
 }
 
@@ -95,6 +105,7 @@ export interface RideHistoryRow {
   miles: number;
   rideMinutes?: number;
   temperature?: number;
+  gasPricePerGallon?: number;
 }
 
 /**
@@ -188,6 +199,24 @@ export async function getRideDefaults(): Promise<RideDefaultsResponse> {
   if (!response.ok) {
     throw new Error(
       await parseErrorMessage(response, "Failed to fetch ride defaults"),
+    );
+  }
+
+  return response.json();
+}
+
+export async function getGasPrice(date: string): Promise<GasPriceResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/rides/gas-price?date=${encodeURIComponent(date)}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await parseErrorMessage(response, "Failed to fetch gas price"),
     );
   }
 

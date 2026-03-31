@@ -12,6 +12,7 @@ public sealed record RideEditedEventPayload(
     decimal Miles,
     int? RideMinutes,
     decimal? Temperature,
+    decimal? GasPricePerGallon,
     string Source
 )
 {
@@ -27,6 +28,7 @@ public sealed record RideEditedEventPayload(
         decimal miles,
         int? rideMinutes = null,
         decimal? temperature = null,
+        decimal? gasPricePerGallon = null,
         DateTime? occurredAtUtc = null
     )
     {
@@ -42,6 +44,7 @@ public sealed record RideEditedEventPayload(
             Miles: miles,
             RideMinutes: rideMinutes,
             Temperature: temperature,
+            GasPricePerGallon: gasPricePerGallon,
             Source: SourceName
         );
     }

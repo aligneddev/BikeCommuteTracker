@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react'
 import type { QuickRideOption, RecordRideRequest } from '../services/ridesService'
-import { getQuickRideOptions, recordRide, getRideDefaults } from '../services/ridesService'
+import {
+  getGasPrice,
+  getQuickRideOptions,
+  recordRide,
+  getRideDefaults,
+} from '../services/ridesService'
 
 export function RecordRidePage() {
   const [rideDateTimeLocal, setRideDateTimeLocal] = useState<string>('')
   const [miles, setMiles] = useState<string>('')
   const [rideMinutes, setRideMinutes] = useState<string>('')
   const [temperature, setTemperature] = useState<string>('')
+  const [gasPrice, setGasPrice] = useState<string>('')
   const [quickRideOptions, setQuickRideOptions] = useState<QuickRideOption[]>([])
 
   const [loading, setLoading] = useState<boolean>(true)
@@ -41,6 +47,18 @@ export function RecordRidePage() {
             setRideMinutes(defaults.defaultRideMinutes.toString())
           if (defaults.defaultTemperature)
             setTemperature(defaults.defaultTemperature.toString())
+          if (defaults.defaultGasPricePerGallon)
+            setGasPrice(defaults.defaultGasPricePerGallon.toString())
+        }
+
+        try {
+          const today = localIso.slice(0, 10)
+          const lookup = await getGasPrice(today)
+          if (lookup.isAvailable && lookup.pricePerGallon !== null) {
+            setGasPrice(lookup.pricePerGallon.toString())
+          }
+        } catch (error) {
+          console.error('Failed to load gas price:', error)
         }
       } catch (error) {
         console.error('Failed to load defaults:', error)
@@ -55,6 +73,31 @@ export function RecordRidePage() {
 
     initializeDefaults()
   }, [])
+
+  useEffect(() => {
+    if (!rideDateTimeLocal) {
+      return
+    }
+
+    const timerId = setTimeout(async () => {
+      const dateOnly = rideDateTimeLocal.slice(0, 10)
+      if (!dateOnly) {
+        return
+      }
+
+      try {
+        const lookup = await getGasPrice(dateOnly)
+        if (lookup.isAvailable && lookup.pricePerGallon !== null) {
+          setGasPrice(lookup.pricePerGallon.toString())
+        }
+      } catch (error) {
+        // Keep the existing gas price value as fallback if lookup fails.
+        console.error('Failed to refresh gas price for date change:', error)
+      }
+    }, 300)
+
+    return () => clearTimeout(timerId)
+  }, [rideDateTimeLocal])
 
   const applyQuickRideOption = (option: QuickRideOption) => {
     setMiles(option.miles.toString())
@@ -83,6 +126,14 @@ export function RecordRidePage() {
       return
     }
 
+    if (gasPrice) {
+      const gasPriceNum = parseFloat(gasPrice)
+      if (Number.isNaN(gasPriceNum) || gasPriceNum < 0.01 || gasPriceNum > 999.9999) {
+        setErrorMessage('Gas price must be a number between 0.01 and 999.9999')
+        return
+      }
+    }
+
     setSubmitting(true)
     try {
       const request: RecordRideRequest = {
@@ -90,6 +141,7 @@ export function RecordRidePage() {
         miles: milesNum,
         rideMinutes: rideMinutes ? parseInt(rideMinutes) : undefined,
         temperature: temperature ? parseFloat(temperature) : undefined,
+        gasPricePerGallon: gasPrice ? parseFloat(gasPrice) : undefined,
       }
 
       const response = await recordRide(request)
@@ -102,6 +154,7 @@ export function RecordRidePage() {
         setMiles('')
         setRideMinutes('')
         setTemperature('')
+        setGasPrice('')
         setSuccessMessage('')
       }, 3000)
     } catch (error) {
@@ -191,6 +244,27 @@ export function RecordRidePage() {
             step="0.1"
             value={temperature}
             onChange={(e) => setTemperature(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="gasPrice">Gas Price ($/gal) (optional)</label>
+          <input
+            id="gasPrice"
+            type="number"
+            step="0.0001"
+            min="0"
+            value={gasPrice}
+            onChange={(e) => {
+              setGasPrice(e.target.value)
+              if (errorMessage.length > 0) {
+                setErrorMessage('')
+              }
+            }}
+            onInvalid={(e) => {
+              e.preventDefault()
+              setErrorMessage('Gas price must be greater than 0')
+            }}
           />
         </div>
 

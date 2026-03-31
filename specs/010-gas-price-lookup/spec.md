@@ -53,7 +53,7 @@ When a user opens the edit form for an existing ride, the gas price field is pre
 
 1. **Given** a user opens the edit form for a ride, **When** the form loads, **Then** the gas price field is pre-populated with the gas price stored on that ride.
 2. **Given** the user changes the ride date to a new date with an available EIA price, **When** the date changes, **Then** the gas price field updates to the price for the new date.
-3. **Given** the user changes the ride date to a date with no EIA price available, **When** the date changes, **Then** the gas price field falls back to the most recent prior ride's gas price.
+3. **Given** the user changes the ride date to a date with no EIA price available, **When** the date changes, **Then** the gas price field retains its current value (the previously shown price, whether from a prior EIA lookup, the fallback, or a user edit).
 4. **Given** the user changes the ride date and the gas price field updates, **When** the user manually overwrites the field and saves, **Then** the user-entered value is stored in the ride updated event.
 5. **Given** the user edits a ride without changing the date, **When** the form is submitted, **Then** the existing gas price value is preserved unchanged.
 
@@ -104,8 +104,8 @@ When a gas price has already been fetched for a given date, any subsequent form 
 ### Key Entities
 
 - **GasPriceLookup**: Represents a single gas price retrieved for a calendar date. Key attributes: date (calendar date), price per gallon (decimal, USD), data source identifier, retrieved-at timestamp. One record per date; acts as the durable cache entry.
-- **RideCreatedEvent**: Extended to include an optional gas price per gallon (USD) at the time of the ride's date.
-- **RideUpdatedEvent**: Extended to include an optional gas price per gallon (USD) reflecting the price for the (possibly new) ride date.
+- **RideRecordedEventPayload**: Extended to include an optional gas price per gallon (USD) at the time of the ride's date.
+- **RideEditedEventPayload**: Extended to include an optional gas price per gallon (USD) reflecting the price for the (possibly new) ride date.
 
 ## Success Criteria *(mandatory)*
 

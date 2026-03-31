@@ -37,7 +37,8 @@ public class GetRideDefaultsService(BikeTrackingDbContext dbContext)
             DefaultRideDateTimeLocal: DateTime.Now,
             DefaultMiles: lastRide.Miles,
             DefaultRideMinutes: lastRide.RideMinutes,
-            DefaultTemperature: lastRide.Temperature
+            DefaultTemperature: lastRide.Temperature,
+            DefaultGasPricePerGallon: lastRide.GasPricePerGallon
         );
     }
 }

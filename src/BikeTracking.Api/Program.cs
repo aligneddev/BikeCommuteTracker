@@ -41,6 +41,16 @@ builder.Services.AddScoped<GetQuickRideOptionsService>();
 builder.Services.AddScoped<GetRideHistoryService>();
 builder.Services.AddScoped<EditRideService>();
 builder.Services.AddScoped<DeleteRideService>();
+builder.Services.AddScoped<IGasPriceLookupService, EiaGasPriceLookupService>();
+
+builder.Services.AddHttpClient(
+    "EiaGasPrice",
+    client =>
+    {
+        client.BaseAddress = new Uri("https://api.eia.gov");
+        client.Timeout = TimeSpan.FromSeconds(10);
+    }
+);
 
 builder.Services.AddSingleton<IOutboxStore, EfOutboxStore>();
 builder.Services.AddSingleton<IUserRegisteredPublisher, UserRegisteredPublisher>();

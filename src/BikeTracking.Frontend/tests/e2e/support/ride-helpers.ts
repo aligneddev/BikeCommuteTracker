@@ -5,6 +5,7 @@ export interface RideFormInput {
   miles: string;
   rideMinutes?: string;
   temperature?: string;
+  gasPrice?: string;
 }
 
 export function toDateTimeLocalValue(date: Date): string {
@@ -32,6 +33,10 @@ export async function recordRide(
 
   if (input.temperature !== undefined) {
     await page.locator("#temperature").fill(input.temperature);
+  }
+
+  if (input.gasPrice !== undefined) {
+    await page.locator("#gasPrice").fill(input.gasPrice);
   }
 
   await page.getByRole("button", { name: "Record Ride" }).click();

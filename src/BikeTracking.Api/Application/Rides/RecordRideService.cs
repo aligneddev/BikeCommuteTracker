@@ -38,6 +38,7 @@ public class RecordRideService(BikeTrackingDbContext dbContext, ILogger<RecordRi
             Miles = request.Miles,
             RideMinutes = request.RideMinutes,
             Temperature = request.Temperature,
+            GasPricePerGallon = request.GasPricePerGallon,
             CreatedAtUtc = DateTime.UtcNow,
         };
 
@@ -50,7 +51,8 @@ public class RecordRideService(BikeTrackingDbContext dbContext, ILogger<RecordRi
             rideDateTimeLocal: request.RideDateTimeLocal,
             miles: request.Miles,
             rideMinutes: request.RideMinutes,
-            temperature: request.Temperature
+            temperature: request.Temperature,
+            gasPricePerGallon: request.GasPricePerGallon
         );
 
         _logger.LogInformation(

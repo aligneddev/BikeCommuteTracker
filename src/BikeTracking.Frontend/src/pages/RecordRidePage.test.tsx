@@ -6,6 +6,7 @@ import { RecordRidePage } from '../pages/RecordRidePage'
 // Mock the ridesService
 vi.mock('../services/ridesService', () => ({
   getRideDefaults: vi.fn(),
+  getGasPrice: vi.fn(),
   getQuickRideOptions: vi.fn(),
   recordRide: vi.fn(),
 }))
@@ -13,12 +14,19 @@ vi.mock('../services/ridesService', () => ({
 import * as ridesService from '../services/ridesService'
 
 const mockGetRideDefaults = vi.mocked(ridesService.getRideDefaults)
+const mockGetGasPrice = vi.mocked(ridesService.getGasPrice)
 const mockGetQuickRideOptions = vi.mocked(ridesService.getQuickRideOptions)
 const mockRecordRide = vi.mocked(ridesService.recordRide)
 
 describe('RecordRidePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetGasPrice.mockResolvedValue({
+      date: new Date().toISOString().slice(0, 10),
+      pricePerGallon: null,
+      isAvailable: false,
+      dataSource: null,
+    })
     mockGetQuickRideOptions.mockResolvedValue({
       options: [],
       generatedAtUtc: new Date().toISOString(),
@@ -74,6 +82,7 @@ describe('RecordRidePage', () => {
       defaultMiles: 10.5,
       defaultRideMinutes: 45,
       defaultTemperature: 72,
+      defaultGasPricePerGallon: 3.1111,
     })
 
     render(
@@ -91,6 +100,165 @@ describe('RecordRidePage', () => {
 
       const tempInput = screen.getByLabelText(/temperature/i) as HTMLInputElement
       expect(tempInput.value).toBe('72')
+
+      const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('3.1111')
+    })
+  })
+
+  it('should call getGasPrice on initial load and use available value', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: true,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+      defaultGasPricePerGallon: 3.1111,
+    })
+    mockGetGasPrice.mockResolvedValue({
+      date: new Date().toISOString().slice(0, 10),
+      pricePerGallon: 3.2222,
+      isAvailable: true,
+      dataSource: 'EIA_EPM0_NUS_Weekly',
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(mockGetGasPrice).toHaveBeenCalled()
+      const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('3.2222')
+    })
+  })
+
+  it('should allow empty gas price and omit it on submit', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockRecordRide.mockResolvedValue({
+      rideId: 50,
+      riderId: 1,
+      savedAtUtc: new Date().toISOString(),
+      eventStatus: 'Queued',
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      const milesInput = screen.getByLabelText(/miles/i) as HTMLInputElement
+      fireEvent.change(milesInput, { target: { value: '10' } })
+    })
+
+    const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+    fireEvent.change(gasPriceInput, { target: { value: '' } })
+
+    const submitButton = screen.getByRole('button', { name: /record ride/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockRecordRide).toHaveBeenCalledWith(
+        expect.not.objectContaining({ gasPricePerGallon: expect.anything() })
+      )
+    })
+  })
+
+  it('should block submit when gas price is negative', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      const milesInput = screen.getByLabelText(/miles/i) as HTMLInputElement
+      fireEvent.change(milesInput, { target: { value: '10' } })
+    })
+
+    const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+    fireEvent.change(gasPriceInput, { target: { value: '-1' } })
+
+    const submitButton = screen.getByRole('button', { name: /record ride/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockRecordRide).not.toHaveBeenCalled()
+      expect(screen.getByText(/gas price must be greater than 0/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should retain fallback gas price when date-change lookup is unavailable', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: true,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+      defaultGasPricePerGallon: 3.1111,
+    })
+    mockGetGasPrice.mockResolvedValue({
+      date: new Date().toISOString().slice(0, 10),
+      pricePerGallon: null,
+      isAvailable: false,
+      dataSource: null,
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('3.1111')
+    })
+
+    const dateInput = screen.getByLabelText(/date & time/i) as HTMLInputElement
+    fireEvent.change(dateInput, { target: { value: '2026-01-01T09:00' } })
+
+    await waitFor(() => {
+      const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('3.1111')
+    })
+  })
+
+  it('should keep gas price empty when lookup unavailable and no fallback exists', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetGasPrice.mockResolvedValue({
+      date: new Date().toISOString().slice(0, 10),
+      pricePerGallon: null,
+      isAvailable: false,
+      dataSource: null,
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('')
+    })
+
+    const dateInput = screen.getByLabelText(/date & time/i) as HTMLInputElement
+    fireEvent.change(dateInput, { target: { value: '2026-01-01T09:00' } })
+
+    await waitFor(() => {
+      const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('')
     })
   })
 

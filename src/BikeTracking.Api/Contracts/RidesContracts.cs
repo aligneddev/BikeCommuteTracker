@@ -13,7 +13,9 @@ public sealed record RecordRideRequest(
         decimal Miles,
     [property: Range(1, int.MaxValue, ErrorMessage = "Ride minutes must be greater than 0")]
         int? RideMinutes = null,
-    decimal? Temperature = null
+    decimal? Temperature = null,
+    [property: Range(0.01, 999.9999, ErrorMessage = "Gas price must be between 0.01 and 999.9999")]
+        decimal? GasPricePerGallon = null
 );
 
 public sealed record RecordRideSuccessResponse(
@@ -28,7 +30,15 @@ public sealed record RideDefaultsResponse(
     DateTime DefaultRideDateTimeLocal,
     decimal? DefaultMiles = null,
     int? DefaultRideMinutes = null,
-    decimal? DefaultTemperature = null
+    decimal? DefaultTemperature = null,
+    decimal? DefaultGasPricePerGallon = null
+);
+
+public sealed record GasPriceResponse(
+    string Date,
+    decimal? PricePerGallon,
+    bool IsAvailable,
+    string? DataSource
 );
 
 public sealed record QuickRideOption(decimal Miles, int RideMinutes, DateTime LastUsedAtLocal);
@@ -51,7 +61,13 @@ public sealed record EditRideRequest(
         int? RideMinutes,
     decimal? Temperature,
     [property: Range(1, int.MaxValue, ErrorMessage = "Expected version must be at least 1")]
-        int ExpectedVersion
+        int ExpectedVersion,
+    [property: Range(
+        0.01,
+        999.9999,
+        ErrorMessage = "Gas price must be greater than 0.01 and less than or equal to 999.9999"
+    )]
+        decimal? GasPricePerGallon = null
 );
 
 public sealed record EditRideResponse(long RideId, int NewVersion, string Message);
@@ -75,7 +91,8 @@ public sealed record RideHistoryRow(
     DateTime RideDateTimeLocal,
     decimal Miles,
     int? RideMinutes = null,
-    decimal? Temperature = null
+    decimal? Temperature = null,
+    decimal? GasPricePerGallon = null
 );
 
 /// <summary>

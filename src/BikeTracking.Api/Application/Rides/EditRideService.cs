@@ -89,6 +89,7 @@ public sealed class EditRideService(
         ride.Miles = request.Miles;
         ride.RideMinutes = request.RideMinutes;
         ride.Temperature = request.Temperature;
+        ride.GasPricePerGallon = request.GasPricePerGallon;
         ride.Version = currentVersion + 1;
 
         var utcNow = DateTime.UtcNow;
@@ -102,6 +103,7 @@ public sealed class EditRideService(
             miles: ride.Miles,
             rideMinutes: ride.RideMinutes,
             temperature: ride.Temperature,
+            gasPricePerGallon: ride.GasPricePerGallon,
             occurredAtUtc: utcNow
         );
 

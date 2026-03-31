@@ -41,6 +41,38 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("AuthAttemptStates", (string)null);
                 });
 
+            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.GasPriceLookupEntity", b =>
+                {
+                    b.Property<int>("GasPriceLookupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DataSource")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("EiaPeriodDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("PriceDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PricePerGallon")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("RetrievedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("GasPriceLookupId");
+
+                    b.HasIndex("PriceDate")
+                        .IsUnique();
+
+                    b.ToTable("GasPriceLookups", (string)null);
+                });
+
             modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.RideEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -48,6 +80,10 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("GasPricePerGallon")
+                        .HasPrecision(10, 4)
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Miles")

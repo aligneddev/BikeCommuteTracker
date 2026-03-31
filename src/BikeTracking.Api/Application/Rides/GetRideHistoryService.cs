@@ -116,7 +116,8 @@ public sealed class GetRideHistoryService(BikeTrackingDbContext dbContext)
                 RideDateTimeLocal: r.RideDateTimeLocal,
                 Miles: r.Miles,
                 RideMinutes: r.RideMinutes,
-                Temperature: r.Temperature
+                Temperature: r.Temperature,
+                GasPricePerGallon: r.GasPricePerGallon
             ))
             .ToList();
 
