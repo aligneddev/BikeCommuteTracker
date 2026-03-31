@@ -1,4 +1,8 @@
-﻿#nullable disable
+﻿using System;
+using BikeTracking.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+#nullable disable
 
 namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 {
