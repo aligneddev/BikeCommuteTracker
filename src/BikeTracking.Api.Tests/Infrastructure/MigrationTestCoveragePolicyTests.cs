@@ -1,8 +1,3 @@
-using BikeTracking.Api.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
-
 namespace BikeTracking.Api.Tests.Infrastructure;
 
 public sealed class MigrationTestCoveragePolicyTests
