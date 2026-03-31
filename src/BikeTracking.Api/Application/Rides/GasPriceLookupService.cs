@@ -1,5 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
+using BikeTracking.Api.Infrastructure.Persistence;
+using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Application.Rides;
 

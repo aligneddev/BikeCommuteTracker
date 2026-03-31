@@ -1,5 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
+using BikeTracking.Api.Application.Rides;
+using BikeTracking.Api.Contracts;
+using BikeTracking.Api.Endpoints;
+using BikeTracking.Api.Infrastructure.Persistence;
+using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Tests.Endpoints;
 

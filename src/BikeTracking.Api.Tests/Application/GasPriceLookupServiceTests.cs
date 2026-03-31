@@ -1,5 +1,12 @@
 using System.Net;
 using System.Text;
+using BikeTracking.Api.Application.Rides;
+using BikeTracking.Api.Infrastructure.Persistence;
+using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BikeTracking.Api.Tests.Application;
 
