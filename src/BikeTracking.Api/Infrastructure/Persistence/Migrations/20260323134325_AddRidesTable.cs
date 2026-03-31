@@ -1,4 +1,6 @@
 ﻿using System;
+using BikeTracking.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,6 +8,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(BikeTrackingDbContext))]
+    [Migration("20260323134325_AddRidesTable")]
     public partial class AddRidesTable : Migration
     {
         /// <inheritdoc />

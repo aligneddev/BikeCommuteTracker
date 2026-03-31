@@ -6,6 +6,8 @@ namespace BikeTracking.Api.Endpoints;
 
 public static class RidesEndpoints
 {
+    private const string EiaGasPriceSource = "Source: U.S. Energy Information Administration (EIA)";
+
     public static IEndpointRouteBuilder MapRidesEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/rides");
@@ -172,7 +174,7 @@ public static class RidesEndpoints
                     Date: parsedDate.ToString("yyyy-MM-dd"),
                     PricePerGallon: price,
                     IsAvailable: price.HasValue,
-                    DataSource: price.HasValue ? "EIA_EPM0_NUS_Weekly" : null
+                    DataSource: price.HasValue ? EiaGasPriceSource : null
                 )
             );
         }

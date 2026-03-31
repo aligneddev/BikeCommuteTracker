@@ -379,7 +379,7 @@ describe('HistoryPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/gas price must be greater than 0/i)
+      expect(screen.getByRole('alert')).toHaveTextContent(/gas price must be between 0.01 and 999.9999/i)
       expect(mockEditRide).not.toHaveBeenCalled()
     })
   })
@@ -410,7 +410,7 @@ describe('HistoryPage', () => {
       date: '2026-01-01',
       pricePerGallon: 3.9999,
       isAvailable: true,
-      dataSource: 'EIA_EPM0_NUS_Weekly',
+      dataSource: 'Source: U.S. Energy Information Administration (EIA)',
     })
 
     render(<HistoryPage />)
@@ -429,6 +429,9 @@ describe('HistoryPage', () => {
         name: /gas price/i,
       }) as HTMLInputElement
       expect(gasPriceInput.value).toBe('3.9999')
+      expect(
+        screen.getByText('Source: U.S. Energy Information Administration (EIA)')
+      ).toBeInTheDocument()
     })
   })
 

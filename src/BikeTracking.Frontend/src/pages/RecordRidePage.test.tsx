@@ -116,7 +116,7 @@ describe('RecordRidePage', () => {
       date: new Date().toISOString().slice(0, 10),
       pricePerGallon: 3.2222,
       isAvailable: true,
-      dataSource: 'EIA_EPM0_NUS_Weekly',
+      dataSource: 'Source: U.S. Energy Information Administration (EIA)',
     })
 
     render(
@@ -129,6 +129,9 @@ describe('RecordRidePage', () => {
       expect(mockGetGasPrice).toHaveBeenCalled()
       const gasPriceInput = screen.getByLabelText(/gas price/i) as HTMLInputElement
       expect(gasPriceInput.value).toBe('3.2222')
+      expect(
+        screen.getByText('Source: U.S. Energy Information Administration (EIA)')
+      ).toBeInTheDocument()
     })
   })
 

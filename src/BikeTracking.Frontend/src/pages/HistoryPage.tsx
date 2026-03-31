@@ -20,12 +20,15 @@ import {
 } from './miles/history-page.helpers'
 import './HistoryPage.css'
 
+const EIA_GAS_PRICE_SOURCE = 'Source: U.S. Energy Information Administration (EIA)'
+
 function HistoryTable({
   rides,
   editingRideId,
   editedRideDateTimeLocal,
   editedMiles,
   editedGasPrice,
+  editedGasPriceSource,
   onStartEdit,
   onEditedRideDateTimeLocalChange,
   onEditedMilesChange,
@@ -39,6 +42,7 @@ function HistoryTable({
   editedRideDateTimeLocal: string
   editedMiles: string
   editedGasPrice: string
+  editedGasPriceSource: string
   onStartEdit: (ride: RideHistoryRow) => void
   onEditedRideDateTimeLocalChange: (value: string) => void
   onEditedMilesChange: (value: string) => void
@@ -113,6 +117,7 @@ function HistoryTable({
                     value={editedGasPrice}
                     onChange={(event) => onEditedGasPriceChange(event.target.value)}
                   />
+                  {editedGasPriceSource ? <p>{editedGasPriceSource}</p> : null}
                 </div>
               ) : ride.gasPricePerGallon != null ? (
                 `$${ride.gasPricePerGallon.toFixed(4)}`
@@ -166,6 +171,7 @@ export function HistoryPage() {
   const [editedRideDateTimeLocal, setEditedRideDateTimeLocal] = useState<string>('')
   const [editedMiles, setEditedMiles] = useState<string>('')
   const [editedGasPrice, setEditedGasPrice] = useState<string>('')
+  const [editedGasPriceSource, setEditedGasPriceSource] = useState<string>('')
   const [ridePendingDelete, setRidePendingDelete] = useState<RideHistoryRow | null>(null)
 
   async function loadHistory(params: GetRideHistoryParams): Promise<void> {
@@ -214,6 +220,7 @@ export function HistoryPage() {
     setEditedRideDateTimeLocal('')
     setEditedMiles('')
     setEditedGasPrice('')
+    setEditedGasPriceSource('')
   }
 
   useEffect(() => {
@@ -231,8 +238,12 @@ export function HistoryPage() {
         const lookup = await getGasPrice(dateOnly)
         if (lookup.isAvailable && lookup.pricePerGallon !== null) {
           setEditedGasPrice(lookup.pricePerGallon.toString())
+          setEditedGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
+        } else {
+          setEditedGasPriceSource('')
         }
       } catch {
+        setEditedGasPriceSource('')
         // Keep current gas price value if lookup fails.
       }
     }, 300)
@@ -291,6 +302,7 @@ export function HistoryPage() {
     setEditedRideDateTimeLocal('')
     setEditedMiles('')
     setEditedGasPrice('')
+    setEditedGasPriceSource('')
 
     await loadHistory({
       from: fromDate || undefined,
@@ -422,10 +434,14 @@ export function HistoryPage() {
           editedRideDateTimeLocal={editedRideDateTimeLocal}
           editedMiles={editedMiles}
           editedGasPrice={editedGasPrice}
+          editedGasPriceSource={editedGasPriceSource}
           onStartEdit={handleStartEdit}
           onEditedRideDateTimeLocalChange={setEditedRideDateTimeLocal}
           onEditedMilesChange={setEditedMiles}
-          onEditedGasPriceChange={setEditedGasPrice}
+          onEditedGasPriceChange={(value) => {
+            setEditedGasPrice(value)
+            setEditedGasPriceSource('')
+          }}
           onSaveEdit={(ride) => void handleSaveEdit(ride)}
           onCancelEdit={handleCancelEdit}
           onStartDelete={handleStartDelete}

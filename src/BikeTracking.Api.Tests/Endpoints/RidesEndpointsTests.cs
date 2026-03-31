@@ -166,6 +166,7 @@ public sealed class RidesEndpointsTests
         var payload = await response.Content.ReadFromJsonAsync<GasPriceResponse>();
         Assert.NotNull(payload);
         Assert.Equal("2026-03-31", payload.Date);
+        Assert.Equal("Source: U.S. Energy Information Administration (EIA)", payload.DataSource);
     }
 
     [Fact]
@@ -625,19 +626,10 @@ public sealed class RidesEndpointsTests
         Assert.Equal(3.4444m, ride.GasPricePerGallon);
     }
 
-    private sealed class RecordRideApiHost : IAsyncDisposable
+    private sealed class RecordRideApiHost(WebApplication app) : IAsyncDisposable
     {
-        private readonly WebApplication _app;
-
-        public RecordRideApiHost(WebApplication app)
-        {
-            _app = app;
-            App = app;
-            Client = app.GetTestClient();
-        }
-
-        public WebApplication App { get; }
-        public HttpClient Client { get; }
+        public WebApplication App { get; } = app;
+        public HttpClient Client { get; } = app.GetTestClient();
 
         public static async Task<RecordRideApiHost> StartAsync()
         {
@@ -675,7 +667,7 @@ public sealed class RidesEndpointsTests
 
         public async Task<long> SeedUserAsync(string displayName)
         {
-            using var scope = _app.Services.CreateScope();
+            using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
 
             var user = new UserEntity
@@ -699,7 +691,7 @@ public sealed class RidesEndpointsTests
             decimal? gasPricePerGallon = null
         )
         {
-            using var scope = _app.Services.CreateScope();
+            using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
 
             var ride = new RideEntity
@@ -721,8 +713,8 @@ public sealed class RidesEndpointsTests
         public async ValueTask DisposeAsync()
         {
             Client.Dispose();
-            await _app.StopAsync();
-            await _app.DisposeAsync();
+            await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 }

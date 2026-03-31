@@ -18,6 +18,8 @@
 - Embedding a static price table — rejected: goes stale and requires manual maintenance.
 
 **EIA API Details**:
+Get a key at https://www.eia.gov/opendata/
+
 
 | Field | Value |
 |---|---|

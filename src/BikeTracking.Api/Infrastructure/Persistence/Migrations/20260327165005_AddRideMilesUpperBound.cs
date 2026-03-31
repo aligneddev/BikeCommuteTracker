@@ -1,10 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using BikeTracking.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(BikeTrackingDbContext))]
+    [Migration("20260327165005_AddRideMilesUpperBound")]
     public partial class AddRideMilesUpperBound : Migration
     {
         /// <inheritdoc />

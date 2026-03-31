@@ -7,12 +7,15 @@ import {
   getRideDefaults,
 } from '../services/ridesService'
 
+const EIA_GAS_PRICE_SOURCE = 'Source: U.S. Energy Information Administration (EIA)'
+
 export function RecordRidePage() {
   const [rideDateTimeLocal, setRideDateTimeLocal] = useState<string>('')
   const [miles, setMiles] = useState<string>('')
   const [rideMinutes, setRideMinutes] = useState<string>('')
   const [temperature, setTemperature] = useState<string>('')
   const [gasPrice, setGasPrice] = useState<string>('')
+  const [gasPriceSource, setGasPriceSource] = useState<string>('')
   const [quickRideOptions, setQuickRideOptions] = useState<QuickRideOption[]>([])
 
   const [loading, setLoading] = useState<boolean>(true)
@@ -56,8 +59,12 @@ export function RecordRidePage() {
           const lookup = await getGasPrice(today)
           if (lookup.isAvailable && lookup.pricePerGallon !== null) {
             setGasPrice(lookup.pricePerGallon.toString())
+            setGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
+          } else {
+            setGasPriceSource('')
           }
         } catch (error) {
+          setGasPriceSource('')
           console.error('Failed to load gas price:', error)
         }
       } catch (error) {
@@ -89,8 +96,12 @@ export function RecordRidePage() {
         const lookup = await getGasPrice(dateOnly)
         if (lookup.isAvailable && lookup.pricePerGallon !== null) {
           setGasPrice(lookup.pricePerGallon.toString())
+          setGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
+        } else {
+          setGasPriceSource('')
         }
       } catch (error) {
+        setGasPriceSource('')
         // Keep the existing gas price value as fallback if lookup fails.
         console.error('Failed to refresh gas price for date change:', error)
       }
@@ -155,6 +166,7 @@ export function RecordRidePage() {
         setRideMinutes('')
         setTemperature('')
         setGasPrice('')
+        setGasPriceSource('')
         setSuccessMessage('')
       }, 3000)
     } catch (error) {
@@ -257,6 +269,7 @@ export function RecordRidePage() {
             value={gasPrice}
             onChange={(e) => {
               setGasPrice(e.target.value)
+              setGasPriceSource('')
               if (errorMessage.length > 0) {
                 setErrorMessage('')
               }
@@ -266,6 +279,7 @@ export function RecordRidePage() {
               setErrorMessage('Gas price must be greater than 0')
             }}
           />
+          {gasPriceSource ? <p>{gasPriceSource}</p> : null}
         </div>
 
         <button type="submit" disabled={submitting}>
