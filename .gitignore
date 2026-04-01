@@ -62,4 +62,3 @@ src/.vs/*
 
 .fake
 src/BikeTracking.Frontend/test-results/
-src/BikeTracking.Frontend/playwright-report/
