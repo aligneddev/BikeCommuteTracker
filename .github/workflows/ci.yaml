@@ -50,7 +50,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: src/BikeTracking.Frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install Playwright browser and system dependencies
         working-directory: src/BikeTracking.Frontend
