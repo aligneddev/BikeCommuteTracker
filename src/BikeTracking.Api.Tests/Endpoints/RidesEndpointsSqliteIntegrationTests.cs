@@ -7,17 +7,12 @@ using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BikeTracking.Api.Tests.Endpoints;
 
 public sealed class RidesEndpointsSqliteIntegrationTests
 {
-    private static readonly string[] SqliteUnsupportedConstraintMigrations =
-    [
-        "20260327165005_AddRideMilesUpperBound",
-        "20260327171355_FixRideMilesUpperBoundNumericComparison",
-    ];
-
     [Fact]
     public async Task GetRideHistory_WithSqliteMigrationsApplied_ReturnsGasPricePerGallon()
     {
@@ -87,25 +82,10 @@ public sealed class RidesEndpointsSqliteIntegrationTests
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
 
-                // SQLite cannot execute DropCheckConstraint migrations. Apply the
-                // supported migrations, mark those legacy migrations as applied,
-                // then continue migration so endpoint queries run on migrated schema.
-                await dbContext.Database.MigrateAsync("20260327000000_AddRideVersion");
-
-                var applied = (await dbContext.Database.GetAppliedMigrationsAsync()).ToHashSet();
-                foreach (var migration in SqliteUnsupportedConstraintMigrations)
-                {
-                    if (applied.Contains(migration))
-                    {
-                        continue;
-                    }
-
-                    await dbContext.Database.ExecuteSqlRawAsync(
-                        "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ({0}, {1})",
-                        migration,
-                        "10.0.5"
-                    );
-                }
+                await SqliteMigrationBootstrapper.ApplyCompatibilityWorkaroundsAsync(
+                    dbContext,
+                    NullLogger.Instance
+                );
 
                 await dbContext.Database.MigrateAsync();
             }
