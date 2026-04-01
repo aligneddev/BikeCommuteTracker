@@ -17,7 +17,10 @@ RUN curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/s
   && apt-get update \
   && apt-get install -y --no-install-recommends podman nodejs \
   && rm -rf /var/lib/apt/lists/* \
-  && npm --version
+  && npm --version \
+  # Security hardening: delay installing very new publishes and block lifecycle scripts by default.
+  && npm config set --global min-release-age 1440 \
+  && npm config set --global ignore-scripts true
 
 # Ensure the SDK version from global.json is available in the image.
 RUN if dotnet --list-sdks | grep -q "^${REQUIRED_DOTNET_SDK_VERSION}"; then \
