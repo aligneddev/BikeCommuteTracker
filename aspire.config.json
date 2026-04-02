@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "src/BikeTracking.AppHost/BikeTracking.AppHost.csproj"
+  }
+}
