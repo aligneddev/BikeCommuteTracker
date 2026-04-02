@@ -22,6 +22,9 @@ var webFrontend = builder
             endpoint.Port = 5173;
             endpoint.TargetPort = 5173;
             // Disabling the proxy means Aspire's dashboard will not track requests for the frontend application, and you must ensure the configured port (default 5173) does not conflict with other local Vite instances
+            //             After restart, the Aspire dashboard will show the frontend link pointing directly to http://localhost:5173 (no proxy). At that URL, the browser connects straight to the Vite dev server and the HMR WebSocket (ws://localhost:5173) will work correctly.
+
+            // Why it won't work at the proxy port at all: Aspire's DCP proxy handles HTTP but does not upgrade connections to WebSockets, so the ws:// HMR handshake is silently dropped regardless of what HMR options you set on the Vite side.
             // Required for HMR to work with default Aspire proxy
             endpoint.IsProxied = false;
         }
