@@ -59,7 +59,7 @@ function HistoryTable({
     <table className="history-page-table" aria-label="Ride history table">
       <thead>
         <tr>
-          <th scope="col">Date</th>
+          <th scope="col">Dateddddd</th>
           <th scope="col">Miles</th>
           <th scope="col">Duration</th>
           <th scope="col">Temperature</th>

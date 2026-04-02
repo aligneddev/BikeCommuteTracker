@@ -15,6 +15,17 @@ var apiService = builder
 
 var webFrontend = builder
     .AddViteApp("frontend", "../BikeTracking.Frontend")
+    .WithEndpoint(
+        "http",
+        endpoint =>
+        {
+            endpoint.Port = 5173;
+            endpoint.TargetPort = 5173;
+            // Disabling the proxy means Aspire's dashboard will not track requests for the frontend application, and you must ensure the configured port (default 5173) does not conflict with other local Vite instances
+            // Required for HMR to work with default Aspire proxy
+            endpoint.IsProxied = false;
+        }
+    )
     .WithReference(apiService)
     .WaitFor(apiService);
 

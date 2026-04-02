@@ -4,8 +4,12 @@ import react from "@vitejs/plugin-react";
 // https://vite.dev/config/
 export default defineConfig({
   server: {
+    host: true,
     open: !process.env.CI,
-    port: 49363,
+    port: 5173,
+    hmr: {
+      overlay: true, // Show error overlay
+    },
   },
   plugins: [react()],
 
