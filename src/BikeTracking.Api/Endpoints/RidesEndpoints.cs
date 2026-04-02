@@ -6,6 +6,8 @@ namespace BikeTracking.Api.Endpoints;
 
 public static class RidesEndpoints
 {
+    private const string EiaGasPriceSource = "Source: U.S. Energy Information Administration (EIA)";
+
     public static IEndpointRouteBuilder MapRidesEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/rides");
@@ -24,6 +26,15 @@ public static class RidesEndpoints
             .WithName("GetRideDefaults")
             .WithSummary("Get record-ride form defaults")
             .Produces<RideDefaultsResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization();
+
+        group
+            .MapGet("/gas-price", GetGasPrice)
+            .WithName("GetGasPrice")
+            .WithSummary("Get gas price lookup for a date")
+            .Produces<GasPriceResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .RequireAuthorization();
 
@@ -130,6 +141,52 @@ public static class RidesEndpoints
         {
             return Results.BadRequest(
                 new ErrorResponse("ERROR", "An error occurred while retrieving defaults")
+            );
+        }
+    }
+
+    private static async Task<IResult> GetGasPrice(
+        HttpContext context,
+        [FromQuery] string? date,
+        [FromServices] IGasPriceLookupService gasPriceLookupService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(date) || !DateOnly.TryParse(date, out var parsedDate))
+        {
+            return Results.BadRequest(
+                new ErrorResponse(
+                    "INVALID_REQUEST",
+                    "date query parameter is required and must be a valid date in YYYY-MM-DD format."
+                )
+            );
+        }
+
+        try
+        {
+            var price = await gasPriceLookupService.GetOrFetchAsync(parsedDate, cancellationToken);
+            return Results.Ok(
+                new GasPriceResponse(
+                    Date: parsedDate.ToString("yyyy-MM-dd"),
+                    PricePerGallon: price,
+                    IsAvailable: price.HasValue,
+                    DataSource: price.HasValue ? EiaGasPriceSource : null
+                )
+            );
+        }
+        catch
+        {
+            return Results.Ok(
+                new GasPriceResponse(
+                    Date: parsedDate.ToString("yyyy-MM-dd"),
+                    PricePerGallon: null,
+                    IsAvailable: false,
+                    DataSource: null
+                )
             );
         }
     }

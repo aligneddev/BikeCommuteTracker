@@ -11,6 +11,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<AuthAttemptStateEntity> AuthAttemptStates => Set<AuthAttemptStateEntity>();
     public DbSet<OutboxEventEntity> OutboxEvents => Set<OutboxEventEntity>();
     public DbSet<RideEntity> Rides => Set<RideEntity>();
+    public DbSet<GasPriceLookupEntity> GasPriceLookups => Set<GasPriceLookupEntity>();
     public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -99,6 +100,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.RiderId).IsRequired();
             entity.Property(static x => x.RideDateTimeLocal).IsRequired();
             entity.Property(static x => x.Miles).IsRequired();
+            entity.Property(static x => x.GasPricePerGallon).HasPrecision(10, 4);
             entity
                 .Property(static x => x.Version)
                 .IsRequired()
@@ -118,6 +120,20 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                 .WithMany()
                 .HasForeignKey(static x => x.RiderId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GasPriceLookupEntity>(static entity =>
+        {
+            entity.ToTable("GasPriceLookups");
+            entity.HasKey(static x => x.GasPriceLookupId);
+
+            entity.Property(static x => x.PriceDate).IsRequired();
+            entity.Property(static x => x.PricePerGallon).IsRequired().HasPrecision(10, 4);
+            entity.Property(static x => x.DataSource).IsRequired().HasMaxLength(64);
+            entity.Property(static x => x.EiaPeriodDate).IsRequired();
+            entity.Property(static x => x.RetrievedAtUtc).IsRequired();
+
+            entity.HasIndex(static x => x.PriceDate).IsUnique();
         });
 
         modelBuilder.Entity<UserSettingsEntity>(static entity =>

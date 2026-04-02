@@ -14,6 +14,8 @@ public sealed class RideEntity
 
     public decimal? Temperature { get; set; }
 
+    public decimal? GasPricePerGallon { get; set; }
+
     public int Version { get; set; } = 1;
 
     public DateTime CreatedAtUtc { get; set; }

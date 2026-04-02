@@ -4,7 +4,12 @@ import type {
   RideHistoryResponse,
   RideHistoryRow,
 } from '../services/ridesService'
-import { deleteRide, editRide, getRideHistory } from '../services/ridesService'
+import {
+  deleteRide,
+  editRide,
+  getGasPrice,
+  getRideHistory,
+} from '../services/ridesService'
 import { RideDeleteDialog } from '../components/RideDeleteDialog/RideDeleteDialog'
 import { MileageSummaryCard } from '../components/mileage-summary-card/mileage-summary-card'
 import {
@@ -15,21 +20,33 @@ import {
 } from './miles/history-page.helpers'
 import './HistoryPage.css'
 
+const EIA_GAS_PRICE_SOURCE = 'Source: (EIA)'
+
 function HistoryTable({
   rides,
   editingRideId,
+  editedRideDateTimeLocal,
   editedMiles,
+  editedGasPrice,
+  editedGasPriceSource,
   onStartEdit,
+  onEditedRideDateTimeLocalChange,
   onEditedMilesChange,
+  onEditedGasPriceChange,
   onSaveEdit,
   onCancelEdit,
   onStartDelete,
 }: {
   rides: RideHistoryRow[]
   editingRideId: number | null
+  editedRideDateTimeLocal: string
   editedMiles: string
+  editedGasPrice: string
+  editedGasPriceSource: string
   onStartEdit: (ride: RideHistoryRow) => void
+  onEditedRideDateTimeLocalChange: (value: string) => void
   onEditedMilesChange: (value: string) => void
+  onEditedGasPriceChange: (value: string) => void
   onSaveEdit: (ride: RideHistoryRow) => void
   onCancelEdit: () => void
   onStartDelete: (ride: RideHistoryRow) => void
@@ -42,17 +59,34 @@ function HistoryTable({
     <table className="history-page-table" aria-label="Ride history table">
       <thead>
         <tr>
-          <th scope="col">Date</th>
+          <th scope="col">Dateddddd</th>
           <th scope="col">Miles</th>
           <th scope="col">Duration</th>
           <th scope="col">Temperature</th>
+          <th scope="col">Gas Price</th>
           <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
         {rides.map((ride) => (
           <tr key={ride.rideId}>
-            <td>{formatRideDate(ride.rideDateTimeLocal)}</td>
+            <td>
+              {editingRideId === ride.rideId ? (
+                <div className="history-page-inline-editor">
+                  <label htmlFor={`edit-ride-date-${ride.rideId}`}>Date</label>
+                  <input
+                    id={`edit-ride-date-${ride.rideId}`}
+                    type="datetime-local"
+                    value={editedRideDateTimeLocal}
+                    onChange={(event) =>
+                      onEditedRideDateTimeLocalChange(event.target.value)
+                    }
+                  />
+                </div>
+              ) : (
+                formatRideDate(ride.rideDateTimeLocal)
+              )}
+            </td>
             <td>
               {editingRideId === ride.rideId ? (
                 <div className="history-page-inline-editor">
@@ -71,6 +105,28 @@ function HistoryTable({
             </td>
             <td>{formatRideDuration(ride.rideMinutes) || 'N/A'}</td>
             <td>{formatTemperature(ride.temperature) || 'N/A'}</td>
+            <td>
+              {editingRideId === ride.rideId ? (
+                <div className="history-page-inline-editor">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <label htmlFor={`edit-ride-gas-price-${ride.rideId}`}>Gas Price</label>
+                    {editedGasPriceSource ? <span className="info-icon" style={{ cursor: 'pointer' }} title={editedGasPriceSource}>ℹ️</span> : null}
+                  </div>
+                  <input
+                    id={`edit-ride-gas-price-${ride.rideId}`}
+                    type="number"
+                    step="0.0001"
+                    min="0"
+                    value={editedGasPrice}
+                    onChange={(event) => onEditedGasPriceChange(event.target.value)}
+                  />
+                </div>
+              ) : ride.gasPricePerGallon != null ? (
+                `$${ride.gasPricePerGallon.toFixed(4)}`
+              ) : (
+                'N/A'
+              )}
+            </td>
             <td>
               {editingRideId === ride.rideId ? (
                 <div className="history-page-edit-actions">
@@ -114,7 +170,10 @@ export function HistoryPage() {
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
   const [editingRideId, setEditingRideId] = useState<number | null>(null)
+  const [editedRideDateTimeLocal, setEditedRideDateTimeLocal] = useState<string>('')
   const [editedMiles, setEditedMiles] = useState<string>('')
+  const [editedGasPrice, setEditedGasPrice] = useState<string>('')
+  const [editedGasPriceSource, setEditedGasPriceSource] = useState<string>('')
   const [ridePendingDelete, setRidePendingDelete] = useState<RideHistoryRow | null>(null)
 
   async function loadHistory(params: GetRideHistoryParams): Promise<void> {
@@ -151,13 +210,53 @@ export function HistoryPage() {
 
   function handleStartEdit(ride: RideHistoryRow): void {
     setEditingRideId(ride.rideId)
+    setEditedRideDateTimeLocal(ride.rideDateTimeLocal.slice(0, 16))
     setEditedMiles(ride.miles.toFixed(1))
+    setEditedGasPrice(
+      ride.gasPricePerGallon != null ? ride.gasPricePerGallon.toFixed(4) : ''
+    )
   }
 
   function handleCancelEdit(): void {
     setEditingRideId(null)
+    setEditedRideDateTimeLocal('')
     setEditedMiles('')
+    setEditedGasPrice('')
+    setEditedGasPriceSource('')
   }
+
+  useEffect(() => {
+    if (editingRideId === null || !editedRideDateTimeLocal) {
+      return
+    }
+
+    const timerId = setTimeout(async () => {
+      const dateOnly = editedRideDateTimeLocal.slice(0, 10)
+      if (!dateOnly) {
+        return
+      }
+
+      try {
+        const lookup = await getGasPrice(dateOnly)
+        if (lookup.isAvailable && lookup.pricePerGallon !== null) {
+          setEditedGasPrice(lookup.pricePerGallon.toString())
+          const source = lookup.dataSource ?? EIA_GAS_PRICE_SOURCE;
+          if (source.includes('EIA')) {
+            setEditedGasPriceSource(EIA_GAS_PRICE_SOURCE)
+          } else {
+            setEditedGasPriceSource(source.substring(0, 15))
+          }
+        } else {
+          setEditedGasPriceSource('')
+        }
+      } catch {
+        setEditedGasPriceSource('')
+        // Keep current gas price value if lookup fails.
+      }
+    }, 300)
+
+    return () => clearTimeout(timerId)
+  }, [editingRideId, editedRideDateTimeLocal])
 
   async function handleSaveEdit(ride: RideHistoryRow): Promise<void> {
     const milesValue = Number(editedMiles)
@@ -171,11 +270,25 @@ export function HistoryPage() {
       return
     }
 
+    let gasPriceValue: number | undefined
+    if (editedGasPrice.length > 0) {
+      gasPriceValue = Number(editedGasPrice)
+      if (
+        !Number.isFinite(gasPriceValue) ||
+        gasPriceValue < 0.01 ||
+        gasPriceValue > 999.9999
+      ) {
+        setError('Gas price must be between 0.01 and 999.9999')
+        return
+      }
+    }
+
     const result = await editRide(ride.rideId, {
-      rideDateTimeLocal: ride.rideDateTimeLocal,
+      rideDateTimeLocal: editedRideDateTimeLocal || ride.rideDateTimeLocal,
       miles: milesValue,
       rideMinutes: ride.rideMinutes,
       temperature: ride.temperature,
+      gasPricePerGallon: gasPriceValue,
       // Version tokens are added to history rows in later tasks; use baseline v1 for now.
       expectedVersion: 1,
     })
@@ -193,7 +306,10 @@ export function HistoryPage() {
 
     setError('')
     setEditingRideId(null)
+    setEditedRideDateTimeLocal('')
     setEditedMiles('')
+    setEditedGasPrice('')
+    setEditedGasPriceSource('')
 
     await loadHistory({
       from: fromDate || undefined,
@@ -322,9 +438,17 @@ export function HistoryPage() {
         <HistoryTable
           rides={data?.rides ?? []}
           editingRideId={editingRideId}
+          editedRideDateTimeLocal={editedRideDateTimeLocal}
           editedMiles={editedMiles}
+          editedGasPrice={editedGasPrice}
+          editedGasPriceSource={editedGasPriceSource}
           onStartEdit={handleStartEdit}
+          onEditedRideDateTimeLocalChange={setEditedRideDateTimeLocal}
           onEditedMilesChange={setEditedMiles}
+          onEditedGasPriceChange={(value) => {
+            setEditedGasPrice(value)
+            setEditedGasPriceSource('')
+          }}
           onSaveEdit={(ride) => void handleSaveEdit(ride)}
           onCancelEdit={handleCancelEdit}
           onStartDelete={handleStartDelete}

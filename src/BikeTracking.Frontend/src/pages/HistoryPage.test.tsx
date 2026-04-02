@@ -7,15 +7,23 @@ vi.mock('../services/ridesService', () => ({
   getRideHistory: vi.fn(),
   editRide: vi.fn(),
   deleteRide: vi.fn(),
+  getGasPrice: vi.fn(),
 }))
 
 const mockGetRideHistory = vi.mocked(ridesService.getRideHistory)
 const mockEditRide = vi.mocked(ridesService.editRide)
 const mockDeleteRide = vi.mocked(ridesService.deleteRide)
+const mockGetGasPrice = vi.mocked(ridesService.getGasPrice)
 
 describe('HistoryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetGasPrice.mockResolvedValue({
+      date: '2026-03-20',
+      pricePerGallon: null,
+      isAvailable: false,
+      dataSource: null,
+    })
     mockDeleteRide.mockResolvedValue({
       ok: true,
       value: {
@@ -277,6 +285,7 @@ describe('HistoryPage', () => {
           miles: 5,
           rideMinutes: 30,
           temperature: 70,
+          gasPricePerGallon: 3.1111,
         },
       ],
       page: 1,
@@ -295,6 +304,135 @@ describe('HistoryPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
+      const gasPriceInput = screen.getByRole('spinbutton', {
+        name: /gas price/i,
+      }) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('3.1111')
+    })
+  })
+
+  it('should render gas price column values in history table', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 5, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 5, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 5, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 5, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 21,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 5,
+          rideMinutes: 30,
+          temperature: 70,
+          gasPricePerGallon: 3.5555,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('$3.5555')).toBeInTheDocument()
+    })
+  })
+
+  it('should block save and show validation message for invalid gas price', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 5, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 5, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 5, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 5, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 32,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 5,
+          rideMinutes: 30,
+          temperature: 70,
+          gasPricePerGallon: 3.1111,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+
+    const gasPriceInput = screen.getByRole('spinbutton', {
+      name: /gas price/i,
+    }) as HTMLInputElement
+    fireEvent.change(gasPriceInput, { target: { value: '-1' } })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/gas price must be between 0.01 and 999.9999/i)
+      expect(mockEditRide).not.toHaveBeenCalled()
+    })
+  })
+
+  it('should refresh gas price on date change in edit mode when lookup is available', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 5, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 5, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 5, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 5, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 33,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 5,
+          rideMinutes: 30,
+          temperature: 70,
+          gasPricePerGallon: 3.1111,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+    mockGetGasPrice.mockResolvedValue({
+      date: '2026-01-01',
+      pricePerGallon: 3.9999,
+      isAvailable: true,
+      dataSource: 'Source: U.S. Energy Information Administration (EIA)',
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+
+    const dateInput = screen.getByLabelText(/^Date$/i) as HTMLInputElement
+    fireEvent.change(dateInput, { target: { value: '2026-01-01T09:00' } })
+
+    await waitFor(() => {
+      const gasPriceInput = screen.getByRole('spinbutton', {
+        name: /gas price/i,
+      }) as HTMLInputElement
+      expect(gasPriceInput.value).toBe('3.9999')
+      // I moved this to a tooltip
+      // expect(
+      //   screen.getByText('Source: U.S. Energy Information Administration (EIA)')
+      // ).toBeInTheDocument()
     })
   })
 

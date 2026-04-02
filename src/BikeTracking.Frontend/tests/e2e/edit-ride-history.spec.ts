@@ -11,9 +11,13 @@ test.describe("006-edit-ride-history e2e", () => {
     const userName = uniqueUser("e2e-edit-history");
     await createAndLoginUser(page, userName, "87654321");
 
-    // Record a ride
+    // Record a ride on a date that is always within the current month so the
+    // "This Month" mileage summary card reflects the seeded ride.
+    const now = new Date();
+    const rideDateTimeLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01T10:30`;
+
     await recordRide(page, {
-      rideDateTimeLocal: "2026-03-20T10:30",
+      rideDateTimeLocal,
       miles: "5.0",
       rideMinutes: "30",
       temperature: "70",
@@ -123,12 +127,19 @@ test.describe("006-edit-ride-history e2e", () => {
   test("shows summary cards with historical totals and active filter", async ({
     page,
   }) => {
-    // Apply a date filter (from starting date to end of month)
+    // Apply a date filter spanning the current month so the seeded ride is visible.
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+    const fromDate = `${year}-${month}-01`;
+    const toDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+
     const fromInput = page.getByLabel(/^From$/i);
     const toInput = page.getByLabel(/^To$/i);
 
-    await fromInput.fill("2026-03-15");
-    await toInput.fill("2026-03-31");
+    await fromInput.fill(fromDate);
+    await toInput.fill(toDate);
     await page.getByRole("button", { name: /apply filter/i }).click();
 
     // Summary cards and visible total should be visible

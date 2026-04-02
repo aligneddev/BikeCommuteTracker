@@ -12,7 +12,8 @@
         "/^cd /workspaces/neCodeBikeTracking && pwsh \\.specify/scripts/powershell/check-prerequisites\\.ps1 -Json$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "mkdir": true
     },
     "sqltools.connections": [
         {

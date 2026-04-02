@@ -136,7 +136,8 @@ Note the devcontainer.json setup with
   },
   "mounts": [
     "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
-    "source=/mnt/c/Users/klogan/.ssh,target=/root/.ssh-host,type=bind,readonly"
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh-host,type=bind,readonly",
+    "source=${localEnv:HOME}/.microsoft/usersecrets,target=/root/.microsoft/usersecrets,type=bind"
   ]
 
 ### Secrets Management
@@ -144,6 +145,20 @@ Note the devcontainer.json setup with
 - Local development: Use .NET User Secrets or environment variables
 - CI/CD: Use GitHub repository secrets or Azure Key Vault
 - DevContainer environment variables in `devcontainer.json` are for non-sensitive values only
+- Persist User Secrets in Dev Containers by bind-mounting your host user-secrets directory to `/root/.microsoft/usersecrets`
+
+Example mount paths by host OS:
+- Linux/macOS host: `source=${localEnv:HOME}/.microsoft/usersecrets,target=/root/.microsoft/usersecrets,type=bind`
+- Windows host: `source=${localEnv:APPDATA}/Microsoft/UserSecrets,target=/root/.microsoft/usersecrets,type=bind`
+
+If you use Docker Compose directly, the same mapping applies:
+
+```yaml
+services:
+  api:
+    volumes:
+      - ${HOME}/.microsoft/usersecrets:/root/.microsoft/usersecrets
+```
 
 ## Advanced Customization
 
@@ -180,7 +195,8 @@ Edit `mounts` array to add more host directories (e.g., for shared data):
 
 ```json
 "mounts": [
-  "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly",
+  "source=${localEnv:HOME}/.ssh,target=/root/.ssh-host,type=bind,readonly",
+  "source=${localEnv:HOME}/.microsoft/usersecrets,target=/root/.microsoft/usersecrets,type=bind",
   "source=/path/on/host,target=/path/in/container"
 ]
 ```
