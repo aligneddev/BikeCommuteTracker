@@ -20,7 +20,7 @@ import {
 } from './miles/history-page.helpers'
 import './HistoryPage.css'
 
-const EIA_GAS_PRICE_SOURCE = 'Source: U.S. Energy Information Administration (EIA)'
+const EIA_GAS_PRICE_SOURCE = 'Source: (EIA)'
 
 function HistoryTable({
   rides,
@@ -108,7 +108,10 @@ function HistoryTable({
             <td>
               {editingRideId === ride.rideId ? (
                 <div className="history-page-inline-editor">
-                  <label htmlFor={`edit-ride-gas-price-${ride.rideId}`}>Gas Price</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <label htmlFor={`edit-ride-gas-price-${ride.rideId}`}>Gas Price</label>
+                    {editedGasPriceSource ? <span className="info-icon" style={{ cursor: 'pointer' }} title={editedGasPriceSource}>ℹ️</span> : null}
+                  </div>
                   <input
                     id={`edit-ride-gas-price-${ride.rideId}`}
                     type="number"
@@ -117,7 +120,6 @@ function HistoryTable({
                     value={editedGasPrice}
                     onChange={(event) => onEditedGasPriceChange(event.target.value)}
                   />
-                  {editedGasPriceSource ? <p>{editedGasPriceSource}</p> : null}
                 </div>
               ) : ride.gasPricePerGallon != null ? (
                 `$${ride.gasPricePerGallon.toFixed(4)}`
@@ -238,7 +240,12 @@ export function HistoryPage() {
         const lookup = await getGasPrice(dateOnly)
         if (lookup.isAvailable && lookup.pricePerGallon !== null) {
           setEditedGasPrice(lookup.pricePerGallon.toString())
-          setEditedGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
+          const source = lookup.dataSource ?? EIA_GAS_PRICE_SOURCE;
+          if (source.includes('EIA')) {
+            setEditedGasPriceSource(EIA_GAS_PRICE_SOURCE)
+          } else {
+            setEditedGasPriceSource(source.substring(0, 15))
+          }
         } else {
           setEditedGasPriceSource('')
         }
