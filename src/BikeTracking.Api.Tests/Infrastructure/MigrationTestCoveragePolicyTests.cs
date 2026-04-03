@@ -24,6 +24,10 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: user settings endpoint integration tests validate persistence and retrieval contract.",
             ["20260331135119_AddGasPriceToRidesAndLookupCache"] =
                 "Added test: SQLite endpoint integration tests validate gas price column retrieval after migration.",
+            ["20260403192400_AddWeatherFieldsToRides"] =
+                "Added test: rides persistence tests validate weather columns round-trip after schema migration.",
+            ["20260403192854_AddWeatherLookupCache"] =
+                "Added test: weather lookup service tests validate cache read/write through weather lookup table.",
         };
 
     [Fact]

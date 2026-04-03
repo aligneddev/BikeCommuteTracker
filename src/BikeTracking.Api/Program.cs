@@ -42,6 +42,7 @@ builder.Services.AddScoped<GetRideHistoryService>();
 builder.Services.AddScoped<EditRideService>();
 builder.Services.AddScoped<DeleteRideService>();
 builder.Services.AddScoped<IGasPriceLookupService, EiaGasPriceLookupService>();
+builder.Services.AddScoped<IWeatherLookupService, OpenMeteoWeatherLookupService>();
 
 builder.Services.AddHttpClient(
     "EiaGasPrice",
@@ -49,6 +50,13 @@ builder.Services.AddHttpClient(
     {
         client.BaseAddress = new Uri("https://api.eia.gov");
         client.Timeout = TimeSpan.FromSeconds(10);
+    }
+);
+builder.Services.AddHttpClient(
+    "OpenMeteo",
+    client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(5);
     }
 );
 

@@ -13,6 +13,12 @@ public sealed record RideEditedEventPayload(
     int? RideMinutes,
     decimal? Temperature,
     decimal? GasPricePerGallon,
+    decimal? WindSpeedMph,
+    int? WindDirectionDeg,
+    int? RelativeHumidityPercent,
+    int? CloudCoverPercent,
+    string? PrecipitationType,
+    bool WeatherUserOverridden,
     string Source
 )
 {
@@ -29,6 +35,12 @@ public sealed record RideEditedEventPayload(
         int? rideMinutes = null,
         decimal? temperature = null,
         decimal? gasPricePerGallon = null,
+        decimal? windSpeedMph = null,
+        int? windDirectionDeg = null,
+        int? relativeHumidityPercent = null,
+        int? cloudCoverPercent = null,
+        string? precipitationType = null,
+        bool weatherUserOverridden = false,
         DateTime? occurredAtUtc = null
     )
     {
@@ -45,6 +57,12 @@ public sealed record RideEditedEventPayload(
             RideMinutes: rideMinutes,
             Temperature: temperature,
             GasPricePerGallon: gasPricePerGallon,
+            WindSpeedMph: windSpeedMph,
+            WindDirectionDeg: windDirectionDeg,
+            RelativeHumidityPercent: relativeHumidityPercent,
+            CloudCoverPercent: cloudCoverPercent,
+            PrecipitationType: precipitationType,
+            WeatherUserOverridden: weatherUserOverridden,
             Source: SourceName
         );
     }

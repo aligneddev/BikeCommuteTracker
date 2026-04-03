@@ -38,7 +38,12 @@ public class GetRideDefaultsService(BikeTrackingDbContext dbContext)
             DefaultMiles: lastRide.Miles,
             DefaultRideMinutes: lastRide.RideMinutes,
             DefaultTemperature: lastRide.Temperature,
-            DefaultGasPricePerGallon: lastRide.GasPricePerGallon
+            DefaultGasPricePerGallon: lastRide.GasPricePerGallon,
+            DefaultWindSpeedMph: lastRide.WindSpeedMph,
+            DefaultWindDirectionDeg: lastRide.WindDirectionDeg,
+            DefaultRelativeHumidityPercent: lastRide.RelativeHumidityPercent,
+            DefaultCloudCoverPercent: lastRide.CloudCoverPercent,
+            DefaultPrecipitationType: lastRide.PrecipitationType
         );
     }
 }

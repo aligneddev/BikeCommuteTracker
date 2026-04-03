@@ -122,6 +122,7 @@ public sealed class DeleteRideEndpointTests
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
             builder.Services.AddScoped<DeleteRideService>();
+            builder.Services.AddScoped<IWeatherLookupService, StubWeatherLookupService>();
 
             var app = builder.Build();
             app.UseAuthentication();
@@ -189,6 +190,16 @@ internal sealed record DeleteRideSuccessResponse(
     DateTime DeletedAtUtc,
     bool IsIdempotent = false
 );
+
+internal sealed class StubWeatherLookupService : IWeatherLookupService
+{
+    public Task<WeatherData?> GetOrFetchAsync(
+        decimal latitude,
+        decimal longitude,
+        DateTime dateTimeUtc,
+        CancellationToken cancellationToken = default
+    ) => Task.FromResult<WeatherData?>(null);
+}
 
 internal class TestAuthenticationSchemeOptions
     : Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions { }

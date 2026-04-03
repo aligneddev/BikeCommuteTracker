@@ -572,4 +572,63 @@ describe('RecordRidePage', () => {
       expect(screen.queryByRole('heading', { name: /quick ride options/i })).not.toBeInTheDocument()
     })
   })
+
+  it('should render editable weather fields for manual override on create', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/wind speed/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/wind direction/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/relative humidity/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/cloud cover/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/precipitation type/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should send weatherUserOverridden when weather fields are manually edited', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockRecordRide.mockResolvedValue({
+      rideId: 321,
+      riderId: 1,
+      savedAtUtc: new Date().toISOString(),
+      eventStatus: 'Queued',
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByLabelText(/miles/i), { target: { value: '12.5' } })
+    })
+
+    fireEvent.change(screen.getByLabelText(/wind speed/i), {
+      target: { value: '11.2' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /record ride/i }))
+
+    await waitFor(() => {
+      expect(mockRecordRide).toHaveBeenCalledWith(
+        expect.objectContaining({
+          windSpeedMph: 11.2,
+          weatherUserOverridden: true,
+        })
+      )
+    })
+  })
 })

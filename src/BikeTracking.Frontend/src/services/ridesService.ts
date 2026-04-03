@@ -4,6 +4,12 @@ export interface RecordRideRequest {
   rideMinutes?: number;
   temperature?: number;
   gasPricePerGallon?: number;
+  windSpeedMph?: number;
+  windDirectionDeg?: number;
+  relativeHumidityPercent?: number;
+  cloudCoverPercent?: number;
+  precipitationType?: string;
+  weatherUserOverridden?: boolean;
 }
 
 export interface RecordRideSuccessResponse {
@@ -19,6 +25,11 @@ export interface RideDefaultsResponse {
   defaultRideMinutes?: number;
   defaultTemperature?: number;
   defaultGasPricePerGallon?: number;
+  defaultWindSpeedMph?: number;
+  defaultWindDirectionDeg?: number;
+  defaultRelativeHumidityPercent?: number;
+  defaultCloudCoverPercent?: number;
+  defaultPrecipitationType?: string;
   defaultRideDateTimeLocal: string;
 }
 
@@ -46,6 +57,12 @@ export interface EditRideRequest {
   rideMinutes?: number;
   temperature?: number;
   gasPricePerGallon?: number;
+  windSpeedMph?: number;
+  windDirectionDeg?: number;
+  relativeHumidityPercent?: number;
+  cloudCoverPercent?: number;
+  precipitationType?: string;
+  weatherUserOverridden?: boolean;
   expectedVersion: number;
 }
 
@@ -106,6 +123,12 @@ export interface RideHistoryRow {
   rideMinutes?: number;
   temperature?: number;
   gasPricePerGallon?: number;
+  windSpeedMph?: number;
+  windDirectionDeg?: number;
+  relativeHumidityPercent?: number;
+  cloudCoverPercent?: number;
+  precipitationType?: string;
+  weatherUserOverridden?: boolean;
 }
 
 /**

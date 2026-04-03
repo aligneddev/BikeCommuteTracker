@@ -869,4 +869,57 @@ describe('HistoryPage', () => {
       })
     })
   })
+
+  it('should allow editing weather fields in history and send weatherUserOverridden', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 10, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 10, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 10, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 10, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 44,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 10,
+          rideMinutes: 30,
+          temperature: 70,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+    mockEditRide.mockResolvedValue({
+      ok: true,
+      value: {
+        rideId: 44,
+        newVersion: 2,
+        message: 'Ride updated successfully.',
+      },
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.change(screen.getByLabelText(/wind speed/i), {
+      target: { value: '14.1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(mockEditRide).toHaveBeenCalledWith(
+        44,
+        expect.objectContaining({
+          windSpeedMph: 14.1,
+          weatherUserOverridden: true,
+        })
+      )
+    })
+  })
 })

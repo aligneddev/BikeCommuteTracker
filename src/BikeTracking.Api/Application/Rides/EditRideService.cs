@@ -10,6 +10,7 @@ namespace BikeTracking.Api.Application.Rides;
 
 public sealed class EditRideService(
     BikeTrackingDbContext dbContext,
+    IWeatherLookupService weatherLookupService,
     ILogger<EditRideService> logger
 )
 {
@@ -85,11 +86,50 @@ public sealed class EditRideService(
             );
         }
 
+        var existingRideDateTimeLocal = ride.RideDateTimeLocal;
+        var rideDateTimeChanged = request.RideDateTimeLocal != existingRideDateTimeLocal;
+
+        WeatherData? fetchedWeather = null;
+        if (!request.WeatherUserOverridden && rideDateTimeChanged)
+        {
+            var userSettings = await dbContext
+                .UserSettings.AsNoTracking()
+                .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
+
+            if (
+                userSettings?.Latitude is decimal latitude
+                && userSettings.Longitude is decimal longitude
+            )
+            {
+                fetchedWeather = await weatherLookupService.GetOrFetchAsync(
+                    latitude,
+                    longitude,
+                    request.RideDateTimeLocal.ToUniversalTime(),
+                    cancellationToken
+                );
+            }
+        }
+
+        var (
+            temperature,
+            windSpeedMph,
+            windDirectionDeg,
+            relativeHumidityPercent,
+            cloudCoverPercent,
+            precipitationType
+        ) = MergeWeatherForEdit(ride, request, fetchedWeather, rideDateTimeChanged);
+
         ride.RideDateTimeLocal = request.RideDateTimeLocal;
         ride.Miles = request.Miles;
         ride.RideMinutes = request.RideMinutes;
-        ride.Temperature = request.Temperature;
+        ride.Temperature = temperature;
         ride.GasPricePerGallon = request.GasPricePerGallon;
+        ride.WindSpeedMph = windSpeedMph;
+        ride.WindDirectionDeg = windDirectionDeg;
+        ride.RelativeHumidityPercent = relativeHumidityPercent;
+        ride.CloudCoverPercent = cloudCoverPercent;
+        ride.PrecipitationType = precipitationType;
+        ride.WeatherUserOverridden = request.WeatherUserOverridden;
         ride.Version = currentVersion + 1;
 
         var utcNow = DateTime.UtcNow;
@@ -102,8 +142,14 @@ public sealed class EditRideService(
             rideDateTimeLocal: ride.RideDateTimeLocal,
             miles: ride.Miles,
             rideMinutes: ride.RideMinutes,
-            temperature: ride.Temperature,
+            temperature: temperature,
             gasPricePerGallon: ride.GasPricePerGallon,
+            windSpeedMph: windSpeedMph,
+            windDirectionDeg: windDirectionDeg,
+            relativeHumidityPercent: relativeHumidityPercent,
+            cloudCoverPercent: cloudCoverPercent,
+            precipitationType: precipitationType,
+            weatherUserOverridden: request.WeatherUserOverridden,
             occurredAtUtc: utcNow
         );
 
@@ -185,5 +231,55 @@ public sealed class EditRideService(
         }
 
         return null;
+    }
+
+    private static (
+        decimal? temperature,
+        decimal? windSpeedMph,
+        int? windDirectionDeg,
+        int? relativeHumidityPercent,
+        int? cloudCoverPercent,
+        string? precipitationType
+    ) MergeWeatherForEdit(
+        RideEntity existingRide,
+        EditRideRequest request,
+        WeatherData? fetchedWeather,
+        bool rideDateTimeChanged
+    )
+    {
+        if (request.WeatherUserOverridden)
+        {
+            return (
+                request.Temperature,
+                request.WindSpeedMph,
+                request.WindDirectionDeg,
+                request.RelativeHumidityPercent,
+                request.CloudCoverPercent,
+                request.PrecipitationType
+            );
+        }
+
+        if (rideDateTimeChanged)
+        {
+            return (
+                temperature: request.Temperature ?? fetchedWeather?.Temperature,
+                windSpeedMph: request.WindSpeedMph ?? fetchedWeather?.WindSpeedMph,
+                windDirectionDeg: request.WindDirectionDeg ?? fetchedWeather?.WindDirectionDeg,
+                relativeHumidityPercent: request.RelativeHumidityPercent
+                    ?? fetchedWeather?.RelativeHumidityPercent,
+                cloudCoverPercent: request.CloudCoverPercent ?? fetchedWeather?.CloudCoverPercent,
+                precipitationType: request.PrecipitationType ?? fetchedWeather?.PrecipitationType
+            );
+        }
+
+        return (
+            temperature: request.Temperature ?? existingRide.Temperature,
+            windSpeedMph: request.WindSpeedMph ?? existingRide.WindSpeedMph,
+            windDirectionDeg: request.WindDirectionDeg ?? existingRide.WindDirectionDeg,
+            relativeHumidityPercent: request.RelativeHumidityPercent
+                ?? existingRide.RelativeHumidityPercent,
+            cloudCoverPercent: request.CloudCoverPercent ?? existingRide.CloudCoverPercent,
+            precipitationType: request.PrecipitationType ?? existingRide.PrecipitationType
+        );
     }
 }
