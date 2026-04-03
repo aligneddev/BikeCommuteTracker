@@ -10,9 +10,10 @@ Modified Sections:
 - Compliance Audit Checklist: Added modular boundary and contract compatibility checks
 - Guardrails: Added non-negotiable interface/contract boundary rules for cross-module integration
 Status: Approved — modular architecture and contract-first parallel delivery are now constitutional requirements
-Current Update (v1.12.3): Added mandatory per-migration test coverage governance requiring each migration to include a new or updated automated test, enforced by a migration coverage policy test in CI.
-Previous Update (v1.12.2): Added mandatory spec-completion gate requiring database migrations to be applied and E2E tests to pass before a spec can be marked done.
+Current Update (v1.13.0): Added Principle X — Trunk-Based Development, Continuous Integration & Delivery. Codified branching strategy (short-lived feature branches, git worktrees, PR-gated merges with validation builds), feature flag governance (max 5 active, mandatory cleanup), and PR completion policy (owner-only completion, GitHub issue linkage required).
+Previous Update (v1.12.3): Added mandatory per-migration test coverage governance requiring each migration to include a new or updated automated test, enforced by a migration coverage policy test in CI.
 Previous Updates:
+- v1.12.2: Added mandatory spec-completion gate requiring database migrations to be applied and E2E tests to pass before a spec can be marked done.
 - v1.11.0: Strengthened TDD mandate with a strict gated red-green-refactor workflow requiring explicit user confirmation of failing tests before implementation.
 - v1.10.2: Codified a mandatory post-change verification command matrix so every change runs explicit checks before merge.
 - v1.10.1: Clarified the local deployment approach for end-user machines by standardizing SQLite local-file storage as the default profile and documenting safety expectations for storage path and upgrades.
@@ -43,6 +44,7 @@ Previous Updates:
 - Why Minimal API? Lightweight, performant, integrates seamlessly with Aspire and domain layers
 - Why local-first architecture? Users own their data locally; cloud deployment optional for sharing/collaboration
 - Why SQLite local-file default for user-machine installs? No separate database install, reliable offline operation, and simpler support/backup through a single user-owned database file
+- Why Trunk-Based Development? Short-lived branches with continuous integration keep `main` always releasable, reduce merge pain, and enable continuous delivery; feature flags decouple deployment from release
 - **Why DevContainer (mandatory)?** Eliminates "works on my machine" problems; ensures identical development environment across all contributors; pre-configures all tooling (C#, F#, Node.js, npm, CSharpier); supports seamless onboarding; enables reproducible builds and tests; backend and frontend dependencies coexist without system-level pollution. **All development MUST occur inside the DevContainer**; no exceptions during active development.
 
 For detailed amendment history, see [DECISIONS.md](./DECISIONS.md).
@@ -117,6 +119,36 @@ Every change **MUST** be validated end-to-end before merge and before phase tran
 System capabilities must be split into cohesive modules with explicit ownership and clear boundaries (for example: identity, rides, projections, analytics, frontend feature areas). Cross-module collaboration must occur through stable interfaces and versioned contracts (API schemas, event schemas, shared DTO contracts), not by direct internal coupling. Teams should define and agree contracts first, then implement modules independently in parallel; integration happens against contracts with compatibility tests before merge. Contract evolution must be backwards compatible by default and versioned when breaking changes are unavoidable.
 
 **Rationale**: Strong module boundaries reduce coordination overhead, minimize merge conflicts, and allow teams to move in parallel without blocking each other. Contract-first integration preserves system cohesion as complexity grows and enables safer incremental delivery.
+
+### X. Trunk-Based Development, Continuous Integration & Delivery
+
+All development follows **Trunk-Based Development (TBD)** with short-lived feature branches. The `main` branch must always be in a **releasable state** — no broken builds, no failing tests, no incomplete features visible to users.
+
+**Branching Strategy**:
+- All work happens on short-lived feature branches created from `main`. No long-lived branches.
+- Use **git worktrees** for parallel work streams; merge branches back to `main` as soon as possible (ideally within 1–2 days; never longer than a few days).
+- Direct pushes to `main` are **prohibited**. All changes enter `main` via Pull Request (PR) only.
+- Every PR must reference a **GitHub issue** that describes the work being done.
+- PR validation builds are **mandatory**: all tests (unit, integration, E2E) and code quality checks (linting, formatting, build) must pass before a PR can be completed.
+- **PR completion policy**: Only the repository owner may complete (merge) a PR. Squad team members may review, provide feedback, request changes, and approve — but they **cannot** complete the PR. This ensures the owner maintains final merge authority.
+
+**Continuous Integration**:
+- Every push to a feature branch triggers the full CI validation pipeline (build, test, lint, format).
+- Branches must be up-to-date with `main` before merge (rebase or merge from `main` required).
+- Merge conflicts must be resolved before PR completion; never merge broken code.
+
+**Feature Flags**:
+- Use feature flags to hide in-progress work that is merged to `main` but not yet ready for users. This decouples **deployment** (code in `main`) from **release** (feature visible to users).
+- Feature flags must be implemented at the minimum viable scope — wrap only the entry points to new features, not deep internal logic.
+- **Maximum 5 active feature flags** at any time to limit complexity and cognitive overhead. If the limit is reached, existing flags must be cleaned up before new ones are introduced.
+- After a feature behind a flag is deemed production-ready and the flag is permanently enabled, the flag, its conditional branches, the old code path, and any flag-specific tests must be **removed** in a dedicated cleanup PR. Feature flag debt is not tolerated.
+- Feature flag state is managed via configuration (appsettings, environment variables); never hard-coded in source.
+
+**Continuous Delivery**:
+- `main` is always deployable. Any commit on `main` can be released to production at any time.
+- Deployment and release are separate concerns: code reaches `main` via PR; features reach users via feature flag enablement or configuration change.
+
+**Rationale**: Trunk-Based Development minimizes integration risk by keeping branches short-lived and merging frequently. Feature flags enable continuous delivery without exposing incomplete work. PR-gated merges with mandatory validation builds ensure `main` never breaks. Owner-only PR completion provides a final quality gate. Git worktrees enable efficient parallel work without branch-switching overhead.
 
 ## Technology Stack Requirements
 
@@ -239,6 +271,66 @@ For features spanning multiple modules, delivery must be organized for parallel 
 
 This contract-first workflow complements vertical slices and the TDD gates; it does not replace them.
 
+### Branching Strategy & Continuous Integration
+
+All development follows Trunk-Based Development with git worktrees for parallel work:
+
+**Branch Lifecycle**:
+1. Create a GitHub issue describing the work
+2. Create a short-lived feature branch from `main` (e.g., `feature/issue-42-record-ride`)
+3. Use `git worktree add` to work on the branch in a separate directory when parallel work is needed
+4. Commit frequently with meaningful messages; push to remote regularly
+5. Open a PR referencing the GitHub issue (e.g., "Closes #42") as soon as the first commit is ready (draft PR for work-in-progress)
+6. Keep the branch up-to-date with `main` via rebase
+7. Once CI passes and review feedback is addressed, the owner completes the PR
+8. Remove the worktree and delete the merged branch: `git worktree remove <path> && git branch -d <branch>`
+
+**CI Validation Pipeline** (runs on every PR and push to feature branches):
+```
+dotnet build BikeTracking.slnx
+csharpier format . --check
+dotnet test BikeTracking.slnx
+cd src/BikeTracking.Frontend && npm run lint && npm run build && npm run test:unit
+```
+All checks must pass before a PR can be completed. E2E tests run on PRs targeting `main`.
+
+**Git Worktree Conventions**:
+- Worktree directories placed in `../<repo>-worktrees/<branch-name>` (outside the main repo directory)
+- Each worktree shares the same `.git` object store — no duplicate clones
+- Clean up worktrees immediately after the branch is merged
+- Never leave orphaned worktrees; run `git worktree list` periodically to audit
+
+**PR Requirements**:
+- Must reference a GitHub issue (linked via "Closes #N" or "Relates to #N")
+- Must have a passing validation build (CI green)
+- Must have at least one reviewer's feedback acknowledged
+- Only the repository owner can complete (merge) the PR
+- Squad members review, approve, or request changes — they cannot merge
+- Use squash merge to keep `main` history clean
+
+### Feature Flag Management
+
+Feature flags decouple deployment from release, allowing incomplete work to be merged to `main` safely:
+
+**Implementation**:
+- Feature flags are boolean configuration values read from `appsettings.json` or environment variables
+- Backend: Use an `IFeatureFlagService` (or equivalent) injected via DI to check flag state
+- Frontend: Feature flags passed via API configuration endpoint or environment build variables
+- Wrap only the **entry point** to a new feature (route registration, menu item, endpoint mapping) — do not scatter flag checks deep in business logic
+
+**Lifecycle**:
+1. **Create**: Add flag with `false` default in configuration; document the flag in a `FEATURE_FLAGS.md` file with owner, issue reference, and expected removal date
+2. **Develop**: All code behind the flag merged to `main` continuously; flag remains `false` in production config
+3. **Test**: Enable flag in test/staging environments; run E2E tests with flag on and off
+4. **Release**: Set flag to `true` in production configuration to enable for users
+5. **Cleanup**: Once the feature is stable in production, create a dedicated cleanup PR that removes the flag, the conditional branches, the old code path, and any flag-specific tests. Update `FEATURE_FLAGS.md`
+
+**Hard Limits**:
+- **Maximum 5 active feature flags** at any time across the entire codebase
+- Before adding a new flag when at the limit, an existing flag must be cleaned up first
+- Feature flags older than 30 days without a cleanup plan must be escalated for review
+- `FEATURE_FLAGS.md` is the single source of truth for all active flags
+
 ### Post-Change Verification Matrix (Mandatory After Any Change)
 
 After **every** code change, run verification commands based on the changed scope. These checks are required before merge and before phase transitions.
@@ -297,6 +389,10 @@ A vertical slice is **production-ready** only when all items are verified:
 - [ ] Events stored in event table with correct schema; projections materialized and queryable
 - [ ] Module boundaries preserved; cross-module interactions occur only via approved interfaces/contracts with compatibility evidence
 - [ ] SAMPLE_/DEMO_ data cleaned up; no test data committed to main branch
+- [ ] PR created from feature branch referencing GitHub issue; CI validation build passes
+- [ ] PR completed (merged) by repository owner only, after review feedback addressed
+- [ ] Feature flags used for any in-progress work visible in `main`; flag count ≤5
+- [ ] Feature flag cleanup PR created after feature is production-ready (removes flag, old code, flag-specific tests)
 - [ ] Deployed to Azure staging environment via GitHub Actions + azd
 - [ ] Pipeline deployment checks pass for the target environment
 - [ ] Security review completed; identified vulnerabilities are explained and fixed (or formally approved risk acceptance)
@@ -402,7 +498,7 @@ Tests suggested by agent must receive explicit user approval before implementati
 ### Compliance Audit Checklist
 
 #### Per-Specification Audit
-- [ ] Spec references all nine core principles in acceptance criteria
+- [ ] Spec references all ten core principles in acceptance criteria
 - [ ] Event schema defined; backwards compatibility verified if updating existing events
 - [ ] Data validation implemented at three layers: client (React), API (Minimal API), database (constraints)
 - [ ] Test coverage for domain logic ≥85%; F# discriminated unions and ROP patterns tested
@@ -420,6 +516,11 @@ Tests suggested by agent must receive explicit user approval before implementati
 - [ ] Secrets NOT committed; `.gitignore` verified; pre-commit hook prevents credential leakage
 - [ ] Validation rule consistency: if field required in React form, enforced in API DTOs and database constraints
 - [ ] OAuth isolation verified: user only accesses their data; public data clearly marked
+- [ ] All changes entered `main` via PR referencing a GitHub issue; no direct pushes
+- [ ] PR validation build passed (build, tests, lint, format) before merge
+- [ ] PR completed by repository owner only
+- [ ] Feature flags used for in-progress work; active flag count ≤5; `FEATURE_FLAGS.md` up-to-date
+- [ ] Feature flag cleanup completed for any flags permanently enabled during this spec
 
 #### Monthly Technology Audit
 - [ ] NuGet packages checked via `mcp_nuget_get-latest-package-version` for security patches
@@ -464,10 +565,13 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 - **SAMPLE_/DEMO_ data never in production** — automated linting prevents prefixed data from deploying. Merge blocked if test data detected.
 - **Database provider abstraction** — application code must work across SQLite (local), SQL Server LocalDB (local), and Azure SQL (cloud) without provider-specific queries. Use EF Core abstractions; avoid raw SQL unless necessary and provider-agnostic.
 - **User-machine local data safety** — local deployments on end-user machines default to SQLite local-file storage in a user-writable app-data path; do not require a separate DB server for single-user installs. Before schema migration, create a backup copy of the SQLite file.
+- **No direct pushes to `main`** — all changes enter `main` via Pull Request only. Every PR must reference a GitHub issue, pass the full CI validation build (build, test, lint, format), and be completed (merged) exclusively by the repository owner. Squad team members may review, approve, and request changes but cannot complete a PR. Violations are treated as process failures requiring immediate revert.
+- **Feature flags are mandatory for in-progress work on `main`** — any incomplete feature merged to `main` must be behind a feature flag set to `false` by default. Maximum 5 active feature flags at any time. After a feature is production-ready and the flag is permanently enabled, a dedicated cleanup PR must remove the flag, old code paths, and flag-specific tests. Feature flag debt is not tolerated.
+- **Branches must be short-lived** — feature branches must be merged back to `main` as quickly as possible (target 1–2 days). Long-lived branches are prohibited; they create merge pain and integration risk. Use git worktrees for parallel work; clean up worktrees immediately after merge.
 
 ### Onboarding Checklist for New Contributors
 
-1. **Read constitution** (~20 min): Understand mission, nine core principles, technology stack, development workflow
+1. **Read constitution** (~20 min): Understand mission, ten core principles, technology stack, development workflow
 2. **Review decision history** (~15 min): [DECISIONS.md](./DECISIONS.md) explains why F#, why Event Sourcing, why Aspire, why Aurelia 2
 3. **Clone repo and bootstrap** (~5 min): `git clone` → `dotnet tool install --global specify-cli` → `dotnet run` (Aspire orchestrates frontend, API, database)
 4. **Explore specification examples** (~30 min): Review `/specs/` directory; read 2–3 completed specifications to understand vertical slice completeness
@@ -508,7 +612,7 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 ## Governance
 
 ### Constitution as Governing Document
-This constitution supersedes all other project guidance. All architectural decisions, code reviews, deployment approvals, and spec acceptance gates must verify compliance with these nine core principles and technology stack requirements.
+This constitution supersedes all other project guidance. All architectural decisions, code reviews, deployment approvals, and spec acceptance gates must verify compliance with these ten core principles and technology stack requirements.
 
 ### Amendment Procedure
 Amendments must:
@@ -548,5 +652,5 @@ Always commit at each TDD gate and before continuing to a new phase.
 
 ---
 
-**Version**: 1.12.2 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-03-27
+**Version**: 1.13.0 | **Ratified**: 2026-03-03 | **Last Amended**: 2026-04-03
 
