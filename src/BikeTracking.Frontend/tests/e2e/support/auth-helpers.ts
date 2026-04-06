@@ -25,7 +25,7 @@ export async function loginUser(
   await page.getByLabel("Name").fill(userName);
   await page.getByLabel("PIN").fill(pin);
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL("/miles");
+  await expect(page).toHaveURL("/dashboard");
 }
 
 export async function createAndLoginUser(

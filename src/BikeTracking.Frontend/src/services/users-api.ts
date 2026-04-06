@@ -36,6 +36,8 @@ export interface UserSettingsUpsertRequest {
   locationLabel?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  dashboardGallonsAvoidedEnabled?: boolean | null;
+  dashboardGoalProgressEnabled?: boolean | null;
 }
 
 export interface UserSettingsView {
@@ -46,6 +48,8 @@ export interface UserSettingsView {
   locationLabel: string | null;
   latitude: number | null;
   longitude: number | null;
+  dashboardGallonsAvoidedEnabled: boolean;
+  dashboardGoalProgressEnabled: boolean;
   updatedAtUtc: string | null;
 }
 

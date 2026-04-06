@@ -44,7 +44,7 @@ export function LoginPage() {
 
       if (response.ok && response.data) {
         auth.login({ userId: response.data.userId, userName: response.data.userName })
-        navigate('/miles')
+        navigate('/dashboard')
         return
       }
 

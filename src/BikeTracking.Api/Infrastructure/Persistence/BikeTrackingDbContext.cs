@@ -95,6 +95,22 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                         "CK_Rides_RideMinutes_GreaterThanZero",
                         "\"RideMinutes\" IS NULL OR \"RideMinutes\" > 0"
                     );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_SnapshotAverageCarMpg_Positive",
+                        "\"SnapshotAverageCarMpg\" IS NULL OR CAST(\"SnapshotAverageCarMpg\" AS REAL) > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_SnapshotMileageRateCents_Positive",
+                        "\"SnapshotMileageRateCents\" IS NULL OR CAST(\"SnapshotMileageRateCents\" AS REAL) > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_SnapshotYearlyGoalMiles_Positive",
+                        "\"SnapshotYearlyGoalMiles\" IS NULL OR CAST(\"SnapshotYearlyGoalMiles\" AS REAL) > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_SnapshotOilChangePrice_Positive",
+                        "\"SnapshotOilChangePrice\" IS NULL OR CAST(\"SnapshotOilChangePrice\" AS REAL) > 0"
+                    );
                 }
             );
             entity.HasKey(static x => x.Id);
@@ -102,6 +118,10 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.RideDateTimeLocal).IsRequired();
             entity.Property(static x => x.Miles).IsRequired();
             entity.Property(static x => x.GasPricePerGallon).HasPrecision(10, 4);
+            entity.Property(static x => x.SnapshotAverageCarMpg).HasPrecision(10, 4);
+            entity.Property(static x => x.SnapshotMileageRateCents).HasPrecision(10, 4);
+            entity.Property(static x => x.SnapshotYearlyGoalMiles).HasPrecision(10, 4);
+            entity.Property(static x => x.SnapshotOilChangePrice).HasPrecision(10, 4);
             entity.Property(static x => x.WindSpeedMph).HasPrecision(10, 4);
             entity.Property(static x => x.WindDirectionDeg);
             entity.Property(static x => x.RelativeHumidityPercent);
@@ -212,6 +232,14 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.LocationLabel).HasMaxLength(200);
             entity.Property(static x => x.Latitude);
             entity.Property(static x => x.Longitude);
+            entity
+                .Property(static x => x.DashboardGallonsAvoidedEnabled)
+                .IsRequired()
+                .HasDefaultValue(false);
+            entity
+                .Property(static x => x.DashboardGoalProgressEnabled)
+                .IsRequired()
+                .HasDefaultValue(false);
             entity.Property(static x => x.UpdatedAtUtc).IsRequired();
 
             entity

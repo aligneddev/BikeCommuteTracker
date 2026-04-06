@@ -58,6 +58,8 @@ describe('SettingsPage', () => {
           locationLabel: null,
           latitude: null,
           longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -91,6 +93,8 @@ describe('SettingsPage', () => {
           locationLabel: null,
           latitude: null,
           longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: null,
         },
       },
@@ -109,6 +113,8 @@ describe('SettingsPage', () => {
           locationLabel: null,
           latitude: null,
           longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -165,6 +171,8 @@ describe('SettingsPage', () => {
           locationLabel: 'Downtown Office',
           latitude: 42.3601,
           longitude: -71.0589,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -183,6 +191,8 @@ describe('SettingsPage', () => {
           locationLabel: 'HQ Campus',
           latitude: 41.9,
           longitude: -87.6,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: '2026-03-30T10:10:00Z',
         },
       },
@@ -237,6 +247,8 @@ describe('SettingsPage', () => {
           locationLabel: 'Home',
           latitude: 41.881,
           longitude: -87.623,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -255,6 +267,8 @@ describe('SettingsPage', () => {
           locationLabel: 'Home',
           latitude: 41.881,
           longitude: -87.623,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: '2026-03-30T10:05:00Z',
         },
       },
@@ -297,6 +311,8 @@ describe('SettingsPage', () => {
           locationLabel: null,
           latitude: null,
           longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: null,
         },
       },
@@ -344,6 +360,8 @@ describe('SettingsPage', () => {
           locationLabel: null,
           latitude: null,
           longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
           updatedAtUtc: null,
         },
       },
@@ -363,6 +381,72 @@ describe('SettingsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/unable to read browser location/i)
+    })
+  })
+
+  it('loads and saves dashboard optional metric approvals', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: true,
+        settings: {
+          averageCarMpg: 30,
+          yearlyGoalMiles: 1600,
+          oilChangePrice: 70,
+          mileageRateCents: 60,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
+          updatedAtUtc: '2026-03-30T10:00:00Z',
+        },
+      },
+    })
+
+    mockSaveUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: true,
+        settings: {
+          averageCarMpg: 30,
+          yearlyGoalMiles: 1600,
+          oilChangePrice: 70,
+          mileageRateCents: 60,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: true,
+          dashboardGoalProgressEnabled: true,
+          updatedAtUtc: '2026-03-30T10:15:00Z',
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/show gallons avoided metric/i)).not.toBeChecked()
+      expect(screen.getByLabelText(/show goal progress metric/i)).not.toBeChecked()
+    })
+
+    fireEvent.click(screen.getByLabelText(/show gallons avoided metric/i))
+    fireEvent.click(screen.getByLabelText(/show goal progress metric/i))
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
+
+    await waitFor(() => {
+      expect(mockSaveUserSettings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dashboardGallonsAvoidedEnabled: true,
+          dashboardGoalProgressEnabled: true,
+        })
+      )
     })
   })
 })

@@ -1,4 +1,5 @@
-﻿using BikeTracking.Api.Application.Events;
+﻿using BikeTracking.Api.Application.Dashboard;
+using BikeTracking.Api.Application.Events;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Endpoints;
@@ -34,6 +35,7 @@ builder.Services.AddSingleton<IPinHasher, PinHasher>();
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<IdentifyService>();
 builder.Services.AddScoped<UserSettingsService>();
+builder.Services.AddScoped<GetDashboardService>();
 
 builder
     .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)
@@ -143,6 +145,7 @@ app.UseCors();
 app.UseHttpLogging();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapDashboardEndpoints();
 app.MapUsersEndpoints();
 app.MapRidesEndpoints();
 app.MapDefaultEndpoints();

@@ -52,7 +52,7 @@ public static class UsersEndpoints
 
     private static async Task<IResult> SignupAsync(
         [FromBody] SignupRequest request,
-        SignupService signupService,
+        [FromServices] SignupService signupService,
         CancellationToken cancellationToken
     )
     {
@@ -76,7 +76,7 @@ public static class UsersEndpoints
 
     private static async Task<IResult> IdentifyAsync(
         [FromBody] IdentifyRequest request,
-        IdentifyService identifyService,
+        [FromServices] IdentifyService identifyService,
         HttpContext httpContext,
         CancellationToken cancellationToken
     )
@@ -112,7 +112,7 @@ public static class UsersEndpoints
 
     private static async Task<IResult> GetUserSettings(
         HttpContext context,
-        UserSettingsService userSettingsService,
+        [FromServices] UserSettingsService userSettingsService,
         CancellationToken cancellationToken
     )
     {
@@ -133,7 +133,7 @@ public static class UsersEndpoints
     private static async Task<IResult> PutUserSettings(
         HttpContext context,
         [FromBody] JsonElement requestBody,
-        UserSettingsService userSettingsService,
+        [FromServices] UserSettingsService userSettingsService,
         CancellationToken cancellationToken
     )
     {

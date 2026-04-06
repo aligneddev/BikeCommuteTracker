@@ -16,6 +16,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
         "locationlabel",
         "latitude",
         "longitude",
+        "dashboardgallonsavoidedenabled",
+        "dashboardgoalprogressenabled",
     ];
 
     private readonly BikeTrackingDbContext _dbContext = dbContext;
@@ -100,6 +102,16 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
             request.Longitude,
             normalizedFields.Contains("longitude")
         );
+        var dashboardGallonsAvoidedEnabled = ResolveBoolean(
+            existing?.DashboardGallonsAvoidedEnabled ?? false,
+            request.DashboardGallonsAvoidedEnabled,
+            normalizedFields.Contains("dashboardgallonsavoidedenabled")
+        );
+        var dashboardGoalProgressEnabled = ResolveBoolean(
+            existing?.DashboardGoalProgressEnabled ?? false,
+            request.DashboardGoalProgressEnabled,
+            normalizedFields.Contains("dashboardgoalprogressenabled")
+        );
 
         if (averageCarMpg is <= 0)
             return UserSettingsResult.Failure(
@@ -158,6 +170,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                 LocationLabel = locationLabel,
                 Latitude = mergedLatitude,
                 Longitude = mergedLongitude,
+                DashboardGallonsAvoidedEnabled = dashboardGallonsAvoidedEnabled,
+                DashboardGoalProgressEnabled = dashboardGoalProgressEnabled,
                 UpdatedAtUtc = DateTime.UtcNow,
             };
 
@@ -172,6 +186,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
             existing.LocationLabel = locationLabel;
             existing.Latitude = mergedLatitude;
             existing.Longitude = mergedLongitude;
+            existing.DashboardGallonsAvoidedEnabled = dashboardGallonsAvoidedEnabled;
+            existing.DashboardGoalProgressEnabled = dashboardGoalProgressEnabled;
             existing.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -191,6 +207,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                 LocationLabel: entity.LocationLabel,
                 Latitude: entity.Latitude,
                 Longitude: entity.Longitude,
+                DashboardGallonsAvoidedEnabled: entity.DashboardGallonsAvoidedEnabled,
+                DashboardGoalProgressEnabled: entity.DashboardGoalProgressEnabled,
                 UpdatedAtUtc: entity.UpdatedAtUtc
             )
         );
@@ -225,6 +243,11 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
     )
     {
         return isProvided ? requested : existing;
+    }
+
+    private static bool ResolveBoolean(bool existing, bool? requested, bool isProvided)
+    {
+        return isProvided ? requested ?? false : existing;
     }
 }
 

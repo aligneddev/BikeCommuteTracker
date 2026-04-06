@@ -16,6 +16,14 @@ public sealed class RideEntity
 
     public decimal? GasPricePerGallon { get; set; }
 
+    public decimal? SnapshotAverageCarMpg { get; set; }
+
+    public decimal? SnapshotMileageRateCents { get; set; }
+
+    public decimal? SnapshotYearlyGoalMiles { get; set; }
+
+    public decimal? SnapshotOilChangePrice { get; set; }
+
     public decimal? WindSpeedMph { get; set; }
 
     public int? WindDirectionDeg { get; set; }

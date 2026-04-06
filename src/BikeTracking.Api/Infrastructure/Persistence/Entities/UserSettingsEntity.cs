@@ -18,5 +18,9 @@ public sealed class UserSettingsEntity
 
     public decimal? Longitude { get; set; }
 
+    public bool DashboardGallonsAvoidedEnabled { get; set; }
+
+    public bool DashboardGoalProgressEnabled { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; }
 }

@@ -37,7 +37,7 @@ function renderLogin(prefillName?: string) {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/miles" element={<div>Miles Page</div>} />
+          <Route path="/dashboard" element={<div>Dashboard Page</div>} />
           <Route path="/signup" element={<div>Signup Page</div>} />
         </Routes>
       </AuthProvider>
@@ -101,7 +101,7 @@ describe('LoginPage component', () => {
     expect(screen.getByLabelText('Name')).toHaveValue('Prefilled Rider')
   })
 
-  it('submits valid credentials, stores session, and navigates to miles', async () => {
+  it('submits valid credentials, stores session, and navigates to dashboard', async () => {
     const user = userEvent.setup()
     const successResult: LoginResult = {
       ok: true,
@@ -117,7 +117,7 @@ describe('LoginPage component', () => {
     await user.click(screen.getByRole('button', { name: 'Log in' }))
 
     expect(mockedLoginUser).toHaveBeenCalledWith({ name: 'Alice', pin: '1234' })
-    await screen.findByText('Miles Page')
+    await screen.findByText('Dashboard Page')
 
     const rawSession = sessionStorage.getItem('bike_tracking_auth_session')
     expect(rawSession).toContain('Alice')

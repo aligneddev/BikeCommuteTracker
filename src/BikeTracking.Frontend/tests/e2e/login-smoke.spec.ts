@@ -8,8 +8,8 @@ import { loginUser, signupUser, uniqueUser } from "./support/auth-helpers";
  *  1. `/` redirects to `/login`
  *  2. Unauthenticated `/miles` redirects to `/login`
  *  3. Incorrect credentials show an error and stay on `/login`
- *  4. Successful login redirects to `/miles` and displays the user's name
- *  5. Logout from `/miles` returns to `/login`
+ *  4. Successful login redirects to `/dashboard`
+ *  5. Logout from `/dashboard` returns to `/login`
  *
  * The Playwright config starts API + Vite when needed.
  *
@@ -49,17 +49,18 @@ test.describe("003-user-login smoke tests", () => {
     await expect(page).toHaveURL("/login");
   });
 
-  test("successful login redirects to /miles and shows user name", async ({
-    page,
-  }) => {
+  test("successful login redirects to /dashboard", async ({ page }) => {
     const userName = uniqueUser("e2e-login-ok");
     await createUserViaSignup(page, userName, TEST_PIN);
 
     await loginUser(page, userName, TEST_PIN);
-    await expect(page.getByText(`Welcome, ${userName}`)).toBeVisible();
+    await expect(page).toHaveURL("/dashboard");
+    await expect(
+      page.getByRole("heading", { name: /your riding story/i }),
+    ).toBeVisible();
   });
 
-  test("logout from /miles returns to /login", async ({ page }) => {
+  test("logout from /dashboard returns to /login", async ({ page }) => {
     const userName = uniqueUser("e2e-logout");
     await createUserViaSignup(page, userName, TEST_PIN);
 

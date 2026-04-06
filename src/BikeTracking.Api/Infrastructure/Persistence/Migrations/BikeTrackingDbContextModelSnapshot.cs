@@ -108,6 +108,22 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<long>("RiderId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal?>("SnapshotAverageCarMpg")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("SnapshotMileageRateCents")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("SnapshotOilChangePrice")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("SnapshotYearlyGoalMiles")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal?>("Temperature")
                         .HasColumnType("TEXT");
 
@@ -140,6 +156,14 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("CK_Rides_Miles_GreaterThanZero", "CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200");
 
                             t.HasCheckConstraint("CK_Rides_RideMinutes_GreaterThanZero", "\"RideMinutes\" IS NULL OR \"RideMinutes\" > 0");
+
+                            t.HasCheckConstraint("CK_Rides_SnapshotAverageCarMpg_Positive", "\"SnapshotAverageCarMpg\" IS NULL OR CAST(\"SnapshotAverageCarMpg\" AS REAL) > 0");
+
+                            t.HasCheckConstraint("CK_Rides_SnapshotMileageRateCents_Positive", "\"SnapshotMileageRateCents\" IS NULL OR CAST(\"SnapshotMileageRateCents\" AS REAL) > 0");
+
+                            t.HasCheckConstraint("CK_Rides_SnapshotOilChangePrice_Positive", "\"SnapshotOilChangePrice\" IS NULL OR CAST(\"SnapshotOilChangePrice\" AS REAL) > 0");
+
+                            t.HasCheckConstraint("CK_Rides_SnapshotYearlyGoalMiles_Positive", "\"SnapshotYearlyGoalMiles\" IS NULL OR CAST(\"SnapshotYearlyGoalMiles\" AS REAL) > 0");
                         });
                 });
 
@@ -150,6 +174,16 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 
                     b.Property<decimal?>("AverageCarMpg")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("DashboardGallonsAvoidedEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("DashboardGoalProgressEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<decimal?>("Latitude")
                         .HasColumnType("TEXT");

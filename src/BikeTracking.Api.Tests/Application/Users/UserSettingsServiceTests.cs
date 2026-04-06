@@ -40,6 +40,8 @@ public sealed class UserSettingsServiceTests
         Assert.Equal(1800m, loaded.Response.Settings.YearlyGoalMiles);
         Assert.Equal(89.99m, loaded.Response.Settings.OilChangePrice);
         Assert.Equal(67.5m, loaded.Response.Settings.MileageRateCents);
+        Assert.False(loaded.Response.Settings.DashboardGallonsAvoidedEnabled);
+        Assert.False(loaded.Response.Settings.DashboardGoalProgressEnabled);
     }
 
     [Fact]
@@ -236,6 +238,79 @@ public sealed class UserSettingsServiceTests
         Assert.Equal(2200m, secondLoaded.Response.Settings.YearlyGoalMiles);
         Assert.Equal(95m, secondLoaded.Response.Settings.OilChangePrice);
         Assert.Equal(70m, secondLoaded.Response.Settings.MileageRateCents);
+    }
+
+    [Fact]
+    public async Task SaveAsync_PersistsDashboardApprovalFields_WhenProvided()
+    {
+        using var dbContext = TestFactories.CreateDbContext();
+        var user = await SeedUserAsync(dbContext, "Settings User H");
+        var service = new UserSettingsService(dbContext);
+
+        var result = await service.SaveAsync(
+            user.UserId,
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 30m,
+                YearlyGoalMiles: 1500m,
+                OilChangePrice: 70m,
+                MileageRateCents: 60m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null,
+                DashboardGallonsAvoidedEnabled: true,
+                DashboardGoalProgressEnabled: true
+            ),
+            CancellationToken.None
+        );
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Response);
+        Assert.True(result.Response.Settings.DashboardGallonsAvoidedEnabled);
+        Assert.True(result.Response.Settings.DashboardGoalProgressEnabled);
+    }
+
+    [Fact]
+    public async Task SaveAsync_KeepsDashboardApprovals_WhenOmittedFromPartialUpdate()
+    {
+        using var dbContext = TestFactories.CreateDbContext();
+        var user = await SeedUserAsync(dbContext, "Settings User I");
+        var service = new UserSettingsService(dbContext);
+
+        await service.SaveAsync(
+            user.UserId,
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 29m,
+                YearlyGoalMiles: 1200m,
+                OilChangePrice: 65m,
+                MileageRateCents: 55m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null,
+                DashboardGallonsAvoidedEnabled: true,
+                DashboardGoalProgressEnabled: false
+            ),
+            CancellationToken.None
+        );
+
+        await service.SaveAsync(
+            user.UserId,
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 31m,
+                YearlyGoalMiles: null,
+                OilChangePrice: null,
+                MileageRateCents: null,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null
+            ),
+            CancellationToken.None,
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "averageCarMpg" }
+        );
+
+        var loaded = await service.GetAsync(user.UserId, CancellationToken.None);
+        Assert.NotNull(loaded.Response);
+        Assert.True(loaded.Response.Settings.DashboardGallonsAvoidedEnabled);
+        Assert.False(loaded.Response.Settings.DashboardGoalProgressEnabled);
     }
 
     private static async Task<UserEntity> SeedUserAsync(

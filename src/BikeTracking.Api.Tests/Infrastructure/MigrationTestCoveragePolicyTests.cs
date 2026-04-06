@@ -28,6 +28,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: rides persistence tests validate weather columns round-trip after schema migration.",
             ["20260403192854_AddWeatherLookupCache"] =
                 "Added test: weather lookup service tests validate cache read/write through weather lookup table.",
+            ["20260406183601_AddDashboardSnapshotsAndPreferences"] =
+                "Added test: dashboard and user settings coverage validates snapshot and preference columns after schema migration.",
         };
 
     [Fact]

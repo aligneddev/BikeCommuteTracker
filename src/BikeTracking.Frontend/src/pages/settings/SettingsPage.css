@@ -35,6 +35,25 @@
   color: #24324a;
 }
 
+.settings-checkbox-group {
+  border: 1px solid #d4dbe5;
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.settings-checkbox-group legend {
+  padding: 0 0.25rem;
+  font-weight: 700;
+  color: #24324a;
+}
+
+.settings-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 500;
+}
+
 .settings-field input {
   border: 1px solid #b9c5d6;
   border-radius: 0.5rem;

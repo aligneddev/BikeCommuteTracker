@@ -88,14 +88,13 @@ public sealed class EditRideService(
 
         var existingRideDateTimeLocal = ride.RideDateTimeLocal;
         var rideDateTimeChanged = request.RideDateTimeLocal != existingRideDateTimeLocal;
+        var userSettings = await dbContext
+            .UserSettings.AsNoTracking()
+            .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
 
         WeatherData? fetchedWeather = null;
         if (!request.WeatherUserOverridden && rideDateTimeChanged)
         {
-            var userSettings = await dbContext
-                .UserSettings.AsNoTracking()
-                .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
-
             if (
                 userSettings?.Latitude is decimal latitude
                 && userSettings.Longitude is decimal longitude
@@ -124,6 +123,10 @@ public sealed class EditRideService(
         ride.RideMinutes = request.RideMinutes;
         ride.Temperature = temperature;
         ride.GasPricePerGallon = request.GasPricePerGallon;
+        ride.SnapshotAverageCarMpg = userSettings?.AverageCarMpg;
+        ride.SnapshotMileageRateCents = userSettings?.MileageRateCents;
+        ride.SnapshotYearlyGoalMiles = userSettings?.YearlyGoalMiles;
+        ride.SnapshotOilChangePrice = userSettings?.OilChangePrice;
         ride.WindSpeedMph = windSpeedMph;
         ride.WindDirectionDeg = windDirectionDeg;
         ride.RelativeHumidityPercent = relativeHumidityPercent;
@@ -150,6 +153,10 @@ public sealed class EditRideService(
             cloudCoverPercent: cloudCoverPercent,
             precipitationType: precipitationType,
             weatherUserOverridden: request.WeatherUserOverridden,
+            snapshotAverageCarMpg: ride.SnapshotAverageCarMpg,
+            snapshotMileageRateCents: ride.SnapshotMileageRateCents,
+            snapshotYearlyGoalMiles: ride.SnapshotYearlyGoalMiles,
+            snapshotOilChangePrice: ride.SnapshotOilChangePrice,
             occurredAtUtc: utcNow
         );
 
