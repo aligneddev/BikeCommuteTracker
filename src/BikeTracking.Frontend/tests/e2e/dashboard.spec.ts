@@ -8,7 +8,7 @@ async function saveDashboardSettings(
 ) {
   await page.goto("/settings");
   await page.getByLabel("Average Car MPG").fill(mpg);
-  await page.getByLabel("Mileage Rate").fill(mileageRate);
+  await page.getByLabel("Mileage Rate (cents per mile)").fill(mileageRate);
   await page.getByRole("button", { name: "Save Settings" }).click();
   await expect(page.getByText(/settings saved successfully/i)).toBeVisible();
 }
@@ -62,13 +62,13 @@ test.describe("012-dashboard-stats e2e", () => {
     await recordRideWithGasPrice(page, "10", "3.00");
 
     await page.goto("/dashboard");
-    await expect(page.getByText("$7", { exact: true })).toBeVisible();
+    await expect(page.getByText("$6.50", { exact: true })).toBeVisible();
 
     await saveDashboardSettings(page, "40", "70");
     await recordRideWithGasPrice(page, "10", "3.00");
 
     await page.goto("/dashboard");
-    await expect(page.getByText("$14", { exact: true })).toBeVisible();
+    await expect(page.getByText("$14.25", { exact: true })).toBeVisible();
   });
 
   test("optional metrics appear only after approval", async ({ page }) => {

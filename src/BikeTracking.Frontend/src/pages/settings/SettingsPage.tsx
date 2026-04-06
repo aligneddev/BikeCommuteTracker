@@ -272,7 +272,7 @@ export function SettingsPage() {
             </div>
 
             <div className="settings-field">
-              <label htmlFor="mileageRateCents">Mileage Rate</label>
+              <label htmlFor="mileageRateCents">Mileage Rate (cents per mile)</label>
               <input
                 id="mileageRateCents"
                 type="number"

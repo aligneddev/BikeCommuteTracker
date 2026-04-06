@@ -113,6 +113,58 @@ public sealed class GetDashboardServiceTests
         Assert.Equal(8m, dashboard.Totals.AllTimeMiles.Miles);
     }
 
+    [Fact]
+    public async Task GetDashboardService_IncludesOptionalMetricValues_WhenDataIsAvailable()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = new UserEntity
+        {
+            DisplayName = "Optional Metric Rider",
+            NormalizedName = "optional metric rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        dbContext.Users.Add(rider);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = rider.UserId,
+                YearlyGoalMiles = 100m,
+                DashboardGallonsAvoidedEnabled = true,
+                DashboardGoalProgressEnabled = true,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+
+        dbContext.Rides.Add(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = DateTime.Now,
+                Miles = 20m,
+                SnapshotAverageCarMpg = 10m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetDashboardService(dbContext);
+        var dashboard = await service.GetAsync(rider.UserId);
+
+        var gallonsSuggestion = dashboard.Suggestions.Single(metric =>
+            metric.MetricKey == "gallonsAvoided"
+        );
+        var goalSuggestion = dashboard.Suggestions.Single(metric =>
+            metric.MetricKey == "goalProgress"
+        );
+
+        Assert.Equal(2m, gallonsSuggestion.Value);
+        Assert.Equal("gal", gallonsSuggestion.UnitLabel);
+        Assert.Equal(20m, goalSuggestion.Value);
+        Assert.Equal("%", goalSuggestion.UnitLabel);
+    }
+
     private static BikeTrackingDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<BikeTrackingDbContext>()

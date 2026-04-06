@@ -50,7 +50,9 @@ public sealed record DashboardMetricSuggestion(
     string MetricKey,
     string Title,
     string Description,
-    bool IsEnabled
+    bool IsEnabled,
+    decimal? Value = null,
+    string? UnitLabel = null
 );
 
 public sealed record DashboardMissingData(

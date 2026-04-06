@@ -84,8 +84,24 @@ function formatCurrency(value: number | null): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(value)
+}
+
+function formatOptionalMetricValue(value: number | null | undefined, unitLabel?: string | null): string {
+  if (value === null || value === undefined) {
+    return '—'
+  }
+
+  if (unitLabel === '%') {
+    return `${value.toFixed(1)}%`
+  }
+
+  if (unitLabel === 'gal') {
+    return `${value.toFixed(2)} gal`
+  }
+
+  return `${value}`
 }
 
 export function DashboardPage() {
@@ -187,7 +203,7 @@ export function DashboardPage() {
           accentClassName="dashboard-summary-card-accent-savings"
         >
           <div className="dashboard-summary-split">
-            <span>Rate {formatCurrency(dashboard.totals.moneySaved.mileageRateSavings)}</span>
+            <span>Rate (cents per mile) {formatCurrency(dashboard.totals.moneySaved.mileageRateSavings)}</span>
             <span>Fuel {formatCurrency(dashboard.totals.moneySaved.fuelCostAvoided)}</span>
           </div>
         </DashboardSummaryCard>
@@ -255,7 +271,10 @@ export function DashboardPage() {
           {enabledSuggestions.map((suggestion) => (
             <article key={suggestion.metricKey} className="dashboard-average-card">
               <p className="dashboard-average-label">Approved Metric</p>
-              <p className="dashboard-average-value">{suggestion.title}</p>
+              <p className="dashboard-average-value">
+                {formatOptionalMetricValue(suggestion.value, suggestion.unitLabel)}
+              </p>
+              <p className="dashboard-average-label">{suggestion.title}</p>
               <p className="dashboard-summary-card-detail">{suggestion.description}</p>
             </article>
           ))}

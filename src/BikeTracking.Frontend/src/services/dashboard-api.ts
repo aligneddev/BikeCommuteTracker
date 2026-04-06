@@ -40,6 +40,8 @@ export interface DashboardMetricSuggestion {
   title: string;
   description: string;
   isEnabled: boolean;
+  value?: number | null;
+  unitLabel?: string | null;
 }
 
 export interface DashboardMissingData {

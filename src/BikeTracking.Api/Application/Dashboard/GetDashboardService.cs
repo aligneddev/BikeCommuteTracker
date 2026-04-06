@@ -40,6 +40,8 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext)
                 ride.RideDateTimeLocal >= currentYearStart && ride.RideDateTimeLocal < nextYearStart
             )
             .ToList();
+        var yearToDateMiles = currentYearRides.Sum(ride => ride.Miles);
+        var gallonsAvoided = CalculateGallonsAvoided(rides);
 
         var savings = CalculateSavings(rides);
 
@@ -59,7 +61,7 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext)
                 MileageByMonth: BuildMileageSeries(rides, nowLocal),
                 SavingsByMonth: BuildSavingsSeries(rides, nowLocal)
             ),
-            Suggestions: BuildSuggestions(settings),
+            Suggestions: BuildSuggestions(settings, gallonsAvoided, yearToDateMiles),
             MissingData: new DashboardMissingData(
                 RidesMissingSavingsSnapshot: rides.Count(ride =>
                     ride.SnapshotMileageRateCents is null || ride.SnapshotAverageCarMpg is null
@@ -228,24 +230,51 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext)
     }
 
     private static IReadOnlyList<DashboardMetricSuggestion> BuildSuggestions(
-        UserSettingsEntity? settings
+        UserSettingsEntity? settings,
+        decimal? gallonsAvoided,
+        decimal yearToDateMiles
     )
     {
+        var yearlyGoalMiles = settings?.YearlyGoalMiles;
+        decimal? goalProgressPercent =
+            yearlyGoalMiles is decimal goal && goal > 0m
+                ? decimal.Round((yearToDateMiles / goal) * 100m, 1, MidpointRounding.AwayFromZero)
+                : null;
+
         return
         [
             new DashboardMetricSuggestion(
                 MetricKey: "gallonsAvoided",
                 Title: "Gallons Avoided",
                 Description: "See how much gas your rides kept in the tank.",
-                IsEnabled: settings?.DashboardGallonsAvoidedEnabled ?? false
+                IsEnabled: settings?.DashboardGallonsAvoidedEnabled ?? false,
+                Value: gallonsAvoided,
+                UnitLabel: "gal"
             ),
             new DashboardMetricSuggestion(
                 MetricKey: "goalProgress",
                 Title: "Goal Progress",
                 Description: "Compare your riding pace to your yearly mileage goal.",
-                IsEnabled: settings?.DashboardGoalProgressEnabled ?? false
+                IsEnabled: settings?.DashboardGoalProgressEnabled ?? false,
+                Value: goalProgressPercent,
+                UnitLabel: "%"
             ),
         ];
+    }
+
+    private static decimal? CalculateGallonsAvoided(IReadOnlyCollection<RideEntity> rides)
+    {
+        var totalGallonsAvoided = rides
+            .Where(ride =>
+                ride.SnapshotAverageCarMpg is decimal averageCarMpg && averageCarMpg > 0m
+            )
+            .Select(ride => ride.Miles / ride.SnapshotAverageCarMpg!.Value)
+            .DefaultIfEmpty(0m)
+            .Sum();
+
+        return totalGallonsAvoided > 0m
+            ? decimal.Round(totalGallonsAvoided, 2, MidpointRounding.AwayFromZero)
+            : null;
     }
 
     private static IEnumerable<DateTime> EnumerateRollingMonths(DateTime nowLocal)
