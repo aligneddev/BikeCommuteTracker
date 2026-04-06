@@ -99,6 +99,34 @@ X-User-Id: {{RiderId}}
   "mileageRateCents": 70.0
 }
 
+### Save user settings (dashboard optional approvals)
+PUT {{ApiService_HostAddress}}/api/users/me/settings
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "dashboardGallonsAvoidedEnabled": true,
+  "dashboardGoalProgressEnabled": true
+}
+
+### Save user settings (disable one optional metric)
+PUT {{ApiService_HostAddress}}/api/users/me/settings
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "dashboardGoalProgressEnabled": false
+}
+
+### Get dashboard (authenticated)
+GET {{ApiService_HostAddress}}/api/dashboard
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Edge case: unauthenticated dashboard request (expects 401)
+GET {{ApiService_HostAddress}}/api/dashboard
+Accept: application/json
+
 ### Edge case: unauthenticated settings request (expects 401)
 GET {{ApiService_HostAddress}}/api/users/me/settings
 Accept: application/json

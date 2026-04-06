@@ -99,6 +99,55 @@ public sealed class RidesApplicationServiceTests
     }
 
     [Fact]
+    public async Task RecordRideService_CapturesUserSettingsSnapshots_OnRideAndEventPayload()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Snapshot Rider",
+            NormalizedName = "snapshot rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        context.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = user.UserId,
+                AverageCarMpg = 31.5m,
+                MileageRateCents = 67m,
+                YearlyGoalMiles = 2400m,
+                OilChangePrice = 79m,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var service = new RecordRideService(
+            context,
+            new StubWeatherLookupService(),
+            NullLogger<RecordRideService>.Instance
+        );
+
+        var (rideId, eventPayload) = await service.ExecuteAsync(
+            user.UserId,
+            new RecordRideRequest(DateTime.Now, 11m, 30, 63m, 3.29m)
+        );
+
+        var persistedRide = await context.Rides.SingleAsync(ride => ride.Id == rideId);
+        Assert.Equal(31.5m, persistedRide.SnapshotAverageCarMpg);
+        Assert.Equal(67m, persistedRide.SnapshotMileageRateCents);
+        Assert.Equal(2400m, persistedRide.SnapshotYearlyGoalMiles);
+        Assert.Equal(79m, persistedRide.SnapshotOilChangePrice);
+
+        Assert.Equal(31.5m, eventPayload.SnapshotAverageCarMpg);
+        Assert.Equal(67m, eventPayload.SnapshotMileageRateCents);
+        Assert.Equal(2400m, eventPayload.SnapshotYearlyGoalMiles);
+        Assert.Equal(79m, eventPayload.SnapshotOilChangePrice);
+    }
+
+    [Fact]
     public async Task RecordRideService_ValidatesMillesGreaterThanZero()
     {
         using var context = CreateDbContext();
@@ -848,6 +897,83 @@ public sealed class RidesApplicationServiceTests
         Assert.Equal(8m, persistedRide.WindSpeedMph);
         Assert.Equal(250, persistedRide.WindDirectionDeg);
         Assert.Equal("rain", persistedRide.PrecipitationType);
+    }
+
+    [Fact]
+    public async Task EditRideService_RefreshesSnapshotFields_FromCurrentSettings()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Snapshot Edit Rider",
+            NormalizedName = "snapshot edit rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        context.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = user.UserId,
+                AverageCarMpg = 32m,
+                MileageRateCents = 65m,
+                YearlyGoalMiles = 1800m,
+                OilChangePrice = 70m,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var ride = new RideEntity
+        {
+            RiderId = user.UserId,
+            RideDateTimeLocal = DateTime.Now.AddDays(-1),
+            Miles = 8m,
+            RideMinutes = 28,
+            GasPricePerGallon = 3.49m,
+            SnapshotAverageCarMpg = 25m,
+            SnapshotMileageRateCents = 50m,
+            SnapshotYearlyGoalMiles = 1200m,
+            SnapshotOilChangePrice = 55m,
+            Version = 1,
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Rides.Add(ride);
+        await context.SaveChangesAsync();
+
+        var service = new EditRideService(
+            context,
+            new StubWeatherLookupService(),
+            NullLogger<EditRideService>.Instance
+        );
+
+        var result = await service.ExecuteAsync(
+            user.UserId,
+            ride.Id,
+            new EditRideRequest(
+                RideDateTimeLocal: ride.RideDateTimeLocal,
+                Miles: 9m,
+                RideMinutes: 31,
+                Temperature: 60m,
+                GasPricePerGallon: 3.59m,
+                ExpectedVersion: 1
+            )
+        );
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.EventPayload);
+
+        var updatedRide = await context.Rides.SingleAsync(entity => entity.Id == ride.Id);
+        Assert.Equal(32m, updatedRide.SnapshotAverageCarMpg);
+        Assert.Equal(65m, updatedRide.SnapshotMileageRateCents);
+        Assert.Equal(1800m, updatedRide.SnapshotYearlyGoalMiles);
+        Assert.Equal(70m, updatedRide.SnapshotOilChangePrice);
+
+        Assert.Equal(32m, result.EventPayload!.SnapshotAverageCarMpg);
+        Assert.Equal(65m, result.EventPayload.SnapshotMileageRateCents);
+        Assert.Equal(1800m, result.EventPayload.SnapshotYearlyGoalMiles);
+        Assert.Equal(70m, result.EventPayload.SnapshotOilChangePrice);
     }
 
     private static BikeTrackingDbContext CreateDbContext()

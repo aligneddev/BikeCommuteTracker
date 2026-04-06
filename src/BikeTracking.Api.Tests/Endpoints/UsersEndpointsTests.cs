@@ -264,6 +264,43 @@ public sealed class UsersEndpointsTests
         Assert.Equal(33m, secondPayload.Settings.AverageCarMpg);
     }
 
+    [Fact]
+    public async Task PutThenGetUserSettings_RoundTripsDashboardApprovals()
+    {
+        await using var host = await IdentifyApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("ApprovalsCase", "1234");
+
+        var putResponse = await host.Client.PutWithAuthAsync(
+            "/api/users/me/settings",
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: 31m,
+                YearlyGoalMiles: 2000m,
+                OilChangePrice: 75m,
+                MileageRateCents: 67m,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null,
+                DashboardGallonsAvoidedEnabled: true,
+                DashboardGoalProgressEnabled: true
+            ),
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, putResponse.StatusCode);
+
+        var payload = await putResponse.Content.ReadFromJsonAsync<UserSettingsResponse>();
+        Assert.NotNull(payload);
+        Assert.True(payload.Settings.DashboardGallonsAvoidedEnabled);
+        Assert.True(payload.Settings.DashboardGoalProgressEnabled);
+
+        var getResponse = await host.Client.GetWithAuthAsync("/api/users/me/settings", userId);
+        var getPayload = await getResponse.Content.ReadFromJsonAsync<UserSettingsResponse>();
+
+        Assert.NotNull(getPayload);
+        Assert.True(getPayload.Settings.DashboardGallonsAvoidedEnabled);
+        Assert.True(getPayload.Settings.DashboardGoalProgressEnabled);
+    }
+
     private sealed class IdentifyApiHost(WebApplication app) : IAsyncDisposable
     {
         public HttpClient Client { get; } = app.GetTestClient();

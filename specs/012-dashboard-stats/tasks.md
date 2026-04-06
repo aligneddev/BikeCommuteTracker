@@ -11,8 +11,8 @@
 
 **Purpose**: Add the dashboard-specific frontend dependency and prepare the shared visualization foundation.
 
-- [ ] T001 Add the `recharts` dependency in `src/BikeTracking.Frontend/package.json` and `src/BikeTracking.Frontend/package-lock.json`
-- [ ] T002 Create the shared ShadCN-style chart wrapper in `src/BikeTracking.Frontend/src/components/ui/chart.tsx`
+- [x] T001 Add the `recharts` dependency in `src/BikeTracking.Frontend/package.json` and `src/BikeTracking.Frontend/package-lock.json`
+- [x] T002 Create the shared ShadCN-style chart wrapper in `src/BikeTracking.Frontend/src/components/ui/chart.tsx`
 
 ---
 
@@ -22,13 +22,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T003 Create the dashboard API contracts in `src/BikeTracking.Api/Contracts/DashboardContracts.cs`
-- [ ] T004 Extend dashboard preference fields in `src/BikeTracking.Api/Contracts/UsersContracts.cs`
-- [ ] T005 [P] Add ride snapshot fields in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/RideEntity.cs`
-- [ ] T006 [P] Add dashboard preference fields in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/UserSettingsEntity.cs`
-- [ ] T007 Configure snapshot and preference persistence in `src/BikeTracking.Api/Infrastructure/Persistence/BikeTrackingDbContext.cs`
-- [ ] T008 Create the EF Core migration in `src/BikeTracking.Api/Infrastructure/Persistence/Migrations/`
-- [ ] T009 Add migration coverage for the new migration in `src/BikeTracking.Api.Tests/Infrastructure/MigrationTestCoveragePolicyTests.cs`
+- [x] T003 Create the dashboard API contracts in `src/BikeTracking.Api/Contracts/DashboardContracts.cs`
+- [x] T004 Extend dashboard preference fields in `src/BikeTracking.Api/Contracts/UsersContracts.cs`
+- [x] T005 [P] Add ride snapshot fields in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/RideEntity.cs`
+- [x] T006 [P] Add dashboard preference fields in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/UserSettingsEntity.cs`
+- [x] T007 Configure snapshot and preference persistence in `src/BikeTracking.Api/Infrastructure/Persistence/BikeTrackingDbContext.cs`
+- [x] T008 Create the EF Core migration in `src/BikeTracking.Api/Infrastructure/Persistence/Migrations/`
+- [x] T009 Add migration coverage for the new migration in `src/BikeTracking.Api.Tests/Infrastructure/MigrationTestCoveragePolicyTests.cs`
 
 **Checkpoint**: Foundation ready. Core dashboard, historical accuracy, and optional metric work can now proceed.
 
@@ -44,26 +44,26 @@
 
 > **NOTE**: Write these tests first, ensure they fail, and get user confirmation before implementation.
 
-- [ ] T010 [US1] Add dashboard aggregation unit tests in `src/BikeTracking.Api.Tests/Application/Dashboard/GetDashboardServiceTests.cs`
-- [ ] T011 [US1] Add dashboard endpoint tests in `src/BikeTracking.Api.Tests/Endpoints/DashboardEndpointsTests.cs`
-- [ ] T012 [US1] Add dashboard API client tests in `src/BikeTracking.Frontend/src/services/dashboard-api.test.ts`
-- [ ] T013 [US1] Add dashboard page rendering tests in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.test.tsx`
-- [ ] T014 [US1] Add dashboard landing and totals E2E coverage in `src/BikeTracking.Frontend/tests/e2e/dashboard.spec.ts`
+- [x] T010 [US1] Add dashboard aggregation unit tests in `src/BikeTracking.Api.Tests/Application/Dashboard/GetDashboardServiceTests.cs`
+- [x] T011 [US1] Add dashboard endpoint tests in `src/BikeTracking.Api.Tests/Endpoints/DashboardEndpointsTests.cs`
+- [x] T012 [US1] Add dashboard API client tests in `src/BikeTracking.Frontend/src/services/dashboard-api.test.ts`
+- [x] T013 [US1] Add dashboard page rendering tests in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.test.tsx`
+- [x] T014 [US1] Add dashboard landing and totals E2E coverage in `src/BikeTracking.Frontend/tests/e2e/dashboard.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Implement dashboard aggregation logic in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs`
-- [ ] T016 [US1] Implement the dashboard endpoint in `src/BikeTracking.Api/Endpoints/DashboardEndpoints.cs`
-- [ ] T017 [US1] Register dashboard services and endpoint mapping in `src/BikeTracking.Api/Program.cs`
-- [ ] T018 [US1] Implement the dashboard API client in `src/BikeTracking.Frontend/src/services/dashboard-api.ts`
-- [ ] T019 [US1] Create dashboard summary card and metric components in `src/BikeTracking.Frontend/src/components/dashboard/dashboard-summary-card.tsx`
-- [ ] T020 [US1] Create dashboard chart section components in `src/BikeTracking.Frontend/src/components/dashboard/dashboard-chart-section.tsx`
-- [ ] T021 [US1] Create dashboard empty and partial-data callouts in `src/BikeTracking.Frontend/src/components/dashboard/dashboard-status-panel.tsx`
-- [ ] T022 [US1] Build the dashboard page layout in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.tsx`
-- [ ] T023 [US1] Implement dashboard styling in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.css`
-- [ ] T024 [US1] Make the dashboard the authenticated main page in `src/BikeTracking.Frontend/src/App.tsx`
-- [ ] T025 [US1] Update the main navigation links for the new dashboard route in `src/BikeTracking.Frontend/src/components/app-header/app-header.tsx`
-- [ ] T026 [US1] Replace the legacy miles page with a redirect shell in `src/BikeTracking.Frontend/src/pages/miles/miles-shell-page.tsx`
+- [x] T015 [US1] Implement dashboard aggregation logic in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs`
+- [x] T016 [US1] Implement the dashboard endpoint in `src/BikeTracking.Api/Endpoints/DashboardEndpoints.cs`
+- [x] T017 [US1] Register dashboard services and endpoint mapping in `src/BikeTracking.Api/Program.cs`
+- [x] T018 [US1] Implement the dashboard API client in `src/BikeTracking.Frontend/src/services/dashboard-api.ts`
+- [x] T019 [US1] Create dashboard summary card and metric components in `src/BikeTracking.Frontend/src/components/dashboard/dashboard-summary-card.tsx`
+- [x] T020 [US1] Create dashboard chart section components in `src/BikeTracking.Frontend/src/components/dashboard/dashboard-chart-section.tsx`
+- [x] T021 [US1] Create dashboard empty and partial-data callouts in `src/BikeTracking.Frontend/src/components/dashboard/dashboard-status-panel.tsx`
+- [x] T022 [US1] Build the dashboard page layout in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.tsx`
+- [x] T023 [US1] Implement dashboard styling in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.css`
+- [x] T024 [US1] Make the dashboard the authenticated main page in `src/BikeTracking.Frontend/src/App.tsx`
+- [x] T025 [US1] Update the main navigation links for the new dashboard route in `src/BikeTracking.Frontend/src/components/app-header/app-header.tsx`
+- [x] T026 [US1] Replace the legacy miles page with a redirect shell in `src/BikeTracking.Frontend/src/pages/miles/miles-shell-page.tsx`
 
 **Checkpoint**: User Story 1 is independently functional when an authenticated rider lands on the dashboard and sees baseline cards, averages, and charts without using ride history.
 
@@ -77,17 +77,17 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T027 [US2] Extend ride write-service tests for snapshot capture in `src/BikeTracking.Api.Tests/Application/RidesApplicationServiceTests.cs`
-- [ ] T028 [US2] Add snapshot persistence coverage in `src/BikeTracking.Api.Tests/Infrastructure/RidesPersistenceTests.cs`
-- [ ] T029 [US2] Add historical-savings stability E2E coverage in `src/BikeTracking.Frontend/tests/e2e/dashboard.spec.ts`
+- [x] T027 [US2] Extend ride write-service tests for snapshot capture in `src/BikeTracking.Api.Tests/Application/RidesApplicationServiceTests.cs`
+- [x] T028 [US2] Add snapshot persistence coverage in `src/BikeTracking.Api.Tests/Infrastructure/RidesPersistenceTests.cs`
+- [x] T029 [US2] Add historical-savings stability E2E coverage in `src/BikeTracking.Frontend/tests/e2e/dashboard.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T030 [US2] Add snapshot fields to recorded ride events in `src/BikeTracking.Api/Application/Events/RideRecordedEventPayload.cs`
-- [ ] T031 [US2] Add snapshot fields to edited ride events in `src/BikeTracking.Api/Application/Events/RideEditedEventPayload.cs`
-- [ ] T032 [US2] Capture calculation snapshots during ride creation in `src/BikeTracking.Api/Application/Rides/RecordRideService.cs`
-- [ ] T033 [US2] Refresh calculation snapshots during ride edits in `src/BikeTracking.Api/Application/Rides/EditRideService.cs`
-- [ ] T034 [US2] Apply snapshot-first and legacy fallback rules in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs`
+- [x] T030 [US2] Add snapshot fields to recorded ride events in `src/BikeTracking.Api/Application/Events/RideRecordedEventPayload.cs`
+- [x] T031 [US2] Add snapshot fields to edited ride events in `src/BikeTracking.Api/Application/Events/RideEditedEventPayload.cs`
+- [x] T032 [US2] Capture calculation snapshots during ride creation in `src/BikeTracking.Api/Application/Rides/RecordRideService.cs`
+- [x] T033 [US2] Refresh calculation snapshots during ride edits in `src/BikeTracking.Api/Application/Rides/EditRideService.cs`
+- [x] T034 [US2] Apply snapshot-first and legacy fallback rules in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs`
 
 **Checkpoint**: User Story 2 is independently functional when changing user settings no longer rewrites prior ride savings in the dashboard.
 
@@ -101,18 +101,18 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T035 [US3] Extend user settings service tests for dashboard approvals in `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`
-- [ ] T036 [US3] Extend user settings endpoint tests for dashboard approvals in `src/BikeTracking.Api.Tests/Endpoints/UsersEndpointsTests.cs`
-- [ ] T037 [US3] Extend settings page approval tests in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx`
-- [ ] T038 [US3] Add optional-metric approval E2E coverage in `src/BikeTracking.Frontend/tests/e2e/dashboard.spec.ts`
+- [x] T035 [US3] Extend user settings service tests for dashboard approvals in `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`
+- [x] T036 [US3] Extend user settings endpoint tests for dashboard approvals in `src/BikeTracking.Api.Tests/Endpoints/UsersEndpointsTests.cs`
+- [x] T037 [US3] Extend settings page approval tests in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx`
+- [x] T038 [US3] Add optional-metric approval E2E coverage in `src/BikeTracking.Frontend/tests/e2e/dashboard.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T039 [US3] Persist dashboard approval fields in `src/BikeTracking.Api/Application/Users/UserSettingsService.cs`
-- [ ] T040 [US3] Accept and return dashboard approval fields in `src/BikeTracking.Api/Endpoints/UsersEndpoints.cs`
-- [ ] T041 [US3] Extend frontend user settings DTOs in `src/BikeTracking.Frontend/src/services/users-api.ts`
-- [ ] T042 [US3] Add gallons avoided and goal progress approval controls in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx`
-- [ ] T043 [US3] Render optional metric suggestions and approved metrics in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.tsx`
+- [x] T039 [US3] Persist dashboard approval fields in `src/BikeTracking.Api/Application/Users/UserSettingsService.cs`
+- [x] T040 [US3] Accept and return dashboard approval fields in `src/BikeTracking.Api/Endpoints/UsersEndpoints.cs`
+- [x] T041 [US3] Extend frontend user settings DTOs in `src/BikeTracking.Frontend/src/services/users-api.ts`
+- [x] T042 [US3] Add gallons avoided and goal progress approval controls in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx`
+- [x] T043 [US3] Render optional metric suggestions and approved metrics in `src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.tsx`
 
 **Checkpoint**: User Story 3 is independently functional when optional metrics stay hidden until approved and appear only after rider opt-in.
 
@@ -122,9 +122,9 @@
 
 **Purpose**: Final validation and cleanup across stories.
 
-- [ ] T044 [P] Update manual API examples for dashboard and settings approvals in `src/BikeTracking.Api/BikeTracking.Api.http`
-- [ ] T045 Code cleanup and shared helper refactoring in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs`
-- [ ] T046 [P] Run full validation from `specs/012-dashboard-stats/quickstart.md`
+- [x] T044 [P] Update manual API examples for dashboard and settings approvals in `src/BikeTracking.Api/BikeTracking.Api.http`
+- [x] T045 Code cleanup and shared helper refactoring in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs`
+- [x] T046 [P] Run full validation from `specs/012-dashboard-stats/quickstart.md`
 
 ---
 

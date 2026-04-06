@@ -15,6 +15,8 @@ interface SettingsFormSnapshot {
   locationLabel: string | null
   latitude: number | null
   longitude: number | null
+  dashboardGallonsAvoidedEnabled: boolean
+  dashboardGoalProgressEnabled: boolean
 }
 
 function toSnapshot(response: UserSettingsResponse): SettingsFormSnapshot {
@@ -26,6 +28,8 @@ function toSnapshot(response: UserSettingsResponse): SettingsFormSnapshot {
     locationLabel: response.settings.locationLabel,
     latitude: response.settings.latitude,
     longitude: response.settings.longitude,
+    dashboardGallonsAvoidedEnabled: response.settings.dashboardGallonsAvoidedEnabled,
+    dashboardGoalProgressEnabled: response.settings.dashboardGoalProgressEnabled,
   }
 }
 
@@ -42,6 +46,8 @@ export function SettingsPage() {
   const [locationLabel, setLocationLabel] = useState<string>('')
   const [latitude, setLatitude] = useState<number | ''>('')
   const [longitude, setLongitude] = useState<number | ''>('')
+  const [dashboardGallonsAvoidedEnabled, setDashboardGallonsAvoidedEnabled] = useState<boolean>(false)
+  const [dashboardGoalProgressEnabled, setDashboardGoalProgressEnabled] = useState<boolean>(false)
   const [locating, setLocating] = useState<boolean>(false)
   const [initialSnapshot, setInitialSnapshot] = useState<SettingsFormSnapshot>({
     averageCarMpg: null,
@@ -51,6 +57,8 @@ export function SettingsPage() {
     locationLabel: null,
     latitude: null,
     longitude: null,
+    dashboardGallonsAvoidedEnabled: false,
+    dashboardGoalProgressEnabled: false,
   })
 
   const [loading, setLoading] = useState<boolean>(true)
@@ -76,6 +84,8 @@ export function SettingsPage() {
           setLocationLabel(settings.locationLabel ?? '')
           setLatitude(settings.latitude ?? '')
           setLongitude(settings.longitude ?? '')
+          setDashboardGallonsAvoidedEnabled(settings.dashboardGallonsAvoidedEnabled)
+          setDashboardGoalProgressEnabled(settings.dashboardGoalProgressEnabled)
           setInitialSnapshot(toSnapshot(response.data))
         } else {
           setError(response.error?.message ?? 'Failed to load settings')
@@ -141,6 +151,8 @@ export function SettingsPage() {
       locationLabel: normalizeLocationLabel(locationLabel),
       latitude: latitude === '' ? null : latitude,
       longitude: longitude === '' ? null : longitude,
+      dashboardGallonsAvoidedEnabled,
+      dashboardGoalProgressEnabled,
     }
 
     const payload: UserSettingsUpsertRequest = {}
@@ -158,6 +170,18 @@ export function SettingsPage() {
       payload.latitude = currentSnapshot.latitude
     if (currentSnapshot.longitude !== initialSnapshot.longitude)
       payload.longitude = currentSnapshot.longitude
+    if (
+      currentSnapshot.dashboardGallonsAvoidedEnabled !==
+      initialSnapshot.dashboardGallonsAvoidedEnabled
+    ) {
+      payload.dashboardGallonsAvoidedEnabled = currentSnapshot.dashboardGallonsAvoidedEnabled
+    }
+    if (
+      currentSnapshot.dashboardGoalProgressEnabled !==
+      initialSnapshot.dashboardGoalProgressEnabled
+    ) {
+      payload.dashboardGoalProgressEnabled = currentSnapshot.dashboardGoalProgressEnabled
+    }
 
     if (Object.keys(payload).length === 0) {
       setSaving(false)
@@ -176,6 +200,8 @@ export function SettingsPage() {
         setLocationLabel(settings.locationLabel ?? '')
         setLatitude(settings.latitude ?? '')
         setLongitude(settings.longitude ?? '')
+        setDashboardGallonsAvoidedEnabled(settings.dashboardGallonsAvoidedEnabled)
+        setDashboardGoalProgressEnabled(settings.dashboardGoalProgressEnabled)
         setInitialSnapshot(toSnapshot(response.data))
         setSuccess('Settings saved successfully.')
       } else {
@@ -306,6 +332,30 @@ export function SettingsPage() {
                 }
               />
             </div>
+
+            <fieldset className="settings-field settings-checkbox-group">
+              <legend>Dashboard Optional Metrics</legend>
+
+              <label className="settings-checkbox-row" htmlFor="dashboardGallonsAvoidedEnabled">
+                <input
+                  id="dashboardGallonsAvoidedEnabled"
+                  type="checkbox"
+                  checked={dashboardGallonsAvoidedEnabled}
+                  onChange={(e) => setDashboardGallonsAvoidedEnabled(e.target.checked)}
+                />
+                Show gallons avoided metric
+              </label>
+
+              <label className="settings-checkbox-row" htmlFor="dashboardGoalProgressEnabled">
+                <input
+                  id="dashboardGoalProgressEnabled"
+                  type="checkbox"
+                  checked={dashboardGoalProgressEnabled}
+                  onChange={(e) => setDashboardGoalProgressEnabled(e.target.checked)}
+                />
+                Show goal progress metric
+              </label>
+            </fieldset>
           </div>
 
           <div className="settings-actions">

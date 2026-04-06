@@ -20,7 +20,9 @@ public sealed record UserSettingsUpsertRequest(
     decimal? MileageRateCents,
     string? LocationLabel,
     decimal? Latitude,
-    decimal? Longitude
+    decimal? Longitude,
+    bool? DashboardGallonsAvoidedEnabled = null,
+    bool? DashboardGoalProgressEnabled = null
 );
 
 public sealed record UserSettingsView(
@@ -31,7 +33,9 @@ public sealed record UserSettingsView(
     string? LocationLabel,
     decimal? Latitude,
     decimal? Longitude,
-    DateTime? UpdatedAtUtc
+    bool DashboardGallonsAvoidedEnabled = false,
+    bool DashboardGoalProgressEnabled = false,
+    DateTime? UpdatedAtUtc = null
 );
 
 public sealed record UserSettingsResponse(bool HasSettings, UserSettingsView Settings);

@@ -36,13 +36,13 @@ public sealed class RecordRideService(
             );
         }
 
+        var userSettings = await dbContext
+            .UserSettings.AsNoTracking()
+            .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
+
         WeatherData? weatherData = null;
         if (!request.WeatherUserOverridden)
         {
-            var userSettings = await dbContext
-                .UserSettings.AsNoTracking()
-                .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
-
             if (
                 userSettings?.Latitude is decimal latitude
                 && userSettings.Longitude is decimal longitude
@@ -81,6 +81,10 @@ public sealed class RecordRideService(
             RideMinutes = request.RideMinutes,
             Temperature = temperature,
             GasPricePerGallon = request.GasPricePerGallon,
+            SnapshotAverageCarMpg = userSettings?.AverageCarMpg,
+            SnapshotMileageRateCents = userSettings?.MileageRateCents,
+            SnapshotYearlyGoalMiles = userSettings?.YearlyGoalMiles,
+            SnapshotOilChangePrice = userSettings?.OilChangePrice,
             WindSpeedMph = windSpeedMph,
             WindDirectionDeg = windDirectionDeg,
             RelativeHumidityPercent = relativeHumidityPercent,
@@ -105,7 +109,11 @@ public sealed class RecordRideService(
             relativeHumidityPercent: relativeHumidityPercent,
             cloudCoverPercent: cloudCoverPercent,
             precipitationType: precipitationType,
-            weatherUserOverridden: request.WeatherUserOverridden
+            weatherUserOverridden: request.WeatherUserOverridden,
+            snapshotAverageCarMpg: rideEntity.SnapshotAverageCarMpg,
+            snapshotMileageRateCents: rideEntity.SnapshotMileageRateCents,
+            snapshotYearlyGoalMiles: rideEntity.SnapshotYearlyGoalMiles,
+            snapshotOilChangePrice: rideEntity.SnapshotOilChangePrice
         );
 
         logger.LogInformation(

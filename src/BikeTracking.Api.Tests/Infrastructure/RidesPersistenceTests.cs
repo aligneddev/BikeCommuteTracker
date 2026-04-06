@@ -41,6 +41,43 @@ public sealed class RidesPersistenceTests
     }
 
     [Fact]
+    public async Task DbContext_CanRoundTripRideSnapshotFields()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Snapshot Persist Rider",
+            NormalizedName = "snapshot persist rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        context.Rides.Add(
+            new RideEntity
+            {
+                RiderId = user.UserId,
+                RideDateTimeLocal = DateTime.Now,
+                Miles = 14m,
+                RideMinutes = 42,
+                GasPricePerGallon = 3.55m,
+                SnapshotAverageCarMpg = 34.2m,
+                SnapshotMileageRateCents = 67m,
+                SnapshotYearlyGoalMiles = 2500m,
+                SnapshotOilChangePrice = 95m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var retrieved = await context.Rides.SingleAsync();
+        Assert.Equal(34.2m, retrieved.SnapshotAverageCarMpg);
+        Assert.Equal(67m, retrieved.SnapshotMileageRateCents);
+        Assert.Equal(2500m, retrieved.SnapshotYearlyGoalMiles);
+        Assert.Equal(95m, retrieved.SnapshotOilChangePrice);
+    }
+
+    [Fact]
     public async Task DbContext_AllowsNullOptionalFields()
     {
         using var context = CreateDbContext();

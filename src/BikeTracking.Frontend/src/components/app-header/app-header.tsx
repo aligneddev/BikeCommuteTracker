@@ -8,13 +8,13 @@ export function AppHeader() {
   return (
     <header className="app-header">
       <div className="app-header-inner">
-        <NavLink to="/miles" className="app-header-brand">
+        <NavLink to="/dashboard" className="app-header-brand">
           Commute Bike Tracker
         </NavLink>
 
         <nav className="app-header-nav" aria-label="Main navigation">
           <NavLink
-            to="/miles"
+            to="/dashboard"
             className={({ isActive }) =>
               isActive ? 'nav-link nav-link-active' : 'nav-link'
             }

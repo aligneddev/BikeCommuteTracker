@@ -3,6 +3,7 @@ import { AuthProvider } from './context/auth-context'
 import { ProtectedRoute } from './components/protected-route'
 import { LoginPage } from './pages/login/login-page'
 import { SignupPage } from './pages/signup/signup-page'
+import { DashboardPage } from './pages/dashboard/dashboard-page'
 import { MilesShellPage } from './pages/miles/miles-shell-page'
 import { RecordRidePage } from './pages/RecordRidePage'
 import { HistoryPage } from './pages/HistoryPage'
@@ -17,6 +18,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/miles" element={<MilesShellPage />} />
             <Route path="/rides/history" element={<HistoryPage />} />
             <Route path="/rides/record" element={<RecordRidePage />} />

@@ -16,6 +16,10 @@ public sealed record RideRecordedEventPayload(
     int? CloudCoverPercent,
     string? PrecipitationType,
     bool WeatherUserOverridden,
+    decimal? SnapshotAverageCarMpg,
+    decimal? SnapshotMileageRateCents,
+    decimal? SnapshotYearlyGoalMiles,
+    decimal? SnapshotOilChangePrice,
     string Source
 )
 {
@@ -35,6 +39,10 @@ public sealed record RideRecordedEventPayload(
         int? cloudCoverPercent = null,
         string? precipitationType = null,
         bool weatherUserOverridden = false,
+        decimal? snapshotAverageCarMpg = null,
+        decimal? snapshotMileageRateCents = null,
+        decimal? snapshotYearlyGoalMiles = null,
+        decimal? snapshotOilChangePrice = null,
         DateTime? occurredAtUtc = null
     )
     {
@@ -54,6 +62,10 @@ public sealed record RideRecordedEventPayload(
             CloudCoverPercent: cloudCoverPercent,
             PrecipitationType: precipitationType,
             WeatherUserOverridden: weatherUserOverridden,
+            SnapshotAverageCarMpg: snapshotAverageCarMpg,
+            SnapshotMileageRateCents: snapshotMileageRateCents,
+            SnapshotYearlyGoalMiles: snapshotYearlyGoalMiles,
+            SnapshotOilChangePrice: snapshotOilChangePrice,
             Source: SourceName
         );
     }
