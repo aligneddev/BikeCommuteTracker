@@ -130,6 +130,102 @@ public sealed class WeatherLookupServiceTests
     }
 
     [Fact]
+    public async Task GetOrFetchAsync_ForecastRequest_DoesNotCombinePastDaysWithExplicitDateRange()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+
+        await using var context = CreateSqliteContext(connection);
+        await context.Database.EnsureCreatedAsync();
+
+        Uri? capturedRequestUri = null;
+        var handler = new StubHandler(request =>
+        {
+            capturedRequestUri = request.RequestUri;
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    CreateHourlyResponseJson(),
+                    Encoding.UTF8,
+                    "application/json"
+                ),
+            };
+        });
+
+        var factory = new StubHttpClientFactory(
+            new HttpClient(handler) { BaseAddress = new Uri("https://api.open-meteo.com") }
+        );
+        var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
+
+        var service = new OpenMeteoWeatherLookupService(
+            context,
+            factory,
+            config,
+            NullLogger<OpenMeteoWeatherLookupService>.Instance
+        );
+
+        var lookupTime = new DateTime(2026, 4, 2, 9, 34, 0, DateTimeKind.Utc);
+
+        var result = await service.GetOrFetchAsync(40.7128m, -74.0060m, lookupTime);
+
+        Assert.NotNull(result);
+        Assert.NotNull(capturedRequestUri);
+        Assert.Equal("/v1/forecast", capturedRequestUri!.AbsolutePath);
+        Assert.Contains("start_date=2026-04-02", capturedRequestUri.Query);
+        Assert.Contains("end_date=2026-04-02", capturedRequestUri.Query);
+        Assert.DoesNotContain("past_days=", capturedRequestUri.Query);
+    }
+
+    [Fact]
+    public async Task GetOrFetchAsync_ArchiveRequest_UsesArchivePathWithExplicitDateRange()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+
+        await using var context = CreateSqliteContext(connection);
+        await context.Database.EnsureCreatedAsync();
+
+        Uri? capturedRequestUri = null;
+        var handler = new StubHandler(request =>
+        {
+            capturedRequestUri = request.RequestUri;
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    CreateArchiveHourlyResponseJson(),
+                    Encoding.UTF8,
+                    "application/json"
+                ),
+            };
+        });
+
+        var factory = new StubHttpClientFactory(
+            new HttpClient(handler) { BaseAddress = new Uri("https://archive-api.open-meteo.com") }
+        );
+        var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
+
+        var service = new OpenMeteoWeatherLookupService(
+            context,
+            factory,
+            config,
+            NullLogger<OpenMeteoWeatherLookupService>.Instance
+        );
+
+        var lookupTime = new DateTime(2025, 12, 1, 9, 34, 0, DateTimeKind.Utc);
+
+        var result = await service.GetOrFetchAsync(40.7128m, -74.0060m, lookupTime);
+
+        Assert.NotNull(result);
+        Assert.NotNull(capturedRequestUri);
+        Assert.Equal("/v1/archive", capturedRequestUri!.AbsolutePath);
+        Assert.Contains("start_date=2025-12-01", capturedRequestUri.Query);
+        Assert.Contains("end_date=2025-12-01", capturedRequestUri.Query);
+        Assert.DoesNotContain("past_days=", capturedRequestUri.Query);
+    }
+
+    [Fact]
     public async Task GetOrFetchAsync_AfterServiceRestart_UsesPersistedCacheWithoutHttp()
     {
         await using var connection = new SqliteConnection("DataSource=:memory:");
@@ -212,6 +308,25 @@ public sealed class WeatherLookupServiceTests
                 "snowfall": [0.0],
                 "weather_code": [61]
               }
+            }
+            """;
+    }
+
+    private static string CreateArchiveHourlyResponseJson()
+    {
+        return """
+            {
+                "hourly": {
+                    "time": ["2025-12-01T09:00"],
+                    "temperature_2m": [38.5],
+                    "wind_speed_10m": [12.1],
+                    "wind_direction_10m": [215],
+                    "relative_humidity_2m": [74],
+                    "cloud_cover": [60],
+                    "precipitation": [0.0],
+                    "snowfall": [0.0],
+                    "weather_code": [3]
+                }
             }
             """;
     }
