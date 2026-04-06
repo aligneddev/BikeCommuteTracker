@@ -12,6 +12,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<OutboxEventEntity> OutboxEvents => Set<OutboxEventEntity>();
     public DbSet<RideEntity> Rides => Set<RideEntity>();
     public DbSet<GasPriceLookupEntity> GasPriceLookups => Set<GasPriceLookupEntity>();
+    public DbSet<WeatherLookupEntity> WeatherLookups => Set<WeatherLookupEntity>();
     public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -101,6 +102,12 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.RideDateTimeLocal).IsRequired();
             entity.Property(static x => x.Miles).IsRequired();
             entity.Property(static x => x.GasPricePerGallon).HasPrecision(10, 4);
+            entity.Property(static x => x.WindSpeedMph).HasPrecision(10, 4);
+            entity.Property(static x => x.WindDirectionDeg);
+            entity.Property(static x => x.RelativeHumidityPercent);
+            entity.Property(static x => x.CloudCoverPercent);
+            entity.Property(static x => x.PrecipitationType).HasMaxLength(50);
+            entity.Property(static x => x.WeatherUserOverridden).HasDefaultValue(false);
             entity
                 .Property(static x => x.Version)
                 .IsRequired()
@@ -134,6 +141,34 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.RetrievedAtUtc).IsRequired();
 
             entity.HasIndex(static x => x.PriceDate).IsUnique();
+        });
+
+        modelBuilder.Entity<WeatherLookupEntity>(static entity =>
+        {
+            entity.ToTable("WeatherLookups");
+            entity.HasKey(static x => x.WeatherLookupId);
+
+            entity.Property(static x => x.LookupHourUtc).IsRequired();
+            entity.Property(static x => x.LatitudeRounded).IsRequired().HasPrecision(8, 2);
+            entity.Property(static x => x.LongitudeRounded).IsRequired().HasPrecision(8, 2);
+            entity.Property(static x => x.Temperature).HasPrecision(10, 4);
+            entity.Property(static x => x.WindSpeedMph).HasPrecision(10, 4);
+            entity.Property(static x => x.WindDirectionDeg);
+            entity.Property(static x => x.RelativeHumidityPercent);
+            entity.Property(static x => x.CloudCoverPercent);
+            entity.Property(static x => x.PrecipitationType).HasMaxLength(50);
+            entity.Property(static x => x.DataSource).IsRequired().HasMaxLength(100);
+            entity.Property(static x => x.RetrievedAtUtc).IsRequired();
+            entity.Property(static x => x.Status).IsRequired().HasMaxLength(50);
+
+            entity
+                .HasIndex(static x => new
+                {
+                    x.LookupHourUtc,
+                    x.LatitudeRounded,
+                    x.LongitudeRounded,
+                })
+                .IsUnique();
         });
 
         modelBuilder.Entity<UserSettingsEntity>(static entity =>

@@ -9,6 +9,7 @@ import {
   editRide,
   getGasPrice,
   getRideHistory,
+  getRideWeather,
 } from '../services/ridesService'
 import { RideDeleteDialog } from '../components/RideDeleteDialog/RideDeleteDialog'
 import { MileageSummaryCard } from '../components/mileage-summary-card/mileage-summary-card'
@@ -27,12 +28,26 @@ function HistoryTable({
   editingRideId,
   editedRideDateTimeLocal,
   editedMiles,
+  editedTemperature,
+  editedWindSpeedMph,
+  editedWindDirectionDeg,
+  editedRelativeHumidityPercent,
+  editedCloudCoverPercent,
+  editedPrecipitationType,
   editedGasPrice,
   editedGasPriceSource,
+  loadingWeather,
   onStartEdit,
   onEditedRideDateTimeLocalChange,
   onEditedMilesChange,
+  onEditedTemperatureChange,
+  onEditedWindSpeedMphChange,
+  onEditedWindDirectionDegChange,
+  onEditedRelativeHumidityPercentChange,
+  onEditedCloudCoverPercentChange,
+  onEditedPrecipitationTypeChange,
   onEditedGasPriceChange,
+  onLoadWeather,
   onSaveEdit,
   onCancelEdit,
   onStartDelete,
@@ -41,12 +56,26 @@ function HistoryTable({
   editingRideId: number | null
   editedRideDateTimeLocal: string
   editedMiles: string
+  editedTemperature: string
+  editedWindSpeedMph: string
+  editedWindDirectionDeg: string
+  editedRelativeHumidityPercent: string
+  editedCloudCoverPercent: string
+  editedPrecipitationType: string
   editedGasPrice: string
   editedGasPriceSource: string
+  loadingWeather: boolean
   onStartEdit: (ride: RideHistoryRow) => void
   onEditedRideDateTimeLocalChange: (value: string) => void
   onEditedMilesChange: (value: string) => void
+  onEditedTemperatureChange: (value: string) => void
+  onEditedWindSpeedMphChange: (value: string) => void
+  onEditedWindDirectionDegChange: (value: string) => void
+  onEditedRelativeHumidityPercentChange: (value: string) => void
+  onEditedCloudCoverPercentChange: (value: string) => void
+  onEditedPrecipitationTypeChange: (value: string) => void
   onEditedGasPriceChange: (value: string) => void
+  onLoadWeather: () => void
   onSaveEdit: (ride: RideHistoryRow) => void
   onCancelEdit: () => void
   onStartDelete: (ride: RideHistoryRow) => void
@@ -104,7 +133,63 @@ function HistoryTable({
               )}
             </td>
             <td>{formatRideDuration(ride.rideMinutes) || 'N/A'}</td>
-            <td>{formatTemperature(ride.temperature) || 'N/A'}</td>
+            <td>
+              {editingRideId === ride.rideId ? (
+                <div className="history-page-inline-editor">
+                  <label htmlFor={`edit-ride-temperature-${ride.rideId}`}>Temperature</label>
+                  <input
+                    id={`edit-ride-temperature-${ride.rideId}`}
+                    type="number"
+                    step="0.1"
+                    value={editedTemperature}
+                    onChange={(event) => onEditedTemperatureChange(event.target.value)}
+                  />
+                  <label htmlFor={`edit-ride-wind-speed-${ride.rideId}`}>Wind Speed</label>
+                  <input
+                    id={`edit-ride-wind-speed-${ride.rideId}`}
+                    type="number"
+                    step="0.1"
+                    value={editedWindSpeedMph}
+                    onChange={(event) => onEditedWindSpeedMphChange(event.target.value)}
+                  />
+                  <label htmlFor={`edit-ride-wind-direction-${ride.rideId}`}>Wind Direction</label>
+                  <input
+                    id={`edit-ride-wind-direction-${ride.rideId}`}
+                    type="number"
+                    value={editedWindDirectionDeg}
+                    onChange={(event) => onEditedWindDirectionDegChange(event.target.value)}
+                  />
+                  <label htmlFor={`edit-ride-relative-humidity-${ride.rideId}`}>Relative Humidity</label>
+                  <input
+                    id={`edit-ride-relative-humidity-${ride.rideId}`}
+                    type="number"
+                    value={editedRelativeHumidityPercent}
+                    onChange={(event) =>
+                      onEditedRelativeHumidityPercentChange(event.target.value)
+                    }
+                  />
+                  <label htmlFor={`edit-ride-cloud-cover-${ride.rideId}`}>Cloud Cover</label>
+                  <input
+                    id={`edit-ride-cloud-cover-${ride.rideId}`}
+                    type="number"
+                    value={editedCloudCoverPercent}
+                    onChange={(event) => onEditedCloudCoverPercentChange(event.target.value)}
+                  />
+                  <label htmlFor={`edit-ride-precipitation-type-${ride.rideId}`}>Precipitation Type</label>
+                  <input
+                    id={`edit-ride-precipitation-type-${ride.rideId}`}
+                    type="text"
+                    value={editedPrecipitationType}
+                    onChange={(event) => onEditedPrecipitationTypeChange(event.target.value)}
+                  />
+                  <button type="button" onClick={onLoadWeather} disabled={loadingWeather}>
+                    {loadingWeather ? 'Loading Weather...' : 'Load Weather'}
+                  </button>
+                </div>
+              ) : (
+                formatTemperature(ride.temperature) || 'N/A'
+              )}
+            </td>
             <td>
               {editingRideId === ride.rideId ? (
                 <div className="history-page-inline-editor">
@@ -172,9 +257,42 @@ export function HistoryPage() {
   const [editingRideId, setEditingRideId] = useState<number | null>(null)
   const [editedRideDateTimeLocal, setEditedRideDateTimeLocal] = useState<string>('')
   const [editedMiles, setEditedMiles] = useState<string>('')
+  const [editedTemperature, setEditedTemperature] = useState<string>('')
+  const [editedWindSpeedMph, setEditedWindSpeedMph] = useState<string>('')
+  const [editedWindDirectionDeg, setEditedWindDirectionDeg] = useState<string>('')
+  const [editedRelativeHumidityPercent, setEditedRelativeHumidityPercent] = useState<string>('')
+  const [editedCloudCoverPercent, setEditedCloudCoverPercent] = useState<string>('')
+  const [editedPrecipitationType, setEditedPrecipitationType] = useState<string>('')
+  const [weatherEditedManually, setWeatherEditedManually] = useState<boolean>(false)
   const [editedGasPrice, setEditedGasPrice] = useState<string>('')
   const [editedGasPriceSource, setEditedGasPriceSource] = useState<string>('')
+  const [loadingWeather, setLoadingWeather] = useState<boolean>(false)
   const [ridePendingDelete, setRidePendingDelete] = useState<RideHistoryRow | null>(null)
+
+  function applyLoadedWeather(weather: {
+    temperature?: number
+    windSpeedMph?: number
+    windDirectionDeg?: number
+    relativeHumidityPercent?: number
+    cloudCoverPercent?: number
+    precipitationType?: string
+  }): void {
+    setEditedTemperature(weather.temperature != null ? weather.temperature.toString() : '')
+    setEditedWindSpeedMph(weather.windSpeedMph != null ? weather.windSpeedMph.toString() : '')
+    setEditedWindDirectionDeg(
+      weather.windDirectionDeg != null ? weather.windDirectionDeg.toString() : ''
+    )
+    setEditedRelativeHumidityPercent(
+      weather.relativeHumidityPercent != null
+        ? weather.relativeHumidityPercent.toString()
+        : ''
+    )
+    setEditedCloudCoverPercent(
+      weather.cloudCoverPercent != null ? weather.cloudCoverPercent.toString() : ''
+    )
+    setEditedPrecipitationType(weather.precipitationType ?? '')
+    setWeatherEditedManually(false)
+  }
 
   async function loadHistory(params: GetRideHistoryParams): Promise<void> {
     setIsLoading(true)
@@ -212,6 +330,19 @@ export function HistoryPage() {
     setEditingRideId(ride.rideId)
     setEditedRideDateTimeLocal(ride.rideDateTimeLocal.slice(0, 16))
     setEditedMiles(ride.miles.toFixed(1))
+    setEditedTemperature(ride.temperature != null ? ride.temperature.toString() : '')
+    setEditedWindSpeedMph(ride.windSpeedMph != null ? ride.windSpeedMph.toString() : '')
+    setEditedWindDirectionDeg(
+      ride.windDirectionDeg != null ? ride.windDirectionDeg.toString() : ''
+    )
+    setEditedRelativeHumidityPercent(
+      ride.relativeHumidityPercent != null ? ride.relativeHumidityPercent.toString() : ''
+    )
+    setEditedCloudCoverPercent(
+      ride.cloudCoverPercent != null ? ride.cloudCoverPercent.toString() : ''
+    )
+    setEditedPrecipitationType(ride.precipitationType ?? '')
+    setWeatherEditedManually(false)
     setEditedGasPrice(
       ride.gasPricePerGallon != null ? ride.gasPricePerGallon.toFixed(4) : ''
     )
@@ -221,8 +352,35 @@ export function HistoryPage() {
     setEditingRideId(null)
     setEditedRideDateTimeLocal('')
     setEditedMiles('')
+    setEditedTemperature('')
+    setEditedWindSpeedMph('')
+    setEditedWindDirectionDeg('')
+    setEditedRelativeHumidityPercent('')
+    setEditedCloudCoverPercent('')
+    setEditedPrecipitationType('')
+    setWeatherEditedManually(false)
     setEditedGasPrice('')
     setEditedGasPriceSource('')
+  }
+
+  async function handleLoadWeather(): Promise<void> {
+    if (!editedRideDateTimeLocal) {
+      setError('Ride date/time is required to load weather')
+      return
+    }
+
+    setLoadingWeather(true)
+    setError('')
+
+    try {
+      const weather = await getRideWeather(editedRideDateTimeLocal)
+      applyLoadedWeather(weather)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load weather'
+      setError(message)
+    } finally {
+      setLoadingWeather(false)
+    }
   }
 
   useEffect(() => {
@@ -283,12 +441,33 @@ export function HistoryPage() {
       }
     }
 
+    const temperatureValue =
+      editedTemperature.length > 0 ? Number(editedTemperature) : undefined
+    const windSpeedMphValue =
+      editedWindSpeedMph.length > 0 ? Number(editedWindSpeedMph) : undefined
+    const windDirectionDegValue =
+      editedWindDirectionDeg.length > 0 ? Number(editedWindDirectionDeg) : undefined
+    const relativeHumidityPercentValue =
+      editedRelativeHumidityPercent.length > 0
+        ? Number(editedRelativeHumidityPercent)
+        : undefined
+    const cloudCoverPercentValue =
+      editedCloudCoverPercent.length > 0 ? Number(editedCloudCoverPercent) : undefined
+    const precipitationTypeValue =
+      editedPrecipitationType.length > 0 ? editedPrecipitationType : undefined
+
     const result = await editRide(ride.rideId, {
       rideDateTimeLocal: editedRideDateTimeLocal || ride.rideDateTimeLocal,
       miles: milesValue,
       rideMinutes: ride.rideMinutes,
-      temperature: ride.temperature,
+      temperature: temperatureValue,
       gasPricePerGallon: gasPriceValue,
+      windSpeedMph: windSpeedMphValue,
+      windDirectionDeg: windDirectionDegValue,
+      relativeHumidityPercent: relativeHumidityPercentValue,
+      cloudCoverPercent: cloudCoverPercentValue,
+      precipitationType: precipitationTypeValue,
+      weatherUserOverridden: weatherEditedManually,
       // Version tokens are added to history rows in later tasks; use baseline v1 for now.
       expectedVersion: 1,
     })
@@ -308,6 +487,13 @@ export function HistoryPage() {
     setEditingRideId(null)
     setEditedRideDateTimeLocal('')
     setEditedMiles('')
+    setEditedTemperature('')
+    setEditedWindSpeedMph('')
+    setEditedWindDirectionDeg('')
+    setEditedRelativeHumidityPercent('')
+    setEditedCloudCoverPercent('')
+    setEditedPrecipitationType('')
+    setWeatherEditedManually(false)
     setEditedGasPrice('')
     setEditedGasPriceSource('')
 
@@ -440,15 +626,47 @@ export function HistoryPage() {
           editingRideId={editingRideId}
           editedRideDateTimeLocal={editedRideDateTimeLocal}
           editedMiles={editedMiles}
+          editedTemperature={editedTemperature}
+          editedWindSpeedMph={editedWindSpeedMph}
+          editedWindDirectionDeg={editedWindDirectionDeg}
+          editedRelativeHumidityPercent={editedRelativeHumidityPercent}
+          editedCloudCoverPercent={editedCloudCoverPercent}
+          editedPrecipitationType={editedPrecipitationType}
           editedGasPrice={editedGasPrice}
           editedGasPriceSource={editedGasPriceSource}
+          loadingWeather={loadingWeather}
           onStartEdit={handleStartEdit}
           onEditedRideDateTimeLocalChange={setEditedRideDateTimeLocal}
           onEditedMilesChange={setEditedMiles}
+          onEditedTemperatureChange={(value) => {
+            setEditedTemperature(value)
+            setWeatherEditedManually(true)
+          }}
+          onEditedWindSpeedMphChange={(value) => {
+            setEditedWindSpeedMph(value)
+            setWeatherEditedManually(true)
+          }}
+          onEditedWindDirectionDegChange={(value) => {
+            setEditedWindDirectionDeg(value)
+            setWeatherEditedManually(true)
+          }}
+          onEditedRelativeHumidityPercentChange={(value) => {
+            setEditedRelativeHumidityPercent(value)
+            setWeatherEditedManually(true)
+          }}
+          onEditedCloudCoverPercentChange={(value) => {
+            setEditedCloudCoverPercent(value)
+            setWeatherEditedManually(true)
+          }}
+          onEditedPrecipitationTypeChange={(value) => {
+            setEditedPrecipitationType(value)
+            setWeatherEditedManually(true)
+          }}
           onEditedGasPriceChange={(value) => {
             setEditedGasPrice(value)
             setEditedGasPriceSource('')
           }}
+          onLoadWeather={() => void handleLoadWeather()}
           onSaveEdit={(ride) => void handleSaveEdit(ride)}
           onCancelEdit={handleCancelEdit}
           onStartDelete={handleStartDelete}

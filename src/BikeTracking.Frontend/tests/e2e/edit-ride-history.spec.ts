@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createAndLoginUser, uniqueUser } from "./support/auth-helpers";
+import {
+  createAndLoginUser,
+  saveUserLocation,
+  uniqueUser,
+} from "./support/auth-helpers";
 import { recordRide } from "./support/ride-helpers";
 
 // E2E scenarios for spec-006-edit-ride-history
@@ -165,5 +169,51 @@ test.describe("006-edit-ride-history e2e", () => {
     await expect(
       page.getByLabel("Visible total miles").getByText("10.0 mi"),
     ).toBeVisible();
+  });
+
+  test("loads weather into edit form before save", async ({ page }) => {
+    const userName = uniqueUser("e2e-edit-load-weather");
+    await createAndLoginUser(page, userName, "87654321");
+    await saveUserLocation(page, "40.71", "-74.01");
+
+    await page.route("**/api/rides/weather**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          rideDateTimeLocal: "2026-03-20T10:30:00",
+          temperature: 51.5,
+          windSpeedMph: 8.4,
+          windDirectionDeg: 195,
+          relativeHumidityPercent: 77,
+          cloudCoverPercent: 66,
+          precipitationType: "snow",
+          isAvailable: true,
+        }),
+      });
+    });
+
+    const now = new Date();
+    const rideDateTimeLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-02T10:30`;
+
+    await recordRide(page, {
+      rideDateTimeLocal,
+      miles: "5.0",
+      rideMinutes: "30",
+    });
+
+    await page.goto("/rides/history");
+    await expect(
+      page.getByRole("table", { name: /ride history table/i }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Edit" }).first().click();
+    await page.getByLabel("Temperature").first().fill("");
+    await page.getByLabel("Wind Speed").first().fill("");
+
+    await page.getByRole("button", { name: "Load Weather" }).click();
+
+    await expect(page.getByLabel("Temperature").first()).toHaveValue("51.5");
+    await expect(page.getByLabel("Wind Speed").first()).toHaveValue("8.4");
   });
 });

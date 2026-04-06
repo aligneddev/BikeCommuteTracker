@@ -151,6 +151,47 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
+    public async Task GetRideDefaults_WithWeatherOnPreviousRide_ReturnsWeatherDefaults()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherDefaults");
+
+        using (var scope = host.App.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+            dbContext.Rides.Add(
+                new RideEntity
+                {
+                    RiderId = userId,
+                    RideDateTimeLocal = DateTime.Now.AddHours(-3),
+                    Miles = 6.6m,
+                    RideMinutes = 24,
+                    Temperature = 61m,
+                    WindSpeedMph = 10.3m,
+                    WindDirectionDeg = 255,
+                    RelativeHumidityPercent = 71,
+                    CloudCoverPercent = 48,
+                    PrecipitationType = "snow",
+                    WeatherUserOverridden = true,
+                    CreatedAtUtc = DateTime.UtcNow,
+                }
+            );
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await host.Client.GetWithAuthAsync("/api/rides/defaults", userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RideDefaultsResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(10.3m, payload.DefaultWindSpeedMph);
+        Assert.Equal(255, payload.DefaultWindDirectionDeg);
+        Assert.Equal(71, payload.DefaultRelativeHumidityPercent);
+        Assert.Equal(48, payload.DefaultCloudCoverPercent);
+        Assert.Equal("snow", payload.DefaultPrecipitationType);
+    }
+
+    [Fact]
     public async Task GetGasPrice_WithValidDate_ReturnsShape()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -194,6 +235,61 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
+    public async Task GetRideWeather_WithConfiguredLocation_ReturnsWeatherData()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherPreview");
+        await host.SeedUserSettingsAsync(userId, latitude: 40.71m, longitude: -74.01m);
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/weather?rideDateTimeLocal=2026-03-20T10:30:00",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RideWeatherResponse>();
+        Assert.NotNull(payload);
+        Assert.True(payload.IsAvailable);
+        Assert.Equal(72.5m, payload.Temperature);
+        Assert.Equal(10.3m, payload.WindSpeedMph);
+        Assert.Equal(250, payload.WindDirectionDeg);
+        Assert.Equal(65, payload.RelativeHumidityPercent);
+        Assert.Equal(30, payload.CloudCoverPercent);
+    }
+
+    [Fact]
+    public async Task GetRideWeather_WithInvalidDateTime_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherPreviewBadDate");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/weather?rideDateTimeLocal=not-a-date-time",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetRideWeather_WithoutLocation_ReturnsUnavailableShape()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherPreviewNoLocation");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/weather?rideDateTimeLocal=2026-03-20T10:30:00",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RideWeatherResponse>();
+        Assert.NotNull(payload);
+        Assert.False(payload.IsAvailable);
+        Assert.Null(payload.Temperature);
+    }
+
+    [Fact]
     public async Task PostRecordRide_WithGasPrice_PersistsGasPrice()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -217,6 +313,44 @@ public sealed class RidesEndpointsTests
         var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
         var ride = await dbContext.Rides.SingleAsync(r => r.Id == payload.RideId);
         Assert.Equal(3.2777m, ride.GasPricePerGallon);
+    }
+
+    [Fact]
+    public async Task PostRecordRide_WithWeatherFields_PersistsWeatherSnapshot()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherPersist");
+
+        var request = new RecordRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 9.4m,
+            RideMinutes: 34,
+            Temperature: 57m,
+            GasPricePerGallon: 3.1010m,
+            WindSpeedMph: 12.2m,
+            WindDirectionDeg: 275,
+            RelativeHumidityPercent: 64,
+            CloudCoverPercent: 52,
+            PrecipitationType: "rain",
+            WeatherUserOverridden: true
+        );
+
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RecordRideSuccessResponse>();
+        Assert.NotNull(payload);
+
+        using var scope = host.App.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+        var ride = await dbContext.Rides.SingleAsync(r => r.Id == payload.RideId);
+
+        Assert.Equal(12.2m, ride.WindSpeedMph);
+        Assert.Equal(275, ride.WindDirectionDeg);
+        Assert.Equal(64, ride.RelativeHumidityPercent);
+        Assert.Equal(52, ride.CloudCoverPercent);
+        Assert.Equal("rain", ride.PrecipitationType);
+        Assert.True(ride.WeatherUserOverridden);
     }
 
     [Fact]
@@ -655,6 +789,7 @@ public sealed class RidesEndpointsTests
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
             builder.Services.AddScoped<IGasPriceLookupService, StubGasPriceLookupService>();
+            builder.Services.AddScoped<IWeatherLookupService, StubWeatherLookupService>();
 
             var app = builder.Build();
             app.UseAuthentication();
@@ -681,6 +816,24 @@ public sealed class RidesEndpointsTests
             dbContext.Users.Add(user);
             await dbContext.SaveChangesAsync();
             return user.UserId;
+        }
+
+        public async Task SeedUserSettingsAsync(long userId, decimal latitude, decimal longitude)
+        {
+            using var scope = app.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+
+            dbContext.UserSettings.Add(
+                new UserSettingsEntity
+                {
+                    UserId = userId,
+                    Latitude = latitude,
+                    Longitude = longitude,
+                    UpdatedAtUtc = DateTime.UtcNow,
+                }
+            );
+
+            await dbContext.SaveChangesAsync();
         }
 
         public async Task<int> RecordRideAsync(
@@ -810,5 +963,32 @@ internal sealed class StubGasPriceLookupService : IGasPriceLookupService
         }
 
         return Task.FromResult<decimal?>(null);
+    }
+}
+
+internal sealed class StubWeatherLookupService : IWeatherLookupService
+{
+    public Task<WeatherData?> GetOrFetchAsync(
+        decimal latitude,
+        decimal longitude,
+        DateTime dateTimeUtc,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (latitude == 40.71m && longitude == -74.01m)
+        {
+            return Task.FromResult<WeatherData?>(
+                new WeatherData(
+                    Temperature: 72.5m,
+                    WindSpeedMph: 10.3m,
+                    WindDirectionDeg: 250,
+                    RelativeHumidityPercent: 65,
+                    CloudCoverPercent: 30,
+                    PrecipitationType: null
+                )
+            );
+        }
+
+        return Task.FromResult<WeatherData?>(null);
     }
 }

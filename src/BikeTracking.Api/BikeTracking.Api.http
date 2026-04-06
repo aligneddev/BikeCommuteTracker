@@ -17,8 +17,31 @@ X-User-Id: {{RiderId}}
   "temperature": 54
 }
 
+### Record a ride (weather fields)
+POST {{ApiService_HostAddress}}/api/rides
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "rideDateTimeLocal": "2026-03-26T07:30:00",
+  "miles": 18.4,
+  "rideMinutes": 58,
+  "temperature": 54,
+  "windSpeedMph": 8.2,
+  "windDirectionDeg": 265,
+  "relativeHumidityPercent": 70,
+  "cloudCoverPercent": 35,
+  "precipitationType": "rain",
+  "weatherUserOverridden": true
+}
+
 ### Get ride defaults
 GET {{ApiService_HostAddress}}/api/rides/defaults
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Load weather for create/edit form
+GET {{ApiService_HostAddress}}/api/rides/weather?rideDateTimeLocal=2026-03-26T07:30:00
 Accept: application/json
 X-User-Id: {{RiderId}}
 
@@ -94,6 +117,25 @@ X-User-Id: {{RiderId}}
   "miles": 19.5,
   "rideMinutes": 62,
   "temperature": 56,
+  "expectedVersion": 1
+}
+
+### Edit ride (weather fields)
+PUT {{ApiService_HostAddress}}/api/rides/1
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "rideDateTimeLocal": "2026-03-26T08:00:00",
+  "miles": 19.5,
+  "rideMinutes": 62,
+  "temperature": 56,
+  "windSpeedMph": 11.4,
+  "windDirectionDeg": 250,
+  "relativeHumidityPercent": 66,
+  "cloudCoverPercent": 40,
+  "precipitationType": "snow",
+  "weatherUserOverridden": true,
   "expectedVersion": 1
 }
 

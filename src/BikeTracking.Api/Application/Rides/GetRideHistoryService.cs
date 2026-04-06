@@ -117,7 +117,12 @@ public sealed class GetRideHistoryService(BikeTrackingDbContext dbContext)
                 Miles: r.Miles,
                 RideMinutes: r.RideMinutes,
                 Temperature: r.Temperature,
-                GasPricePerGallon: r.GasPricePerGallon
+                GasPricePerGallon: r.GasPricePerGallon,
+                WindSpeedMph: r.WindSpeedMph,
+                WindDirectionDeg: r.WindDirectionDeg,
+                RelativeHumidityPercent: r.RelativeHumidityPercent,
+                CloudCoverPercent: r.CloudCoverPercent,
+                PrecipitationType: r.PrecipitationType
             ))
             .ToList();
 

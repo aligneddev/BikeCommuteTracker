@@ -15,7 +15,18 @@ public sealed record RecordRideRequest(
         int? RideMinutes = null,
     decimal? Temperature = null,
     [property: Range(0.01, 999.9999, ErrorMessage = "Gas price must be between 0.01 and 999.9999")]
-        decimal? GasPricePerGallon = null
+        decimal? GasPricePerGallon = null,
+    [property: Range(0, 500, ErrorMessage = "Wind speed must be between 0 and 500 mph")]
+        decimal? WindSpeedMph = null,
+    [property: Range(0, 360, ErrorMessage = "Wind direction must be between 0 and 360 degrees")]
+        int? WindDirectionDeg = null,
+    [property: Range(0, 100, ErrorMessage = "Relative humidity must be between 0 and 100")]
+        int? RelativeHumidityPercent = null,
+    [property: Range(0, 100, ErrorMessage = "Cloud cover must be between 0 and 100")]
+        int? CloudCoverPercent = null,
+    [property: MaxLength(50, ErrorMessage = "Precipitation type must be 50 characters or fewer")]
+        string? PrecipitationType = null,
+    bool WeatherUserOverridden = false
 );
 
 public sealed record RecordRideSuccessResponse(
@@ -31,7 +42,12 @@ public sealed record RideDefaultsResponse(
     decimal? DefaultMiles = null,
     int? DefaultRideMinutes = null,
     decimal? DefaultTemperature = null,
-    decimal? DefaultGasPricePerGallon = null
+    decimal? DefaultGasPricePerGallon = null,
+    decimal? DefaultWindSpeedMph = null,
+    int? DefaultWindDirectionDeg = null,
+    int? DefaultRelativeHumidityPercent = null,
+    int? DefaultCloudCoverPercent = null,
+    string? DefaultPrecipitationType = null
 );
 
 public sealed record GasPriceResponse(
@@ -39,6 +55,17 @@ public sealed record GasPriceResponse(
     decimal? PricePerGallon,
     bool IsAvailable,
     string? DataSource
+);
+
+public sealed record RideWeatherResponse(
+    DateTime RideDateTimeLocal,
+    decimal? Temperature,
+    decimal? WindSpeedMph,
+    int? WindDirectionDeg,
+    int? RelativeHumidityPercent,
+    int? CloudCoverPercent,
+    string? PrecipitationType,
+    bool IsAvailable
 );
 
 public sealed record QuickRideOption(decimal Miles, int RideMinutes, DateTime LastUsedAtLocal);
@@ -67,7 +94,18 @@ public sealed record EditRideRequest(
         999.9999,
         ErrorMessage = "Gas price must be greater than 0.01 and less than or equal to 999.9999"
     )]
-        decimal? GasPricePerGallon = null
+        decimal? GasPricePerGallon = null,
+    [property: Range(0, 500, ErrorMessage = "Wind speed must be between 0 and 500 mph")]
+        decimal? WindSpeedMph = null,
+    [property: Range(0, 360, ErrorMessage = "Wind direction must be between 0 and 360 degrees")]
+        int? WindDirectionDeg = null,
+    [property: Range(0, 100, ErrorMessage = "Relative humidity must be between 0 and 100")]
+        int? RelativeHumidityPercent = null,
+    [property: Range(0, 100, ErrorMessage = "Cloud cover must be between 0 and 100")]
+        int? CloudCoverPercent = null,
+    [property: MaxLength(50, ErrorMessage = "Precipitation type must be 50 characters or fewer")]
+        string? PrecipitationType = null,
+    bool WeatherUserOverridden = false
 );
 
 public sealed record EditRideResponse(long RideId, int NewVersion, string Message);
@@ -92,7 +130,13 @@ public sealed record RideHistoryRow(
     decimal Miles,
     int? RideMinutes = null,
     decimal? Temperature = null,
-    decimal? GasPricePerGallon = null
+    decimal? GasPricePerGallon = null,
+    decimal? WindSpeedMph = null,
+    int? WindDirectionDeg = null,
+    int? RelativeHumidityPercent = null,
+    int? CloudCoverPercent = null,
+    string? PrecipitationType = null,
+    bool WeatherUserOverridden = false
 );
 
 /// <summary>

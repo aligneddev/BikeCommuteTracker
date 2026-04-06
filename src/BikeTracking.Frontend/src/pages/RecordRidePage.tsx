@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { QuickRideOption, RecordRideRequest } from '../services/ridesService'
 import {
   getGasPrice,
+  getRideWeather,
   getQuickRideOptions,
   recordRide,
   getRideDefaults,
@@ -14,14 +15,65 @@ export function RecordRidePage() {
   const [miles, setMiles] = useState<string>('')
   const [rideMinutes, setRideMinutes] = useState<string>('')
   const [temperature, setTemperature] = useState<string>('')
+  const [windSpeedMph, setWindSpeedMph] = useState<string>('')
+  const [windDirectionDeg, setWindDirectionDeg] = useState<string>('')
+  const [relativeHumidityPercent, setRelativeHumidityPercent] = useState<string>('')
+  const [cloudCoverPercent, setCloudCoverPercent] = useState<string>('')
+  const [precipitationType, setPrecipitationType] = useState<string>('')
+  const [weatherEdited, setWeatherEdited] = useState<boolean>(false)
   const [gasPrice, setGasPrice] = useState<string>('')
   const [gasPriceSource, setGasPriceSource] = useState<string>('')
   const [quickRideOptions, setQuickRideOptions] = useState<QuickRideOption[]>([])
 
   const [loading, setLoading] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
+  const [loadingWeather, setLoadingWeather] = useState<boolean>(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string>('')
+
+  const applyLoadedWeather = (weather: {
+    temperature?: number
+    windSpeedMph?: number
+    windDirectionDeg?: number
+    relativeHumidityPercent?: number
+    cloudCoverPercent?: number
+    precipitationType?: string
+  }) => {
+    setTemperature(weather.temperature != null ? weather.temperature.toString() : '')
+    setWindSpeedMph(weather.windSpeedMph != null ? weather.windSpeedMph.toString() : '')
+    setWindDirectionDeg(
+      weather.windDirectionDeg != null ? weather.windDirectionDeg.toString() : ''
+    )
+    setRelativeHumidityPercent(
+      weather.relativeHumidityPercent != null
+        ? weather.relativeHumidityPercent.toString()
+        : ''
+    )
+    setCloudCoverPercent(
+      weather.cloudCoverPercent != null ? weather.cloudCoverPercent.toString() : ''
+    )
+    setPrecipitationType(weather.precipitationType ?? '')
+    setWeatherEdited(false)
+  }
+
+  const handleLoadWeather = async () => {
+    if (!rideDateTimeLocal) {
+      setErrorMessage('Ride date/time is required to load weather')
+      return
+    }
+
+    setLoadingWeather(true)
+    setErrorMessage('')
+
+    try {
+      const weather = await getRideWeather(rideDateTimeLocal)
+      applyLoadedWeather(weather)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to load weather')
+    } finally {
+      setLoadingWeather(false)
+    }
+  }
 
   const loadQuickRideOptions = async () => {
     try {
@@ -50,6 +102,16 @@ export function RecordRidePage() {
             setRideMinutes(defaults.defaultRideMinutes.toString())
           if (defaults.defaultTemperature)
             setTemperature(defaults.defaultTemperature.toString())
+          if (defaults.defaultWindSpeedMph)
+            setWindSpeedMph(defaults.defaultWindSpeedMph.toString())
+          if (defaults.defaultWindDirectionDeg)
+            setWindDirectionDeg(defaults.defaultWindDirectionDeg.toString())
+          if (defaults.defaultRelativeHumidityPercent)
+            setRelativeHumidityPercent(defaults.defaultRelativeHumidityPercent.toString())
+          if (defaults.defaultCloudCoverPercent)
+            setCloudCoverPercent(defaults.defaultCloudCoverPercent.toString())
+          if (defaults.defaultPrecipitationType)
+            setPrecipitationType(defaults.defaultPrecipitationType)
           if (defaults.defaultGasPricePerGallon)
             setGasPrice(defaults.defaultGasPricePerGallon.toString())
         }
@@ -152,6 +214,14 @@ export function RecordRidePage() {
         miles: milesNum,
         rideMinutes: rideMinutes ? parseInt(rideMinutes) : undefined,
         temperature: temperature ? parseFloat(temperature) : undefined,
+        windSpeedMph: windSpeedMph ? parseFloat(windSpeedMph) : undefined,
+        windDirectionDeg: windDirectionDeg ? parseInt(windDirectionDeg) : undefined,
+        relativeHumidityPercent: relativeHumidityPercent
+          ? parseInt(relativeHumidityPercent)
+          : undefined,
+        cloudCoverPercent: cloudCoverPercent ? parseInt(cloudCoverPercent) : undefined,
+        precipitationType: precipitationType || undefined,
+        weatherUserOverridden: weatherEdited,
         gasPricePerGallon: gasPrice ? parseFloat(gasPrice) : undefined,
       }
 
@@ -165,6 +235,12 @@ export function RecordRidePage() {
         setMiles('')
         setRideMinutes('')
         setTemperature('')
+        setWindSpeedMph('')
+        setWindDirectionDeg('')
+        setRelativeHumidityPercent('')
+        setCloudCoverPercent('')
+        setPrecipitationType('')
+        setWeatherEdited(false)
         setGasPrice('')
         setGasPriceSource('')
         setSuccessMessage('')
@@ -255,8 +331,83 @@ export function RecordRidePage() {
             type="number"
             step="0.1"
             value={temperature}
-            onChange={(e) => setTemperature(e.target.value)}
+            onChange={(e) => {
+              setTemperature(e.target.value)
+              setWeatherEdited(true)
+            }}
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="windSpeedMph">Wind Speed (mph, optional)</label>
+          <input
+            id="windSpeedMph"
+            type="number"
+            step="0.1"
+            value={windSpeedMph}
+            onChange={(e) => {
+              setWindSpeedMph(e.target.value)
+              setWeatherEdited(true)
+            }}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="windDirectionDeg">Wind Direction (deg, optional)</label>
+          <input
+            id="windDirectionDeg"
+            type="number"
+            value={windDirectionDeg}
+            onChange={(e) => {
+              setWindDirectionDeg(e.target.value)
+              setWeatherEdited(true)
+            }}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="relativeHumidityPercent">Relative Humidity (%, optional)</label>
+          <input
+            id="relativeHumidityPercent"
+            type="number"
+            value={relativeHumidityPercent}
+            onChange={(e) => {
+              setRelativeHumidityPercent(e.target.value)
+              setWeatherEdited(true)
+            }}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="cloudCoverPercent">Cloud Cover (%, optional)</label>
+          <input
+            id="cloudCoverPercent"
+            type="number"
+            value={cloudCoverPercent}
+            onChange={(e) => {
+              setCloudCoverPercent(e.target.value)
+              setWeatherEdited(true)
+            }}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="precipitationType">Precipitation Type (optional)</label>
+          <input
+            id="precipitationType"
+            type="text"
+            value={precipitationType}
+            onChange={(e) => {
+              setPrecipitationType(e.target.value)
+              setWeatherEdited(true)
+            }}
+          />
+        </div>
+
+        <div className="form-group">
+          <button type="button" onClick={() => void handleLoadWeather()} disabled={loadingWeather}>
+            {loadingWeather ? 'Loading Weather...' : 'Load Weather'}
+          </button>
         </div>
 
         <div className="form-group">

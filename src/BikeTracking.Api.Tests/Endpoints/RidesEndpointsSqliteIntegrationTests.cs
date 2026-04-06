@@ -75,6 +75,7 @@ public sealed class RidesEndpointsSqliteIntegrationTests
             builder.Services.AddScoped<EditRideService>();
             builder.Services.AddScoped<DeleteRideService>();
             builder.Services.AddScoped<IGasPriceLookupService, StubGasPriceLookupService>();
+            builder.Services.AddScoped<IWeatherLookupService, StubWeatherLookupService>();
 
             var app = builder.Build();
 

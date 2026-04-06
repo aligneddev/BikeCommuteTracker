@@ -7,6 +7,7 @@ import { RecordRidePage } from '../pages/RecordRidePage'
 vi.mock('../services/ridesService', () => ({
   getRideDefaults: vi.fn(),
   getGasPrice: vi.fn(),
+  getRideWeather: vi.fn(),
   getQuickRideOptions: vi.fn(),
   recordRide: vi.fn(),
 }))
@@ -15,6 +16,7 @@ import * as ridesService from '../services/ridesService'
 
 const mockGetRideDefaults = vi.mocked(ridesService.getRideDefaults)
 const mockGetGasPrice = vi.mocked(ridesService.getGasPrice)
+const mockGetRideWeather = vi.mocked(ridesService.getRideWeather)
 const mockGetQuickRideOptions = vi.mocked(ridesService.getQuickRideOptions)
 const mockRecordRide = vi.mocked(ridesService.recordRide)
 
@@ -30,6 +32,16 @@ describe('RecordRidePage', () => {
     mockGetQuickRideOptions.mockResolvedValue({
       options: [],
       generatedAtUtc: new Date().toISOString(),
+    })
+    mockGetRideWeather.mockResolvedValue({
+      rideDateTimeLocal: new Date().toISOString(),
+      temperature: undefined,
+      windSpeedMph: undefined,
+      windDirectionDeg: undefined,
+      relativeHumidityPercent: undefined,
+      cloudCoverPercent: undefined,
+      precipitationType: undefined,
+      isAvailable: false,
     })
   })
 
@@ -570,6 +582,104 @@ describe('RecordRidePage', () => {
       expect(screen.getByLabelText(/miles/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /record ride/i })).toBeInTheDocument()
       expect(screen.queryByRole('heading', { name: /quick ride options/i })).not.toBeInTheDocument()
+    })
+  })
+
+  it('should render editable weather fields for manual override on create', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/wind speed/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/wind direction/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/relative humidity/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/cloud cover/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/precipitation type/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should send weatherUserOverridden when weather fields are manually edited', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockRecordRide.mockResolvedValue({
+      rideId: 321,
+      riderId: 1,
+      savedAtUtc: new Date().toISOString(),
+      eventStatus: 'Queued',
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByLabelText(/miles/i), { target: { value: '12.5' } })
+    })
+
+    fireEvent.change(screen.getByLabelText(/wind speed/i), {
+      target: { value: '11.2' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /record ride/i }))
+
+    await waitFor(() => {
+      expect(mockRecordRide).toHaveBeenCalledWith(
+        expect.objectContaining({
+          windSpeedMph: 11.2,
+          weatherUserOverridden: true,
+        })
+      )
+    })
+  })
+
+  it('should load weather into fields when Load Weather is clicked', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetRideWeather.mockResolvedValue({
+      rideDateTimeLocal: '2026-04-03T08:00:00',
+      temperature: 58.2,
+      windSpeedMph: 12.4,
+      windDirectionDeg: 240,
+      relativeHumidityPercent: 81,
+      cloudCoverPercent: 72,
+      precipitationType: 'rain',
+      isAvailable: true,
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /load weather/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /load weather/i }))
+
+    await waitFor(() => {
+      expect(mockGetRideWeather).toHaveBeenCalled()
+      expect((screen.getByLabelText(/temperature/i) as HTMLInputElement).value).toBe('58.2')
+      expect((screen.getByLabelText(/wind speed/i) as HTMLInputElement).value).toBe('12.4')
+      expect((screen.getByLabelText(/wind direction/i) as HTMLInputElement).value).toBe('240')
+      expect((screen.getByLabelText(/relative humidity/i) as HTMLInputElement).value).toBe('81')
+      expect((screen.getByLabelText(/cloud cover/i) as HTMLInputElement).value).toBe('72')
+      expect((screen.getByLabelText(/precipitation type/i) as HTMLInputElement).value).toBe('rain')
     })
   })
 })

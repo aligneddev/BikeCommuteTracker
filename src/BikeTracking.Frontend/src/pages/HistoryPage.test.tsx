@@ -8,12 +8,14 @@ vi.mock('../services/ridesService', () => ({
   editRide: vi.fn(),
   deleteRide: vi.fn(),
   getGasPrice: vi.fn(),
+  getRideWeather: vi.fn(),
 }))
 
 const mockGetRideHistory = vi.mocked(ridesService.getRideHistory)
 const mockEditRide = vi.mocked(ridesService.editRide)
 const mockDeleteRide = vi.mocked(ridesService.deleteRide)
 const mockGetGasPrice = vi.mocked(ridesService.getGasPrice)
+const mockGetRideWeather = vi.mocked(ridesService.getRideWeather)
 
 describe('HistoryPage', () => {
   beforeEach(() => {
@@ -32,6 +34,16 @@ describe('HistoryPage', () => {
         message: 'Ride deleted successfully.',
         isIdempotent: false,
       },
+    })
+    mockGetRideWeather.mockResolvedValue({
+      rideDateTimeLocal: '2026-03-20T10:30:00',
+      temperature: undefined,
+      windSpeedMph: undefined,
+      windDirectionDeg: undefined,
+      relativeHumidityPercent: undefined,
+      cloudCoverPercent: undefined,
+      precipitationType: undefined,
+      isAvailable: false,
     })
   })
 
@@ -867,6 +879,111 @@ describe('HistoryPage', () => {
         page: 1,
         pageSize: 25,
       })
+    })
+  })
+
+  it('should allow editing weather fields in history and send weatherUserOverridden', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 10, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 10, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 10, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 10, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 44,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 10,
+          rideMinutes: 30,
+          temperature: 70,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+    mockEditRide.mockResolvedValue({
+      ok: true,
+      value: {
+        rideId: 44,
+        newVersion: 2,
+        message: 'Ride updated successfully.',
+      },
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.change(screen.getByLabelText(/wind speed/i), {
+      target: { value: '14.1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(mockEditRide).toHaveBeenCalledWith(
+        44,
+        expect.objectContaining({
+          windSpeedMph: 14.1,
+          weatherUserOverridden: true,
+        })
+      )
+    })
+  })
+
+  it('should load weather into edit fields when Load Weather is clicked', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 10, rideCount: 1, period: 'thisMonth' },
+        thisYear: { miles: 10, rideCount: 1, period: 'thisYear' },
+        allTime: { miles: 10, rideCount: 1, period: 'allTime' },
+      },
+      filteredTotal: { miles: 10, rideCount: 1, period: 'filtered' },
+      rides: [
+        {
+          rideId: 45,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 10,
+          rideMinutes: 30,
+          temperature: 70,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 1,
+    })
+    mockGetRideWeather.mockResolvedValue({
+      rideDateTimeLocal: '2026-03-20T10:30:00',
+      temperature: 51.5,
+      windSpeedMph: 8.4,
+      windDirectionDeg: 195,
+      relativeHumidityPercent: 77,
+      cloudCoverPercent: 66,
+      precipitationType: 'snow',
+      isAvailable: true,
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: /load weather/i }))
+
+    await waitFor(() => {
+      expect(mockGetRideWeather).toHaveBeenCalledWith('2026-03-20T10:30')
+      expect((screen.getByLabelText(/temperature/i) as HTMLInputElement).value).toBe('51.5')
+      expect((screen.getByLabelText(/wind speed/i) as HTMLInputElement).value).toBe('8.4')
+      expect((screen.getByLabelText(/wind direction/i) as HTMLInputElement).value).toBe('195')
+      expect((screen.getByLabelText(/relative humidity/i) as HTMLInputElement).value).toBe('77')
+      expect((screen.getByLabelText(/cloud cover/i) as HTMLInputElement).value).toBe('66')
+      expect((screen.getByLabelText(/precipitation type/i) as HTMLInputElement).value).toBe('snow')
     })
   })
 })

@@ -4,6 +4,12 @@ export interface RecordRideRequest {
   rideMinutes?: number;
   temperature?: number;
   gasPricePerGallon?: number;
+  windSpeedMph?: number;
+  windDirectionDeg?: number;
+  relativeHumidityPercent?: number;
+  cloudCoverPercent?: number;
+  precipitationType?: string;
+  weatherUserOverridden?: boolean;
 }
 
 export interface RecordRideSuccessResponse {
@@ -19,6 +25,11 @@ export interface RideDefaultsResponse {
   defaultRideMinutes?: number;
   defaultTemperature?: number;
   defaultGasPricePerGallon?: number;
+  defaultWindSpeedMph?: number;
+  defaultWindDirectionDeg?: number;
+  defaultRelativeHumidityPercent?: number;
+  defaultCloudCoverPercent?: number;
+  defaultPrecipitationType?: string;
   defaultRideDateTimeLocal: string;
 }
 
@@ -27,6 +38,17 @@ export interface GasPriceResponse {
   pricePerGallon: number | null;
   isAvailable: boolean;
   dataSource: string | null;
+}
+
+export interface RideWeatherResponse {
+  rideDateTimeLocal: string;
+  temperature?: number;
+  windSpeedMph?: number;
+  windDirectionDeg?: number;
+  relativeHumidityPercent?: number;
+  cloudCoverPercent?: number;
+  precipitationType?: string;
+  isAvailable: boolean;
 }
 
 export interface QuickRideOption {
@@ -46,6 +68,12 @@ export interface EditRideRequest {
   rideMinutes?: number;
   temperature?: number;
   gasPricePerGallon?: number;
+  windSpeedMph?: number;
+  windDirectionDeg?: number;
+  relativeHumidityPercent?: number;
+  cloudCoverPercent?: number;
+  precipitationType?: string;
+  weatherUserOverridden?: boolean;
   expectedVersion: number;
 }
 
@@ -106,6 +134,12 @@ export interface RideHistoryRow {
   rideMinutes?: number;
   temperature?: number;
   gasPricePerGallon?: number;
+  windSpeedMph?: number;
+  windDirectionDeg?: number;
+  relativeHumidityPercent?: number;
+  cloudCoverPercent?: number;
+  precipitationType?: string;
+  weatherUserOverridden?: boolean;
 }
 
 /**
@@ -217,6 +251,26 @@ export async function getGasPrice(date: string): Promise<GasPriceResponse> {
   if (!response.ok) {
     throw new Error(
       await parseErrorMessage(response, "Failed to fetch gas price"),
+    );
+  }
+
+  return response.json();
+}
+
+export async function getRideWeather(
+  rideDateTimeLocal: string,
+): Promise<RideWeatherResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/rides/weather?rideDateTimeLocal=${encodeURIComponent(rideDateTimeLocal)}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await parseErrorMessage(response, "Failed to fetch ride weather"),
     );
   }
 
