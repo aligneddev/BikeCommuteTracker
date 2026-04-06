@@ -110,20 +110,17 @@ public sealed class OpenMeteoWeatherLookupService(
             : $"&apikey={Uri.EscapeDataString(apiKey)}";
 
         // Build query parameters
-        var pastDaysParam =
-            isHistorical || daysDiff < 0 ? "" : $"&past_days={Math.Min(daysDiff + 1, 92)}";
+        // Note: past_days is mutually exclusive with start_date/end_date on the Open-Meteo API.
         var queryParams =
             $"?latitude={Uri.EscapeDataString(latitude.ToString(CultureInfo.InvariantCulture))}"
             + $"&longitude={Uri.EscapeDataString(longitude.ToString(CultureInfo.InvariantCulture))}"
             + $"&start_date={dateTimeUtc.Date:yyyy-MM-dd}"
             + $"&end_date={dateTimeUtc.Date:yyyy-MM-dd}"
-            + $"{pastDaysParam}"
             + "&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,relative_humidity_2m,cloud_cover,precipitation,weather_code"
             + "&temperature_unit=fahrenheit"
             + "&wind_speed_unit=mph"
             + "&timezone=auto"
             + apiKeyParam;
-
         try
         {
             var client = httpClientFactory.CreateClient(clientName);
