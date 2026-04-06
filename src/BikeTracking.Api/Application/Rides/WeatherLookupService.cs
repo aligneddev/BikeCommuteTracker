@@ -135,9 +135,9 @@ public sealed class OpenMeteoWeatherLookupService(
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
-                    "Open-Meteo lookup failed for {Latitude},{Longitude} at {UtcHour} with status {StatusCode}",
-                    latitude,
-                    longitude,
+                    "Open-Meteo lookup failed for rounded {LatitudeRounded},{LongitudeRounded} at {UtcHour} with status {StatusCode}",
+                    latRounded,
+                    lonRounded,
                     dateTimeUtc,
                     response.StatusCode
                 );
@@ -250,9 +250,9 @@ public sealed class OpenMeteoWeatherLookupService(
         {
             logger.LogWarning(
                 ex,
-                "Open-Meteo lookup threw for {Latitude},{Longitude} at {UtcHour}",
-                latitude,
-                longitude,
+                "Open-Meteo lookup threw for rounded {LatitudeRounded},{LongitudeRounded} at {UtcHour}",
+                latRounded,
+                lonRounded,
                 dateTimeUtc
             );
             return null;
