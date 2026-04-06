@@ -132,11 +132,12 @@ public sealed class OpenMeteoWeatherLookupService(
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
-                    "Open-Meteo lookup failed for rounded {LatitudeRounded},{LongitudeRounded} at {UtcHour} with status {StatusCode}",
+                    "Open-Meteo lookup failed for rounded {LatitudeRounded},{LongitudeRounded} at {UtcHour} with status {StatusCode}: {ResponseContent}",
                     latRounded,
                     lonRounded,
                     dateTimeUtc,
-                    response.StatusCode
+                    response.StatusCode,
+                    await response.Content.ReadAsStringAsync(cancellationToken)
                 );
 
                 // Cache failure for short period to avoid hammering API
