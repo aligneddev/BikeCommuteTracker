@@ -45,6 +45,10 @@ export default defineConfig({
       env: {
         ASPNETCORE_URLS: e2eApiUrl,
         PLAYWRIGHT_E2E: "1",
+        ExternalApis__EiaGasPriceBaseUrl: "https://api.eia.gov",
+        ExternalApis__OpenMeteoForecastBaseUrl: "https://api.open-meteo.com",
+        ExternalApis__OpenMeteoArchiveBaseUrl:
+          "https://archive-api.open-meteo.com",
         // Use a dedicated E2E database so test runs never touch the local dev DB.
         // ASP.NET Core maps ConnectionStrings__<name> to ConnectionStrings[name].
         ConnectionStrings__BikeTracking: `Data Source=${e2eDbPath}`,

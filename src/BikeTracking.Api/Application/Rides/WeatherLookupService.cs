@@ -101,9 +101,8 @@ public sealed class OpenMeteoWeatherLookupService(
         // Determine which API to call (forecast vs. archive)
         var daysDiff = (int)(DateTime.UtcNow.Date - dateTimeUtc.Date).TotalDays;
         var isHistorical = daysDiff > 92;
-        var endpoint = isHistorical
-            ? "https://archive-api.open-meteo.com/v1/archive"
-            : "https://api.open-meteo.com/v1/forecast";
+        var clientName = isHistorical ? "OpenMeteoArchive" : "OpenMeteoForecast";
+        var requestPath = isHistorical ? "/v1/archive" : "/v1/forecast";
 
         var apiKey = configuration["WeatherLookup:ApiKey"];
         var apiKeyParam = string.IsNullOrWhiteSpace(apiKey)
@@ -111,7 +110,8 @@ public sealed class OpenMeteoWeatherLookupService(
             : $"&apikey={Uri.EscapeDataString(apiKey)}";
 
         // Build query parameters
-        var pastDaysParam = isHistorical ? "" : $"&past_days={Math.Min(daysDiff + 1, 92)}";
+        var pastDaysParam =
+            isHistorical || daysDiff < 0 ? "" : $"&past_days={Math.Min(daysDiff + 1, 92)}";
         var queryParams =
             $"?latitude={Uri.EscapeDataString(latitude.ToString(CultureInfo.InvariantCulture))}"
             + $"&longitude={Uri.EscapeDataString(longitude.ToString(CultureInfo.InvariantCulture))}"
@@ -126,9 +126,9 @@ public sealed class OpenMeteoWeatherLookupService(
 
         try
         {
-            var client = httpClientFactory.CreateClient("OpenMeteo");
+            var client = httpClientFactory.CreateClient(clientName);
             using var response = await client.GetAsync(
-                $"{endpoint}{queryParams}",
+                $"{requestPath}{queryParams}",
                 cancellationToken
             );
 

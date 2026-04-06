@@ -15,6 +15,14 @@ builder.AddServiceDefaults();
 var connectionString =
     builder.Configuration.GetConnectionString("BikeTracking")
     ?? "Data Source=biketracking.local.db";
+var eiaGasPriceBaseUrl =
+    builder.Configuration["ExternalApis:EiaGasPriceBaseUrl"] ?? "https+http://eia-gas-price";
+var openMeteoForecastBaseUrl =
+    builder.Configuration["ExternalApis:OpenMeteoForecastBaseUrl"]
+    ?? "https+http://open-meteo-forecast";
+var openMeteoArchiveBaseUrl =
+    builder.Configuration["ExternalApis:OpenMeteoArchiveBaseUrl"]
+    ?? "https+http://open-meteo-archive";
 
 builder.Services.Configure<IdentityOptions>(builder.Configuration.GetSection("Identity"));
 builder.Services.AddDbContext<BikeTrackingDbContext>(options =>
@@ -48,14 +56,23 @@ builder.Services.AddHttpClient(
     "EiaGasPrice",
     client =>
     {
-        client.BaseAddress = new Uri("https://api.eia.gov");
+        client.BaseAddress = new Uri(eiaGasPriceBaseUrl);
         client.Timeout = TimeSpan.FromSeconds(10);
     }
 );
 builder.Services.AddHttpClient(
-    "OpenMeteo",
+    "OpenMeteoForecast",
     client =>
     {
+        client.BaseAddress = new Uri(openMeteoForecastBaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(5);
+    }
+);
+builder.Services.AddHttpClient(
+    "OpenMeteoArchive",
+    client =>
+    {
+        client.BaseAddress = new Uri(openMeteoArchiveBaseUrl);
         client.Timeout = TimeSpan.FromSeconds(5);
     }
 );
