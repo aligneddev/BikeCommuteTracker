@@ -101,9 +101,8 @@ public sealed class OpenMeteoWeatherLookupService(
         // Determine which API to call (forecast vs. archive)
         var daysDiff = (int)(DateTime.UtcNow.Date - dateTimeUtc.Date).TotalDays;
         var isHistorical = daysDiff > 92;
-        var endpoint = isHistorical
-            ? "https://archive-api.open-meteo.com/v1/archive"
-            : "https://api.open-meteo.com/v1/forecast";
+        var clientName = isHistorical ? "OpenMeteoArchive" : "OpenMeteoForecast";
+        var requestPath = isHistorical ? "/v1/archive" : "/v1/forecast";
 
         var apiKey = configuration["WeatherLookup:ApiKey"];
         var apiKeyParam = string.IsNullOrWhiteSpace(apiKey)
@@ -111,35 +110,34 @@ public sealed class OpenMeteoWeatherLookupService(
             : $"&apikey={Uri.EscapeDataString(apiKey)}";
 
         // Build query parameters
-        var pastDaysParam = isHistorical ? "" : $"&past_days={Math.Min(daysDiff + 1, 92)}";
+        // Note: past_days is mutually exclusive with start_date/end_date on the Open-Meteo API.
         var queryParams =
             $"?latitude={Uri.EscapeDataString(latitude.ToString(CultureInfo.InvariantCulture))}"
             + $"&longitude={Uri.EscapeDataString(longitude.ToString(CultureInfo.InvariantCulture))}"
             + $"&start_date={dateTimeUtc.Date:yyyy-MM-dd}"
             + $"&end_date={dateTimeUtc.Date:yyyy-MM-dd}"
-            + $"{pastDaysParam}"
             + "&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,relative_humidity_2m,cloud_cover,precipitation,weather_code"
             + "&temperature_unit=fahrenheit"
             + "&wind_speed_unit=mph"
             + "&timezone=auto"
             + apiKeyParam;
-
         try
         {
-            var client = httpClientFactory.CreateClient("OpenMeteo");
+            var client = httpClientFactory.CreateClient(clientName);
             using var response = await client.GetAsync(
-                $"{endpoint}{queryParams}",
+                $"{requestPath}{queryParams}",
                 cancellationToken
             );
 
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
-                    "Open-Meteo lookup failed for rounded {LatitudeRounded},{LongitudeRounded} at {UtcHour} with status {StatusCode}",
+                    "Open-Meteo lookup failed for rounded {LatitudeRounded},{LongitudeRounded} at {UtcHour} with status {StatusCode}: {ResponseContent}",
                     latRounded,
                     lonRounded,
                     dateTimeUtc,
-                    response.StatusCode
+                    response.StatusCode,
+                    await response.Content.ReadAsStringAsync(cancellationToken)
                 );
 
                 // Cache failure for short period to avoid hammering API

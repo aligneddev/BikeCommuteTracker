@@ -65,7 +65,9 @@ public sealed class WeatherLookupServiceTests
         {
             Content = new StringContent("{}", Encoding.UTF8, "application/json"),
         });
-        var factory = new StubHttpClientFactory(new HttpClient(handler));
+        var factory = new StubHttpClientFactory(
+            new HttpClient(handler) { BaseAddress = new Uri("https://api.open-meteo.com") }
+        );
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
 
         var service = new OpenMeteoWeatherLookupService(
@@ -101,7 +103,9 @@ public sealed class WeatherLookupServiceTests
             ),
         });
 
-        var factory = new StubHttpClientFactory(new HttpClient(handler));
+        var factory = new StubHttpClientFactory(
+            new HttpClient(handler) { BaseAddress = new Uri("https://api.open-meteo.com") }
+        );
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
 
         var service = new OpenMeteoWeatherLookupService(
@@ -164,7 +168,9 @@ public sealed class WeatherLookupServiceTests
                 "application/json"
             ),
         });
-        var factory = new StubHttpClientFactory(new HttpClient(handler));
+        var factory = new StubHttpClientFactory(
+            new HttpClient(handler) { BaseAddress = new Uri("https://api.open-meteo.com") }
+        );
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
 
         await using var restartedContext = CreateSqliteContext(connection);

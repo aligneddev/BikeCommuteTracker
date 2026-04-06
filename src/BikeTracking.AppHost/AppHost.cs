@@ -1,5 +1,19 @@
 ﻿var builder = DistributedApplication.CreateBuilder(args);
 
+var openMeteoForecast = builder.AddExternalService(
+    "open-meteo-forecast",
+    "https://api.open-meteo.com/"
+);
+var openMeteoArchive = builder.AddExternalService(
+    "open-meteo-archive",
+    "https://archive-api.open-meteo.com/"
+);
+var eiaGasPrice = builder.AddExternalService("eia-gas-price", "https://api.eia.gov/");
+
+const string eiaGasPriceBaseUrl = "https+http://eia-gas-price";
+const string openMeteoForecastBaseUrl = "https+http://open-meteo-forecast";
+const string openMeteoArchiveBaseUrl = "https+http://open-meteo-archive";
+
 // Local SQL Server database for development
 // var database = builder.AddSqlServer("sql").AddDatabase("biketracking");
 // TODO https://aspire.dev/integrations/databases/sqlite/sqlite-get-started/?lang=csharp
@@ -10,6 +24,12 @@
 var apiService = builder
     .AddProject<Projects.BikeTracking_Api>("api")
     //.WithReference(database)
+    .WithReference(openMeteoForecast)
+    .WithReference(openMeteoArchive)
+    .WithReference(eiaGasPrice)
+    .WithEnvironment("ExternalApis__EiaGasPriceBaseUrl", eiaGasPriceBaseUrl)
+    .WithEnvironment("ExternalApis__OpenMeteoForecastBaseUrl", openMeteoForecastBaseUrl)
+    .WithEnvironment("ExternalApis__OpenMeteoArchiveBaseUrl", openMeteoArchiveBaseUrl)
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
