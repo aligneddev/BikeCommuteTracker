@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { QuickRideOption, RecordRideRequest } from '../services/ridesService'
 import {
   getGasPrice,
+  getRideWeather,
   getQuickRideOptions,
   recordRide,
   getRideDefaults,
@@ -26,8 +27,53 @@ export function RecordRidePage() {
 
   const [loading, setLoading] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
+  const [loadingWeather, setLoadingWeather] = useState<boolean>(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string>('')
+
+  const applyLoadedWeather = (weather: {
+    temperature?: number
+    windSpeedMph?: number
+    windDirectionDeg?: number
+    relativeHumidityPercent?: number
+    cloudCoverPercent?: number
+    precipitationType?: string
+  }) => {
+    setTemperature(weather.temperature != null ? weather.temperature.toString() : '')
+    setWindSpeedMph(weather.windSpeedMph != null ? weather.windSpeedMph.toString() : '')
+    setWindDirectionDeg(
+      weather.windDirectionDeg != null ? weather.windDirectionDeg.toString() : ''
+    )
+    setRelativeHumidityPercent(
+      weather.relativeHumidityPercent != null
+        ? weather.relativeHumidityPercent.toString()
+        : ''
+    )
+    setCloudCoverPercent(
+      weather.cloudCoverPercent != null ? weather.cloudCoverPercent.toString() : ''
+    )
+    setPrecipitationType(weather.precipitationType ?? '')
+    setWeatherEdited(false)
+  }
+
+  const handleLoadWeather = async () => {
+    if (!rideDateTimeLocal) {
+      setErrorMessage('Ride date/time is required to load weather')
+      return
+    }
+
+    setLoadingWeather(true)
+    setErrorMessage('')
+
+    try {
+      const weather = await getRideWeather(rideDateTimeLocal)
+      applyLoadedWeather(weather)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to load weather')
+    } finally {
+      setLoadingWeather(false)
+    }
+  }
 
   const loadQuickRideOptions = async () => {
     try {
@@ -356,6 +402,12 @@ export function RecordRidePage() {
               setWeatherEdited(true)
             }}
           />
+        </div>
+
+        <div className="form-group">
+          <button type="button" onClick={() => void handleLoadWeather()} disabled={loadingWeather}>
+            {loadingWeather ? 'Loading Weather...' : 'Load Weather'}
+          </button>
         </div>
 
         <div className="form-group">

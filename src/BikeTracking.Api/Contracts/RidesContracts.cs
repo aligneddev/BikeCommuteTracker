@@ -57,6 +57,17 @@ public sealed record GasPriceResponse(
     string? DataSource
 );
 
+public sealed record RideWeatherResponse(
+    DateTime RideDateTimeLocal,
+    decimal? Temperature,
+    decimal? WindSpeedMph,
+    int? WindDirectionDeg,
+    int? RelativeHumidityPercent,
+    int? CloudCoverPercent,
+    string? PrecipitationType,
+    bool IsAvailable
+);
+
 public sealed record QuickRideOption(decimal Miles, int RideMinutes, DateTime LastUsedAtLocal);
 
 public sealed record QuickRideOptionsResponse(

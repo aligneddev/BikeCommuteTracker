@@ -117,6 +117,35 @@ data is fetched server-side at save time inside `RecordRideService` and `EditRid
 The existing `GET /api/rides/gas-price` endpoint pattern is not replicated for weather because
 the weather lookup is tightly coupled to save time and user location (which is server-held).
 
+## Weather Preview Endpoint
+
+The explicit load-weather action uses a server-side preview endpoint so the browser never talks to
+Open-Meteo directly.
+
+### `GET /api/rides/weather?rideDateTimeLocal={iso}`
+
+Returns the weather snapshot for the authenticated rider's configured location and the supplied
+ride timestamp.
+
+```csharp
+public sealed record RideWeatherResponse(
+    DateTime RideDateTimeLocal,
+    decimal? Temperature,
+    decimal? WindSpeedMph,
+    int? WindDirectionDeg,
+    int? RelativeHumidityPercent,
+    int? CloudCoverPercent,
+    string? PrecipitationType,
+    bool IsAvailable
+);
+```
+
+Behavior:
+- Returns `200` with `IsAvailable = true` when weather data is found.
+- Returns `200` with null weather fields and `IsAvailable = false` when location is missing or no weather is available.
+- Returns `400` when `rideDateTimeLocal` is missing or invalid.
+- Returns `401` when the caller is unauthenticated.
+
 ---
 
 ## Frontend TypeScript Contracts

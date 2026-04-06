@@ -171,6 +171,14 @@ Map new `RideEntity` weather columns to `RideHistoryRow` and `RideDefaultsRespon
 
 ---
 
+### Step 7.5 — Add Explicit Weather Preview Endpoint
+
+Add an authenticated endpoint that accepts `rideDateTimeLocal` and returns weather fields for the
+authenticated rider's configured location. This endpoint is used by create/edit form buttons to
+fill weather values before save while keeping the weather provider server-side.
+
+---
+
 ### Step 8 — Frontend: Ride Create/Edit Form
 
 **Files** (locate existing ride form components):
@@ -192,6 +200,7 @@ Add optional weather fields to both forms:
 **UI behavior**:
 - All weather fields are optional — user can leave them empty
 - Pre-populated on edit from the stored ride values
+- Add a `Load Weather` button on create and edit that fetches weather for the currently selected ride timestamp
 - When user manually changes any field, set `weatherUserOverridden = true` before submit
 - Show in RideHistoryRow in the history table
 

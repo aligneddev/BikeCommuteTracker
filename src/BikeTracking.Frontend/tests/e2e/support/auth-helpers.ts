@@ -36,3 +36,15 @@ export async function createAndLoginUser(
   await signupUser(page, userName, pin);
   await loginUser(page, userName, pin);
 }
+
+export async function saveUserLocation(
+  page: Page,
+  latitude: string,
+  longitude: string,
+): Promise<void> {
+  await page.goto("/settings");
+  await page.locator("#latitude").fill(latitude);
+  await page.locator("#longitude").fill(longitude);
+  await page.getByRole("button", { name: "Save Settings" }).click();
+  await expect(page.getByText(/settings saved successfully/i)).toBeVisible();
+}

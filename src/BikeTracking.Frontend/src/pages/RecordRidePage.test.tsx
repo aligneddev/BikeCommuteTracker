@@ -7,6 +7,7 @@ import { RecordRidePage } from '../pages/RecordRidePage'
 vi.mock('../services/ridesService', () => ({
   getRideDefaults: vi.fn(),
   getGasPrice: vi.fn(),
+  getRideWeather: vi.fn(),
   getQuickRideOptions: vi.fn(),
   recordRide: vi.fn(),
 }))
@@ -15,6 +16,7 @@ import * as ridesService from '../services/ridesService'
 
 const mockGetRideDefaults = vi.mocked(ridesService.getRideDefaults)
 const mockGetGasPrice = vi.mocked(ridesService.getGasPrice)
+const mockGetRideWeather = vi.mocked(ridesService.getRideWeather)
 const mockGetQuickRideOptions = vi.mocked(ridesService.getQuickRideOptions)
 const mockRecordRide = vi.mocked(ridesService.recordRide)
 
@@ -30,6 +32,16 @@ describe('RecordRidePage', () => {
     mockGetQuickRideOptions.mockResolvedValue({
       options: [],
       generatedAtUtc: new Date().toISOString(),
+    })
+    mockGetRideWeather.mockResolvedValue({
+      rideDateTimeLocal: new Date().toISOString(),
+      temperature: undefined,
+      windSpeedMph: undefined,
+      windDirectionDeg: undefined,
+      relativeHumidityPercent: undefined,
+      cloudCoverPercent: undefined,
+      precipitationType: undefined,
+      isAvailable: false,
     })
   })
 
@@ -629,6 +641,45 @@ describe('RecordRidePage', () => {
           weatherUserOverridden: true,
         })
       )
+    })
+  })
+
+  it('should load weather into fields when Load Weather is clicked', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockGetRideWeather.mockResolvedValue({
+      rideDateTimeLocal: '2026-04-03T08:00:00',
+      temperature: 58.2,
+      windSpeedMph: 12.4,
+      windDirectionDeg: 240,
+      relativeHumidityPercent: 81,
+      cloudCoverPercent: 72,
+      precipitationType: 'rain',
+      isAvailable: true,
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /load weather/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /load weather/i }))
+
+    await waitFor(() => {
+      expect(mockGetRideWeather).toHaveBeenCalled()
+      expect((screen.getByLabelText(/temperature/i) as HTMLInputElement).value).toBe('58.2')
+      expect((screen.getByLabelText(/wind speed/i) as HTMLInputElement).value).toBe('12.4')
+      expect((screen.getByLabelText(/wind direction/i) as HTMLInputElement).value).toBe('240')
+      expect((screen.getByLabelText(/relative humidity/i) as HTMLInputElement).value).toBe('81')
+      expect((screen.getByLabelText(/cloud cover/i) as HTMLInputElement).value).toBe('72')
+      expect((screen.getByLabelText(/precipitation type/i) as HTMLInputElement).value).toBe('rain')
     })
   })
 })

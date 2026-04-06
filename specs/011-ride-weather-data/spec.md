@@ -17,8 +17,9 @@ As a rider creating or editing a ride entry, I want weather details for the ride
 
 **Acceptance Scenarios**:
 
-1. **Given** a user submits a new ride with a valid ride timestamp and weather data is available, **When** the server processes the save request, **Then** temperature, wind speed, wind direction, humidity, cloud cover, and precipitation type are fetched server-side and stored with the ride created event.
-2. **Given** a user edits an existing ride and updates the ride timestamp, **When** they save, **Then** the server fetches weather for the new time and stores the refreshed values with the ride updated event.
+1. **Given** a user opens the create ride page or edits a ride and chooses to load weather for the selected ride timestamp, **When** the server processes that explicit load-weather request, **Then** temperature, wind speed, wind direction, humidity, cloud cover, and precipitation type are fetched server-side and returned to the form so the fields can be filled before save.
+2. **Given** a user submits a new ride with a valid ride timestamp and weather data is available, **When** the server processes the save request, **Then** temperature, wind speed, wind direction, humidity, cloud cover, and precipitation type are fetched server-side and stored with the ride created event.
+3. **Given** a user edits an existing ride and updates the ride timestamp, **When** they save, **Then** the server fetches weather for the new time and stores the refreshed values with the ride updated event.
 
 ---
 
@@ -32,8 +33,9 @@ As a rider, I want to manually adjust weather fields when automatic values are i
 
 **Acceptance Scenarios**:
 
-1. **Given** a ride has been saved and its weather values are shown on the ride edit page, **When** the user changes one or more weather fields and saves, **Then** the user-provided values are stored as authoritative and the server does not overwrite them with a new weather fetch.
-2. **Given** automatic weather retrieval fails and a ride is saved with empty weather fields, **When** the user re-opens the ride for editing and enters weather values manually and saves, **Then** those values are stored and displayed for that ride.
+1. **Given** a ride create or edit form is visible, **When** the user clicks the load-weather button and weather data is available, **Then** the returned weather values populate the weather fields without requiring a save.
+2. **Given** a ride has been saved and its weather values are shown on the ride edit page, **When** the user changes one or more weather fields and saves, **Then** the user-provided values are stored as authoritative and the server does not overwrite them with a new weather fetch.
+3. **Given** automatic weather retrieval fails and a ride is saved with empty weather fields, **When** the user re-opens the ride for editing and enters weather values manually and saves, **Then** those values are stored and displayed for that ride.
 
 ---
 
@@ -55,6 +57,7 @@ As a rider repeatedly adding or editing rides for the same date/time context, I 
 - Weather provider has no record for the ride timestamp; ride save still succeeds and weather fields remain empty unless user enters values.
 - Weather provider returns only partial weather data; available fields are populated and unavailable fields remain empty.
 - Weather provider is unreachable or times out during server-side fetch; ride save completes and weather fields are stored empty.
+- Weather preview lookup triggered from the form is unreachable or returns no data; the form remains usable and weather fields stay empty.
 - User manually enters or clears a weather field on the edit form; the submitted value (including blank) is preserved and the server does not overwrite it with a fresh weather fetch.
 - Ride time is changed during edit; the server re-fetches weather for the new time at save, but only for fields the user has not manually provided.
 
@@ -63,6 +66,8 @@ As a rider repeatedly adding or editing rides for the same date/time context, I 
 ### Functional Requirements
 
 - **FR-001**: The server MUST perform a weather lookup at the time the ride create request is received; the weather fetch MUST support both historical ride times and current/live ride times.
+- **FR-001c**: The system MUST provide an explicit user action on ride create and ride edit forms to load weather for the currently selected ride timestamp before save.
+- **FR-001d**: The explicit load-weather action MUST call the server, not the frontend directly, and MUST fill the weather form fields with returned values when available.
 - **FR-001a**: The weather provider API key MUST be configurable by the user or administrator in the application's settings; the app MUST behave gracefully (empty weather fields, no error blocking save) when no API key is configured.
 - **FR-001b**: Weather fetches MUST be performed server-side only; the API key MUST NOT be exposed to or used by the frontend.
 - **FR-002**: The server MUST perform a weather lookup at the time the ride update request is received when the ride timestamp has changed; the same historical/current support applies.
@@ -81,7 +86,7 @@ As a rider repeatedly adding or editing rides for the same date/time context, I 
 
 - **Ride Event Weather Snapshot**: Weather attributes stored directly on ride created and ride updated events; includes temperature, wind speed, wind direction, humidity, cloud cover, precipitation type, plus indication of whether values were user-overridden.
 - **Weather Lookup Record**: Reusable stored weather result keyed by ride timestamp rounded to the nearest hour and the user's configured location; includes retrieved weather fields, lookup timestamp, and retrieval status (success/partial/unavailable/error). All ride times within the same hour at the same location share one cache entry.
-- **Ride Entry Form Weather Fields**: Editable fields shown on both create and edit pages. On create, fields start empty and are optionally filled by the user before saving; server auto-fills only unsubmitted fields. On edit, fields are pre-populated with the previously saved weather values so the user can review and override before saving.
+- **Ride Entry Form Weather Fields**: Editable fields shown on both create and edit pages. On create, fields may start empty or with prior ride defaults and can be explicitly filled by a load-weather action before saving; server auto-fills only unsubmitted fields at save. On edit, fields are pre-populated with the previously saved weather values so the user can review, reload weather for the current timestamp, and override before saving.
 
 ## Clarifications
 

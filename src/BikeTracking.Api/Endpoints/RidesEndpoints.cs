@@ -1,6 +1,8 @@
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Contracts;
+using BikeTracking.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Endpoints;
 
@@ -34,6 +36,15 @@ public static class RidesEndpoints
             .WithName("GetGasPrice")
             .WithSummary("Get gas price lookup for a date")
             .Produces<GasPriceResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization();
+
+        group
+            .MapGet("/weather", GetRideWeather)
+            .WithName("GetRideWeather")
+            .WithSummary("Get weather preview for a ride timestamp")
+            .Produces<RideWeatherResponse>(StatusCodes.Status200OK)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .RequireAuthorization();
@@ -186,6 +197,93 @@ public static class RidesEndpoints
                     PricePerGallon: null,
                     IsAvailable: false,
                     DataSource: null
+                )
+            );
+        }
+    }
+
+    private static async Task<IResult> GetRideWeather(
+        HttpContext context,
+        [FromQuery] string? rideDateTimeLocal,
+        [FromServices] BikeTrackingDbContext dbContext,
+        [FromServices] IWeatherLookupService weatherLookupService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        if (
+            string.IsNullOrWhiteSpace(rideDateTimeLocal)
+            || !DateTime.TryParse(rideDateTimeLocal, out var parsedRideDateTimeLocal)
+        )
+        {
+            return Results.BadRequest(
+                new ErrorResponse(
+                    "INVALID_REQUEST",
+                    "rideDateTimeLocal query parameter is required and must be a valid date time."
+                )
+            );
+        }
+
+        try
+        {
+            var userSettings = await dbContext
+                .UserSettings.AsNoTracking()
+                .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
+
+            if (
+                userSettings?.Latitude is not decimal latitude
+                || userSettings.Longitude is not decimal longitude
+            )
+            {
+                return Results.Ok(
+                    new RideWeatherResponse(
+                        RideDateTimeLocal: parsedRideDateTimeLocal,
+                        Temperature: null,
+                        WindSpeedMph: null,
+                        WindDirectionDeg: null,
+                        RelativeHumidityPercent: null,
+                        CloudCoverPercent: null,
+                        PrecipitationType: null,
+                        IsAvailable: false
+                    )
+                );
+            }
+
+            var weather = await weatherLookupService.GetOrFetchAsync(
+                latitude,
+                longitude,
+                parsedRideDateTimeLocal.ToUniversalTime(),
+                cancellationToken
+            );
+
+            return Results.Ok(
+                new RideWeatherResponse(
+                    RideDateTimeLocal: parsedRideDateTimeLocal,
+                    Temperature: weather?.Temperature,
+                    WindSpeedMph: weather?.WindSpeedMph,
+                    WindDirectionDeg: weather?.WindDirectionDeg,
+                    RelativeHumidityPercent: weather?.RelativeHumidityPercent,
+                    CloudCoverPercent: weather?.CloudCoverPercent,
+                    PrecipitationType: weather?.PrecipitationType,
+                    IsAvailable: weather is not null
+                )
+            );
+        }
+        catch
+        {
+            return Results.Ok(
+                new RideWeatherResponse(
+                    RideDateTimeLocal: parsedRideDateTimeLocal,
+                    Temperature: null,
+                    WindSpeedMph: null,
+                    WindDirectionDeg: null,
+                    RelativeHumidityPercent: null,
+                    CloudCoverPercent: null,
+                    PrecipitationType: null,
+                    IsAvailable: false
                 )
             );
         }

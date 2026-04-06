@@ -133,6 +133,21 @@
 
 ---
 
+## Phase 7: Explicit Weather Load Actions
+
+**Purpose**: Add a user-triggered weather fetch button on create and edit forms that fills weather fields before save.
+
+- [X] T047 [P] [US1] Update the feature spec for explicit load-weather actions on create and edit forms in `specs/011-ride-weather-data/spec.md`
+- [X] T048 [P] [US1] Add backend/frontend contract coverage for a weather preview endpoint in `src/BikeTracking.Api/Contracts/RidesContracts.cs` and `src/BikeTracking.Frontend/src/services/ridesService.ts`
+- [X] T049 [P] [US1] Add endpoint coverage for explicit weather loading in `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`
+- [X] T050 [P] [US2] Add frontend tests for load-weather buttons in `src/BikeTracking.Frontend/src/pages/RecordRidePage.test.tsx` and `src/BikeTracking.Frontend/src/pages/HistoryPage.test.tsx`
+- [X] T051 [US1] Add authenticated weather preview endpoint in `src/BikeTracking.Api/Endpoints/RidesEndpoints.cs`
+- [X] T052 [US1] Add create-page load-weather action in `src/BikeTracking.Frontend/src/pages/RecordRidePage.tsx`
+- [X] T053 [US2] Add edit-page load-weather action in `src/BikeTracking.Frontend/src/pages/HistoryPage.tsx`
+- [X] T054 [US1] Update supporting docs/examples for the preview endpoint in `specs/011-ride-weather-data/quickstart.md`, `specs/011-ride-weather-data/contracts/api-contracts.md`, and `src/BikeTracking.Api/BikeTracking.Api.http`
+
+---
+
 ## Dependencies
 
 ```text

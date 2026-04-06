@@ -279,7 +279,7 @@ All development follows Trunk-Based Development with git worktrees for parallel 
 1. Create a GitHub issue describing the work
 2. Create a short-lived feature branch from `main` (e.g., `feature/issue-42-record-ride`)
 3. Use `git worktree add` to work on the branch in a separate directory when parallel work is needed
-4. Commit frequently with meaningful messages; push to remote regularly
+4. Commit frequently with meaningful messages using `semantic commits or conventional commits` format; push to remote regularly
 5. Open a PR referencing the GitHub issue (e.g., "Closes #42") as soon as the first commit is ready (draft PR for work-in-progress)
 6. Keep the branch up-to-date with `main` via rebase
 7. Once CI passes and review feedback is addressed, the owner completes the PR

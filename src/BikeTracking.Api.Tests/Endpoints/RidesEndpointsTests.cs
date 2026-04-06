@@ -235,6 +235,61 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
+    public async Task GetRideWeather_WithConfiguredLocation_ReturnsWeatherData()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherPreview");
+        await host.SeedUserSettingsAsync(userId, latitude: 40.71m, longitude: -74.01m);
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/weather?rideDateTimeLocal=2026-03-20T10:30:00",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RideWeatherResponse>();
+        Assert.NotNull(payload);
+        Assert.True(payload.IsAvailable);
+        Assert.Equal(72.5m, payload.Temperature);
+        Assert.Equal(10.3m, payload.WindSpeedMph);
+        Assert.Equal(250, payload.WindDirectionDeg);
+        Assert.Equal(65, payload.RelativeHumidityPercent);
+        Assert.Equal(30, payload.CloudCoverPercent);
+    }
+
+    [Fact]
+    public async Task GetRideWeather_WithInvalidDateTime_Returns400()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherPreviewBadDate");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/weather?rideDateTimeLocal=not-a-date-time",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetRideWeather_WithoutLocation_ReturnsUnavailableShape()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("WeatherPreviewNoLocation");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/weather?rideDateTimeLocal=2026-03-20T10:30:00",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<RideWeatherResponse>();
+        Assert.NotNull(payload);
+        Assert.False(payload.IsAvailable);
+        Assert.Null(payload.Temperature);
+    }
+
+    [Fact]
     public async Task PostRecordRide_WithGasPrice_PersistsGasPrice()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -761,6 +816,24 @@ public sealed class RidesEndpointsTests
             dbContext.Users.Add(user);
             await dbContext.SaveChangesAsync();
             return user.UserId;
+        }
+
+        public async Task SeedUserSettingsAsync(long userId, decimal latitude, decimal longitude)
+        {
+            using var scope = app.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+
+            dbContext.UserSettings.Add(
+                new UserSettingsEntity
+                {
+                    UserId = userId,
+                    Latitude = latitude,
+                    Longitude = longitude,
+                    UpdatedAtUtc = DateTime.UtcNow,
+                }
+            );
+
+            await dbContext.SaveChangesAsync();
         }
 
         public async Task<int> RecordRideAsync(
