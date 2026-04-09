@@ -56,6 +56,8 @@ builder.Services.AddScoped<DeleteRideService>();
 builder.Services.AddScoped<ICsvRideImportService, CsvRideImportService>();
 builder.Services.AddScoped<IDuplicateResolutionService, DuplicateResolutionService>();
 builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
+builder.Services.AddScoped<IImportJobRepository, EfImportJobRepository>();
+builder.Services.AddSingleton<IImportJobProcessor, ImportJobProcessor>();
 builder.Services.AddScoped<IGasPriceLookupService, EiaGasPriceLookupService>();
 builder.Services.AddScoped<IWeatherLookupService, OpenMeteoWeatherLookupService>();
 

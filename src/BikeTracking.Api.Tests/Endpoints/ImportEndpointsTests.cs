@@ -375,8 +375,10 @@ public sealed class ImportEndpointsTests
                 options.UseInMemoryDatabase(dbName)
             );
             builder.Services.AddScoped<IDuplicateResolutionService, DuplicateResolutionService>();
+            builder.Services.AddScoped<IImportJobRepository, EfImportJobRepository>();
             builder.Services.AddScoped<ICsvRideImportService, CsvRideImportService>();
             builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
+            builder.Services.AddSingleton<IImportJobProcessor, ImportJobProcessor>();
 
             var app = builder.Build();
             app.UseAuthentication();

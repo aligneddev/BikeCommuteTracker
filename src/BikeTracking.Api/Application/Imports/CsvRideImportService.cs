@@ -1,17 +1,14 @@
 using System.Text;
 using System.Text.Json;
-using BikeTracking.Api.Application.Notifications;
 using BikeTracking.Api.Contracts;
-using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Application.Imports;
 
 public sealed class CsvRideImportService(
-    BikeTrackingDbContext dbContext,
+    IImportJobRepository importJobRepository,
     IDuplicateResolutionService duplicateResolutionService,
-    IServiceScopeFactory serviceScopeFactory
+    IImportJobProcessor importJobProcessor
 ) : ICsvRideImportService
 {
     public async Task<ImportPreviewResponse> PreviewAsync(
@@ -27,68 +24,9 @@ public sealed class CsvRideImportService(
         var csvText = Encoding.UTF8.GetString(csvBytes);
         var parsedDocument = CsvParser.Parse(csvText);
 
-        var previewRows = new List<ImportPreviewRow>();
-        var importRows = new List<ImportRowEntity>();
-        var validRows = 0;
-        var duplicateCandidates = new List<ImportDuplicateCandidate>();
+        var (previewRows, importRows, validRows) = BuildRowData(parsedDocument);
 
-        foreach (var parsedRow in parsedDocument.Rows)
-        {
-            var errors = CsvValidationRules.ValidateRow(parsedRow);
-            var isValid = errors.Count == 0;
-            if (isValid)
-            {
-                validRows += 1;
-            }
-
-            CsvValidationRules.TryParseDate(parsedRow.Date, out var parsedDate);
-            CsvValidationRules.TryParseMiles(parsedRow.Miles, out var parsedMiles);
-            CsvValidationRules.TryParseRideMinutes(parsedRow.Time, out var parsedRideMinutes);
-            CsvValidationRules.TryParseTemperature(parsedRow.Temp, out var parsedTemp);
-
-            if (isValid && parsedDate != default && parsedMiles > 0)
-            {
-                duplicateCandidates.Add(
-                    new ImportDuplicateCandidate(parsedRow.RowNumber, parsedDate, parsedMiles)
-                );
-            }
-
-            previewRows.Add(
-                new ImportPreviewRow(
-                    RowNumber: parsedRow.RowNumber,
-                    Date: parsedRow.Date,
-                    Miles: parsedMiles,
-                    RideMinutes: parsedRideMinutes,
-                    Temperature: parsedTemp,
-                    Tags: parsedRow.Tags,
-                    Notes: parsedRow.Notes,
-                    IsValid: isValid,
-                    Errors: errors,
-                    DuplicateMatches: []
-                )
-            );
-
-            importRows.Add(
-                new ImportRowEntity
-                {
-                    RowNumber = parsedRow.RowNumber,
-                    RideDateLocal = CsvValidationRules.TryParseDate(parsedRow.Date, out var rowDate)
-                        ? rowDate
-                        : null,
-                    Miles = CsvValidationRules.TryParseMiles(parsedRow.Miles, out var rowMiles)
-                        ? rowMiles
-                        : null,
-                    RideMinutes = parsedRideMinutes,
-                    Temperature = parsedTemp,
-                    TagsRaw = parsedRow.Tags,
-                    Notes = parsedRow.Notes,
-                    ValidationStatus = isValid ? "valid" : "invalid",
-                    ValidationErrorsJson = isValid ? null : JsonSerializer.Serialize(errors),
-                    DuplicateStatus = "none",
-                    ProcessingStatus = isValid ? "pending" : "failed",
-                }
-            );
-        }
+        var duplicateCandidates = BuildDuplicateCandidates(previewRows);
 
         var duplicateLookup = await duplicateResolutionService.GetDuplicateMatchesAsync(
             riderId,
@@ -96,58 +34,20 @@ public sealed class CsvRideImportService(
             cancellationToken
         );
 
-        var duplicateRows = 0;
-        for (var index = 0; index < previewRows.Count; index++)
-        {
-            var row = previewRows[index];
-            if (!duplicateLookup.TryGetValue(row.RowNumber, out var matches))
-            {
-                continue;
-            }
-
-            duplicateRows += 1;
-            previewRows[index] = row with { DuplicateMatches = matches };
-        }
-
-        foreach (var entity in importRows)
-        {
-            if (!duplicateLookup.TryGetValue(entity.RowNumber, out var matches))
-            {
-                continue;
-            }
-
-            entity.DuplicateStatus = "duplicate";
-            entity.ExistingRideIdsJson = JsonSerializer.Serialize(
-                matches.Select(static x => x.ExistingRideId)
-            );
-        }
+        var duplicateRows = ApplyDuplicateMatches(previewRows, importRows, duplicateLookup);
 
         var totalRows = parsedDocument.Rows.Count;
         var invalidRows = totalRows - validRows;
 
-        var job = new ImportJobEntity
-        {
-            RiderId = riderId,
-            FileName = request.FileName,
-            Status = "awaiting-confirmation",
-            TotalRows = totalRows,
-            ProcessedRows = 0,
-            ImportedRows = 0,
-            SkippedRows = 0,
-            FailedRows = invalidRows,
-            CreatedAtUtc = DateTime.UtcNow,
-        };
+        var job = await importJobRepository.CreateJobAsync(
+            riderId,
+            request.FileName,
+            totalRows,
+            invalidRows,
+            cancellationToken
+        );
 
-        dbContext.ImportJobs.Add(job);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        foreach (var row in importRows)
-        {
-            row.ImportJobId = job.Id;
-        }
-
-        dbContext.ImportRows.AddRange(importRows);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await importJobRepository.AddRowsAsync(job.Id, importRows, cancellationToken);
 
         return new ImportPreviewResponse(
             ImportJobId: job.Id,
@@ -166,8 +66,9 @@ public sealed class CsvRideImportService(
         CancellationToken cancellationToken
     )
     {
-        var hasActiveImport = await dbContext.ImportJobs.AnyAsync(
-            x => x.RiderId == riderId && x.Status == "processing" && x.Id != request.ImportJobId,
+        var hasActiveImport = await importJobRepository.HasActiveImportAsync(
+            riderId,
+            request.ImportJobId,
             cancellationToken
         );
 
@@ -176,8 +77,9 @@ public sealed class CsvRideImportService(
             throw new ImportConflictException("An import is already in progress.");
         }
 
-        var job = await dbContext.ImportJobs.SingleOrDefaultAsync(
-            x => x.Id == request.ImportJobId && x.RiderId == riderId,
+        var job = await importJobRepository.GetJobAsync(
+            riderId,
+            request.ImportJobId,
             cancellationToken
         );
 
@@ -191,50 +93,9 @@ public sealed class CsvRideImportService(
             throw new ArgumentException("Import job is not ready to start.");
         }
 
-        var jobRows = await dbContext
-            .ImportRows.Where(x => x.ImportJobId == job.Id)
-            .OrderBy(x => x.RowNumber)
-            .ToListAsync(cancellationToken);
+        var jobRows = await importJobRepository.GetJobRowsAsync(job.Id, cancellationToken);
 
-        var resolutionLookup = (request.Resolutions ?? []).ToDictionary(
-            static x => x.RowNumber,
-            static x => x.Action,
-            EqualityComparer<int>.Default
-        );
-
-        foreach (var row in jobRows.Where(x => x.DuplicateStatus == "duplicate"))
-        {
-            if (request.OverrideAllDuplicates)
-            {
-                row.DuplicateResolution = "override-all";
-                row.DuplicateStatus = "resolved";
-                continue;
-            }
-
-            if (!resolutionLookup.TryGetValue(row.RowNumber, out var action))
-            {
-                throw new ArgumentException(
-                    $"Duplicate row {row.RowNumber} requires a resolution or override-all."
-                );
-            }
-
-            if (action is not ("keep-existing" or "replace-with-import"))
-            {
-                throw new ArgumentException(
-                    $"Duplicate row {row.RowNumber} has an invalid resolution action."
-                );
-            }
-
-            row.DuplicateResolution = action;
-            row.DuplicateStatus = "resolved";
-
-            if (action == "keep-existing")
-            {
-                row.ProcessingStatus = "skipped";
-                job.SkippedRows += 1;
-                job.ProcessedRows += 1;
-            }
-        }
+        ResolveDuplicates(job, jobRows, request);
 
         job.OverrideAllDuplicates = request.OverrideAllDuplicates;
         job.Status = "processing";
@@ -246,163 +107,11 @@ public sealed class CsvRideImportService(
             DateTime.UtcNow
         );
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await importJobRepository.SaveChangesAsync(cancellationToken);
 
-        _ = Task.Run(
-            async () => await ProcessImportJobAsync(riderId, job.Id, CancellationToken.None),
-            CancellationToken.None
-        );
+        importJobProcessor.Enqueue(riderId, job.Id);
 
         return new ImportStartResponse(job.Id, job.Status, job.StartedAtUtc.Value);
-    }
-
-    private async Task ProcessImportJobAsync(
-        long riderId,
-        long importJobId,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            await using var scope = serviceScopeFactory.CreateAsyncScope();
-            var scopedDbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
-            var scopedNotifier =
-                scope.ServiceProvider.GetRequiredService<IImportProgressNotifier>();
-
-            var job = await scopedDbContext.ImportJobs.SingleOrDefaultAsync(
-                x => x.Id == importJobId && x.RiderId == riderId,
-                cancellationToken
-            );
-            if (job is null || job.Status != "processing")
-            {
-                return;
-            }
-
-            var rowsToProcess = await scopedDbContext
-                .ImportRows.Where(x =>
-                    x.ImportJobId == importJobId && x.ProcessingStatus == "pending"
-                )
-                .OrderBy(x => x.RowNumber)
-                .ToListAsync(cancellationToken);
-
-            var sentMilestones = ImportProgressEstimator
-                .GetReachedMilestones(job.TotalRows, job.ProcessedRows)
-                .ToHashSet();
-
-            // Delay the first unit of processing so Start can return a stable processing state.
-            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
-
-            foreach (var row in rowsToProcess)
-            {
-                await scopedDbContext.Entry(job).ReloadAsync(cancellationToken);
-                if (job.Status == "cancelled")
-                {
-                    break;
-                }
-
-                await Task.Delay(TimeSpan.FromMilliseconds(75), cancellationToken);
-
-                row.ProcessingStatus = "imported";
-                job.ImportedRows += 1;
-                job.ProcessedRows += 1;
-                job.EtaMinutesRounded = ImportProgressEstimator.CalculateEtaMinutesRounded(
-                    job.TotalRows,
-                    job.ProcessedRows,
-                    job.StartedAtUtc,
-                    DateTime.UtcNow
-                );
-
-                await scopedDbContext.SaveChangesAsync(cancellationToken);
-
-                var milestones = ImportProgressEstimator.GetReachedMilestones(
-                    job.TotalRows,
-                    job.ProcessedRows
-                );
-                foreach (var milestone in milestones)
-                {
-                    if (!sentMilestones.Add(milestone))
-                    {
-                        continue;
-                    }
-
-                    await scopedNotifier.NotifyProgressAsync(
-                        CreateProgressNotification(job, riderId),
-                        cancellationToken
-                    );
-                }
-            }
-
-            await scopedDbContext.Entry(job).ReloadAsync(cancellationToken);
-            if (job.Status != "cancelled")
-            {
-                job.Status = "completed";
-                job.CompletedAtUtc = DateTime.UtcNow;
-                job.EtaMinutesRounded = 0;
-                await scopedDbContext.SaveChangesAsync(cancellationToken);
-            }
-
-            await scopedNotifier.NotifyProgressAsync(
-                CreateProgressNotification(job, riderId),
-                cancellationToken
-            );
-        }
-        catch
-        {
-            await MarkImportAsFailedAsync(riderId, importJobId, cancellationToken);
-        }
-    }
-
-    private async Task MarkImportAsFailedAsync(
-        long riderId,
-        long importJobId,
-        CancellationToken cancellationToken
-    )
-    {
-        await using var scope = serviceScopeFactory.CreateAsyncScope();
-        var scopedDbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
-        var scopedNotifier = scope.ServiceProvider.GetRequiredService<IImportProgressNotifier>();
-
-        var job = await scopedDbContext.ImportJobs.SingleOrDefaultAsync(
-            x => x.Id == importJobId && x.RiderId == riderId,
-            cancellationToken
-        );
-        if (job is null || job.Status == "cancelled")
-        {
-            return;
-        }
-
-        job.Status = "failed";
-        job.LastError = "Import processing failed.";
-        job.CompletedAtUtc = DateTime.UtcNow;
-        await scopedDbContext.SaveChangesAsync(cancellationToken);
-
-        await scopedNotifier.NotifyProgressAsync(
-            CreateProgressNotification(job, riderId),
-            cancellationToken
-        );
-    }
-
-    private static ImportProgressNotification CreateProgressNotification(
-        ImportJobEntity job,
-        long riderId
-    )
-    {
-        return new ImportProgressNotification(
-            RiderId: riderId,
-            ImportJobId: job.Id,
-            Status: job.Status,
-            PercentComplete: ImportProgressEstimator.CalculatePercentComplete(
-                job.TotalRows,
-                job.ProcessedRows
-            ),
-            EtaMinutesRounded: job.EtaMinutesRounded,
-            ProcessedRows: job.ProcessedRows,
-            TotalRows: job.TotalRows,
-            ImportedRows: job.ImportedRows,
-            SkippedRows: job.SkippedRows,
-            FailedRows: job.FailedRows,
-            EmittedAtUtc: DateTime.UtcNow
-        );
     }
 
     public async Task<ImportStatusResponse?> GetStatusAsync(
@@ -411,12 +120,11 @@ public sealed class CsvRideImportService(
         CancellationToken cancellationToken
     )
     {
-        var job = await dbContext
-            .ImportJobs.AsNoTracking()
-            .SingleOrDefaultAsync(
-                x => x.Id == importJobId && x.RiderId == riderId,
-                cancellationToken
-            );
+        var job = await importJobRepository.GetJobReadOnlyAsync(
+            riderId,
+            importJobId,
+            cancellationToken
+        );
 
         if (job is null)
         {
@@ -459,10 +167,7 @@ public sealed class CsvRideImportService(
         CancellationToken cancellationToken
     )
     {
-        var job = await dbContext.ImportJobs.SingleOrDefaultAsync(
-            x => x.Id == importJobId && x.RiderId == riderId,
-            cancellationToken
-        );
+        var job = await importJobRepository.GetJobAsync(riderId, importJobId, cancellationToken);
 
         if (job is null)
         {
@@ -474,7 +179,7 @@ public sealed class CsvRideImportService(
             job.Status = "cancelled";
             job.CompletedAtUtc = DateTime.UtcNow;
             job.EtaMinutesRounded = null;
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await importJobRepository.SaveChangesAsync(cancellationToken);
         }
 
         return new ImportCancelResponse(
@@ -486,5 +191,169 @@ public sealed class CsvRideImportService(
             FailedRows: job.FailedRows,
             CancelledAtUtc: job.CompletedAtUtc ?? DateTime.UtcNow
         );
+    }
+
+    private static (
+        List<ImportPreviewRow> PreviewRows,
+        List<ImportRowEntity> ImportRows,
+        int ValidRows
+    ) BuildRowData(ParsedCsvDocument parsedDocument)
+    {
+        var previewRows = new List<ImportPreviewRow>();
+        var importRows = new List<ImportRowEntity>();
+        var validRows = 0;
+
+        foreach (var parsedRow in parsedDocument.Rows)
+        {
+            var errors = CsvValidationRules.ValidateRow(parsedRow);
+            var isValid = errors.Count == 0;
+            if (isValid)
+            {
+                validRows += 1;
+            }
+
+            CsvValidationRules.TryParseDate(parsedRow.Date, out var parsedDate);
+            CsvValidationRules.TryParseMiles(parsedRow.Miles, out var parsedMiles);
+            CsvValidationRules.TryParseRideMinutes(parsedRow.Time, out var parsedRideMinutes);
+            CsvValidationRules.TryParseTemperature(parsedRow.Temp, out var parsedTemp);
+
+            previewRows.Add(
+                new ImportPreviewRow(
+                    RowNumber: parsedRow.RowNumber,
+                    Date: parsedRow.Date,
+                    Miles: parsedMiles,
+                    RideMinutes: parsedRideMinutes,
+                    Temperature: parsedTemp,
+                    Tags: parsedRow.Tags,
+                    Notes: parsedRow.Notes,
+                    IsValid: isValid,
+                    Errors: errors,
+                    DuplicateMatches: []
+                )
+            );
+
+            importRows.Add(
+                new ImportRowEntity
+                {
+                    RowNumber = parsedRow.RowNumber,
+                    RideDateLocal = CsvValidationRules.TryParseDate(parsedRow.Date, out var rowDate)
+                        ? rowDate
+                        : null,
+                    Miles = CsvValidationRules.TryParseMiles(parsedRow.Miles, out var rowMiles)
+                        ? rowMiles
+                        : null,
+                    RideMinutes = parsedRideMinutes,
+                    Temperature = parsedTemp,
+                    TagsRaw = parsedRow.Tags,
+                    Notes = parsedRow.Notes,
+                    ValidationStatus = isValid ? "valid" : "invalid",
+                    ValidationErrorsJson = isValid ? null : JsonSerializer.Serialize(errors),
+                    DuplicateStatus = "none",
+                    ProcessingStatus = isValid ? "pending" : "failed",
+                }
+            );
+        }
+
+        return (previewRows, importRows, validRows);
+    }
+
+    private static IReadOnlyList<ImportDuplicateCandidate> BuildDuplicateCandidates(
+        List<ImportPreviewRow> previewRows
+    )
+    {
+        return previewRows
+            .Where(row => row.IsValid && row.Miles is > 0)
+            .Where(row =>
+                CsvValidationRules.TryParseDate(row.Date, out var date) && date != default
+            )
+            .Select(row =>
+            {
+                CsvValidationRules.TryParseDate(row.Date, out var date);
+                return new ImportDuplicateCandidate(row.RowNumber, date, row.Miles!.Value);
+            })
+            .ToArray();
+    }
+
+    private static int ApplyDuplicateMatches(
+        List<ImportPreviewRow> previewRows,
+        List<ImportRowEntity> importRows,
+        IReadOnlyDictionary<int, IReadOnlyList<ImportDuplicateMatch>> duplicateLookup
+    )
+    {
+        var duplicateRows = 0;
+
+        for (var index = 0; index < previewRows.Count; index++)
+        {
+            var row = previewRows[index];
+            if (!duplicateLookup.TryGetValue(row.RowNumber, out var matches))
+            {
+                continue;
+            }
+
+            duplicateRows += 1;
+            previewRows[index] = row with { DuplicateMatches = matches };
+        }
+
+        foreach (var entity in importRows)
+        {
+            if (!duplicateLookup.TryGetValue(entity.RowNumber, out var matches))
+            {
+                continue;
+            }
+
+            entity.DuplicateStatus = "duplicate";
+            entity.ExistingRideIdsJson = JsonSerializer.Serialize(
+                matches.Select(static x => x.ExistingRideId)
+            );
+        }
+
+        return duplicateRows;
+    }
+
+    private static void ResolveDuplicates(
+        ImportJobEntity job,
+        IReadOnlyList<ImportRowEntity> jobRows,
+        ImportStartRequest request
+    )
+    {
+        var resolutionLookup = (request.Resolutions ?? []).ToDictionary(
+            static x => x.RowNumber,
+            static x => x.Action,
+            EqualityComparer<int>.Default
+        );
+
+        foreach (var row in jobRows.Where(x => x.DuplicateStatus == "duplicate"))
+        {
+            if (request.OverrideAllDuplicates)
+            {
+                row.DuplicateResolution = "override-all";
+                row.DuplicateStatus = "resolved";
+                continue;
+            }
+
+            if (!resolutionLookup.TryGetValue(row.RowNumber, out var action))
+            {
+                throw new ArgumentException(
+                    $"Duplicate row {row.RowNumber} requires a resolution or override-all."
+                );
+            }
+
+            if (action is not ("keep-existing" or "replace-with-import"))
+            {
+                throw new ArgumentException(
+                    $"Duplicate row {row.RowNumber} has an invalid resolution action."
+                );
+            }
+
+            row.DuplicateResolution = action;
+            row.DuplicateStatus = "resolved";
+
+            if (action == "keep-existing")
+            {
+                row.ProcessingStatus = "skipped";
+                job.SkippedRows += 1;
+                job.ProcessedRows += 1;
+            }
+        }
     }
 }
