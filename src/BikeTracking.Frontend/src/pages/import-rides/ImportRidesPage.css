@@ -1,0 +1,95 @@
+.import-rides-page {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.import-rides-card {
+  width: min(52rem, 100%);
+  border-radius: 0.75rem;
+  border: 1px solid #d5dbe5;
+  background: #ffffff;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgb(14 30 37 / 10%);
+}
+
+.import-rides-card h1 {
+  margin: 0 0 0.5rem;
+}
+
+.import-rides-description {
+  margin: 0 0 1rem;
+  color: #2f3f56;
+}
+
+.import-rides-file-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
+
+.import-rides-file-input {
+  width: 100%;
+}
+
+.import-rides-selected-file {
+  margin-top: 0.75rem;
+  color: #1a2738;
+}
+
+.import-rides-error {
+  color: #b42318;
+  margin: 0.5rem 0 0;
+}
+
+.import-rides-actions {
+  margin-top: 0.75rem;
+}
+
+.import-rides-actions button {
+  border: none;
+  border-radius: 0.5rem;
+  background: #2f6fdd;
+  color: #fff;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.import-rides-actions button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.import-rides-preview {
+  margin-top: 1rem;
+  border-top: 1px solid #d5dbe5;
+  padding-top: 1rem;
+}
+
+.import-rides-preview h2 {
+  margin: 0 0 0.5rem;
+}
+
+.import-rides-duplicates {
+  margin: 0.5rem 0 0;
+  color: #6c4b1f;
+  font-weight: 600;
+}
+
+.import-rides-preview ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.import-rides-status {
+  margin-top: 0.75rem;
+  color: #17324d;
+  font-weight: 600;
+}
+
+.import-rides-placeholder {
+  margin-top: 1rem;
+  color: #465872;
+  font-style: italic;
+}

@@ -1,5 +1,7 @@
 ﻿using BikeTracking.Api.Application.Dashboard;
 using BikeTracking.Api.Application.Events;
+using BikeTracking.Api.Application.Imports;
+using BikeTracking.Api.Application.Notifications;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Endpoints;
@@ -51,6 +53,9 @@ builder.Services.AddScoped<GetQuickRideOptionsService>();
 builder.Services.AddScoped<GetRideHistoryService>();
 builder.Services.AddScoped<EditRideService>();
 builder.Services.AddScoped<DeleteRideService>();
+builder.Services.AddScoped<ICsvRideImportService, CsvRideImportService>();
+builder.Services.AddScoped<IDuplicateResolutionService, DuplicateResolutionService>();
+builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
 builder.Services.AddScoped<IGasPriceLookupService, EiaGasPriceLookupService>();
 builder.Services.AddScoped<IWeatherLookupService, OpenMeteoWeatherLookupService>();
 
@@ -148,6 +153,7 @@ app.UseAuthorization();
 app.MapDashboardEndpoints();
 app.MapUsersEndpoints();
 app.MapRidesEndpoints();
+app.MapImportEndpoints();
 app.MapDefaultEndpoints();
 
 app.Run();

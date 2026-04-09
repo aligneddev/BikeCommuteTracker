@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   getUserSettings,
   saveUserSettings,
@@ -222,6 +223,11 @@ export function SettingsPage() {
     <main className="settings-page">
       <section className="settings-card">
         <h1>Settings</h1>
+        <p className="settings-import-link-wrapper">
+          <Link className="settings-import-link" to="/rides/import">
+            Import Rides from CSV
+          </Link>
+        </p>
 
         {error ? (
           <p className="settings-error" role="alert">
