@@ -116,7 +116,7 @@
 - [X] T038 [P] [US3] Add progress milestone and ETA rounding tests in `src/BikeTracking.Api.Tests/Application/Imports/ImportProgressEstimatorTests.cs`
 - [X] T039 [P] [US3] Add cancel endpoint and status transition tests in `src/BikeTracking.Api.Tests/Endpoints/ImportEndpointsTests.cs`
 - [X] T040 [P] [US3] Add progress panel rendering tests in `src/BikeTracking.Frontend/src/components/import-rides/ImportProgressPanel.test.tsx`
-- [ ] T041 [US3] Add E2E progress milestones and cancellation test in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
+- [X] T041 [US3] Add E2E progress milestones and cancellation test in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
 
 ### Implementation for User Story 3
 
@@ -135,25 +135,28 @@
 
 ## Phase 6: User Story 4 - Gas and weather enrichment with cache + lookup fallback (Priority: P2)
 
-**Goal**: Enrich imported rides via cache-first lookups, external fallback, retry-once behavior, and 4 calls/sec throttle.
+**Goal**: Enrich imported rides via cache-first lookups with weekly gas deduplication, noon-default weather hour, batch pre-fetch with controlled concurrency, retry-once behavior, and 4 calls/sec throttle.
 
-**Independent Test**: Import mixed cached/uncached rows and verify cache hits, external lookup fallback, retry-once skip behavior, and temperature precedence from CSV.
+**Independent Test**: Import a CSV with rides spanning multiple weeks, some cached and some not; verify (a) only one gas API call per distinct week, (b) weather looked up at noon UTC per date, (c) retry-once-then-skip on failure, (d) CSV Temp takes precedence over fetched temperature.
 
 ### Tests for User Story 4
 
-- [ ] T050 [P] [US4] Add cache-hit/cache-miss enrichment tests in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs`
-- [ ] T051 [P] [US4] Add retry-once-then-skip enrichment failure tests in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs`
-- [ ] T052 [P] [US4] Add lookup throttling tests (4 calls/sec) in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs`
-- [ ] T053 [US4] Add E2E enrichment behavior test with mixed cache states in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
+- [X] T050 [P] [US4] Add weekly gas dedup tests (two rows same week → one call, boundary Saturday/Sunday → two calls) in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs`
+- [X] T051 [P] [US4] Add cache-hit/cache-miss enrichment tests (gas week key, weather noon-hour key) in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs`
+- [X] T052 [P] [US4] Add retry-once-then-skip enrichment failure tests in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs`
+- [X] T053 [P] [US4] Add lookup throttling tests (4 calls/sec, SemaphoreSlim token bucket) in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs`
+- [X] T054 [US4] Add E2E enrichment behavior test with mixed cache states in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T054 [US4] Integrate cache-first gas price enrichment in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
-- [ ] T055 [US4] Integrate cache-first weather enrichment in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
-- [ ] T056 [US4] Integrate external lookup on cache miss for gas/weather in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
-- [ ] T057 [US4] Implement retry-once then skip-field policy in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
-- [ ] T058 [US4] Implement shared 4 calls/sec throttle for enrichment lookups in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
-- [ ] T059 [US4] Enforce CSV Temp precedence over fetched weather in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
+- [X] T055 [US4] Add `GasPriceWeekKeyHelper` utility: compute Sunday start-date for a given `DateOnly` in `src/BikeTracking.Api/Application/Imports/GasPriceWeekKeyHelper.cs`
+- [X] T056 [US4] Extend `IGasPriceLookupService` / `EiaGasPriceLookupService` to accept and store a `weekStartDate` cache key alongside `PriceDate`; add DB migration for the `WeekStartDate` column and unique index on `WeekStartDate` in `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs` and `src/BikeTracking.Api/Infrastructure/Persistence/`
+- [X] T057 [US4] Implement pre-fetch enrichment stage in `ImportJobProcessor`: before the row loop, group valid rows by week key (gas) and by date (weather), resolve each distinct key with one cache check + at most one throttled API call, store results in memory dictionaries in `src/BikeTracking.Api/Application/Imports/ImportJobProcessor.cs`
+- [X] T058 [US4] Apply pre-fetched gas price to each row during the row loop (use week key to look up from in-memory dict) in `src/BikeTracking.Api/Application/Imports/ImportJobProcessor.cs`
+- [X] T059 [US4] Apply pre-fetched weather snapshot to each row during the row loop (use date key; weather fetched at noon UTC) in `src/BikeTracking.Api/Application/Imports/ImportJobProcessor.cs`
+- [X] T060 [US4] Implement shared 4 calls/sec `SemaphoreSlim` token-bucket throttle for pre-fetch API calls in `src/BikeTracking.Api/Application/Imports/ImportJobProcessor.cs`
+- [X] T061 [US4] Implement retry-once then skip-field policy wrapping each external call in the pre-fetch stage in `src/BikeTracking.Api/Application/Imports/ImportJobProcessor.cs`
+- [X] T062 [US4] Enforce CSV Temp precedence over fetched weather temperature when applying enrichment in `src/BikeTracking.Api/Application/Imports/ImportJobProcessor.cs`
 
 **Checkpoint**: User Story 4 is independently functional.
 
@@ -167,14 +170,14 @@
 
 ### Tests for User Story 5
 
-- [ ] T060 [P] [US5] Add settings link rendering tests in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx`
-- [ ] T061 [P] [US5] Add route auth redirect tests in `src/BikeTracking.Frontend/src/App.test.tsx`
-- [ ] T062 [US5] Add E2E settings navigation and unauthenticated redirect tests in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
+- [X] T063 [P] [US5] Add settings link rendering tests in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx`
+- [X] T064 [P] [US5] Add route auth redirect tests in `src/BikeTracking.Frontend/src/App.test.tsx`
+- [X] T065 [US5] Add E2E settings navigation and unauthenticated redirect tests in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
 
 ### Implementation for User Story 5
 
-- [X] T063 [US5] Add Import Rides entry on settings page in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx`
-- [X] T064 [US5] Ensure import route uses authenticated guard in `src/BikeTracking.Frontend/src/App.tsx`
+- [X] T066 [US5] Add Import Rides entry on settings page in `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx`
+- [X] T067 [US5] Ensure import route uses authenticated guard in `src/BikeTracking.Frontend/src/App.tsx`
 
 **Checkpoint**: User Story 5 is independently functional.
 
@@ -184,10 +187,10 @@
 
 **Purpose**: Finalize documentation, validation, and cleanup across all stories.
 
-- [ ] T065 [P] Update import API examples in `src/BikeTracking.Api/BikeTracking.Api.http`
-- [ ] T066 Clean up import service helper extraction in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
-- [ ] T067 [P] Run backend validation suite from `specs/013-csv-ride-import/quickstart.md` using `dotnet test BikeTracking.slnx`
-- [ ] T068 [P] Run frontend validation suite from `specs/013-csv-ride-import/quickstart.md` using `npm run lint`, `npm run build`, `npm run test:unit`, and `npm run test:e2e` in `src/BikeTracking.Frontend/`
+- [X] T068 [P] Update import API examples in `src/BikeTracking.Api/BikeTracking.Api.http`
+- [X] T069 Clean up import service helper extraction in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
+- [X] T070 [P] Run backend validation suite from `specs/013-csv-ride-import/quickstart.md` using `dotnet test BikeTracking.slnx`
+- [X] T071 [P] Run frontend validation suite from `specs/013-csv-ride-import/quickstart.md` using `npm run lint`, `npm run build`, `npm run test:unit`, and `npm run test:e2e` in `src/BikeTracking.Frontend/`
 
 ---
 
@@ -221,9 +224,9 @@
 - US1: T012-T015 can run in parallel; T017 and T018 can run in parallel.
 - US2: T027-T029 can run in parallel.
 - US3: T038-T040 can run in parallel; T048 can proceed while backend progress estimator is built.
-- US4: T050-T052 can run in parallel.
-- US5: T060 and T061 can run in parallel.
-- Polish: T065, T067, and T068 can run in parallel after implementation stabilizes.
+- US4: T050–T053 can run in parallel (test tasks); T055 and T057 must precede T056 (pre-fetch stage needs week key helper and extended lookup service).
+- US5: T063 and T064 can run in parallel.
+- Polish: T068, T070, and T071 can run in parallel after implementation stabilizes.
 
 ---
 
@@ -245,9 +248,10 @@ Task: "T040 [US3] Add progress panel rendering tests in src/BikeTracking.Fronten
 ## Parallel example: User Story 4
 
 ```bash
-Task: "T050 [US4] Add cache-hit/cache-miss enrichment tests in src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs"
-Task: "T051 [US4] Add retry-once-then-skip enrichment failure tests in src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs"
-Task: "T052 [US4] Add lookup throttling tests (4 calls/sec) in src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs"
+Task: "T050 [US4] Add weekly gas dedup tests in src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs"
+Task: "T051 [US4] Add cache-hit/cache-miss enrichment tests (gas week key, weather noon-hour) in src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs"
+Task: "T052 [US4] Add retry-once-then-skip enrichment failure tests in src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs"
+Task: "T053 [US4] Add lookup throttling tests (4 calls/sec, SemaphoreSlim) in src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServiceTests.cs"
 ```
 
 ---

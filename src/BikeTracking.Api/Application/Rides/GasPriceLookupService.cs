@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using BikeTracking.Api.Application.Imports;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,16 @@ namespace BikeTracking.Api.Application.Rides;
 public interface IGasPriceLookupService
 {
     Task<decimal?> GetOrFetchAsync(DateOnly date, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get or fetch gas price using the ISO week start date as the cache key.
+    /// Multiple dates within the same week share the same cached entry.
+    /// </summary>
+    Task<decimal?> GetOrFetchAsync(
+        DateOnly priceDate,
+        DateOnly weekStartDate,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public sealed class EiaGasPriceLookupService(
@@ -25,9 +36,20 @@ public sealed class EiaGasPriceLookupService(
         CancellationToken cancellationToken = default
     )
     {
+        var weekStartDate = GasPriceWeekKeyHelper.GetWeekStartDate(date);
+        return await GetOrFetchAsync(date, weekStartDate, cancellationToken);
+    }
+
+    public async Task<decimal?> GetOrFetchAsync(
+        DateOnly priceDate,
+        DateOnly weekStartDate,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // First, try to find by week start date (cache key)
         var cached = await dbContext
             .GasPriceLookups.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.PriceDate == date, cancellationToken);
+            .SingleOrDefaultAsync(x => x.WeekStartDate == weekStartDate, cancellationToken);
 
         if (cached is not null)
         {
@@ -37,7 +59,10 @@ public sealed class EiaGasPriceLookupService(
         var apiKey = configuration["GasPriceLookup:EiaApiKey"];
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            logger.LogWarning("EIA API key missing; skipping gas price lookup for {Date}", date);
+            logger.LogWarning(
+                "EIA API key missing; skipping gas price lookup for {Date}",
+                priceDate
+            );
             return null;
         }
 
@@ -47,7 +72,7 @@ public sealed class EiaGasPriceLookupService(
             + "&facets[duoarea][]=NUS"
             + "&facets[product][]=EPM0"
             + "&frequency=weekly"
-            + $"&end={date:yyyy-MM-dd}"
+            + $"&end={priceDate:yyyy-MM-dd}"
             + "&sort[0][column]=period"
             + "&sort[0][direction]=desc"
             + "&length=1";
@@ -59,7 +84,7 @@ public sealed class EiaGasPriceLookupService(
             {
                 logger.LogWarning(
                     "EIA lookup failed for {Date} with status {StatusCode}",
-                    date,
+                    priceDate,
                     response.StatusCode
                 );
                 return null;
@@ -81,7 +106,8 @@ public sealed class EiaGasPriceLookupService(
 
             var entry = new GasPriceLookupEntity
             {
-                PriceDate = date,
+                PriceDate = priceDate,
+                WeekStartDate = weekStartDate,
                 PricePerGallon = pricePerGallon,
                 DataSource = DataSourceName,
                 EiaPeriodDate = eiaPeriodDate,
@@ -95,10 +121,10 @@ public sealed class EiaGasPriceLookupService(
             }
             catch (DbUpdateException)
             {
-                // Another request may have inserted the same date concurrently.
+                // Another request may have inserted the same week concurrently.
                 var existing = await dbContext
                     .GasPriceLookups.AsNoTracking()
-                    .SingleOrDefaultAsync(x => x.PriceDate == date, cancellationToken);
+                    .SingleOrDefaultAsync(x => x.WeekStartDate == weekStartDate, cancellationToken);
 
                 if (existing is not null)
                 {
@@ -112,7 +138,7 @@ public sealed class EiaGasPriceLookupService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "EIA lookup threw for {Date}", date);
+            logger.LogWarning(ex, "EIA lookup threw for {Date}", priceDate);
             return null;
         }
     }

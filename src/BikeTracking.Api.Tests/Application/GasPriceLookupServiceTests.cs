@@ -24,6 +24,7 @@ public sealed class GasPriceLookupServiceTests
             new GasPriceLookupEntity
             {
                 PriceDate = new DateOnly(2026, 3, 31),
+                WeekStartDate = new DateOnly(2026, 3, 29),
                 PricePerGallon = 3.1999m,
                 DataSource = "EIA_EPM0_NUS_Weekly",
                 EiaPeriodDate = new DateOnly(2026, 3, 30),
@@ -228,6 +229,7 @@ public sealed class GasPriceLookupServiceTests
                     new GasPriceLookupEntity
                     {
                         PriceDate = new DateOnly(2026, 3, 31),
+                        WeekStartDate = new DateOnly(2026, 3, 29),
                         PricePerGallon = 3.2222m,
                         DataSource = "EIA_EPM0_NUS_Weekly",
                         EiaPeriodDate = new DateOnly(2026, 3, 30),
@@ -257,6 +259,7 @@ public sealed class GasPriceLookupServiceTests
                 new GasPriceLookupEntity
                 {
                     PriceDate = new DateOnly(2026, 3, 31),
+                    WeekStartDate = new DateOnly(2026, 3, 29),
                     PricePerGallon = 3.4567m,
                     DataSource = "EIA_EPM0_NUS_Weekly",
                     EiaPeriodDate = new DateOnly(2026, 3, 30),

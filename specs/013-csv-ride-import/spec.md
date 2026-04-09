@@ -66,20 +66,29 @@ Because importing many rides (with gas price and weather enrichment) can take a 
 
 ### User Story 4 - Gas Price and Weather Enrichment (Priority: P2)
 
-For each imported ride, the system automatically attempts to fill in gas price and weather data. It first checks the local cache: if cached gas price data exists for that ride's date, it is attached; if cached weather data exists for the ride's date and hour, it is attached. When no cached data exists, the system makes an external API lookup to fetch the missing data, caches the result for future use, and attaches it to the ride. If an external lookup fails, the system retries once; if the retry also fails, enrichment is skipped for that field on that ride and the import continues.
+For each imported ride, the system automatically attempts to fill in gas price and weather data using a cache-first, weekly-dedup strategy.
 
-**Why this priority**: Enrichment adds significant value to imported rides, making them consistent with manually-entered rides. External lookups for uncached dates ensure imported historical rides are as complete as possible. However, enrichment depends on the core import working correctly and is not strictly required for ride records to be useful.
+**Gas price (weekly window)**: Gas prices are cached and fetched per Sunday–Saturday week, not per individual date, because the EIA API reports weekly national average prices. The system computes the Sunday that begins the week containing the ride's local date and uses that as the cache key. All rides in the same week share one cache entry — at most one external API call is made per distinct week across the entire import. If a cached entry for that week already exists, it is reused with no external call.
 
-**Independent Test**: Can be tested by importing a CSV with rides on dates that have cached data (verifying cache hits) and dates that do not (verifying external lookups are triggered and results cached). Also test with a simulated API failure to confirm retry-then-skip behavior.
+**Weather (date + noon default)**: Weather is cached per date and UTC hour at the rider's saved location. Because the CSV Time column represents ride *duration* (minutes), not a clock departure time, the system cannot derive a ride start hour from the CSV. Instead, weather is fetched for the ride's local date at noon (12:00 local, converted to UTC) as a consistent default. This matches the same fallback hour used for manual ride entry when no exact departure time is set.
+
+**Failure handling**: If an external lookup fails, the system retries once. If the retry also fails, enrichment is skipped for that field on that ride and the import continues.
+
+**Why this priority**: Enrichment adds significant value to imported rides, making them consistent with manually-entered rides. The weekly gas dedup strategy dramatically reduces external API calls for typical imports (e.g., a 200-row commute history spanning ~40 weeks needs at most 40 gas lookups instead of 200). However, enrichment depends on the core import working correctly and is not strictly required for ride records to be useful.
+
+**Independent Test**: Can be tested by importing a CSV with rides on dates that have cached data (verifying cache hits), dates that do not (verifying external lookups are triggered and results cached), multiple rides in the same week (verifying one lookup shared across all), and a simulated API failure (confirming retry-then-skip behavior).
 
 **Acceptance Scenarios**:
 
-1. **Given** a cached gas price exists for 2026-03-10, **When** a CSV row dated 2026-03-10 is imported, **Then** the resulting ride record includes the cached gas price (no external call made).
-2. **Given** no cached gas price exists for 2026-02-20, **When** a CSV row dated 2026-02-20 is imported, **Then** the system fetches the gas price from the external API, caches it, and attaches it to the ride record.
+1. **Given** a cached gas price entry exists for the week of 2026-03-08 (Sunday) through 2026-03-14 (Saturday), **When** a CSV row dated 2026-03-10 (Tuesday) is imported, **Then** the resulting ride record includes the cached gas price (no external call made).
+2. **Given** no cached gas price exists for the week of 2026-02-15 (Sunday) through 2026-02-21 (Saturday), **When** a CSV row dated 2026-02-20 (Friday) is imported, **Then** the system fetches the gas price from the external API for that week, caches one entry keyed to 2026-02-15, and attaches the price to the ride record.
 3. **Given** no cached gas price exists and the external API call fails, **When** the system retries once and the retry also fails, **Then** the ride record is created with gas price left empty and the import continues.
-4. **Given** a cached weather record exists for 2026-03-10 at the hour matching the ride's time, **When** that CSV row is imported, **Then** the ride record includes the cached weather snapshot (temperature, wind, humidity, etc.).
-5. **Given** no cached weather exists for 2026-03-10 at 14:00, **When** a CSV row dated 2026-03-10 with Time 14:30 is imported, **Then** the system fetches weather for that date/hour from the external API, caches it, and attaches it.
-6. **Given** a CSV row includes a Temp value and cached or fetched weather also has temperature data, **When** the row is imported, **Then** the user-provided Temp from the CSV takes precedence (enrichment fills only fields not supplied in the CSV).
+4. **Given** a CSV contains two rows dated 2026-03-10 (Tuesday) and 2026-03-12 (Thursday) — both in the week of 2026-03-08 — and no cache entry exists for that week, **When** the import runs, **Then** exactly one external gas price API call is made, one cache entry is written, and both ride records receive the same gas price.
+5. **Given** a CSV contains one row dated 2026-03-07 (Saturday) and one row dated 2026-03-08 (Sunday), **When** the import runs, **Then** two separate gas price lookups are made (one for the week of 2026-03-01, one for the week of 2026-03-08) because the dates fall in different Sunday–Saturday windows.
+6. **Given** a cached weather record exists for 2026-03-10 at 12:00 UTC (noon) at the rider's location, **When** a CSV row dated 2026-03-10 is imported, **Then** the ride record includes the cached weather snapshot (temperature, wind, humidity, etc.) — the noon-default hour is matched.
+7. **Given** no cached weather exists for 2026-03-14 at noon UTC at the rider's location, **When** a CSV row dated 2026-03-14 is imported, **Then** the system fetches weather for 2026-03-14 at noon UTC, caches it keyed to that date and hour, and attaches it to the ride record.
+8. **Given** no cached weather data and the external API call fails, **When** the system retries once and the retry also fails, **Then** the ride record is created without weather data and the import continues.
+9. **Given** a CSV row includes a Temp value and cached or fetched weather also has temperature data, **When** the row is imported, **Then** the user-provided Temp from the CSV takes precedence (enrichment fills only fields not supplied in the CSV).
 
 ---
 
@@ -128,9 +137,10 @@ The import functionality is discoverable from the Settings page via a clearly la
 - **FR-010**: System MUST provide an "Override All Duplicates" option (available before import starts or at the first duplicate prompt) that bypasses all subsequent duplicate checks and imports all rows.
 - **FR-011**: System MUST send real-time progress notifications at 25% processing increments (25%, 50%, 75%, 100%) via a persistent connection.
 - **FR-012**: System MUST display an estimated time remaining (rounded to the nearest 5 minutes) once enough rows have been processed to compute a rate, showing "Estimating…" until that point.
-- **FR-013**: System MUST enrich each imported ride with cached gas price data when a cache entry exists for that ride's date.
-- **FR-014**: System MUST enrich each imported ride with cached weather data when a cache entry exists for the ride's date and nearest hour.
-- **FR-015**: System MUST attempt external API lookups for gas price and weather data when no cached data exists for a ride's date (gas price) or date and hour (weather). On failure, the system MUST retry once; if the retry also fails, enrichment for that field is skipped and the import continues.
+- **FR-013**: System MUST enrich each imported ride with cached gas price data when a cache entry exists for the Sunday–Saturday week window containing the ride's local date.
+- **FR-014**: System MUST enrich each imported ride with cached weather data when a cache entry exists for the ride's local date at noon (12:00 local, converted to UTC) at the rider's saved location.
+- **FR-015**: System MUST attempt external API lookups for gas price and weather data when no cached data exists for the ride's week window (gas price) or date at noon UTC (weather). On failure, the system MUST retry once; if the retry also fails, enrichment for that field is skipped and the import continues.
+- **FR-025**: System MUST deduplicate gas price API calls by week window during import. Before processing rows, the system MUST group all valid rows by their Sunday–Saturday week key, fetch or load the cache for each distinct week (at most one external call per week), and apply the resolved price to all rows sharing that week. The week key is the Sunday date that begins the ISO-week window containing the ride's local date.
 - **FR-016**: System MUST give CSV-provided values (e.g., Temp) precedence over cached data when both are available for the same field.
 - **FR-017**: System MUST prevent concurrent imports for the same rider.
 - **FR-018**: System MUST continue processing the import server-side even if the rider navigates away from the import page.
@@ -144,9 +154,10 @@ The import functionality is discoverable from the Settings page via a clearly la
 ### Key Entities
 
 - **Import Job**: Represents a single CSV import operation. Attributes: rider identity, upload timestamp, file name, total row count, processed row count, status (pending, validating, awaiting-confirmation, processing, completed, failed), estimated completion time.
-- **Import Row**: A single parsed row from the CSV. Attributes: row number, date, miles, time (duration), temperature, tags, notes, validation status (valid/invalid with error details), duplicate status (none/duplicate), resolution (import/skip/override).
+- **Import Row**: A single parsed row from the CSV. Attributes: row number, date, miles, time (duration in minutes), temperature, tags, notes, validation status (valid/invalid with error details), duplicate status (none/duplicate), resolution (import/skip/override).
 - **Import Summary**: The outcome of a completed import. Attributes: total rows, rides imported count, rides skipped count, rows failed count, enrichment stats (gas prices attached count, weather snapshots attached count), duration of import.
 - **Duplicate Conflict**: Represents a date-based conflict between an incoming CSV row and existing ride(s). Attributes: conflicting date, existing ride details (miles, time, temp, tags, notes), incoming row details, rider resolution choice.
+- **Gas Price Week Key**: The Sunday date that starts the Sunday–Saturday week window containing a ride's local date. Used as the gas price cache lookup key so that all rides within the same week share one cache entry.
 
 ## Assumptions
 
@@ -154,11 +165,14 @@ The import functionality is discoverable from the Settings page via a clearly la
 - Date formats attempted during parsing include: YYYY-MM-DD, MM/DD/YYYY, M/D/YYYY, DD-MMM-YYYY, and MMM DD YYYY. Dates that don't match any recognized format are flagged as invalid.
 - The Tags column may contain comma-separated or semicolon-separated tag values within a single cell.
 - The Notes column may contain free-text of any length (within reason given file size limits).
-- The Time column represents ride duration in minutes (e.g., "45") or HH:MM format (e.g., "1:30" for 90 minutes).
+- The Time column represents ride *duration* in minutes (e.g., "45") or H:MM format (e.g., "1:30" for 90 minutes). It is not a clock departure time and cannot be used to derive the hour of day for weather lookups.
 - The Temp column represents temperature in the same unit used throughout the app (Fahrenheit, per U.S.-centric gas price data).
 - A 5 MB file size limit accommodates roughly 50,000+ ride rows, which far exceeds expected usage for a personal commute tracker.
 - The estimated time calculation begins after at least 10% of rows have been processed, to avoid wildly inaccurate early estimates.
-- External API lookups are throttled to 4 calls per second. For a 200-row import where most dates are uncached (~400 lookups for gas + weather), enrichment adds approximately 1.5–2 minutes of processing time. The time estimate shown to the rider accounts for this throttled rate.
+- **Gas price week key calculation**: The week key is the Sunday date that begins the week containing a ride's local date. For example, 2026-03-10 (Tuesday) maps to week key 2026-03-08 (Sunday). Week boundaries are computed from the ride's local date as recorded in the CSV Date column; UTC offset is not applied for this calculation.
+- **Weather lookup hour**: Because the CSV Time column is duration-only, weather is always fetched for the ride's local date at noon (12:00) converted to UTC using the rider's saved location timezone offset. This is the same fallback used for manual ride entry, ensuring cache reuse between manually-entered rides and imported rides on the same date.
+- **Weekly gas deduplication effect on API calls**: Before any API calls are made, the import pre-groups all valid rows by their Sunday week key. At most one external gas price call is made per distinct week regardless of how many rows share that week. For a 200-row import spanning ~40 distinct weeks, this reduces gas lookups from up to 200 to at most 40 (plus at most 1 weather call per distinct date). At 4 calls/sec throttle, enrichment adds approximately 20–30 seconds for the gas phase rather than 50 seconds.
+- The throttle of 4 calls/sec applies to the combined gas + weather external call stream. Cache hits do not count against the rate.
 - The "Override All Duplicates" option creates new ride records alongside existing ones (does not replace or merge).
 
 ## Clarifications
@@ -170,6 +184,12 @@ The import functionality is discoverable from the Settings page via a clearly la
 - Q: Can the rider cancel an in-progress import, and what happens to already-imported rows? → A: Yes, cancel stops processing; rows already imported are kept (not rolled back).
 - Q: Should external API lookups be throttled during bulk enrichment to avoid rate limits? → A: Yes, throttle to 4 calls per second.
 
+### Session 2026-04-09
+
+- Q: Should gas price lookups be deduplicated across rows sharing the same week during import, rather than fetching once per distinct date? → A: Yes. The EIA API reports weekly national average prices, so one price per Sunday–Saturday window is the correct granularity. Gas prices are cached and fetched by week key (Sunday start date). All rows in the same week reuse one cache entry, reducing external API calls significantly.
+- Q: Can the import use parallel or batched enrichment instead of serial per-row lookups? → A: Yes, with caveats. Gas price lookups should be pre-computed by grouping all valid rows by week key, fetching each distinct week in a controlled loop (honoring the 4 calls/sec throttle), and then applying the results to all rows before the row-processing loop begins. Weather lookups can follow the same pattern grouped by distinct date. Parallel API calls within the batch are allowed up to the 4 calls/sec budget (e.g., using a SemaphoreSlim token bucket), but the underlying EF DbContext must remain single-threaded — lookups resolve results into memory before the row loop writes to the DB.
+- Q: The CSV Time column is ride duration, not a clock start time. How should weather lookup determine the correct hour? → A: Use noon (12:00) in the rider's local timezone as the default lookup hour for all CSV-imported rides. This is consistent with the manual ride entry fallback and maximises cache reuse. If a future CSV column (e.g., StartTime) is added, that value would take precedence.
+
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
@@ -178,7 +198,7 @@ The import functionality is discoverable from the Settings page via a clearly la
 - **SC-002**: Progress notifications are received at each 25% increment (±2% tolerance) during an import of 20 or more rows.
 - **SC-003**: Estimated time remaining, when displayed, is accurate to within one 5-minute increment of the actual remaining time for imports exceeding 5 minutes.
 - **SC-004**: 100% of duplicate date+miles rows are detected and presented to the rider before import completes (when "Override All Duplicates" is not enabled).
-- **SC-005**: Gas price and weather data (from cache or external lookup) are attached to at least 95% of imported rides where the data is obtainable (date match for gas, date+hour match for weather).
+- **SC-005**: Gas price and weather data (from cache or external lookup) are attached to at least 95% of imported rides where the data is obtainable (week-window match for gas, date+noon-hour match for weather).
 - **SC-006**: Riders can complete the full import flow (upload → preview → confirm → completion) without needing external documentation or support.
 - **SC-007**: Invalid rows are clearly identified with specific error messages (field name + reason) and do not prevent valid rows from being imported.
 - **SC-008**: The import page is reachable from the Settings page in one click/tap.

@@ -262,12 +262,14 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.HasKey(static x => x.GasPriceLookupId);
 
             entity.Property(static x => x.PriceDate).IsRequired();
+            entity.Property(static x => x.WeekStartDate).IsRequired();
             entity.Property(static x => x.PricePerGallon).IsRequired().HasPrecision(10, 4);
             entity.Property(static x => x.DataSource).IsRequired().HasMaxLength(64);
             entity.Property(static x => x.EiaPeriodDate).IsRequired();
             entity.Property(static x => x.RetrievedAtUtc).IsRequired();
 
             entity.HasIndex(static x => x.PriceDate).IsUnique();
+            entity.HasIndex(static x => x.WeekStartDate).IsUnique();
         });
 
         modelBuilder.Entity<WeatherLookupEntity>(static entity =>

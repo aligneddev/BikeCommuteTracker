@@ -26,7 +26,7 @@ public sealed class CsvRideImportService(
 
         var (previewRows, importRows, validRows) = BuildRowData(parsedDocument);
 
-        var duplicateCandidates = BuildDuplicateCandidates(previewRows);
+        var duplicateCandidates = BuildDuplicateCandidates(importRows);
 
         var duplicateLookup = await duplicateResolutionService.GetDuplicateMatchesAsync(
             riderId,
@@ -233,44 +233,60 @@ public sealed class CsvRideImportService(
             );
 
             importRows.Add(
-                new ImportRowEntity
-                {
-                    RowNumber = parsedRow.RowNumber,
-                    RideDateLocal = CsvValidationRules.TryParseDate(parsedRow.Date, out var rowDate)
-                        ? rowDate
-                        : null,
-                    Miles = CsvValidationRules.TryParseMiles(parsedRow.Miles, out var rowMiles)
-                        ? rowMiles
-                        : null,
-                    RideMinutes = parsedRideMinutes,
-                    Temperature = parsedTemp,
-                    TagsRaw = parsedRow.Tags,
-                    Notes = parsedRow.Notes,
-                    ValidationStatus = isValid ? "valid" : "invalid",
-                    ValidationErrorsJson = isValid ? null : JsonSerializer.Serialize(errors),
-                    DuplicateStatus = "none",
-                    ProcessingStatus = isValid ? "pending" : "failed",
-                }
+                CreateImportRowEntity(
+                    parsedRow,
+                    parsedDate,
+                    parsedMiles,
+                    parsedRideMinutes,
+                    parsedTemp,
+                    isValid,
+                    errors
+                )
             );
         }
 
         return (previewRows, importRows, validRows);
     }
 
-    private static IReadOnlyList<ImportDuplicateCandidate> BuildDuplicateCandidates(
-        List<ImportPreviewRow> previewRows
+    private static ImportRowEntity CreateImportRowEntity(
+        ParsedCsvRow parsedRow,
+        DateOnly parsedDate,
+        decimal? parsedMiles,
+        int? parsedRideMinutes,
+        decimal? parsedTemp,
+        bool isValid,
+        IReadOnlyList<ImportValidationError> errors
     )
     {
-        return previewRows
-            .Where(row => row.IsValid && row.Miles is > 0)
+        return new ImportRowEntity
+        {
+            RowNumber = parsedRow.RowNumber,
+            RideDateLocal = parsedDate,
+            Miles = isValid ? parsedMiles : null,
+            RideMinutes = parsedRideMinutes,
+            Temperature = parsedTemp,
+            TagsRaw = parsedRow.Tags,
+            Notes = parsedRow.Notes,
+            ValidationStatus = isValid ? "valid" : "invalid",
+            ValidationErrorsJson = isValid ? null : JsonSerializer.Serialize(errors),
+            DuplicateStatus = "none",
+            ProcessingStatus = isValid ? "pending" : "failed",
+        };
+    }
+
+    private static IReadOnlyList<ImportDuplicateCandidate> BuildDuplicateCandidates(
+        IReadOnlyList<ImportRowEntity> importRows
+    )
+    {
+        return importRows
             .Where(row =>
-                CsvValidationRules.TryParseDate(row.Date, out var date) && date != default
+                row.ValidationStatus == "valid" && row.Miles is > 0 && row.RideDateLocal != default
             )
-            .Select(row =>
-            {
-                CsvValidationRules.TryParseDate(row.Date, out var date);
-                return new ImportDuplicateCandidate(row.RowNumber, date, row.Miles!.Value);
-            })
+            .Select(row => new ImportDuplicateCandidate(
+                row.RowNumber,
+                row.RideDateLocal!.Value,
+                row.Miles!.Value
+            ))
             .ToArray();
     }
 

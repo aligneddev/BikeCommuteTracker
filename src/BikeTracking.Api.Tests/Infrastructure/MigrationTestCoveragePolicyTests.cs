@@ -32,6 +32,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: dashboard and user settings coverage validates snapshot and preference columns after schema migration.",
             ["20260408185627_AddCsvRideImport"] =
                 "Added test: import endpoint and persistence integration coverage validates ImportJobs and ImportRows schema after migration.",
+            ["20260409150320_AddGasPriceWeeklyDeduplication"] =
+                "Updated test: gas lookup and import enrichment coverage validates weekly WeekStartDate cache-key behavior after schema migration.",
         };
 
     [Fact]
