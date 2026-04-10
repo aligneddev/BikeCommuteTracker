@@ -132,6 +132,8 @@ src/BikeTracking.Frontend/src/
 
 Resolved in `research.md`:
 - CSV parsing strategy and header normalization
+- CSV parser skips fully empty rows (`Date`,`Miles`,`Time`,`Temp`,`Tags`,`Notes` all blank) so blank separators do not count as invalid import rows
+- BOM-aware CSV upload decoding in preview path (UTF-8/UTF-16 BOM detection, UTF-8 fallback)
 - Duplicate key policy (date+miles) and override behavior
 - Progress signaling milestones and ETA rounding algorithm
 - Cache-first enrichment with external lookup fallback and retry/throttle rules

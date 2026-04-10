@@ -116,6 +116,7 @@ The import functionality is discoverable from the Settings page via a clearly la
 - What happens if the real-time connection is lost during import? → The import continues server-side. When the rider reconnects or refreshes, they see the current state (in-progress with latest percentage, or completed with summary).
 - What happens when a CSV row has extra columns beyond the expected six? → Extra columns are ignored silently.
 - What happens when a CSV row has fewer columns than expected? → Missing optional columns are treated as empty. Missing required columns (Date, Miles) cause that row to be flagged as invalid.
+- What happens when a CSV row is fully empty (all six columns blank, e.g., `,,,,,`)? → The row is skipped during parsing and excluded from preview/import totals.
 - What happens when the rider starts a second import while one is already in progress? → The system prevents concurrent imports for the same rider, showing a message: "An import is already in progress."
 - What happens when the rider cancels mid-import? → Processing stops after the current row finishes. All rides imported up to that point remain in the rider's history. The summary reflects the partial import (rows imported, rows remaining/cancelled).
 - What happens when multiple rides exist on the same date in the rider's history? → Duplicate detection flags a match only when both date and miles are identical. A rider with a morning 8.5-mile commute and an evening 12-mile ride would not trigger a duplicate for either if the CSV rows have different mileage. If a CSV row matches on date+miles with any existing ride, the dialog shows all matching existing rides alongside the incoming row.
@@ -150,6 +151,7 @@ The import functionality is discoverable from the Settings page via a clearly la
 - **FR-022**: System MUST restrict import page access to authenticated riders only.
 - **FR-023**: System MUST allow the rider to cancel an in-progress import. Cancellation stops processing of remaining rows; rides already imported are kept and not rolled back.
 - **FR-024**: System MUST throttle external API lookups (gas price and weather) to a maximum of 4 calls per second during import to avoid hitting external API rate limits.
+- **FR-026**: System MUST skip fully empty CSV rows (all mapped fields blank) during parsing, excluding those rows from preview/import totals and validation counts.
 
 ### Key Entities
 
@@ -161,7 +163,7 @@ The import functionality is discoverable from the Settings page via a clearly la
 
 ## Assumptions
 
-- The rider's CSV is encoded in UTF-8 (or ASCII-compatible). Other encodings may produce garbled text.
+- The rider's CSV decoding is BOM-aware. UTF-8 and UTF-16 BOM-encoded files are supported; files without BOM default to UTF-8 decoding.
 - Date formats attempted during parsing include: YYYY-MM-DD, MM/DD/YYYY, M/D/YYYY, DD-MMM-YYYY, and MMM DD YYYY. Dates that don't match any recognized format are flagged as invalid.
 - The Tags column may contain comma-separated or semicolon-separated tag values within a single cell.
 - The Notes column may contain free-text of any length (within reason given file size limits).

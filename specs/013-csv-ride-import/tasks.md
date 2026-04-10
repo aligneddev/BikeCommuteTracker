@@ -129,6 +129,33 @@
 - [X] T048 [US3] Create import progress panel component in `src/BikeTracking.Frontend/src/components/import-rides/ImportProgressPanel.tsx`
 - [X] T049 [US3] Integrate progress subscription, ETA, and cancel action in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.tsx`
 
+### US3 Follow-up: SignalR push path completion
+
+- [X] T080 [P] [US3] Add backend hub contract tests for rider/job event isolation in `src/BikeTracking.Api.Tests/Application/Imports/ImportProgressNotifierTests.cs`
+- [X] T081 [P] [US3] Add endpoint integration test that maps import progress hub and verifies authenticated negotiation in `src/BikeTracking.Api.Tests/Endpoints/ImportEndpointsTests.cs`
+- [X] T082 [P] [US3] Add frontend unit tests for realtime event apply/reconcile logic in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.test.tsx`
+- [X] T083 [P] [US3] Add frontend unit tests for fallback polling when SignalR disconnects in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.test.tsx`
+- [X] T084 [US3] Add SignalR service registration and map import progress hub endpoint in `src/BikeTracking.Api/Program.cs`
+- [X] T085 [US3] Implement rider-scoped import progress hub and group naming helper in `src/BikeTracking.Api/Application/Notifications/ImportProgressHub.cs`
+- [X] T086 [US3] Add reusable rider claim helper for hub/endpoint auth alignment in `src/BikeTracking.Api/Application/Notifications/ImportProgressHubAuth.cs`
+- [X] T087 [US3] Update import progress notifier to publish hub events while retaining structured log output in `src/BikeTracking.Api/Application/Notifications/ImportProgressNotifier.cs`
+- [X] T088 [US3] Add strongly typed frontend SignalR progress payload model in `src/BikeTracking.Frontend/src/services/import-progress-realtime.ts`
+- [X] T089 [US3] Implement frontend SignalR connection/subscription wrapper with reconnect callbacks in `src/BikeTracking.Frontend/src/services/import-progress-realtime.ts`
+- [X] T090 [US3] Integrate realtime subscription into import page lifecycle with status merge logic in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.tsx`
+- [X] T091 [US3] Implement automatic polling fallback activation/deactivation on hub state changes in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.tsx`
+- [X] T092 [US3] Add E2E test verifying realtime progress updates without waiting for polling interval in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
+- [X] T093 [US3] Add E2E test verifying fallback polling after forced hub disconnect and eventual completion in `src/BikeTracking.Frontend/tests/e2e/import-rides.spec.ts`
+
+### US1 Follow-up: CSV decoding and blank-row hardening
+
+- [X] T094 [P] [US1] Add parser regression test for UTF-8 BOM headers in `src/BikeTracking.Api.Tests/Application/Imports/CsvParserTests.cs`
+- [X] T095 [P] [US1] Add preview-service regression tests for BOM-aware decoding (UTF-8/UTF-16 BOM) in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServicePreviewTests.cs`
+- [X] T096 [P] [US1] Add parser test that fully empty rows (`,,,,,`) are skipped in `src/BikeTracking.Api.Tests/Application/Imports/CsvParserTests.cs`
+- [X] T097 [P] [US1] Add preview-service test that fully empty rows are excluded from import totals in `src/BikeTracking.Api.Tests/Application/Imports/CsvRideImportServicePreviewTests.cs`
+- [X] T098 [US1] Implement BOM-safe header normalization in `src/BikeTracking.Api/Application/Imports/CsvParser.cs`
+- [X] T099 [US1] Implement BOM-aware CSV byte decoding in preview path in `src/BikeTracking.Api/Application/Imports/CsvRideImportService.cs`
+- [X] T100 [US1] Implement fully-empty-row skip behavior in `src/BikeTracking.Api/Application/Imports/CsvParser.cs`
+
 **Checkpoint**: User Story 3 is independently functional.
 
 ---

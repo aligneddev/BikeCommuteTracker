@@ -68,15 +68,34 @@ public static class CsvParser
                 return string.IsNullOrWhiteSpace(value) ? null : value;
             }
 
+            var date = GetValue("DATE");
+            var miles = GetValue("MILES");
+            var time = GetValue("TIME");
+            var temp = GetValue("TEMP");
+            var tags = GetValue("TAGS");
+            var notes = GetValue("NOTES");
+
+            if (
+                date is null
+                && miles is null
+                && time is null
+                && temp is null
+                && tags is null
+                && notes is null
+            )
+            {
+                continue;
+            }
+
             rows.Add(
                 new ParsedCsvRow(
                     RowNumber: lineIndex,
-                    Date: GetValue("DATE"),
-                    Miles: GetValue("MILES"),
-                    Time: GetValue("TIME"),
-                    Temp: GetValue("TEMP"),
-                    Tags: GetValue("TAGS"),
-                    Notes: GetValue("NOTES")
+                    Date: date,
+                    Miles: miles,
+                    Time: time,
+                    Temp: temp,
+                    Tags: tags,
+                    Notes: notes
                 )
             );
         }

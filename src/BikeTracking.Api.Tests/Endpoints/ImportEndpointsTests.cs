@@ -14,6 +14,28 @@ namespace BikeTracking.Api.Tests.Endpoints;
 public sealed class ImportEndpointsTests
 {
     [Fact]
+    public async Task ImportProgressHub_Negotiate_RequiresAuthentication()
+    {
+        await using var host = await ImportApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("ImportUser");
+
+        using var unauthorizedRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/hubs/import-progress/negotiate?negotiateVersion=1"
+        );
+        var unauthorizedResponse = await host.Client.SendAsync(unauthorizedRequest);
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedResponse.StatusCode);
+
+        using var authorizedRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/hubs/import-progress/negotiate?negotiateVersion=1"
+        );
+        authorizedRequest.Headers.Add("X-User-Id", userId.ToString());
+        var authorizedResponse = await host.Client.SendAsync(authorizedRequest);
+        Assert.Equal(HttpStatusCode.OK, authorizedResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task PostPreview_WithValidCsv_ReturnsSummaryAndRows()
     {
         await using var host = await ImportApiHost.StartAsync();
@@ -379,11 +401,13 @@ public sealed class ImportEndpointsTests
             builder.Services.AddScoped<ICsvRideImportService, CsvRideImportService>();
             builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
             builder.Services.AddSingleton<IImportJobProcessor, ImportJobProcessor>();
+            builder.Services.AddSignalR();
 
             var app = builder.Build();
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapImportEndpoints();
+            app.MapHub<ImportProgressHub>("/hubs/import-progress").RequireAuthorization();
             await app.StartAsync();
 
             return new ImportApiHost(app);

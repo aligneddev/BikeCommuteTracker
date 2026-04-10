@@ -103,6 +103,7 @@ builder.Services.AddHttpLogging(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSignalR();
 
 // Allow any localhost origin so the Vite dev server and published frontend
 // can reach the API during local Aspire orchestration. The origin port varies
@@ -156,6 +157,7 @@ app.MapDashboardEndpoints();
 app.MapUsersEndpoints();
 app.MapRidesEndpoints();
 app.MapImportEndpoints();
+app.MapHub<ImportProgressHub>("/hubs/import-progress").RequireAuthorization();
 app.MapDefaultEndpoints();
 
 app.Run();

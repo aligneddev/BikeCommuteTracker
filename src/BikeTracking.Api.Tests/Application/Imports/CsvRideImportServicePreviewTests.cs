@@ -47,6 +47,26 @@ public sealed class CsvRideImportServicePreviewTests
         Assert.Equal(29m, result.Rows[0].Temperature);
     }
 
+    [Fact]
+    public async Task PreviewAsync_WithFullyEmptyCsvRow_SkipsEmptyRow()
+    {
+        var service = CreateService();
+        var csv = "Date,Miles,Time,Temp,Tags,Notes\r\n1/7/2026,4.35,,29,,\r\n,,,,,\r\n";
+        var bytes = Encoding.UTF8.GetBytes(csv);
+
+        var result = await service.PreviewAsync(
+            riderId: 42,
+            new ImportPreviewRequest("rides.csv", Convert.ToBase64String(bytes)),
+            CancellationToken.None
+        );
+
+        Assert.Equal(1, result.TotalRows);
+        Assert.Equal(1, result.ValidRows);
+        Assert.Equal(0, result.InvalidRows);
+        Assert.Single(result.Rows);
+        Assert.Equal("1/7/2026", result.Rows[0].Date);
+    }
+
     private static CsvRideImportService CreateService()
     {
         return new CsvRideImportService(

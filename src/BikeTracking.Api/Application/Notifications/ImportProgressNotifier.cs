@@ -1,5 +1,7 @@
 namespace BikeTracking.Api.Application.Notifications;
 
+using Microsoft.AspNetCore.SignalR;
+
 public sealed record ImportProgressNotification(
     long RiderId,
     long ImportJobId,
@@ -22,10 +24,13 @@ public interface IImportProgressNotifier
     );
 }
 
-public sealed class ImportProgressNotifier(ILogger<ImportProgressNotifier> logger)
-    : IImportProgressNotifier
+public sealed class ImportProgressNotifier(
+    ILogger<ImportProgressNotifier> logger,
+    IHubContext<ImportProgressHub>? hubContext = null
+) : IImportProgressNotifier
 {
     private readonly ILogger<ImportProgressNotifier> _logger = logger;
+    private readonly IHubContext<ImportProgressHub>? _hubContext = hubContext;
 
     public Task NotifyProgressAsync(
         ImportProgressNotification notification,
@@ -42,6 +47,14 @@ public sealed class ImportProgressNotifier(ILogger<ImportProgressNotifier> logge
             notification.TotalRows
         );
 
-        return Task.CompletedTask;
+        if (_hubContext is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var group = ImportProgressGroups.RiderJob(notification.RiderId, notification.ImportJobId);
+        return _hubContext
+            .Clients.Group(group)
+            .SendAsync("import.progress", notification, cancellationToken);
     }
 }

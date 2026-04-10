@@ -9,6 +9,11 @@ import {
   type ImportPreviewRow,
   type ImportStatusResponse,
 } from '../../services/import-api'
+import {
+  subscribeToImportProgress,
+  type ImportProgressRealtimeNotification,
+  type ImportProgressRealtimeSubscription,
+} from '../../services/import-progress-realtime'
 import { DuplicateResolutionDialog } from '../../components/import-rides/DuplicateResolutionDialog'
 import { ImportProgressPanel } from '../../components/import-rides/ImportProgressPanel'
 import './ImportRidesPage.css'
@@ -50,6 +55,7 @@ export function ImportRidesPage() {
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState<boolean>(false)
   const [overrideAllDuplicates, setOverrideAllDuplicates] = useState<boolean>(false)
   const [duplicateResolutions, setDuplicateResolutions] = useState<ImportDuplicateResolution[]>([])
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(false)
 
   const duplicateRows: ImportPreviewRow[] =
     preview?.rows.filter((row) => row.duplicateMatches.length > 0) ?? []
@@ -64,7 +70,7 @@ export function ImportRidesPage() {
   }, [])
 
   useEffect(() => {
-    if (status?.status !== 'processing') {
+    if (status?.status !== 'processing' || isRealtimeConnected) {
       return
     }
 
@@ -74,6 +80,77 @@ export function ImportRidesPage() {
 
     return () => {
       window.clearInterval(intervalId)
+    }
+  }, [isRealtimeConnected, status?.importJobId, status?.status])
+
+  useEffect(() => {
+    if (status?.status !== 'processing') {
+      setIsRealtimeConnected(false)
+      return
+    }
+
+    let subscription: ImportProgressRealtimeSubscription | null = null
+    let isMounted = true
+
+    const connect = async (): Promise<void> => {
+      try {
+        subscription = await subscribeToImportProgress(status.importJobId, {
+          onProgress: (notification: ImportProgressRealtimeNotification): void => {
+            if (!isMounted || notification.importJobId !== status.importJobId) {
+              return
+            }
+
+            setStatus((current) => {
+              if (current === null || current.importJobId !== notification.importJobId) {
+                return current
+              }
+
+              return {
+                ...current,
+                status: notification.status,
+                totalRows: notification.totalRows,
+                processedRows: notification.processedRows,
+                importedRows: notification.importedRows,
+                skippedRows: notification.skippedRows,
+                failedRows: notification.failedRows,
+                percentComplete: notification.percentComplete,
+                etaMinutesRounded: notification.etaMinutesRounded ?? null,
+                completedAtUtc: isTerminalStatus(notification.status)
+                  ? notification.emittedAtUtc
+                  : current.completedAtUtc,
+              }
+            })
+
+            if (isTerminalStatus(notification.status)) {
+              clearActiveImportJobId()
+              setIsRealtimeConnected(false)
+            }
+          },
+          onConnectionStateChanged: (state): void => {
+            if (!isMounted) {
+              return
+            }
+
+            setIsRealtimeConnected(state === 'connected')
+          },
+        })
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        setIsRealtimeConnected(false)
+      }
+    }
+
+    void connect()
+
+    return () => {
+      isMounted = false
+      setIsRealtimeConnected(false)
+      if (subscription !== null) {
+        void subscription.stop()
+      }
     }
   }, [status?.importJobId, status?.status])
 
@@ -250,20 +327,22 @@ export function ImportRidesPage() {
         return
       }
 
+      const cancelled = cancelResponse.data
+
       clearActiveImportJobId()
       setStatus((current) => ({
-        importJobId: cancelResponse.data.importJobId,
-        status: cancelResponse.data.status,
+        importJobId: cancelled.importJobId,
+        status: cancelled.status,
         totalRows: current?.totalRows ?? 0,
-        processedRows: cancelResponse.data.processedRows,
-        importedRows: cancelResponse.data.importedRows,
-        skippedRows: cancelResponse.data.skippedRows,
-        failedRows: cancelResponse.data.failedRows,
+        processedRows: cancelled.processedRows,
+        importedRows: cancelled.importedRows,
+        skippedRows: cancelled.skippedRows,
+        failedRows: cancelled.failedRows,
         percentComplete: current?.percentComplete ?? null,
         etaMinutesRounded: null,
-        createdAtUtc: current?.createdAtUtc ?? cancelResponse.data.cancelledAtUtc,
+        createdAtUtc: current?.createdAtUtc ?? cancelled.cancelledAtUtc,
         startedAtUtc: current?.startedAtUtc ?? null,
-        completedAtUtc: cancelResponse.data.cancelledAtUtc,
+        completedAtUtc: cancelled.cancelledAtUtc,
         lastError: null,
       }))
     } catch {

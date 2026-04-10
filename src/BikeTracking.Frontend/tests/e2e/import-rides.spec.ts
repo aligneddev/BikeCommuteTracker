@@ -22,6 +22,80 @@ function buildCsvRows(startDateIso: string, count: number): string {
   return rows.join("\n");
 }
 
+async function installSignalRDisconnectHarness(page: {
+  addInitScript: (script: () => void) => Promise<void>;
+}): Promise<void> {
+  await page.addInitScript(() => {
+    const originalWebSocket = window.WebSocket;
+    const trackedSockets: WebSocket[] = [];
+    let blockImportSignalR = false;
+
+    const TrackedWebSocket = function (
+      this: unknown,
+      url: string | URL,
+      protocols?: string | string[],
+    ): WebSocket {
+      const socket =
+        protocols === undefined
+          ? new originalWebSocket(url)
+          : new originalWebSocket(url, protocols);
+
+      trackedSockets.push(socket);
+
+      const socketUrl = typeof url === "string" ? url : url.toString();
+      if (blockImportSignalR && socketUrl.includes("/hubs/import-progress")) {
+        window.setTimeout(() => {
+          try {
+            socket.close();
+          } catch {
+            // Ignore close race conditions.
+          }
+        }, 0);
+      }
+
+      return socket;
+    } as unknown as typeof WebSocket;
+
+    TrackedWebSocket.prototype = originalWebSocket.prototype;
+    window.WebSocket = TrackedWebSocket;
+
+    const signalrHarnessWindow = window as Window & {
+      __disconnectImportSignalR?: () => void;
+    };
+
+    signalrHarnessWindow.__disconnectImportSignalR = () => {
+      blockImportSignalR = true;
+      trackedSockets.forEach((socket) => {
+        if (socket.url.includes("/hubs/import-progress")) {
+          try {
+            socket.close();
+          } catch {
+            // Ignore close race conditions.
+          }
+        }
+      });
+    };
+  });
+}
+
+async function installSlowPollingHarness(page: {
+  addInitScript: (script: () => void) => Promise<void>;
+}): Promise<void> {
+  await page.addInitScript(() => {
+    const originalSetInterval = window.setInterval.bind(window);
+    const adjustedSetInterval = (
+      handler: TimerHandler,
+      timeout?: number,
+      ...args: unknown[]
+    ): number => {
+      const effectiveTimeout = timeout === 2000 ? 10000 : timeout;
+      return originalSetInterval(handler, effectiveTimeout, ...args);
+    };
+
+    window.setInterval = adjustedSetInterval as typeof window.setInterval;
+  });
+}
+
 test.describe("013-csv-import e2e", () => {
   test("upload preview and start import happy path", async ({ page }) => {
     const userName = uniqueUser("e2e-import-rides");
@@ -190,6 +264,96 @@ test.describe("013-csv-import e2e", () => {
     // Wait for completion
     await expect(page.getByText(/status: completed/i)).toBeVisible({
       timeout: 30000,
+    });
+  });
+
+  test("shows progress updates through completion", async ({ page }) => {
+    await installSlowPollingHarness(page);
+
+    const userName = uniqueUser("e2e-import-realtime-first-update");
+    await createAndLoginUser(page, userName, TEST_PIN);
+
+    await page.goto("/settings");
+    await page.getByRole("link", { name: /import rides from csv/i }).click();
+    await expect(page).toHaveURL("/rides/import");
+
+    const rows = buildCsvRows("2026-04-01", 60);
+    await page.setInputFiles("#csv-upload-input", {
+      name: "rides.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(rows, "utf8"),
+    });
+
+    await page.getByRole("button", { name: /preview import/i }).click();
+    await expect(page.getByText(/valid rows:\s*60/i)).toBeVisible({
+      timeout: 10000,
+    });
+
+    const startedAt = Date.now();
+    await page.getByRole("button", { name: /^start import$/i }).click();
+
+    await expect(
+      page.getByText(/status:\s*(processing|completed)/i),
+    ).toBeVisible({
+      timeout: 10000,
+    });
+
+    await expect(page.getByText(/complete:\s*\d+%/i)).toBeVisible({
+      timeout: 10000,
+    });
+
+    await expect(page.getByText(/status: completed/i)).toBeVisible({
+      timeout: 30000,
+    });
+
+    const elapsedMs = Date.now() - startedAt;
+    expect(elapsedMs).toBeLessThan(30000);
+  });
+
+  test("completes import through polling fallback after forced SignalR disconnect", async ({
+    page,
+  }) => {
+    await installSignalRDisconnectHarness(page);
+
+    const userName = uniqueUser("e2e-import-polling-fallback");
+    await createAndLoginUser(page, userName, TEST_PIN);
+
+    await page.goto("/settings");
+    await page.getByRole("link", { name: /import rides from csv/i }).click();
+    await expect(page).toHaveURL("/rides/import");
+
+    const rows = buildCsvRows("2026-04-01", 80);
+    await page.setInputFiles("#csv-upload-input", {
+      name: "rides.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(rows, "utf8"),
+    });
+
+    await page.getByRole("button", { name: /preview import/i }).click();
+    await expect(page.getByText(/valid rows:\s*80/i)).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole("button", { name: /^start import$/i }).click();
+    await expect(
+      page.getByText(/status:\s*(processing|completed)/i),
+    ).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.evaluate(() => {
+      const signalrHarnessWindow = window as Window & {
+        __disconnectImportSignalR?: () => void;
+      };
+      signalrHarnessWindow.__disconnectImportSignalR?.();
+    });
+
+    await expect(page.getByText(/complete:\s*\d+%/i)).toBeVisible({
+      timeout: 12000,
+    });
+
+    await expect(page.getByText(/status: completed/i)).toBeVisible({
+      timeout: 35000,
     });
   });
 

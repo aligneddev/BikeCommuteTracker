@@ -43,6 +43,19 @@ public sealed class CsvParserTests
     }
 
     [Fact]
+    public void Parse_WithFullyEmptyRow_SkipsTheRow()
+    {
+        var csv =
+            "Date,Miles,Time,Temp,Tags,Notes\r\n1/6/2026,4.35,,21,,\r\n,,,,,\r\n1/7/2026,4.35,,29,,\r\n";
+
+        var result = CsvParser.Parse(csv);
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.Equal("1/6/2026", result.Rows[0].Date);
+        Assert.Equal("1/7/2026", result.Rows[1].Date);
+    }
+
+    [Fact]
     public void Parse_WithCaseInsensitiveHeaders_ParsesRows()
     {
         var csv = "DATE,mIlEs,TiMe,Temp,Tags,Notes\n2026-04-01,12.5,45,60,commute,morning ride";

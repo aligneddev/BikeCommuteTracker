@@ -1,9 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { ImportRidesPage } from './ImportRidesPage'
 import * as importApi from '../../services/import-api'
+import type {
+  ImportProgressRealtimeHandlers,
+  ImportProgressRealtimeSubscription,
+} from '../../services/import-progress-realtime'
+import * as realtimeApi from '../../services/import-progress-realtime'
+
+const realtimeState = vi.hoisted(() => ({
+  handlers: null as ImportProgressRealtimeHandlers | null,
+  subscription: {
+    stop: vi.fn(async () => {}),
+  } as ImportProgressRealtimeSubscription,
+}))
 
 vi.mock('../../services/import-api', () => ({
   previewImportCsv: vi.fn(),
@@ -12,15 +24,243 @@ vi.mock('../../services/import-api', () => ({
   cancelImport: vi.fn(),
 }))
 
+vi.mock('../../services/import-progress-realtime', () => ({
+  subscribeToImportProgress: vi.fn(
+    async (_importJobId: number, handlers: ImportProgressRealtimeHandlers) => {
+      realtimeState.handlers = handlers
+      return realtimeState.subscription
+    },
+  ),
+}))
+
 const mockPreviewImportCsv = vi.mocked(importApi.previewImportCsv)
 const mockStartImportCsv = vi.mocked(importApi.startImportCsv)
 const mockGetImportStatus = vi.mocked(importApi.getImportStatus)
 const mockCancelImport = vi.mocked(importApi.cancelImport)
+const mockSubscribeToImportProgress = vi.mocked(realtimeApi.subscribeToImportProgress)
 
 describe('ImportRidesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     sessionStorage.clear()
+    realtimeState.handlers = null
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('applies realtime progress updates to the progress panel', async () => {
+    const user = userEvent.setup()
+    mockPreviewImportCsv.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 201,
+        totalRows: 2,
+        validRows: 2,
+        invalidRows: 0,
+        duplicateRows: 0,
+        requiresDuplicateResolution: false,
+        rows: [
+          {
+            rowNumber: 1,
+            date: '2026-04-01',
+            miles: 12.5,
+            rideMinutes: 45,
+            temperature: 60,
+            tags: 'commute',
+            notes: 'morning',
+            isValid: true,
+            errors: [],
+            duplicateMatches: [],
+          },
+          {
+            rowNumber: 2,
+            date: '2026-04-02',
+            miles: 9.5,
+            rideMinutes: 38,
+            temperature: 55,
+            tags: 'errand',
+            notes: 'afternoon',
+            isValid: true,
+            errors: [],
+            duplicateMatches: [],
+          },
+        ],
+      },
+    })
+    mockStartImportCsv.mockResolvedValue({
+      ok: true,
+      status: 202,
+      data: {
+        importJobId: 201,
+        status: 'processing',
+        startedAtUtc: '2026-04-10T10:10:00Z',
+      },
+    })
+    mockGetImportStatus.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 201,
+        status: 'processing',
+        totalRows: 2,
+        processedRows: 0,
+        importedRows: 0,
+        skippedRows: 0,
+        failedRows: 0,
+        percentComplete: 0,
+        etaMinutesRounded: null,
+        createdAtUtc: '2026-04-10T10:09:00Z',
+        startedAtUtc: '2026-04-10T10:10:00Z',
+        completedAtUtc: null,
+        lastError: null,
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <ImportRidesPage />
+      </BrowserRouter>,
+    )
+
+    const fileInput = screen.getByLabelText(/select csv file/i) as HTMLInputElement
+    const csvFile = new File(['Date,Miles\n2026-04-01,12.5'], 'rides.csv', {
+      type: 'text/csv',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [csvFile] } })
+    fireEvent.click(screen.getByRole('button', { name: /preview import/i }))
+    await user.click(await screen.findByRole('button', { name: /start import/i }))
+
+    await waitFor(() => {
+      expect(mockSubscribeToImportProgress).toHaveBeenCalledWith(
+        201,
+        expect.objectContaining({
+          onProgress: expect.any(Function),
+          onConnectionStateChanged: expect.any(Function),
+        }),
+      )
+    })
+
+    await act(async () => {
+      realtimeState.handlers?.onConnectionStateChanged('connected')
+      realtimeState.handlers?.onProgress({
+        riderId: 42,
+        importJobId: 201,
+        status: 'processing',
+        percentComplete: 50,
+        etaMinutesRounded: 5,
+        processedRows: 1,
+        totalRows: 2,
+        importedRows: 1,
+        skippedRows: 0,
+        failedRows: 0,
+        emittedAtUtc: '2026-04-10T10:12:00Z',
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/complete: 50%/i)).toBeInTheDocument()
+      expect(screen.getByText(/eta: ~5 minutes remaining/i)).toBeInTheDocument()
+      expect(screen.getByText(/imported: 1/i)).toBeInTheDocument()
+    })
+  })
+
+  it('falls back to polling when SignalR disconnects', async () => {
+
+    mockPreviewImportCsv.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 202,
+        totalRows: 1,
+        validRows: 1,
+        invalidRows: 0,
+        duplicateRows: 0,
+        requiresDuplicateResolution: false,
+        rows: [
+          {
+            rowNumber: 1,
+            date: '2026-04-01',
+            miles: 12.5,
+            rideMinutes: 45,
+            temperature: 60,
+            tags: 'commute',
+            notes: 'morning',
+            isValid: true,
+            errors: [],
+            duplicateMatches: [],
+          },
+        ],
+      },
+    })
+    mockStartImportCsv.mockResolvedValue({
+      ok: true,
+      status: 202,
+      data: {
+        importJobId: 202,
+        status: 'processing',
+        startedAtUtc: '2026-04-10T10:20:00Z',
+      },
+    })
+    mockGetImportStatus.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 202,
+        status: 'processing',
+        totalRows: 1,
+        processedRows: 0,
+        importedRows: 0,
+        skippedRows: 0,
+        failedRows: 0,
+        percentComplete: 0,
+        etaMinutesRounded: null,
+        createdAtUtc: '2026-04-10T10:19:00Z',
+        startedAtUtc: '2026-04-10T10:20:00Z',
+        completedAtUtc: null,
+        lastError: null,
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <ImportRidesPage />
+      </BrowserRouter>,
+    )
+
+    const fileInput = screen.getByLabelText(/select csv file/i) as HTMLInputElement
+    const csvFile = new File(['Date,Miles\n2026-04-01,12.5'], 'rides.csv', {
+      type: 'text/csv',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [csvFile] } })
+    fireEvent.click(screen.getByRole('button', { name: /preview import/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /start import/i }))
+
+    await waitFor(() => {
+      expect(mockSubscribeToImportProgress).toHaveBeenCalledWith(
+        202,
+        expect.objectContaining({
+          onProgress: expect.any(Function),
+          onConnectionStateChanged: expect.any(Function),
+        }),
+      )
+    })
+
+    await act(async () => {
+      realtimeState.handlers?.onConnectionStateChanged('disconnected')
+    })
+
+    const baselineCalls = mockGetImportStatus.mock.calls.length
+    await waitFor(
+      () => {
+        expect(mockGetImportStatus.mock.calls.length).toBeGreaterThan(baselineCalls)
+      },
+      { timeout: 3000 },
+    )
   })
 
   it('renders preview summary after successful upload preview', async () => {
