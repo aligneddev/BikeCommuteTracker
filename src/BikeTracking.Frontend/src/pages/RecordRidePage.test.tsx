@@ -64,6 +64,24 @@ describe('RecordRidePage', () => {
     })
   })
 
+  it('should render an import rides link', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      const importLink = screen.getByRole('link', { name: /import rides from csv/i })
+      expect(importLink).toHaveAttribute('href', '/rides/import')
+    })
+  })
+
   it('should default date/time to now', async () => {
     const now = new Date()
     mockGetRideDefaults.mockResolvedValue({

@@ -260,6 +260,9 @@ export function RecordRidePage() {
   return (
     <div className="record-ride-page">
       <h1>Record a Ride</h1>
+      <p>
+        Need to add past rides in bulk? <a href="/rides/import">Import rides from CSV</a>.
+      </p>
 
       {successMessage && <div className="success-message">{successMessage}</div>}
       {errorMessage && <div className="error-message">{errorMessage}</div>}

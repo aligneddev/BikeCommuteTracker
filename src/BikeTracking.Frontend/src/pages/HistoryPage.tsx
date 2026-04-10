@@ -560,6 +560,9 @@ export function HistoryPage() {
     <main className="history-page">
       <header className="history-page-header">
         <h1>Ride History</h1>
+        <p className="history-page-import-link">
+          Need to add older rides? <a href="/rides/import">Import rides from CSV</a>.
+        </p>
       </header>
 
       <section className="history-page-filters" aria-label="Date range filters">
