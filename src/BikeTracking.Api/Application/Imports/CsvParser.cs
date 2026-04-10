@@ -84,5 +84,6 @@ public static class CsvParser
         return new ParsedCsvDocument(rows);
     }
 
-    private static string NormalizeHeader(string value) => value.Trim().ToUpperInvariant();
+    private static string NormalizeHeader(string value) =>
+        value.Trim().Trim('\uFEFF').ToUpperInvariant();
 }

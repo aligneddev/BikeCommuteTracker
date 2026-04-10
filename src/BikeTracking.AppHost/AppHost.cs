@@ -52,6 +52,9 @@ var webFrontend = builder
     .WithReference(apiService)
     .WaitFor(apiService);
 
-apiService.PublishWithContainerFiles(webFrontend, "wwwroot");
+if (builder.ExecutionContext.IsPublishMode)
+{
+    apiService.PublishWithContainerFiles(webFrontend, "wwwroot");
+}
 
 builder.Build().Run();

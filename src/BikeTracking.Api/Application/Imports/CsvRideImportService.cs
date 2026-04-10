@@ -21,7 +21,7 @@ public sealed class CsvRideImportService(
         ArgumentException.ThrowIfNullOrWhiteSpace(request.ContentBase64);
 
         var csvBytes = Convert.FromBase64String(request.ContentBase64);
-        var csvText = Encoding.UTF8.GetString(csvBytes);
+        var csvText = DecodeCsvText(csvBytes);
         var parsedDocument = CsvParser.Parse(csvText);
 
         var (previewRows, importRows, validRows) = BuildRowData(parsedDocument);
@@ -191,6 +191,18 @@ public sealed class CsvRideImportService(
             FailedRows: job.FailedRows,
             CancelledAtUtc: job.CompletedAtUtc ?? DateTime.UtcNow
         );
+    }
+
+    private static string DecodeCsvText(byte[] csvBytes)
+    {
+        using var stream = new MemoryStream(csvBytes);
+        using var reader = new StreamReader(
+            stream,
+            encoding: Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true
+        );
+
+        return reader.ReadToEnd();
     }
 
     private static (

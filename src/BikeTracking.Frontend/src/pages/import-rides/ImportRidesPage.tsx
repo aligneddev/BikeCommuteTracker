@@ -368,7 +368,7 @@ export function ImportRidesPage() {
           />
         ) : (
           <p className="import-rides-placeholder">
-            Progress tracking and cancellation continue in the next implementation slice.
+            Start an import to see progress and cancellation controls.
           </p>
         )}
       </section>
