@@ -261,8 +261,10 @@ test.describe("013-csv-import e2e", () => {
     // Verify ETA is displayed (should be rounded to 5-minute increments)
     await expect(page.getByText(/eta|minutes remaining/i)).toBeVisible();
 
-    // Wait for completion
-    await expect(page.getByText(/status: completed/i)).toBeVisible({
+    // Wait for completion celebration
+    await expect(
+      page.getByRole("heading", { name: /import complete/i }),
+    ).toBeVisible({
       timeout: 30000,
     });
   });
@@ -302,7 +304,9 @@ test.describe("013-csv-import e2e", () => {
       timeout: 10000,
     });
 
-    await expect(page.getByText(/status: completed/i)).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: /import complete/i }),
+    ).toBeVisible({
       timeout: 30000,
     });
 
@@ -352,7 +356,9 @@ test.describe("013-csv-import e2e", () => {
       timeout: 12000,
     });
 
-    await expect(page.getByText(/status: completed/i)).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: /import complete/i }),
+    ).toBeVisible({
       timeout: 35000,
     });
   });
@@ -457,7 +463,7 @@ test.describe("013-csv-import e2e", () => {
 
     // Wait for import to complete
     await expect(
-      page.getByText(/status: completed|import completed/i),
+      page.getByRole("heading", { name: /import complete/i }),
     ).toBeVisible({ timeout: 30000 });
 
     // Navigate to history to verify rides were imported with enrichment
