@@ -8,6 +8,7 @@ import { MilesShellPage } from './pages/miles/miles-shell-page'
 import { RecordRidePage } from './pages/RecordRidePage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
+import { ImportRidesPage } from './pages/import-rides/ImportRidesPage'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/miles" element={<MilesShellPage />} />
             <Route path="/rides/history" element={<HistoryPage />} />
             <Route path="/rides/record" element={<RecordRidePage />} />
+            <Route path="/rides/import" element={<ImportRidesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>

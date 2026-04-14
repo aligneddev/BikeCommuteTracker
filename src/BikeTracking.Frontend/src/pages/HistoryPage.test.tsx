@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import { HistoryPage } from './HistoryPage'
 import * as ridesService from '../services/ridesService'
 
@@ -75,6 +76,32 @@ describe('HistoryPage', () => {
       expect(screen.getByText(/this month/i)).toBeInTheDocument()
       expect(screen.getByText(/this year/i)).toBeInTheDocument()
       expect(screen.getByText(/all time/i)).toBeInTheDocument()
+    })
+  })
+
+  it('should render an import rides link', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 0, rideCount: 0, period: 'thisMonth' },
+        thisYear: { miles: 0, rideCount: 0, period: 'thisYear' },
+        allTime: { miles: 0, rideCount: 0, period: 'allTime' },
+      },
+      filteredTotal: { miles: 0, rideCount: 0, period: 'filtered' },
+      rides: [],
+      page: 1,
+      pageSize: 25,
+      totalRows: 0,
+    })
+
+    render(
+      <BrowserRouter>
+        <HistoryPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      const importLink = screen.getByRole('link', { name: /import rides from csv/i })
+      expect(importLink).toHaveAttribute('href', '/rides/import')
     })
   })
 

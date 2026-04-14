@@ -192,3 +192,76 @@ X-User-Id: {{RiderId}}
   "temperature": 58,
   "expectedVersion": 99
 }
+
+###############################################################################
+### CSV Import Scenarios (spec-013-csv-ride-import)
+###############################################################################
+
+### Preview CSV import
+POST {{ApiService_HostAddress}}/api/imports/preview
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "fileName": "rides.csv",
+  "contentBase64": "RGF0ZSxNaWxlcyxUaW1lLFRlbXAsVGFncyxOb3RlcwoyMDI2LTA0LTAxLDEyLjUsNDUsNjAsY29tbXV0ZSxtb3JuaW5nIHJpZGUKMjAyNi0wNC0wMiwxMi44LDQ4LDYyLGNvbW11dGUsZXZlbmluZyByaWRl"
+}
+
+### Start import with duplicate resolution payload
+POST {{ApiService_HostAddress}}/api/imports/start
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "importJobId": 1,
+  "overrideAllDuplicates": false,
+  "resolutions": [
+    {
+      "rowNumber": 2,
+      "action": "replace-with-import"
+    }
+  ]
+}
+
+### Start import with override-all duplicates
+POST {{ApiService_HostAddress}}/api/imports/start
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "importJobId": 2,
+  "overrideAllDuplicates": true,
+  "resolutions": []
+}
+
+### Get import status
+GET {{ApiService_HostAddress}}/api/imports/1/status
+Accept: application/json
+X-User-Id: {{RiderId}}
+
+### Cancel import
+POST {{ApiService_HostAddress}}/api/imports/1/cancel
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{}
+
+### Edge case: non-CSV file upload (expects 400)
+POST {{ApiService_HostAddress}}/api/imports/preview
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "fileName": "rides.txt",
+  "contentBase64": "RGF0ZSxNaWxlcwoyMDI2LTA0LTAxLDEyLjU="
+}
+
+### Edge case: invalid base64 content (expects 400)
+POST {{ApiService_HostAddress}}/api/imports/preview
+Content-Type: application/json
+X-User-Id: {{RiderId}}
+
+{
+  "fileName": "rides.csv",
+  "contentBase64": "not-base64"
+}

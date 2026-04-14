@@ -1,5 +1,7 @@
 ﻿using BikeTracking.Api.Application.Dashboard;
 using BikeTracking.Api.Application.Events;
+using BikeTracking.Api.Application.Imports;
+using BikeTracking.Api.Application.Notifications;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Endpoints;
@@ -51,6 +53,11 @@ builder.Services.AddScoped<GetQuickRideOptionsService>();
 builder.Services.AddScoped<GetRideHistoryService>();
 builder.Services.AddScoped<EditRideService>();
 builder.Services.AddScoped<DeleteRideService>();
+builder.Services.AddScoped<ICsvRideImportService, CsvRideImportService>();
+builder.Services.AddScoped<IDuplicateResolutionService, DuplicateResolutionService>();
+builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
+builder.Services.AddScoped<IImportJobRepository, EfImportJobRepository>();
+builder.Services.AddSingleton<IImportJobProcessor, ImportJobProcessor>();
 builder.Services.AddScoped<IGasPriceLookupService, EiaGasPriceLookupService>();
 builder.Services.AddScoped<IWeatherLookupService, OpenMeteoWeatherLookupService>();
 
@@ -96,6 +103,7 @@ builder.Services.AddHttpLogging(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSignalR();
 
 // Allow any localhost origin so the Vite dev server and published frontend
 // can reach the API during local Aspire orchestration. The origin port varies
@@ -148,6 +156,8 @@ app.UseAuthorization();
 app.MapDashboardEndpoints();
 app.MapUsersEndpoints();
 app.MapRidesEndpoints();
+app.MapImportEndpoints();
+app.MapHub<ImportProgressHub>("/hubs/import-progress").RequireAuthorization();
 app.MapDefaultEndpoints();
 
 app.Run();

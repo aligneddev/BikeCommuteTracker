@@ -12,6 +12,16 @@
   color: #0f172a;
 }
 
+.history-page-import-link {
+  margin: 0.35rem 0 0;
+  color: #475569;
+}
+
+.history-page-import-link a {
+  color: #0f766e;
+  font-weight: 600;
+}
+
 .history-page-summaries {
   display: grid;
   gap: 0.75rem;

@@ -1,16 +1,11 @@
 # Bike Tracking Application Constitution
-<!-- Sync Impact Report v1.12.0
-Rationale: Added explicit modularity and contract-first collaboration governance so teams can deliver independently in parallel while preserving interoperability through stable interfaces and versioned contracts.
+<!-- Sync Impact Report v1.14.0
+Rationale: Strengthened Principle I from "Clean Architecture & DDD" to "Clean Architecture, DDD & Ports-and-Adapters". Added explicit requirements for: port/adapter boundaries, anti-corruption layers for third-party integrations, separation of concerns (no mixed orchestration + I/O methods), modularity (no god services), and abstraction over third-party libraries. Added references to Modern Software Engineering (Dave Farley) and Domain Modeling Made Functional (Scott Wlaschin). Added two new guardrails: mandatory port/adapter boundaries and no god services.
 Modified Sections:
-- Principle IX: Added explicit Modularity, Interfaces & Contract-First Collaboration principle
-- Development Workflow: Added contract-first parallel delivery guidance
-- Definition of Done: Added interface/contract compatibility verification requirement
-- Testing Strategy: Added integration contract-compatibility testing expectation
-- Development Approval Gates: Added contract boundary freeze gate before implementation
-- Compliance Audit Checklist: Added modular boundary and contract compatibility checks
-- Guardrails: Added non-negotiable interface/contract boundary rules for cross-module integration
-Status: Approved — modular architecture and contract-first parallel delivery are now constitutional requirements
-Current Update (v1.13.0): Added Principle X — Trunk-Based Development, Continuous Integration & Delivery. Codified branching strategy (short-lived feature branches, git worktrees, PR-gated merges with validation builds), feature flag governance (max 5 active, mandatory cleanup), and PR completion policy (owner-only completion, GitHub issue linkage required).
+- Principle I: Expanded to include Ports and Adapters, ACLs, separation of concerns, modularity, and third-party abstraction requirements
+- Guardrails: Added port/adapter boundary enforcement and god-service prohibition rules
+Status: Approved — ports-and-adapters architecture, anti-corruption layers, and modularity are now constitutional requirements
+Previous Update (v1.13.0): Added Principle X — Trunk-Based Development, Continuous Integration & Delivery. Codified branching strategy (short-lived feature branches, git worktrees, PR-gated merges with validation builds), feature flag governance (max 5 active, mandatory cleanup), and PR completion policy (owner-only completion, GitHub issue linkage required).
 Previous Update (v1.12.3): Added mandatory per-migration test coverage governance requiring each migration to include a new or updated automated test, enforced by a migration coverage policy test in CI.
 Previous Updates:
 - v1.12.2: Added mandatory spec-completion gate requiring database migrations to be applied and E2E tests to pass before a spec can be marked done.
@@ -51,11 +46,21 @@ For detailed amendment history, see [DECISIONS.md](./DECISIONS.md).
 
 ## Core Principles
 
-### I. Clean Architecture & Domain-Driven Design
+### I. Clean Architecture, Domain-Driven Design & Ports-and-Adapters
 
-Domain logic isolated from infrastructure concerns via layered architecture aligned with Biker Commuter aggregates: Rides, Expenses, Savings Calculations. Infrastructure dependencies (database, HTTP clients, external APIs) must be injectable and independently testable. Use domain models to express business rules explicitly; repositories and services should abstract data access. Repository pattern separates domain models from persistence details.
+Domain logic isolated from infrastructure concerns via **Ports and Adapters (Hexagonal Architecture)** aligned with Biker Commuter aggregates: Rides, Expenses, Savings Calculations. Infrastructure dependencies (database, HTTP clients, external APIs) must be injectable and independently testable. Use domain models to express business rules explicitly; repositories and services should abstract data access. Repository pattern separates domain models from persistence details.
 
-**Rationale**: Testability without mocking infrastructure; business logic remains framework-agnostic and reusable; easier to reason about domain behavior independent of deployment environment.
+**Architectural Boundaries & Abstractions**:
+- **Ports**: Define explicit interfaces (`I*Repository`, `I*Gateway`, `I*Service`) at domain/application layer boundaries. These are the contracts between layers — stable, owned by the inner layer, and technology-agnostic.
+- **Adapters**: Infrastructure implementations (EF Core repositories, HTTP clients, file system access, notification channels) implement port interfaces. Adapters are replaceable without changing business logic.
+- **Anti-Corruption Layers (ACLs)**: When integrating with external systems or third-party libraries, wrap them behind dedicated abstractions that translate external models into domain language. No third-party types (EF entities, HTTP response models, SDK-specific types) may leak into application or domain layers. Reference: *Domain Modeling Made Functional* (Scott Wlaschin) — model boundaries as explicit translation layers.
+- **Separation of Concerns & Cohesion**: Each class/module has a single, well-defined responsibility. Orchestration logic (workflow coordination) is separated from business rules (validation, calculation) and from infrastructure I/O (persistence, notifications, external calls). Functions that mix orchestration, business rules, and I/O in the same method body violate this principle.
+- **Modularity**: Services are small, focused, and composable. Prefer multiple cohesive services over a single "god service" that handles an entire feature's workflow. Break large orchestration methods into named, testable pipeline steps.
+- **Abstraction over third-party libraries**: Never depend directly on concrete third-party types in application/domain code. Wrap `DbContext`, `HttpClient`, `ILogger`, SignalR hubs, and all external SDKs behind owned interfaces so they can be replaced, decorated, or tested in isolation.
+
+**Reference**: *Modern Software Engineering* (Dave Farley) — manage complexity through modularity, separation of concerns, abstraction, and loose coupling. Optimize for learning and managing complexity, not for output.
+
+**Rationale**: Testability without mocking infrastructure; business logic remains framework-agnostic and reusable; easier to reason about domain behavior independent of deployment environment. Port/adapter boundaries make dependencies explicit and replaceable. Anti-corruption layers protect domain integrity when external systems change. Correct cohesion and separation of concerns prevent "god classes" that are hard to test, extend, and reason about.
 
 ### II. Functional Programming (Pure & Impure Sandwich)
 
@@ -555,6 +560,8 @@ Breaking these guarantees causes architectural decay and technical debt accrual:
 - **Expected-flow C# logic uses Result, not exceptions** — validation, not-found, conflict, and authorization business outcomes must be returned via typed Result objects (including error code/message metadata). Throwing exceptions for these expected outcomes is prohibited; exceptions are only for truly unexpected failures.
 - **Cross-module work is contract-first and interface-bound** — teams must integrate through explicit interfaces and versioned contracts only; direct coupling to another module's internal implementation is prohibited.
 - **No Entity Framework DbContext in domain layer** — domain must remain infrastructure-agnostic. If domain needs persistence logic, use repository pattern abstracting EF.
+- **Port/Adapter boundaries are mandatory** — application and domain layers define ports (interfaces); infrastructure provides adapters (implementations). No concrete infrastructure types (`DbContext`, `HttpClient`, third-party SDK classes) referenced directly in application orchestration or domain logic. All I/O goes through owned interfaces. A service that directly calls `dbContext.SaveChangesAsync()` alongside business logic violates this boundary — persistence must be behind a repository or unit-of-work port.
+- **No god services** — a single class must not own the entire workflow of a feature (parsing, validation, persistence, background processing, notifications, cancellation). Break into cohesive collaborators: one for orchestration, one for persistence, one for row processing, etc. If a class has more than ~3 injected dependencies or methods longer than ~30 lines of business logic, it likely violates separation of concerns and should be decomposed.
 - **Secrets management by deployment context** — **Cloud**: all secrets in Azure Key Vault; **Local**: User Secrets or environment variables. No connection strings, API keys, or OAuth secrets in appsettings.json, code, or GitHub. Pre-commit hooks enforce this. **⚠️ This repository is public on GitHub**: any committed secret is immediately and permanently exposed to the internet; treat any accidental secret commit as an immediate security incident requiring credential rotation.
 - **Event schema is append-only** — never mutate existing events. If schema changes needed, create new event type and version old events. Immutability is non-negotiable.
 - **F# domain types must marshal through EF Core value converters** — no raw EF entities exposed to C# API layer. C# records serve as API DTOs; converters handle F#-to-C# translation.

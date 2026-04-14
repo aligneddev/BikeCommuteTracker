@@ -964,6 +964,16 @@ internal sealed class StubGasPriceLookupService : IGasPriceLookupService
 
         return Task.FromResult<decimal?>(null);
     }
+
+    public Task<decimal?> GetOrFetchAsync(
+        DateOnly priceDate,
+        DateOnly weekStartDate,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // Delegate to the single-date overload for stub behavior
+        return GetOrFetchAsync(priceDate, cancellationToken);
+    }
 }
 
 internal sealed class StubWeatherLookupService : IWeatherLookupService

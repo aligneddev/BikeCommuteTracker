@@ -65,12 +65,180 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("RetrievedAtUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly>("WeekStartDate")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("GasPriceLookupId");
 
                     b.HasIndex("PriceDate")
                         .IsUnique();
 
+                    b.HasIndex("WeekStartDate")
+                        .IsUnique();
+
                     b.ToTable("GasPriceLookups", (string)null);
+                });
+
+            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.ImportJobEntity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EtaMinutesRounded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FailedRows")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ImportedRows")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2048)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("OverrideAllDuplicates")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("ProcessedRows")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<long>("RiderId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SkippedRows")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TotalRows")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RiderId", "CreatedAtUtc");
+
+                    b.ToTable("ImportJobs", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ImportJobs_FailedRows_NonNegative", "\"FailedRows\" >= 0");
+
+                            t.HasCheckConstraint("CK_ImportJobs_ImportedRows_NonNegative", "\"ImportedRows\" >= 0");
+
+                            t.HasCheckConstraint("CK_ImportJobs_ProcessedRows_Lte_TotalRows", "\"ProcessedRows\" <= \"TotalRows\"");
+
+                            t.HasCheckConstraint("CK_ImportJobs_ProcessedRows_NonNegative", "\"ProcessedRows\" >= 0");
+
+                            t.HasCheckConstraint("CK_ImportJobs_SkippedRows_NonNegative", "\"SkippedRows\" >= 0");
+
+                            t.HasCheckConstraint("CK_ImportJobs_TotalRows_NonNegative", "\"TotalRows\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.ImportRowEntity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("CreatedRideId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DuplicateResolution")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DuplicateStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExistingRideIdsJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ImportJobId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("Miles")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProcessingStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("RideDateLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RideMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RowNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TagsRaw")
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("Temperature")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ValidationErrorsJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ValidationStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImportJobId", "RowNumber")
+                        .IsUnique();
+
+                    b.ToTable("ImportRows", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ImportRows_Miles_Range", "\"Miles\" IS NULL OR (CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200)");
+
+                            t.HasCheckConstraint("CK_ImportRows_RideMinutes_Positive", "\"RideMinutes\" IS NULL OR \"RideMinutes\" > 0");
+
+                            t.HasCheckConstraint("CK_ImportRows_RowNumber_Positive", "\"RowNumber\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.RideEntity", b =>
@@ -416,6 +584,26 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.ImportJobEntity", b =>
+                {
+                    b.HasOne("BikeTracking.Api.Infrastructure.Persistence.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("RiderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.ImportRowEntity", b =>
+                {
+                    b.HasOne("BikeTracking.Api.Infrastructure.Persistence.Entities.ImportJobEntity", "ImportJob")
+                        .WithMany("Rows")
+                        .HasForeignKey("ImportJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ImportJob");
+                });
+
             modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.RideEntity", b =>
                 {
                     b.HasOne("BikeTracking.Api.Infrastructure.Persistence.UserEntity", null)
@@ -443,6 +631,11 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.ImportJobEntity", b =>
+                {
+                    b.Navigation("Rows");
                 });
 
             modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.UserEntity", b =>

@@ -44,6 +44,40 @@ describe('SettingsPage', () => {
     })
   })
 
+  it('renders an Import Rides from CSV link', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: false,
+        settings: {
+          averageCarMpg: null,
+          yearlyGoalMiles: null,
+          oilChangePrice: null,
+          mileageRateCents: null,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
+          updatedAtUtc: null,
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    const importLink = await screen.findByRole('link', {
+      name: /import rides from csv/i,
+    })
+
+    expect(importLink).toHaveAttribute('href', '/rides/import')
+  })
+
   it('loads and displays saved numeric settings values', async () => {
     mockGetUserSettings.mockResolvedValue({
       ok: true,

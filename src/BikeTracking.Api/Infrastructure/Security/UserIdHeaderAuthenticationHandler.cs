@@ -25,6 +25,17 @@ public sealed class UserIdHeaderAuthenticationHandler
         var userIdString = Request.Headers[UserIdHeaderName].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(userIdString))
         {
+            // SignalR browser websocket connections cannot send custom headers,
+            // so we allow the same user id value via access token query parameter.
+            userIdString = Request.Query["access_token"].FirstOrDefault();
+        }
+        if (string.IsNullOrWhiteSpace(userIdString))
+        {
+            userIdString = Request.Query["userId"].FirstOrDefault();
+        }
+
+        if (string.IsNullOrWhiteSpace(userIdString))
+        {
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
