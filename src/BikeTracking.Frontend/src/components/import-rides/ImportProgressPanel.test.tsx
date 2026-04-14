@@ -20,7 +20,8 @@ describe('ImportProgressPanel', () => {
 
     expect(screen.getByText(/status: processing/i)).toBeInTheDocument()
     expect(screen.getByText(/complete: 25%/i)).toBeInTheDocument()
-    expect(screen.getByText(/eta: estimating/i)).toBeInTheDocument()
+    expect(screen.getByText(/eta: calculating/i)).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: /eta progress/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cancel import/i })).toBeInTheDocument()
   })
 

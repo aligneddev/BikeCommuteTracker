@@ -11,14 +11,29 @@ public static class CsvValidationRules
         "MM/dd/yyyy",
         "M/d/yyyy",
         "dd-MMM-yyyy",
+        "d-MMM-yyyy",
         "MMM dd yyyy",
+        "MM/dd/yy",
+        "M/d/yy",
     ];
 
     public static IReadOnlyList<ImportValidationError> ValidateRow(ParsedCsvRow row)
     {
         var errors = new List<ImportValidationError>();
 
-        if (!TryParseDate(row.Date, out _))
+        if (IsMonthDayWithoutYear(row.Date))
+        {
+            errors.Add(
+                new ImportValidationError(
+                    row.RowNumber,
+                    "INVALID_DATE",
+                    $"Date '{row.Date}' contains only a month and day without a year. "
+                        + "Change the Date column to a short date format (e.g. 3/12/2026) and re-save the file.",
+                    "Date"
+                )
+            );
+        }
+        else if (!TryParseDate(row.Date, out _))
         {
             errors.Add(
                 new ImportValidationError(
@@ -77,19 +92,59 @@ public static class CsvValidationRules
             return false;
         }
 
-        return DateOnly.TryParseExact(
-                rawDate,
+        var trimmed = rawDate.Trim();
+
+        if (
+            DateOnly.TryParseExact(
+                trimmed,
                 SupportedDateFormats,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AllowWhiteSpaces,
                 out value
             )
-            || DateOnly.TryParse(
-                rawDate,
+        )
+        {
+            return true;
+        }
+
+        // Accept day-month-without-year (e.g. "12-Mar") and default to the current year.
+        // Month-first yearless patterns (e.g. "Mar-12") are rejected via IsMonthDayWithoutYear.
+        if (
+            DateTime.TryParseExact(
+                trimmed,
+                ["dd-MMM", "d-MMM"],
                 CultureInfo.InvariantCulture,
-                DateTimeStyles.None,
-                out value
-            );
+                DateTimeStyles.AllowWhiteSpaces,
+                out var dayMonthOnly
+            )
+        )
+        {
+            value = new DateOnly(DateTime.Now.Year, dayMonthOnly.Month, dayMonthOnly.Day);
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Returns true when the input looks like a month-name + day number without a year
+    /// (e.g. "Mar-12" or "Mar 12"). These formats are ambiguous and must be rejected.
+    /// </summary>
+    public static bool IsMonthDayWithoutYear(string? rawDate)
+    {
+        if (string.IsNullOrWhiteSpace(rawDate))
+        {
+            return false;
+        }
+
+        return DateTime.TryParseExact(
+            rawDate.Trim(),
+            ["MMM-d", "MMM-dd", "MMM d", "MMM dd"],
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AllowWhiteSpaces,
+            out _
+        );
     }
 
     public static bool TryParseMiles(string? rawMiles, out decimal value)

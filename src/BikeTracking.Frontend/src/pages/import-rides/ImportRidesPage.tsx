@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   cancelImport,
   getImportStatus,
@@ -56,9 +57,12 @@ export function ImportRidesPage() {
   const [overrideAllDuplicates, setOverrideAllDuplicates] = useState<boolean>(false)
   const [duplicateResolutions, setDuplicateResolutions] = useState<ImportDuplicateResolution[]>([])
   const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(false)
+  const [isDiscardingPreview, setIsDiscardingPreview] = useState<boolean>(false)
 
   const duplicateRows: ImportPreviewRow[] =
     preview?.rows.filter((row) => row.duplicateMatches.length > 0) ?? []
+  const hasStartedImport = isStarting || status !== null
+  const isImportCompleted = status?.status === 'completed'
 
   useEffect(() => {
     const importJobId = readActiveImportJobId()
@@ -251,6 +255,18 @@ export function ImportRidesPage() {
     }
   }
 
+  function resetForNewImport(): void {
+    setSelectedFile(null)
+    setSelectedFileName('')
+    setPreview(null)
+    setStatus(null)
+    setIsDuplicateDialogOpen(false)
+    setOverrideAllDuplicates(false)
+    setDuplicateResolutions([])
+    setIsRealtimeConnected(false)
+    clearActiveImportJobId()
+  }
+
   function onResolutionChange(
     rowNumber: number,
     action: ImportDuplicateResolution['action']
@@ -293,7 +309,7 @@ export function ImportRidesPage() {
   }
 
   async function onStartImport(): Promise<void> {
-    if (!preview) {
+    if (!preview || hasStartedImport) {
       return
     }
 
@@ -311,6 +327,30 @@ export function ImportRidesPage() {
     }
 
     await runStartImport(preview.importJobId, overrideAllDuplicates, duplicateResolutions)
+  }
+
+  async function onCancelDuplicateResolution(): Promise<void> {
+    if (!preview) {
+      resetForNewImport()
+      return
+    }
+
+    setIsDiscardingPreview(true)
+    setErrorMessage('')
+
+    try {
+      const cancelResponse = await cancelImport(preview.importJobId)
+      if (!cancelResponse.ok) {
+        setErrorMessage(cancelResponse.error?.message ?? 'Unable to discard import preview.')
+        return
+      }
+
+      resetForNewImport()
+    } catch {
+      setErrorMessage('Unable to discard import preview.')
+    } finally {
+      setIsDiscardingPreview(false)
+    }
   }
 
   async function onCancelImport(): Promise<void> {
@@ -388,14 +428,20 @@ export function ImportRidesPage() {
               {isPreviewing ? 'Previewing...' : 'Preview Import'}
             </button>
           </div>
+
+          {isPreviewing ? (
+            <div className="import-rides-loading" aria-live="polite" aria-busy="true">
+              <div className="import-rides-spinner" aria-hidden="true" />
+              <span>Parsing CSV and checking for duplicates... This may take a moment for large files.</span>
+            </div>
+          ) : null}
         </form>
 
-        {preview ? (
+        {preview && !isImportCompleted ? (
           <section className="import-rides-preview" aria-label="Import preview">
-            <h2>Preview Summary</h2>
+            <h2>{hasStartedImport ? 'Import Summary' : 'Preview Summary'}</h2>
             <p>
-              Total rows: {preview.totalRows} | Valid rows: {preview.validRows} | Invalid rows:{' '}
-              {preview.invalidRows}
+              Total rows: {preview.totalRows} | Valid rows: {preview.validRows} | Invalid rows: {preview.invalidRows}
             </p>
 
             <p className="import-rides-duplicates">
@@ -405,7 +451,11 @@ export function ImportRidesPage() {
                 : ' | No duplicate review required.'}
             </p>
 
-            {preview.rows.length > 0 ? (
+            {hasStartedImport ? (
+              <p className="import-rides-summary-line">
+                Import running for {preview.validRows} valid rows. Duplicates reviewed: {preview.duplicateRows}.
+              </p>
+            ) : preview.rows.length > 0 ? (
               <ul>
                 {preview.rows.map((row) => (
                   <li key={row.rowNumber}>
@@ -426,15 +476,30 @@ export function ImportRidesPage() {
 
             <div className="import-rides-actions">
               {!isDuplicateDialogOpen ? (
-                <button type="button" onClick={() => void onStartImport()} disabled={isStarting}>
-                  {isStarting ? 'Starting...' : 'Start Import'}
+                <button type="button" onClick={() => void onStartImport()} disabled={hasStartedImport}>
+                  {isStarting ? 'Starting...' : hasStartedImport ? 'Import Started' : 'Start Import'}
                 </button>
               ) : null}
             </div>
           </section>
         ) : null}
 
-        {status ? (
+        {isImportCompleted ? (
+          <section className="import-rides-complete" aria-label="Import complete celebration">
+            <div className="import-rides-complete-burst" aria-hidden="true" />
+            <div className="import-rides-complete-icon" aria-hidden="true">
+              ✓
+            </div>
+            <h2>Import Complete</h2>
+            <p>
+              Nice work. {status?.importedRows ?? 0} rides were imported successfully.
+            </p>
+            <p>Head to your dashboard to see your updated stats and trends.</p>
+            <Link className="import-rides-dashboard-link" to="/dashboard">
+              Go To Dashboard
+            </Link>
+          </section>
+        ) : status ? (
           <ImportProgressPanel
             status={status.status}
             percentComplete={status.percentComplete ?? null}
@@ -457,8 +522,8 @@ export function ImportRidesPage() {
         duplicateRows={duplicateRows}
         overrideAllDuplicates={overrideAllDuplicates}
         resolutions={duplicateResolutions}
-        isSubmitting={isStarting}
-        onClose={() => setIsDuplicateDialogOpen(false)}
+        isSubmitting={isStarting || isDiscardingPreview}
+        onClose={() => void onCancelDuplicateResolution()}
         onConfirm={() => void onConfirmDuplicateResolution()}
         onOverrideAllDuplicatesChange={setOverrideAllDuplicates}
         onResolutionChange={onResolutionChange}

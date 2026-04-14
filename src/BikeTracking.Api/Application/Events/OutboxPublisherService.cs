@@ -16,24 +16,27 @@ public sealed class OutboxPublisherService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await PublishPendingBatchAsync(stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Outbox publisher encountered an unhandled exception.");
-            }
+        // Temporarily disable the background processing loop for manual testing of the outbox store and publishers.
+        // TODO: re-enable or change to event based processing.
+        await Task.CompletedTask;
+        // while (!stoppingToken.IsCancellationRequested)
+        // {
+        //     try
+        //     {
+        //         await PublishPendingBatchAsync(stoppingToken);
+        //     }
+        //     catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        //     {
+        //         break;
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         logger.LogError(ex, "Outbox publisher encountered an unhandled exception.");
+        //     }
 
-            var delay = TimeSpan.FromSeconds(Math.Max(1, _outboxOptions.PollIntervalSeconds));
-            await Task.Delay(delay, stoppingToken);
-        }
+        //     var delay = TimeSpan.FromSeconds(Math.Max(1, _outboxOptions.PollIntervalSeconds));
+        //     await Task.Delay(delay, stoppingToken);
+        // }
     }
 
     private async Task PublishPendingBatchAsync(CancellationToken cancellationToken)

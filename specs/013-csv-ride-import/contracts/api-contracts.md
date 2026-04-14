@@ -146,7 +146,7 @@ public sealed record ImportProgressNotification(
 
 - Required CSV columns: `Date`, `Miles` (case-insensitive)
 - Optional CSV columns: `Time`, `Temp`, `Tags`, `Notes`
-- Duplicate key: `Date + Miles`
+- Duplicate key: `Date + Miles + Temp` (Temp must also match when provided)
 - Enrichment rules:
   - Cache-first gas/weather lookup
   - On cache miss, perform external lookup

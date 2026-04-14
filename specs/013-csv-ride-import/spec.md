@@ -28,7 +28,7 @@ A rider navigates to the Settings page and selects "Import Rides." They are pres
 
 ### User Story 2 - Duplicate Detection and Resolution (Priority: P1)
 
-During import, the system checks each row's date and miles against the rider's existing ride history. If duplicates are found (an existing ride with the same date and same miles value), the rider is prompted with a dialog showing the conflicting rows side-by-side (existing ride vs. incoming CSV row). The rider can resolve each duplicate individually, or use an "Override All Duplicates" toggle to skip duplicate checking entirely and import everything. Rides on the same date but with different mileage are treated as distinct trips and imported without prompting.
+During import, the system checks each row's date, miles, and Temp (when provided) against the rider's existing ride history. If duplicates are found (an existing ride with the same date, same miles value, and matching Temp value when present), the rider is prompted with a dialog showing the conflicting rows side-by-side (existing ride vs. incoming CSV row). The rider can resolve each duplicate individually, or use an "Override All Duplicates" toggle to skip duplicate checking entirely and import everything. Rides on the same date with different mileage or different Temp are treated as distinct trips and imported without prompting.
 
 **Why this priority**: Without duplicate handling, importing a CSV could corrupt the rider's history with repeated entries — especially likely if the rider re-imports the same file or has partial data already recorded. This is a data-integrity concern and is co-equal with the core import.
 
@@ -41,6 +41,7 @@ During import, the system checks each row's date and miles against the rider's e
 3. **Given** the duplicate dialog is displayed, **When** the rider chooses "Replace with Import," **Then** the existing ride is superseded by the imported row (via a new corrective event) and the import continues.
 4. **Given** a CSV with multiple duplicate dates, **When** the first duplicate is encountered, **Then** the dialog also offers an "Override All Duplicates" option. If selected, all remaining duplicates are imported without further prompts (creating new ride records alongside existing ones).
 5. **Given** the rider enables "Override All Duplicates" before starting the import, **When** duplicates are encountered, **Then** all rows are imported without any duplicate prompts.
+6. **Given** the duplicate dialog is displayed for a previewed import, **When** the rider clicks "Cancel," **Then** the previewed job is discarded, the page resets to a clean "new import" state, and after refresh the rider can upload and preview a different CSV without residual import state.
 
 ---
 
@@ -122,6 +123,18 @@ The import functionality is discoverable from the Settings page via a clearly la
 - What happens when multiple rides exist on the same date in the rider's history? → Duplicate detection flags a match only when both date and miles are identical. A rider with a morning 8.5-mile commute and an evening 12-mile ride would not trigger a duplicate for either if the CSV rows have different mileage. If a CSV row matches on date+miles with any existing ride, the dialog shows all matching existing rides alongside the incoming row.
 - What happens when an external gas price or weather API call fails during enrichment? → The system retries once. If the retry also fails, enrichment is skipped for that ride (the ride is still imported without that data) and the import continues with the next row.
 
+---
+
+## Known Limitations
+
+**Preview Performance**: The preview phase (CSV parsing + duplicate detection) loads all rider rides into memory and checks each CSV row against the full history. For riders with large ride histories (1000+ rides) or large CSV uploads (500+ rows), the preview operation may take 5–30 seconds with no real-time progress updates. **Mitigation**: A preview progress spinner is displayed during the preview phase with a message indicating the operation is in progress. For very large imports, consider splitting the CSV into smaller batches (100–200 rows per file) or pre-filtering to recent years to reduce matching overhead.
+
+**Duplicate Detection on Large Datasets**: Duplicate lookup is performed in-memory (LINQ-to-Objects) after loading all rider rides from the database. This is efficient for typical riders (up to ~500 rides) but will degrade for riders with 5000+ historical rides. **Mitigation**: In future phases, duplicate detection could be optimized via SQL-level batch lookup or streaming row processing if needed.
+
+**Preview Summary Display**: When a preview contains 100+ rows, the row list will render inline and may cause the browser to slow down. **Mitigation**: In future phases, the preview row list should be paginated or virtualized if needed to handle massive CSV exports.
+
+---
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
@@ -133,7 +146,7 @@ The import functionality is discoverable from the Settings page via a clearly la
 - **FR-005**: System MUST validate each row against existing ride-entry rules: miles between 0 and 200 (exclusive of zero), parseable date, optional positive duration for Time.
 - **FR-006**: System MUST display a preview of parsed CSV data (row count, sample rows, any validation errors) before the rider confirms the import.
 - **FR-007**: System MUST create ride records for each valid row, associated with the authenticated rider, preserving all provided fields (date, miles, time, temperature, tags, notes).
-- **FR-008**: System MUST detect duplicate rides by comparing each CSV row's date and miles against the rider's existing ride history. A duplicate is flagged only when both date and miles match an existing ride.
+- **FR-008**: System MUST detect duplicate rides by comparing each CSV row's date, miles, and Temp (when provided) against the rider's existing ride history. A duplicate is flagged only when date and miles match, and Temp also matches when Temp values are present.
 - **FR-009**: System MUST present a duplicate-resolution dialog when a date+miles conflict is found, showing the existing ride and incoming row side by side, with options to "Keep Existing," "Replace with Import," or "Override All Duplicates."
 - **FR-010**: System MUST provide an "Override All Duplicates" option (available before import starts or at the first duplicate prompt) that bypasses all subsequent duplicate checks and imports all rows.
 - **FR-011**: System MUST send real-time progress notifications at 25% processing increments (25%, 50%, 75%, 100%) via a persistent connection.
@@ -204,3 +217,12 @@ The import functionality is discoverable from the Settings page via a clearly la
 - **SC-006**: Riders can complete the full import flow (upload → preview → confirm → completion) without needing external documentation or support.
 - **SC-007**: Invalid rows are clearly identified with specific error messages (field name + reason) and do not prevent valid rows from being imported.
 - **SC-008**: The import page is reachable from the Settings page in one click/tap.
+
+
+# I prompted after using it
+
+let's improve the import.
+After start import, disable the button, reduce the import summary section to a short summary (one liner).
+make the ETA into a progress bar that updates. use seconds instead of minutes.
+
+When the import is completed add a cool animation and replace preview summary and import status with an "import complete message, graphic and suggestion to go to the dashboard to see the results" 

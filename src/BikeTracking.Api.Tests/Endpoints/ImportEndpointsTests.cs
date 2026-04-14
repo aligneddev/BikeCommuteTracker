@@ -188,6 +188,30 @@ public sealed class ImportEndpointsTests
     }
 
     [Fact]
+    public async Task PostPreview_WithSameDateMilesButDifferentTemp_DoesNotReturnDuplicate()
+    {
+        await using var host = await ImportApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("ImportUser");
+        await host.SeedRideAsync(userId, new DateTime(2026, 4, 1, 8, 0, 0), 12.5m, 36m);
+
+        var payload = new ImportPreviewRequest(
+            "rides.csv",
+            Convert.ToBase64String(
+                System.Text.Encoding.UTF8.GetBytes("Date,Miles,Time,Temp\n2026-04-01,12.5,45,58")
+            )
+        );
+
+        var response = await PostAsAuthAsync(host.Client, "/api/imports/preview", payload, userId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<ImportPreviewResponse>();
+        Assert.NotNull(body);
+        Assert.Equal(0, body.DuplicateRows);
+        Assert.False(body.RequiresDuplicateResolution);
+        Assert.Empty(body.Rows[0].DuplicateMatches);
+    }
+
+    [Fact]
     public async Task PostStart_WithUnresolvedDuplicatesAndNoOverride_ReturnsBadRequest()
     {
         await using var host = await ImportApiHost.StartAsync();
@@ -429,7 +453,12 @@ public sealed class ImportEndpointsTests
             return user.UserId;
         }
 
-        public async Task SeedRideAsync(long riderId, DateTime rideDateTimeLocal, decimal miles)
+        public async Task SeedRideAsync(
+            long riderId,
+            DateTime rideDateTimeLocal,
+            decimal miles,
+            decimal? temperature = null
+        )
         {
             await using var scope = _app.Services.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
@@ -439,6 +468,7 @@ public sealed class ImportEndpointsTests
                     RiderId = riderId,
                     RideDateTimeLocal = rideDateTimeLocal,
                     Miles = miles,
+                    Temperature = temperature,
                     CreatedAtUtc = DateTime.UtcNow,
                 }
             );

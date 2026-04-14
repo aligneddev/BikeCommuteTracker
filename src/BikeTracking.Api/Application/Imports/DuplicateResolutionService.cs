@@ -32,6 +32,7 @@ public sealed class DuplicateResolutionService(BikeTrackingDbContext dbContext)
             var matches = riderRides
                 .Where(ride => DateOnly.FromDateTime(ride.RideDateTimeLocal) == candidate.Date)
                 .Where(ride => ride.Miles == candidate.Miles)
+                .Where(ride => ride.Temperature == candidate.Temperature)
                 .Select(ride => new ImportDuplicateMatch(
                     ExistingRideId: ride.Id,
                     ExistingRideDate: ride.RideDateTimeLocal.ToString("yyyy-MM-dd"),

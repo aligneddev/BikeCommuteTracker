@@ -312,6 +312,32 @@ Task: "T053 [US4] Add lookup throttling tests (4 calls/sec, SemaphoreSlim) in sr
 
 ---
 
+## Phase 9: Follow-up - Preview Progress UI and Hardening (Priority: P3)
+
+**Purpose**: Address user feedback on large CSV preview performance and add visual feedback during preview operations.
+
+**Issue**: Users reported that CSV preview for 50+ row files appeared to hang with no progress indication. Root cause: preview phase (CSV parsing + duplicate detection) can take 5-30 seconds for large files/histories with no real-time UI feedback.
+
+**Acceptance**: Preview phase displays a loading spinner and status message while processing. Documentation captures known scaling limitations.
+
+### Tests for Phase 9
+
+- [ ] T101 [P] Add preview loading state rendering tests in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.test.tsx`
+- [X] T107 [P] Add duplicate-dialog cancel flow test that verifies preview discard and clean new-import state in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.test.tsx`
+
+### Implementation for Phase 9
+
+- [X] T102 Add preview loading spinner with status message to `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.tsx`
+- [X] T103 Add spinner animation and loading container styles to `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.css`
+- [X] T104 Document preview performance limitations and duplicate detection optimization notes in `specs/013-csv-ride-import/spec.md` Known Limitations section
+- [X] T108 Handle duplicate-dialog cancel by discarding preview job and resetting import page state in `src/BikeTracking.Frontend/src/pages/import-rides/ImportRidesPage.tsx`
+- [ ] T105 (Future) Optimize duplicate detection to use SQL-level batch lookup or streaming for riders with 5000+ historical rides
+- [ ] T106 (Future) Add preview row pagination or virtualization for CSVs with 500+ rows
+
+**Checkpoint**: Preview phase has clear user feedback; limitations documented; feature is more robust for large imports.
+
+---
+
 ## Notes
 
 - [P] tasks are parallel-safe and should avoid same-file conflicts.

@@ -297,7 +297,8 @@ public sealed class CsvRideImportService(
             .Select(row => new ImportDuplicateCandidate(
                 row.RowNumber,
                 row.RideDateLocal!.Value,
-                row.Miles!.Value
+                row.Miles!.Value,
+                row.Temperature
             ))
             .ToArray();
     }

@@ -163,8 +163,43 @@ describe('ImportRidesPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/complete: 50%/i)).toBeInTheDocument()
-      expect(screen.getByText(/eta: ~5 minutes remaining/i)).toBeInTheDocument()
+      expect(screen.getByText(/eta: 300s remaining/i)).toBeInTheDocument()
       expect(screen.getByText(/imported: 1/i)).toBeInTheDocument()
+    })
+  })
+
+  it('shows completion celebration and dashboard call-to-action when import completes', async () => {
+    mockGetImportStatus.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 303,
+        status: 'completed',
+        totalRows: 10,
+        processedRows: 10,
+        importedRows: 9,
+        skippedRows: 1,
+        failedRows: 0,
+        percentComplete: 100,
+        etaMinutesRounded: 0,
+        createdAtUtc: '2026-04-10T10:19:00Z',
+        startedAtUtc: '2026-04-10T10:20:00Z',
+        completedAtUtc: '2026-04-10T10:25:00Z',
+        lastError: null,
+      },
+    })
+    sessionStorage.setItem('bike_tracking_active_import_job_id', '303')
+
+    render(
+      <BrowserRouter>
+        <ImportRidesPage />
+      </BrowserRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /import complete/i })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /go to dashboard/i })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: /import progress/i })).not.toBeInTheDocument()
     })
   })
 
@@ -606,6 +641,82 @@ describe('ImportRidesPage', () => {
         overrideAllDuplicates: true,
         resolutions: [],
       })
+    })
+  })
+
+  it('discards duplicate preview when cancel is clicked so a new import can be prepared', async () => {
+    const user = userEvent.setup()
+    mockPreviewImportCsv.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 107,
+        totalRows: 1,
+        validRows: 1,
+        invalidRows: 0,
+        duplicateRows: 1,
+        requiresDuplicateResolution: true,
+        rows: [
+          {
+            rowNumber: 1,
+            date: '2026-04-01',
+            miles: 12.5,
+            rideMinutes: 45,
+            temperature: 60,
+            tags: 'commute',
+            notes: 'morning',
+            isValid: true,
+            errors: [],
+            duplicateMatches: [
+              {
+                existingRideId: 7,
+                existingRideDate: '2026-04-01',
+                existingMiles: 12.5,
+              },
+            ],
+          },
+        ],
+      },
+    })
+    mockCancelImport.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 107,
+        status: 'cancelled',
+        processedRows: 0,
+        importedRows: 0,
+        skippedRows: 0,
+        failedRows: 0,
+        cancelledAtUtc: '2026-04-10T12:00:00Z',
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <ImportRidesPage />
+      </BrowserRouter>
+    )
+
+    const fileInput = screen.getByLabelText(/select csv file/i) as HTMLInputElement
+    const csvFile = new File(['Date,Miles\n2026-04-01,12.5'], 'rides.csv', {
+      type: 'text/csv',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [csvFile] } })
+    fireEvent.click(screen.getByRole('button', { name: /preview import/i }))
+
+    await screen.findByText(/duplicate rows: 1/i)
+    await user.click(screen.getByRole('button', { name: /start import/i }))
+
+    const dialog = screen.getByRole('dialog', { name: /duplicate resolution/i })
+    await user.click(within(dialog).getByRole('button', { name: /cancel/i }))
+
+    await waitFor(() => {
+      expect(mockCancelImport).toHaveBeenCalledWith(107)
+      expect(screen.queryByRole('dialog', { name: /duplicate resolution/i })).not.toBeInTheDocument()
+      expect(screen.getByText(/no file selected\./i)).toBeInTheDocument()
+      expect(screen.queryByLabelText(/import preview/i)).not.toBeInTheDocument()
     })
   })
 

@@ -8,7 +8,7 @@ namespace BikeTracking.Api.Tests.Application.Imports;
 public sealed class DuplicateResolutionServiceTests
 {
     [Fact]
-    public async Task GetDuplicateMatchesAsync_MatchesByDateAndMiles()
+    public async Task GetDuplicateMatchesAsync_MatchesByDateMilesAndTemperature()
     {
         await using var db = CreateDbContext();
         db.Rides.Add(
@@ -17,6 +17,7 @@ public sealed class DuplicateResolutionServiceTests
                 RiderId = 42,
                 RideDateTimeLocal = new DateTime(2026, 4, 1, 8, 0, 0),
                 Miles = 12.5m,
+                Temperature = 36m,
                 CreatedAtUtc = DateTime.UtcNow,
             }
         );
@@ -25,7 +26,7 @@ public sealed class DuplicateResolutionServiceTests
         var service = new DuplicateResolutionService(db);
         var result = await service.GetDuplicateMatchesAsync(
             42,
-            [new ImportDuplicateCandidate(1, new DateOnly(2026, 4, 1), 12.5m)],
+            [new ImportDuplicateCandidate(1, new DateOnly(2026, 4, 1), 12.5m, 36m)],
             CancellationToken.None
         );
 
@@ -44,6 +45,7 @@ public sealed class DuplicateResolutionServiceTests
                 RiderId = 42,
                 RideDateTimeLocal = new DateTime(2026, 4, 1, 8, 0, 0),
                 Miles = 10m,
+                Temperature = 36m,
                 CreatedAtUtc = DateTime.UtcNow,
             }
         );
@@ -52,7 +54,33 @@ public sealed class DuplicateResolutionServiceTests
         var service = new DuplicateResolutionService(db);
         var result = await service.GetDuplicateMatchesAsync(
             42,
-            [new ImportDuplicateCandidate(1, new DateOnly(2026, 4, 1), 12.5m)],
+            [new ImportDuplicateCandidate(1, new DateOnly(2026, 4, 1), 12.5m, 36m)],
+            CancellationToken.None
+        );
+
+        Assert.False(result.ContainsKey(1));
+    }
+
+    [Fact]
+    public async Task GetDuplicateMatchesAsync_DoesNotMatchWhenTemperatureDiffers()
+    {
+        await using var db = CreateDbContext();
+        db.Rides.Add(
+            new RideEntity
+            {
+                RiderId = 42,
+                RideDateTimeLocal = new DateTime(2026, 4, 1, 8, 0, 0),
+                Miles = 12.5m,
+                Temperature = 36m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await db.SaveChangesAsync();
+
+        var service = new DuplicateResolutionService(db);
+        var result = await service.GetDuplicateMatchesAsync(
+            42,
+            [new ImportDuplicateCandidate(1, new DateOnly(2026, 4, 1), 12.5m, 58m)],
             CancellationToken.None
         );
 

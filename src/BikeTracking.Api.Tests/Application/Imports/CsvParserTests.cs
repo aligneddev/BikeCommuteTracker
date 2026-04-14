@@ -100,4 +100,51 @@ public sealed class CsvParserTests
         Assert.Contains(errors, e => e.Field == "Miles");
         Assert.Contains(errors, e => e.Field == "Time");
     }
+
+    [Fact]
+    public void ValidateRow_WithMonthDayWithoutYear_ReturnsSpecificFormatError()
+    {
+        var row = new ParsedCsvRow(1, "Mar-12", "4.35", null, null, null, null);
+
+        var errors = CsvValidationRules.ValidateRow(row);
+
+        var dateError = Assert.Single(errors, e => e.Field == "Date");
+        Assert.Equal("INVALID_DATE", dateError.Code);
+        Assert.Contains("short date", dateError.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Mar-12", dateError.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ValidateRow_WithMonthSpaceDayWithoutYear_ReturnsSpecificFormatError()
+    {
+        var row = new ParsedCsvRow(1, "Mar 12", "4.35", null, null, null, null);
+
+        var errors = CsvValidationRules.ValidateRow(row);
+
+        var dateError = Assert.Single(errors, e => e.Field == "Date");
+        Assert.Equal("INVALID_DATE", dateError.Code);
+        Assert.Contains("short date", dateError.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void TryParseDate_WithDayMonthWithoutYear_UsesCurrentYear()
+    {
+        var parsed = CsvValidationRules.TryParseDate("12-Mar", out var value);
+
+        Assert.True(parsed);
+        Assert.Equal(DateTime.Now.Year, value.Year);
+        Assert.Equal(3, value.Month);
+        Assert.Equal(12, value.Day);
+    }
+
+    [Fact]
+    public void TryParseDate_WithSlashDate_ParsesAsMarchTwelve()
+    {
+        var parsed = CsvValidationRules.TryParseDate("3/12/2026", out var value);
+
+        Assert.True(parsed);
+        Assert.Equal(2026, value.Year);
+        Assert.Equal(3, value.Month);
+        Assert.Equal(12, value.Day);
+    }
 }
