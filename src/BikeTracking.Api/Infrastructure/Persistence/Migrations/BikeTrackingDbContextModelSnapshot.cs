@@ -260,6 +260,10 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("Miles")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PrecipitationType")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");

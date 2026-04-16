@@ -185,6 +185,63 @@
   max-width: 8rem;
 }
 
+.history-page-inline-editor textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.3rem 0.45rem;
+  font: inherit;
+  width: 100%;
+  max-width: 14rem;
+  min-height: 4.2rem;
+  resize: vertical;
+}
+
+.history-note-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.history-note-button {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  border: 1px solid #94a3b8;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.history-note-button:hover,
+.history-note-button:focus-visible {
+  background: #e2e8f0;
+}
+
+.history-note-popover {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  z-index: 20;
+  display: none;
+  min-width: 14rem;
+  max-width: 20rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 8px 18px rgb(15 23 42 / 12%);
+  white-space: pre-wrap;
+}
+
+.history-note-wrap:hover .history-note-popover,
+.history-note-wrap:focus-within .history-note-popover,
+.history-note-wrap.is-open .history-note-popover {
+  display: block;
+}
+
 .history-page-edit-actions {
   display: flex;
   gap: 0.4rem;

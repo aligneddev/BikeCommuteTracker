@@ -60,7 +60,50 @@ describe('RecordRidePage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/date & time/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/miles/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/notes/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /record ride/i })).toBeInTheDocument()
+    })
+  })
+
+  it('should include note in submit payload when provided', async () => {
+    mockGetRideDefaults.mockResolvedValue({
+      hasPreviousRide: false,
+      defaultRideDateTimeLocal: new Date().toISOString(),
+    })
+    mockRecordRide.mockResolvedValue({
+      rideId: 321,
+      riderId: 1,
+      savedAtUtc: new Date().toISOString(),
+      eventStatus: 'Queued',
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/miles/i)).toBeInTheDocument()
+    })
+
+    const milesInput = screen.getByLabelText(/miles/i) as HTMLInputElement
+    fireEvent.change(milesInput, { target: { value: '9.4' } })
+
+    const notesInput = screen.getByLabelText(/notes/i) as HTMLTextAreaElement
+    fireEvent.change(notesInput, {
+      target: { value: 'Strong headwind near the river trail.' },
+    })
+
+    const submitButton = screen.getByRole('button', { name: /record ride/i })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockRecordRide).toHaveBeenCalledWith(
+        expect.objectContaining({
+          note: 'Strong headwind near the river trail.',
+        })
+      )
     })
   })
 

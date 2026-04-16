@@ -136,6 +136,40 @@ describe('HistoryPage', () => {
     })
   })
 
+  it('should render note indicator only for rows with notes', async () => {
+    mockGetRideHistory.mockResolvedValue({
+      summaries: {
+        thisMonth: { miles: 12, rideCount: 2, period: 'thisMonth' },
+        thisYear: { miles: 12, rideCount: 2, period: 'thisYear' },
+        allTime: { miles: 12, rideCount: 2, period: 'allTime' },
+      },
+      filteredTotal: { miles: 12, rideCount: 2, period: 'filtered' },
+      rides: [
+        {
+          rideId: 1,
+          rideDateTimeLocal: '2026-03-20T10:30:00',
+          miles: 5,
+          note: 'Bridge detour this morning.',
+        },
+        {
+          rideId: 2,
+          rideDateTimeLocal: '2026-03-21T10:30:00',
+          miles: 7,
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      totalRows: 2,
+    })
+
+    render(<HistoryPage />)
+
+    await waitFor(() => {
+      const indicators = screen.getAllByRole('button', { name: /view ride note/i })
+      expect(indicators).toHaveLength(1)
+    })
+  })
+
   it('should show empty state when no rides exist', async () => {
     mockGetRideHistory.mockResolvedValue({
       summaries: {

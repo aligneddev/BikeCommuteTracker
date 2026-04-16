@@ -34,6 +34,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: import endpoint and persistence integration coverage validates ImportJobs and ImportRows schema after migration.",
             ["20260409150320_AddGasPriceWeeklyDeduplication"] =
                 "Updated test: gas lookup and import enrichment coverage validates weekly WeekStartDate cache-key behavior after schema migration.",
+            ["20260414164512_AddRideNotes"] =
+                "Added test: rides service and history projection coverage validates note persistence and retrieval after schema migration.",
         };
 
     [Fact]

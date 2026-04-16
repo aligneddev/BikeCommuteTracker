@@ -122,7 +122,8 @@ public sealed class GetRideHistoryService(BikeTrackingDbContext dbContext)
                 WindDirectionDeg: r.WindDirectionDeg,
                 RelativeHumidityPercent: r.RelativeHumidityPercent,
                 CloudCoverPercent: r.CloudCoverPercent,
-                PrecipitationType: r.PrecipitationType
+                PrecipitationType: r.PrecipitationType,
+                Note: r.Notes
             ))
             .ToList();
 

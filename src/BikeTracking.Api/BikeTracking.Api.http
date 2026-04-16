@@ -14,7 +14,8 @@ X-User-Id: {{RiderId}}
   "rideDateTimeLocal": "2026-03-26T07:30:00",
   "miles": 18.4,
   "rideMinutes": 58,
-  "temperature": 54
+  "temperature": 54,
+  "note": "Headwind on river trail."
 }
 
 ### Record a ride (weather fields)
@@ -145,6 +146,7 @@ X-User-Id: {{RiderId}}
   "miles": 19.5,
   "rideMinutes": 62,
   "temperature": 56,
+  "note": "Updated route due to bridge closure.",
   "expectedVersion": 1
 }
 
@@ -163,6 +165,7 @@ X-User-Id: {{RiderId}}
   "relativeHumidityPercent": 66,
   "cloudCoverPercent": 40,
   "precipitationType": "snow",
+  "note": "Steady crosswind for first 20 minutes.",
   "weatherUserOverridden": true,
   "expectedVersion": 1
 }

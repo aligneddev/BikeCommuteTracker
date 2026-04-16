@@ -215,6 +215,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
             RelativeHumidityPercent: weather?.RelativeHumidityPercent,
             CloudCoverPercent: weather?.CloudCoverPercent,
             PrecipitationType: weather?.PrecipitationType,
+            Note: row.Notes,
             WeatherUserOverridden: csvTemperature.HasValue
         );
     }

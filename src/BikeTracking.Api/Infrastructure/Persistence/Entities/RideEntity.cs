@@ -34,6 +34,8 @@ public sealed class RideEntity
 
     public string? PrecipitationType { get; set; }
 
+    public string? Notes { get; set; }
+
     public bool WeatherUserOverridden { get; set; }
 
     public int Version { get; set; } = 1;

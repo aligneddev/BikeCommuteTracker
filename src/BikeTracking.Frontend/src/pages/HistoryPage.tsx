@@ -34,6 +34,7 @@ function HistoryTable({
   editedRelativeHumidityPercent,
   editedCloudCoverPercent,
   editedPrecipitationType,
+  editedNote,
   editedGasPrice,
   editedGasPriceSource,
   loadingWeather,
@@ -46,6 +47,7 @@ function HistoryTable({
   onEditedRelativeHumidityPercentChange,
   onEditedCloudCoverPercentChange,
   onEditedPrecipitationTypeChange,
+  onEditedNoteChange,
   onEditedGasPriceChange,
   onLoadWeather,
   onSaveEdit,
@@ -62,6 +64,7 @@ function HistoryTable({
   editedRelativeHumidityPercent: string
   editedCloudCoverPercent: string
   editedPrecipitationType: string
+  editedNote: string
   editedGasPrice: string
   editedGasPriceSource: string
   loadingWeather: boolean
@@ -74,12 +77,15 @@ function HistoryTable({
   onEditedRelativeHumidityPercentChange: (value: string) => void
   onEditedCloudCoverPercentChange: (value: string) => void
   onEditedPrecipitationTypeChange: (value: string) => void
+  onEditedNoteChange: (value: string) => void
   onEditedGasPriceChange: (value: string) => void
   onLoadWeather: () => void
   onSaveEdit: (ride: RideHistoryRow) => void
   onCancelEdit: () => void
   onStartDelete: (ride: RideHistoryRow) => void
 }) {
+  const [openNoteRideId, setOpenNoteRideId] = useState<number | null>(null)
+
   if (rides.length === 0) {
     return <p className="history-page-empty">No rides found for this rider.</p>
   }
@@ -93,6 +99,7 @@ function HistoryTable({
           <th scope="col">Duration</th>
           <th scope="col">Temperature</th>
           <th scope="col">Gas Price</th>
+          <th scope="col">Notes</th>
           <th scope="col">Actions</th>
         </tr>
       </thead>
@@ -214,6 +221,41 @@ function HistoryTable({
             </td>
             <td>
               {editingRideId === ride.rideId ? (
+                <div className="history-page-inline-editor">
+                  <label htmlFor={`edit-ride-note-${ride.rideId}`}>Notes</label>
+                  <textarea
+                    id={`edit-ride-note-${ride.rideId}`}
+                    value={editedNote}
+                    maxLength={500}
+                    onChange={(event) => onEditedNoteChange(event.target.value)}
+                  />
+                </div>
+              ) : ride.note ? (
+                <div
+                  className={`history-note-wrap ${
+                    openNoteRideId === ride.rideId ? 'is-open' : ''
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className="history-note-button"
+                    aria-label="View ride note"
+                    onClick={() =>
+                      setOpenNoteRideId((current) =>
+                        current === ride.rideId ? null : ride.rideId
+                      )
+                    }
+                  >
+                    i
+                  </button>
+                  <div className="history-note-popover" role="tooltip">
+                    {ride.note}
+                  </div>
+                </div>
+              ) : null}
+            </td>
+            <td>
+              {editingRideId === ride.rideId ? (
                 <div className="history-page-edit-actions">
                   <button type="button" className="history-page-edit-button" onClick={() => onSaveEdit(ride)}>
                     Save
@@ -263,6 +305,7 @@ export function HistoryPage() {
   const [editedRelativeHumidityPercent, setEditedRelativeHumidityPercent] = useState<string>('')
   const [editedCloudCoverPercent, setEditedCloudCoverPercent] = useState<string>('')
   const [editedPrecipitationType, setEditedPrecipitationType] = useState<string>('')
+  const [editedNote, setEditedNote] = useState<string>('')
   const [weatherEditedManually, setWeatherEditedManually] = useState<boolean>(false)
   const [editedGasPrice, setEditedGasPrice] = useState<string>('')
   const [editedGasPriceSource, setEditedGasPriceSource] = useState<string>('')
@@ -342,6 +385,7 @@ export function HistoryPage() {
       ride.cloudCoverPercent != null ? ride.cloudCoverPercent.toString() : ''
     )
     setEditedPrecipitationType(ride.precipitationType ?? '')
+    setEditedNote(ride.note ?? '')
     setWeatherEditedManually(false)
     setEditedGasPrice(
       ride.gasPricePerGallon != null ? ride.gasPricePerGallon.toFixed(4) : ''
@@ -358,6 +402,7 @@ export function HistoryPage() {
     setEditedRelativeHumidityPercent('')
     setEditedCloudCoverPercent('')
     setEditedPrecipitationType('')
+    setEditedNote('')
     setWeatherEditedManually(false)
     setEditedGasPrice('')
     setEditedGasPriceSource('')
@@ -428,6 +473,11 @@ export function HistoryPage() {
       return
     }
 
+    if (editedNote.length > 500) {
+      setError('Note must be 500 characters or fewer')
+      return
+    }
+
     let gasPriceValue: number | undefined
     if (editedGasPrice.length > 0) {
       gasPriceValue = Number(editedGasPrice)
@@ -467,6 +517,7 @@ export function HistoryPage() {
       relativeHumidityPercent: relativeHumidityPercentValue,
       cloudCoverPercent: cloudCoverPercentValue,
       precipitationType: precipitationTypeValue,
+      note: editedNote,
       weatherUserOverridden: weatherEditedManually,
       // Version tokens are added to history rows in later tasks; use baseline v1 for now.
       expectedVersion: 1,
@@ -493,6 +544,7 @@ export function HistoryPage() {
     setEditedRelativeHumidityPercent('')
     setEditedCloudCoverPercent('')
     setEditedPrecipitationType('')
+    setEditedNote('')
     setWeatherEditedManually(false)
     setEditedGasPrice('')
     setEditedGasPriceSource('')
@@ -635,6 +687,7 @@ export function HistoryPage() {
           editedRelativeHumidityPercent={editedRelativeHumidityPercent}
           editedCloudCoverPercent={editedCloudCoverPercent}
           editedPrecipitationType={editedPrecipitationType}
+          editedNote={editedNote}
           editedGasPrice={editedGasPrice}
           editedGasPriceSource={editedGasPriceSource}
           loadingWeather={loadingWeather}
@@ -665,6 +718,7 @@ export function HistoryPage() {
             setEditedPrecipitationType(value)
             setWeatherEditedManually(true)
           }}
+          onEditedNoteChange={setEditedNote}
           onEditedGasPriceChange={(value) => {
             setEditedGasPrice(value)
             setEditedGasPriceSource('')

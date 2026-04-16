@@ -367,6 +367,60 @@ describe('ImportRidesPage', () => {
     })
   })
 
+  it('surfaces note length errors from preview validation', async () => {
+    mockPreviewImportCsv.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        importJobId: 140,
+        totalRows: 1,
+        validRows: 0,
+        invalidRows: 1,
+        duplicateRows: 0,
+        requiresDuplicateResolution: false,
+        rows: [
+          {
+            rowNumber: 1,
+            date: '2026-04-14',
+            miles: 8.2,
+            rideMinutes: 31,
+            temperature: 60,
+            tags: 'commute',
+            notes: 'x'.repeat(501),
+            isValid: false,
+            errors: [
+              {
+                rowNumber: 1,
+                code: 'NOTE_TOO_LONG',
+                message: 'Note must be 500 characters or fewer.',
+                field: 'Notes',
+              },
+            ],
+            duplicateMatches: [],
+          },
+        ],
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <ImportRidesPage />
+      </BrowserRouter>
+    )
+
+    const fileInput = screen.getByLabelText(/select csv file/i) as HTMLInputElement
+    const csvFile = new File(['Date,Miles,Notes\n2026-04-14,8.2,test'], 'rides.csv', {
+      type: 'text/csv',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [csvFile] } })
+    fireEvent.click(screen.getByRole('button', { name: /preview import/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/notes: note must be 500 characters or fewer\./i)).toBeInTheDocument()
+    })
+  })
+
   it('shows error when selected file is not csv', async () => {
     render(
       <BrowserRouter>

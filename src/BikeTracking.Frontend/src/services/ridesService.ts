@@ -9,6 +9,7 @@ export interface RecordRideRequest {
   relativeHumidityPercent?: number;
   cloudCoverPercent?: number;
   precipitationType?: string;
+  note?: string;
   weatherUserOverridden?: boolean;
 }
 
@@ -73,6 +74,7 @@ export interface EditRideRequest {
   relativeHumidityPercent?: number;
   cloudCoverPercent?: number;
   precipitationType?: string;
+  note?: string;
   weatherUserOverridden?: boolean;
   expectedVersion: number;
 }
@@ -139,6 +141,7 @@ export interface RideHistoryRow {
   relativeHumidityPercent?: number;
   cloudCoverPercent?: number;
   precipitationType?: string;
+  note?: string;
   weatherUserOverridden?: boolean;
 }
 
