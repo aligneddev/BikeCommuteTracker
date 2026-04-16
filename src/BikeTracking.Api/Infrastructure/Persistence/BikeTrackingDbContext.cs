@@ -129,6 +129,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.RelativeHumidityPercent);
             entity.Property(static x => x.CloudCoverPercent);
             entity.Property(static x => x.PrecipitationType).HasMaxLength(50);
+            entity.Property(static x => x.Notes).HasMaxLength(500);
             entity.Property(static x => x.WeatherUserOverridden).HasDefaultValue(false);
             entity
                 .Property(static x => x.Version)

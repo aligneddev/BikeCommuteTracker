@@ -36,6 +36,11 @@ public sealed class RecordRideService(
             );
         }
 
+        if (request.Note is not null && request.Note.Length > 500)
+        {
+            throw new ArgumentException("Note must be 500 characters or fewer", nameof(request));
+        }
+
         var userSettings = await dbContext
             .UserSettings.AsNoTracking()
             .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
@@ -90,6 +95,7 @@ public sealed class RecordRideService(
             RelativeHumidityPercent = relativeHumidityPercent,
             CloudCoverPercent = cloudCoverPercent,
             PrecipitationType = precipitationType,
+            Notes = request.Note,
             WeatherUserOverridden = request.WeatherUserOverridden,
             CreatedAtUtc = DateTime.UtcNow,
         };
@@ -109,6 +115,7 @@ public sealed class RecordRideService(
             relativeHumidityPercent: relativeHumidityPercent,
             cloudCoverPercent: cloudCoverPercent,
             precipitationType: precipitationType,
+            note: request.Note,
             weatherUserOverridden: request.WeatherUserOverridden,
             snapshotAverageCarMpg: rideEntity.SnapshotAverageCarMpg,
             snapshotMileageRateCents: rideEntity.SnapshotMileageRateCents,

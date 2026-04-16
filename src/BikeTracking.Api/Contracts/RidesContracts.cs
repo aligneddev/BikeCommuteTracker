@@ -26,6 +26,8 @@ public sealed record RecordRideRequest(
         int? CloudCoverPercent = null,
     [property: MaxLength(50, ErrorMessage = "Precipitation type must be 50 characters or fewer")]
         string? PrecipitationType = null,
+    [property: MaxLength(500, ErrorMessage = "Note must be 500 characters or fewer")]
+        string? Note = null,
     bool WeatherUserOverridden = false
 );
 
@@ -105,6 +107,8 @@ public sealed record EditRideRequest(
         int? CloudCoverPercent = null,
     [property: MaxLength(50, ErrorMessage = "Precipitation type must be 50 characters or fewer")]
         string? PrecipitationType = null,
+    [property: MaxLength(500, ErrorMessage = "Note must be 500 characters or fewer")]
+        string? Note = null,
     bool WeatherUserOverridden = false
 );
 
@@ -136,6 +140,7 @@ public sealed record RideHistoryRow(
     int? RelativeHumidityPercent = null,
     int? CloudCoverPercent = null,
     string? PrecipitationType = null,
+    string? Note = null,
     bool WeatherUserOverridden = false
 );
 

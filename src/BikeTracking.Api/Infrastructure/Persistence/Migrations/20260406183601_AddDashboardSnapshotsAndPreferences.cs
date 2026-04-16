@@ -15,14 +15,16 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                 table: "UserSettings",
                 type: "INTEGER",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: false
+            );
 
             migrationBuilder.AddColumn<bool>(
                 name: "DashboardGoalProgressEnabled",
                 table: "UserSettings",
                 type: "INTEGER",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: false
+            );
 
             migrationBuilder.AddColumn<decimal>(
                 name: "SnapshotAverageCarMpg",
@@ -30,7 +32,8 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                 type: "TEXT",
                 precision: 10,
                 scale: 4,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<decimal>(
                 name: "SnapshotMileageRateCents",
@@ -38,7 +41,8 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                 type: "TEXT",
                 precision: 10,
                 scale: 4,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<decimal>(
                 name: "SnapshotOilChangePrice",
@@ -46,7 +50,8 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                 type: "TEXT",
                 precision: 10,
                 scale: 4,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<decimal>(
                 name: "SnapshotYearlyGoalMiles",
@@ -54,27 +59,32 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                 type: "TEXT",
                 precision: 10,
                 scale: 4,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Rides_SnapshotAverageCarMpg_Positive",
                 table: "Rides",
-                sql: "\"SnapshotAverageCarMpg\" IS NULL OR CAST(\"SnapshotAverageCarMpg\" AS REAL) > 0");
+                sql: "\"SnapshotAverageCarMpg\" IS NULL OR CAST(\"SnapshotAverageCarMpg\" AS REAL) > 0"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Rides_SnapshotMileageRateCents_Positive",
                 table: "Rides",
-                sql: "\"SnapshotMileageRateCents\" IS NULL OR CAST(\"SnapshotMileageRateCents\" AS REAL) > 0");
+                sql: "\"SnapshotMileageRateCents\" IS NULL OR CAST(\"SnapshotMileageRateCents\" AS REAL) > 0"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Rides_SnapshotOilChangePrice_Positive",
                 table: "Rides",
-                sql: "\"SnapshotOilChangePrice\" IS NULL OR CAST(\"SnapshotOilChangePrice\" AS REAL) > 0");
+                sql: "\"SnapshotOilChangePrice\" IS NULL OR CAST(\"SnapshotOilChangePrice\" AS REAL) > 0"
+            );
 
             migrationBuilder.AddCheckConstraint(
                 name: "CK_Rides_SnapshotYearlyGoalMiles_Positive",
                 table: "Rides",
-                sql: "\"SnapshotYearlyGoalMiles\" IS NULL OR CAST(\"SnapshotYearlyGoalMiles\" AS REAL) > 0");
+                sql: "\"SnapshotYearlyGoalMiles\" IS NULL OR CAST(\"SnapshotYearlyGoalMiles\" AS REAL) > 0"
+            );
         }
 
         /// <inheritdoc />
@@ -82,43 +92,41 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.DropCheckConstraint(
                 name: "CK_Rides_SnapshotAverageCarMpg_Positive",
-                table: "Rides");
+                table: "Rides"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_Rides_SnapshotMileageRateCents_Positive",
-                table: "Rides");
+                table: "Rides"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_Rides_SnapshotOilChangePrice_Positive",
-                table: "Rides");
+                table: "Rides"
+            );
 
             migrationBuilder.DropCheckConstraint(
                 name: "CK_Rides_SnapshotYearlyGoalMiles_Positive",
-                table: "Rides");
+                table: "Rides"
+            );
 
             migrationBuilder.DropColumn(
                 name: "DashboardGallonsAvoidedEnabled",
-                table: "UserSettings");
+                table: "UserSettings"
+            );
 
             migrationBuilder.DropColumn(
                 name: "DashboardGoalProgressEnabled",
-                table: "UserSettings");
+                table: "UserSettings"
+            );
 
-            migrationBuilder.DropColumn(
-                name: "SnapshotAverageCarMpg",
-                table: "Rides");
+            migrationBuilder.DropColumn(name: "SnapshotAverageCarMpg", table: "Rides");
 
-            migrationBuilder.DropColumn(
-                name: "SnapshotMileageRateCents",
-                table: "Rides");
+            migrationBuilder.DropColumn(name: "SnapshotMileageRateCents", table: "Rides");
 
-            migrationBuilder.DropColumn(
-                name: "SnapshotOilChangePrice",
-                table: "Rides");
+            migrationBuilder.DropColumn(name: "SnapshotOilChangePrice", table: "Rides");
 
-            migrationBuilder.DropColumn(
-                name: "SnapshotYearlyGoalMiles",
-                table: "Rides");
+            migrationBuilder.DropColumn(name: "SnapshotYearlyGoalMiles", table: "Rides");
         }
     }
 }

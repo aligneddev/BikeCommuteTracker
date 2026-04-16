@@ -81,6 +81,18 @@ public static class CsvValidationRules
             );
         }
 
+        if (row.Notes is not null && row.Notes.Length > 500)
+        {
+            errors.Add(
+                new ImportValidationError(
+                    row.RowNumber,
+                    "NOTE_TOO_LONG",
+                    "Note must be 500 characters or fewer.",
+                    "Notes"
+                )
+            );
+        }
+
         return errors;
     }
 

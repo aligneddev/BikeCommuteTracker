@@ -45,6 +45,7 @@ Previous Updates:
 For detailed amendment history, see [DECISIONS.md](./DECISIONS.md).
 
 ## Core Principles
+prefer using the available LSP for the language over grep whenever I'm looking for symbols, call graphs, or type relationships — e.g., finding all callers of an F# domain function, or locating where a C# DTO is consumer, or using Typescript, yaml, etc.
 
 ### I. Clean Architecture, Domain-Driven Design & Ports-and-Adapters
 

@@ -20,6 +20,7 @@ export function RecordRidePage() {
   const [relativeHumidityPercent, setRelativeHumidityPercent] = useState<string>('')
   const [cloudCoverPercent, setCloudCoverPercent] = useState<string>('')
   const [precipitationType, setPrecipitationType] = useState<string>('')
+  const [note, setNote] = useState<string>('')
   const [weatherEdited, setWeatherEdited] = useState<boolean>(false)
   const [gasPrice, setGasPrice] = useState<string>('')
   const [gasPriceSource, setGasPriceSource] = useState<string>('')
@@ -199,6 +200,11 @@ export function RecordRidePage() {
       return
     }
 
+    if (note.length > 500) {
+      setErrorMessage('Note must be 500 characters or fewer')
+      return
+    }
+
     if (gasPrice) {
       const gasPriceNum = parseFloat(gasPrice)
       if (Number.isNaN(gasPriceNum) || gasPriceNum < 0.01 || gasPriceNum > 999.9999) {
@@ -221,6 +227,7 @@ export function RecordRidePage() {
           : undefined,
         cloudCoverPercent: cloudCoverPercent ? parseInt(cloudCoverPercent) : undefined,
         precipitationType: precipitationType || undefined,
+        note: note.length > 0 ? note : undefined,
         weatherUserOverridden: weatherEdited,
         gasPricePerGallon: gasPrice ? parseFloat(gasPrice) : undefined,
       }
@@ -240,6 +247,7 @@ export function RecordRidePage() {
         setRelativeHumidityPercent('')
         setCloudCoverPercent('')
         setPrecipitationType('')
+        setNote('')
         setWeatherEdited(false)
         setGasPrice('')
         setGasPriceSource('')
@@ -404,6 +412,16 @@ export function RecordRidePage() {
               setPrecipitationType(e.target.value)
               setWeatherEdited(true)
             }}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="notes">Notes (optional)</label>
+          <textarea
+            id="notes"
+            value={note}
+            maxLength={500}
+            onChange={(e) => setNote(e.target.value)}
           />
         </div>
 

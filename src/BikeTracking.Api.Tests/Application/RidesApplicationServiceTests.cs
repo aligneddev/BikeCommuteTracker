@@ -99,6 +99,74 @@ public sealed class RidesApplicationServiceTests
     }
 
     [Fact]
+    public async Task RecordRideService_WithValidNote_PersistsRideNoteAndEventPayloadNote()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Notes Rider",
+            NormalizedName = "notes rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var service = new RecordRideService(
+            context,
+            new StubWeatherLookupService(),
+            NullLogger<RecordRideService>.Instance
+        );
+
+        var note = "Bridge detour this morning.";
+        var request = new RecordRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 8.2m,
+            RideMinutes: 32,
+            Temperature: 64m,
+            Note: note
+        );
+
+        var (rideId, eventPayload) = await service.ExecuteAsync(user.UserId, request);
+
+        var persistedRide = await context.Rides.SingleAsync(ride => ride.Id == rideId);
+        Assert.Equal(note, persistedRide.Notes);
+        Assert.Equal(note, eventPayload.Note);
+    }
+
+    [Fact]
+    public async Task RecordRideService_WithNoteLongerThanFiveHundredChars_ThrowsArgumentException()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Long Notes Rider",
+            NormalizedName = "long notes rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var service = new RecordRideService(
+            context,
+            new StubWeatherLookupService(),
+            NullLogger<RecordRideService>.Instance
+        );
+
+        var tooLongNote = new string('n', 501);
+        var request = new RecordRideRequest(
+            RideDateTimeLocal: DateTime.Now,
+            Miles: 7.1m,
+            RideMinutes: 28,
+            Temperature: 60m,
+            Note: tooLongNote
+        );
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.ExecuteAsync(user.UserId, request)
+        );
+    }
+
+    [Fact]
     public async Task RecordRideService_CapturesUserSettingsSnapshots_OnRideAndEventPayload()
     {
         using var context = CreateDbContext();
@@ -650,6 +718,37 @@ public sealed class RidesApplicationServiceTests
         Assert.Equal(1, result.Page);
         Assert.Equal(2, result.PageSize);
         Assert.Equal(5, result.TotalRows);
+    }
+
+    [Fact]
+    public async Task GetRideHistoryService_WithRideNote_ProjectsNoteInHistoryRow()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Note History",
+            NormalizedName = "note history",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+
+        context.Rides.Add(
+            new RideEntity
+            {
+                RiderId = user.UserId,
+                RideDateTimeLocal = DateTime.Now,
+                Miles = 6.4m,
+                Notes = "Strong crosswind near downtown bridge.",
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var service = new GetRideHistoryService(context);
+        var result = await service.GetRideHistoryAsync(user.UserId, null, null);
+
+        Assert.Single(result.Rides);
+        Assert.Equal("Strong crosswind near downtown bridge.", result.Rides[0].Note);
     }
 
     [Fact]

@@ -132,6 +132,11 @@ public sealed class EditRideService(
         ride.RelativeHumidityPercent = relativeHumidityPercent;
         ride.CloudCoverPercent = cloudCoverPercent;
         ride.PrecipitationType = precipitationType;
+        ride.Notes = request.Note ?? ride.Notes;
+        if (request.Note is not null && request.Note.Length == 0)
+        {
+            ride.Notes = null;
+        }
         ride.WeatherUserOverridden = request.WeatherUserOverridden;
         ride.Version = currentVersion + 1;
 
@@ -152,6 +157,7 @@ public sealed class EditRideService(
             relativeHumidityPercent: relativeHumidityPercent,
             cloudCoverPercent: cloudCoverPercent,
             precipitationType: precipitationType,
+            note: ride.Notes,
             weatherUserOverridden: request.WeatherUserOverridden,
             snapshotAverageCarMpg: ride.SnapshotAverageCarMpg,
             snapshotMileageRateCents: ride.SnapshotMileageRateCents,
@@ -234,6 +240,14 @@ public sealed class EditRideService(
             return EditRideResult.Failure(
                 "VALIDATION_FAILED",
                 "Expected version must be at least 1."
+            );
+        }
+
+        if (request.Note is not null && request.Note.Length > 500)
+        {
+            return EditRideResult.Failure(
+                "VALIDATION_FAILED",
+                "Note must be 500 characters or fewer."
             );
         }
 

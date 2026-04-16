@@ -81,4 +81,40 @@ public sealed class CsvRideImportServiceTests
 
         Assert.True(sw.ElapsedMilliseconds >= 50);
     }
+
+    [Fact]
+    public void ValidateRow_WithNoteLongerThanFiveHundredChars_ReturnsNoteTooLongError()
+    {
+        var row = new ParsedCsvRow(
+            RowNumber: 1,
+            Date: "2026-04-14",
+            Miles: "12.3",
+            Time: "45",
+            Temp: "63",
+            Tags: "commute",
+            Notes: new string('n', 501)
+        );
+
+        var errors = CsvValidationRules.ValidateRow(row);
+
+        Assert.Contains(errors, error => error.Code == "NOTE_TOO_LONG" && error.Field == "Notes");
+    }
+
+    [Fact]
+    public void ValidateRow_WithBlankNote_DoesNotReturnNoteTooLongError()
+    {
+        var row = new ParsedCsvRow(
+            RowNumber: 1,
+            Date: "2026-04-14",
+            Miles: "12.3",
+            Time: "45",
+            Temp: "63",
+            Tags: "commute",
+            Notes: ""
+        );
+
+        var errors = CsvValidationRules.ValidateRow(row);
+
+        Assert.DoesNotContain(errors, error => error.Code == "NOTE_TOO_LONG");
+    }
 }
