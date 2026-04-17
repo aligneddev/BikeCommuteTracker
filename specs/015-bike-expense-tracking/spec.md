@@ -19,7 +19,7 @@
 
 ### User Story 1 - Enter a Manual Expense (Priority: P1)
 
-As a rider, I want to record a bike-related expense with a date, amount, optional note, and optional receipt photo so I can track what I actually spend on my bike.
+As a rider, I want to record a bike-related expense with a date, amount, optional note, and optional receipt attachment so I can track what I actually spend on my bike.
 
 **Why this priority**: Recording expenses is the foundation of all other expense features. Without this, there is no data to view, edit, or summarize.
 
@@ -47,10 +47,10 @@ As a rider, I want to see a list of my recorded expenses and be able to edit the
 1. **Given** a signed-in rider with at least one saved expense, **When** they open the expense history page, **Then** they see a list of their expenses sorted by date (newest first) with date, amount, note preview, and receipt indicator.
 2. **Given** a rider applies a date range filter, **When** the filter is confirmed, **Then** only expenses with dates within the selected range are shown and the visible total updates to reflect the filtered set.
 3. **Given** a rider clears or resets the date range filter, **When** the filter is removed, **Then** all expenses are shown again.
-2. **Given** a rider is viewing the expense list, **When** they activate edit mode on an expense row, **Then** the row becomes editable with save and cancel actions.
-3. **Given** a row is in edit mode with valid changes, **When** the rider saves, **Then** the updated values are persisted and the row returns to read-only with the new values.
-4. **Given** a row is in edit mode, **When** the rider cancels, **Then** the original values are restored and no change is saved.
-5. **Given** a rider edits a row with invalid values, **When** they attempt to save, **Then** save is blocked and clear field-level validation messages are shown.
+4. **Given** a rider is viewing the expense list, **When** they activate edit mode on an expense row, **Then** the row becomes editable with save and cancel actions.
+5. **Given** a row is in edit mode with valid changes, **When** the rider saves, **Then** the updated values are persisted and the row returns to read-only with the new values.
+6. **Given** a row is in edit mode, **When** the rider cancels, **Then** the original values are restored and no change is saved.
+7. **Given** a rider edits a row with invalid values, **When** they attempt to save, **Then** save is blocked and clear field-level validation messages are shown.
 
 ---
 
@@ -100,6 +100,7 @@ As a rider, I want automatic oil-change savings to count as negative expenses th
 - What happens when an expense has a very long note? Note text is capped at a defined maximum length with appropriate truncation in list view and full display in edit mode.
 - What happens when the rider opens the expense list without being authenticated? Expenses are not shown and the rider is redirected to sign in.
 - What happens when a rider deletes an expense that had a receipt attached? The receipt file is also removed from storage and the tombstone event records that the receipt was deleted.
+- What happens when the same rider opens the same expense in two browser tabs and saves changes from both? The first save succeeds and increments the version; the second save is rejected with a version conflict and must be refreshed before retrying.
 
 ## Requirements *(mandatory)*
 
@@ -108,7 +109,7 @@ As a rider, I want automatic oil-change savings to count as negative expenses th
 - **FR-001**: System MUST provide an expense entry page accessible from a named navigation menu link.
 - **FR-002**: The expense entry form MUST require a date and a positive numeric amount.
 - **FR-003**: The expense entry form MUST allow an optional plain-text note.
-- **FR-004**: The expense entry form MUST allow an optional receipt image attachment.
+- **FR-004**: The expense entry form MUST allow an optional receipt attachment.
 - **FR-005**: System MUST validate that the expense amount is a positive number before saving.
 - **FR-006**: System MUST validate that a date is provided before saving and block saving with clear field-level messages when validation fails.
 - **FR-007**: System MUST save expenses per rider so one rider cannot view or edit another rider's expenses.
@@ -122,19 +123,19 @@ As a rider, I want automatic oil-change savings to count as negative expenses th
 - **FR-012b**: System MUST record expense deletion as a tombstone event in the event log; the expense MUST no longer appear in the expense history list or contribute to the dashboard expense total after deletion.
 - **FR-013**: System MUST allow a rider to remove or replace an existing receipt attachment when editing an expense.
 - **FR-014**: System MUST display the rider's total manual expense amount (sum of all saved positive expense amounts) on the dashboard.
-- **FR-015**: System MUST automatically calculate oil-change savings based on the rider's **lifetime cumulative ride miles** (all-time, never reset) divided by 3000, rounded down to the nearest whole interval, multiplied by the rider's saved oil change price.
+- **FR-015**: System MUST automatically calculate oil-change savings as a derived dashboard value, not a stored expense row, based on the rider's **lifetime cumulative ride miles** (all-time, never reset) divided by 3000, rounded down to the nearest whole interval, multiplied by the rider's saved oil change price.
 - **FR-016**: System MUST display oil-change savings on the dashboard alongside the existing gas-saved and mileage-saved figures.
 - **FR-017**: System MUST subtract total automatic oil-change savings from total manual expenses to produce a net expense figure displayed on the dashboard.
 - **FR-018**: When a rider's oil change price setting is not set, System MUST show oil-change savings as unavailable rather than zero and exclude the oil-change savings from the net expense calculation.
 - **FR-019**: System MUST enforce a maximum note length of 500 characters for expense notes (consistent with ride notes, spec 014) and reject entries that exceed it.
-- **FR-020**: System MUST enforce accepted file types and maximum file size for receipt uploads and show clear error messaging when a file does not meet those constraints.
+- **FR-020**: System MUST enforce accepted file types and maximum file size for receipt uploads and show clear error messaging when a file does not meet those constraints. Accepted formats are JPEG, PNG, WEBP, and PDF. Maximum file size is 5 MB.
 - **FR-021**: System MUST not expose expense records or receipt files to unauthenticated users.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Expense Record**: A rider-owned financial entry consisting of a required date, required positive amount, optional plain-text note, and optional receipt attachment. Stored as immutable events with full edit history.
-- **Receipt Attachment**: An optional image file linked to an expense record. Stored as a file in a `receipts/` subfolder within the application data folder alongside the SQLite database. Only accessible to the owning rider. The database record stores the file path/reference, not the binary content.
-- **Oil-Change Saving**: An automatically calculated negative expense derived from the rider's **lifetime cumulative ride miles** (all-time total, never reset) and their oil change price setting. Calculated as `floor(lifetime_ride_miles / 3000) × oil_change_price`. Not a manually entered record.
+- **Receipt Attachment**: An optional receipt file linked to an expense record. Stored as a file in a `receipts/` subfolder within the application data folder alongside the SQLite database. Supported formats are JPEG, PNG, WEBP, and PDF. Only accessible to the owning rider. The database record stores the file path/reference, not the binary content.
+- **Oil-Change Saving**: An automatically calculated derived value that behaves like a negative expense in dashboard totals. It is derived from the rider's **lifetime cumulative ride miles** (all-time total, never reset) and their oil change price setting. Calculated as `floor(lifetime_ride_miles / 3000) × oil_change_price`. It is not a manually entered record and is not stored as its own expense row.
 - **Net Expense Total**: The displayed financial summary on the dashboard: total manual expenses minus total oil-change savings. Can be negative (net savings).
 
 ## Success Criteria *(mandatory)*
