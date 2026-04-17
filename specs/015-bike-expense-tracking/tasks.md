@@ -100,7 +100,7 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 - [X] T030 [US1] Implement `GET /api/expenses` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting optional `startDate` + `endDate` query params, returning list of non-deleted expenses for authenticated rider with total amount
 - [X] T031 [US1] Register `/api/expenses` endpoints in `src/BikeTracking.Api/Program.cs`
 - [X] T031A [US1] Write failing integration security tests proving unauthenticated requests to expense endpoints are rejected in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
-- [ ] T031B [US1] Write failing integration security tests proving rider A cannot read, edit, delete, or fetch receipts for rider B's expenses in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
+- [X] T031B [US1] Write failing integration security tests proving rider A cannot read, edit, delete, or fetch receipts for rider B's expenses in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
 - [ ] T031C [US1] Write failing integration security tests proving receipt file access ignores user-supplied paths and blocks path traversal or direct file access attempts in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
 
 ### Sub-Phase 3.3: Frontend Entry Page (TDD)

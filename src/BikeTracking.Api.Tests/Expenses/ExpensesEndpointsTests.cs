@@ -143,6 +143,8 @@ public sealed class ExpensesEndpointsTests
                 );
             builder.Services.AddAuthorization();
             builder.Services.AddScoped<RecordExpenseService>();
+            builder.Services.AddScoped<EditExpenseService>();
+            builder.Services.AddScoped<DeleteExpenseService>();
             builder.Services.AddScoped<IReceiptStorage, StubReceiptStorage>();
 
             var app = builder.Build();

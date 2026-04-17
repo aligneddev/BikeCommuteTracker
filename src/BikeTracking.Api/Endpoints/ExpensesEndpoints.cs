@@ -1,12 +1,16 @@
 using BikeTracking.Api.Application.Expenses;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Endpoints;
 
 public static class ExpensesEndpoints
 {
+    private static readonly FileExtensionContentTypeProvider ReceiptContentTypeProvider = new();
+
     private static readonly HashSet<string> AllowedReceiptContentTypes =
     [
         "image/jpeg",
@@ -36,6 +40,36 @@ public static class ExpensesEndpoints
             .Produces<ExpenseHistoryResponse>(StatusCodes.Status200OK)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization();
+
+        group
+            .MapPut("/{expenseId:long}", PutExpense)
+            .WithName("EditExpense")
+            .WithSummary("Edit an existing expense for the authenticated rider")
+            .Produces<EditExpenseResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict)
+            .RequireAuthorization();
+
+        group
+            .MapDelete("/{expenseId:long}", DeleteExpense)
+            .WithName("DeleteExpense")
+            .WithSummary("Delete an existing expense for the authenticated rider")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<ErrorResponse>(StatusCodes.Status409Conflict)
+            .RequireAuthorization();
+
+        group
+            .MapGet("/{expenseId:long}/receipt", GetExpenseReceipt)
+            .WithName("GetExpenseReceipt")
+            .WithSummary("Get the receipt for an expense owned by the authenticated rider")
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
             .RequireAuthorization();
 
         return endpoints;
@@ -186,4 +220,135 @@ public static class ExpensesEndpoints
 
         return Results.Ok(response);
     }
+
+    private static async Task<IResult> PutExpense(
+        [FromRoute] long expenseId,
+        [FromBody] EditExpenseRequest request,
+        HttpContext context,
+        [FromServices] EditExpenseService editExpenseService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        {
+            return Results.Unauthorized();
+        }
+
+        var result = await editExpenseService.ExecuteAsync(
+            riderId,
+            expenseId,
+            request,
+            cancellationToken
+        );
+
+        if (result.IsSuccess && result.Response is not null)
+        {
+            return Results.Ok(result.Response);
+        }
+
+        var error =
+            result.Error ?? new EditExpenseService.EditExpenseError("ERROR", "Unknown error.");
+
+        return error.Code switch
+        {
+            "VALIDATION_FAILED" => Results.BadRequest(new ErrorResponse(error.Code, error.Message)),
+            "EXPENSE_NOT_FOUND" => Results.NotFound(new ErrorResponse(error.Code, error.Message)),
+            "EXPENSE_VERSION_CONFLICT" => Results.Conflict(
+                new
+                {
+                    code = error.Code,
+                    message = error.Message,
+                    currentVersion = error.CurrentVersion,
+                }
+            ),
+            _ => Results.BadRequest(new ErrorResponse(error.Code, error.Message)),
+        };
+    }
+
+    private static async Task<IResult> DeleteExpense(
+        [FromRoute] long expenseId,
+        HttpContext context,
+        DeleteExpenseService deleteExpenseService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        {
+            return Results.Unauthorized();
+        }
+
+        var result = await deleteExpenseService.ExecuteAsync(riderId, expenseId, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Results.NoContent();
+        }
+
+        var error =
+            result.Error ?? new DeleteExpenseService.DeleteExpenseError("ERROR", "Unknown error.");
+
+        return error.Code switch
+        {
+            "EXPENSE_NOT_FOUND" => Results.NotFound(new ErrorResponse(error.Code, error.Message)),
+            "EXPENSE_ALREADY_DELETED" => Results.Conflict(
+                new ErrorResponse(error.Code, error.Message)
+            ),
+            _ => Results.BadRequest(new ErrorResponse(error.Code, error.Message)),
+        };
+    }
+
+    private static async Task<IResult> GetExpenseReceipt(
+        [FromRoute] long expenseId,
+        HttpContext context,
+        BikeTrackingDbContext dbContext,
+        IReceiptStorage receiptStorage,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        {
+            return Results.Unauthorized();
+        }
+
+        var expense = await dbContext
+            .Expenses.AsNoTracking()
+            .Where(current => current.Id == expenseId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (
+            expense is null
+            || expense.RiderId != riderId
+            || expense.IsDeleted
+            || string.IsNullOrWhiteSpace(expense.ReceiptPath)
+        )
+        {
+            return Results.NotFound(
+                new ErrorResponse("EXPENSE_NOT_FOUND", $"Expense {expenseId} was not found.")
+            );
+        }
+
+        try
+        {
+            var receiptStream = await receiptStorage.GetAsync(expense.ReceiptPath);
+            var contentType = ResolveReceiptContentType(expense.ReceiptPath);
+            return Results.File(receiptStream, contentType);
+        }
+        catch (FileNotFoundException)
+        {
+            return Results.NotFound(
+                new ErrorResponse("RECEIPT_NOT_FOUND", $"Receipt for expense {expenseId} was not found.")
+            );
+        }
+    }
+
+    private static string ResolveReceiptContentType(string receiptPath)
+    {
+        return ReceiptContentTypeProvider.TryGetContentType(receiptPath, out var contentType)
+            ? contentType
+            : "application/octet-stream";
+    }
+
 }
