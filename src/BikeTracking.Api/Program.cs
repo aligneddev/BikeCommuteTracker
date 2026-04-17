@@ -159,6 +159,7 @@ app.UseAuthorization();
 app.MapDashboardEndpoints();
 app.MapUsersEndpoints();
 app.MapRidesEndpoints();
+app.MapExpensesEndpoints();
 app.MapImportEndpoints();
 app.MapHub<ImportProgressHub>("/hubs/import-progress").RequireAuthorization();
 app.MapDefaultEndpoints();

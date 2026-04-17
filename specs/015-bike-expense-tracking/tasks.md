@@ -95,11 +95,11 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 3.2: API Endpoints (TDD)
 
-- [ ] T028 [US1] Write failing integration tests for `POST /api/expenses` in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsTests.cs`: 201 with valid expense, 400 with validation error, 422 with invalid receipt
-- [ ] T029 [US1] Implement `POST /api/expenses` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting `multipart/form-data` (expenseDate, amount, notes, receipt file), calling `RecordExpenseService`, returning 201 with response
-- [ ] T030 [US1] Implement `GET /api/expenses` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting optional `startDate` + `endDate` query params, returning list of non-deleted expenses for authenticated rider with total amount
-- [ ] T031 [US1] Register `/api/expenses` endpoints in `src/BikeTracking.Api/Program.cs`
-- [ ] T031A [US1] Write failing integration security tests proving unauthenticated requests to expense endpoints are rejected in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
+- [X] T028 [US1] Write failing integration tests for `POST /api/expenses` in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsTests.cs`: 201 with valid expense, 400 with validation error, 422 with invalid receipt
+- [X] T029 [US1] Implement `POST /api/expenses` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting `multipart/form-data` (expenseDate, amount, notes, receipt file), calling `RecordExpenseService`, returning 201 with response
+- [X] T030 [US1] Implement `GET /api/expenses` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting optional `startDate` + `endDate` query params, returning list of non-deleted expenses for authenticated rider with total amount
+- [X] T031 [US1] Register `/api/expenses` endpoints in `src/BikeTracking.Api/Program.cs`
+- [X] T031A [US1] Write failing integration security tests proving unauthenticated requests to expense endpoints are rejected in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
 - [ ] T031B [US1] Write failing integration security tests proving rider A cannot read, edit, delete, or fetch receipts for rider B's expenses in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
 - [ ] T031C [US1] Write failing integration security tests proving receipt file access ignores user-supplied paths and blocks path traversal or direct file access attempts in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
 

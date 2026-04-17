@@ -16,3 +16,20 @@ public sealed record RecordExpenseResponse(
     DateTime SavedAtUtc,
     bool ReceiptAttached
 );
+
+public sealed record ExpenseHistoryRow(
+    long ExpenseId,
+    DateTime ExpenseDate,
+    decimal Amount,
+    string? Notes,
+    bool HasReceipt,
+    int Version,
+    DateTime CreatedAtUtc
+);
+
+public sealed record ExpenseHistoryResponse(
+    IReadOnlyList<ExpenseHistoryRow> Expenses,
+    decimal TotalAmount,
+    int ExpenseCount,
+    DateTime GeneratedAtUtc
+);

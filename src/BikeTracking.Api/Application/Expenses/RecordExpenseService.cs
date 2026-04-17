@@ -1,6 +1,6 @@
 using BikeTracking.Api.Contracts;
-using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using BikeTracking.Api.Infrastructure.Persistence;
+using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using BikeTracking.Domain.FSharp.Expenses;
 using Microsoft.FSharp.Core;
 using Microsoft.FSharp.Reflection;
@@ -28,10 +28,9 @@ public sealed class RecordExpenseService(
             ExpenseEvents.validateDate(request.ExpenseDate),
             nameof(request)
         );
-        var noteOption =
-            request.Notes is null
-                ? FSharpOption<string>.None
-                : FSharpOption<string>.Some(request.Notes);
+        var noteOption = request.Notes is null
+            ? FSharpOption<string>.None
+            : FSharpOption<string>.Some(request.Notes);
         var validatedNotesOption = EnsureValid(
             ExpenseEvents.validateNotes(noteOption),
             nameof(request)
@@ -67,12 +66,21 @@ public sealed class RecordExpenseService(
             receiptAttached = true;
         }
 
-        return new RecordExpenseResponse(expense.Id, riderId, expense.UpdatedAtUtc, receiptAttached);
+        return new RecordExpenseResponse(
+            expense.Id,
+            riderId,
+            expense.UpdatedAtUtc,
+            receiptAttached
+        );
     }
 
     private static T EnsureValid<T>(FSharpResult<T, string> validationResult, string paramName)
     {
-        var union = FSharpValue.GetUnionFields(validationResult, typeof(FSharpResult<T, string>), null);
+        var union = FSharpValue.GetUnionFields(
+            validationResult,
+            typeof(FSharpResult<T, string>),
+            null
+        );
         if (union.Item1.Name == "Ok")
         {
             return (T)union.Item2[0];
