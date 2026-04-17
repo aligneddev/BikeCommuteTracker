@@ -108,10 +108,7 @@ public sealed class EditExpenseService(
     {
         if (request.Amount <= 0)
         {
-            return EditExpenseResult.Failure(
-                "VALIDATION_FAILED",
-                "Amount must be greater than 0."
-            );
+            return EditExpenseResult.Failure("VALIDATION_FAILED", "Amount must be greater than 0.");
         }
 
         if (request.ExpectedVersion <= 0)

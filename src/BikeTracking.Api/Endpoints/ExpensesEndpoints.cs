@@ -339,7 +339,10 @@ public static class ExpensesEndpoints
         catch (FileNotFoundException)
         {
             return Results.NotFound(
-                new ErrorResponse("RECEIPT_NOT_FOUND", $"Receipt for expense {expenseId} was not found.")
+                new ErrorResponse(
+                    "RECEIPT_NOT_FOUND",
+                    $"Receipt for expense {expenseId} was not found."
+                )
             );
         }
     }
@@ -350,5 +353,4 @@ public static class ExpensesEndpoints
             ? contentType
             : "application/octet-stream";
     }
-
 }

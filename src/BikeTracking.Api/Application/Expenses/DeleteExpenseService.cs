@@ -66,7 +66,11 @@ public sealed class DeleteExpenseService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation("Deleted expense {ExpenseId} for rider {RiderId}", expense.Id, riderId);
+        logger.LogInformation(
+            "Deleted expense {ExpenseId} for rider {RiderId}",
+            expense.Id,
+            riderId
+        );
 
         return DeleteExpenseResult.Success(
             new DeleteExpenseResponse(expense.Id, expense.UpdatedAtUtc)
