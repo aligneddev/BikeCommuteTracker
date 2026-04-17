@@ -19,7 +19,7 @@ auto_commit:
     enabled: false
     message: "[Spec Kit] Save progress before planning"
   before_tasks:
-    enabled: false
+    enabled: true
     message: "[Spec Kit] Save progress before task generation"
   before_implement:
     enabled: false
