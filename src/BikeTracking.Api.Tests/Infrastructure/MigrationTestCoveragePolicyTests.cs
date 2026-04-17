@@ -36,6 +36,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Updated test: gas lookup and import enrichment coverage validates weekly WeekStartDate cache-key behavior after schema migration.",
             ["20260414164512_AddRideNotes"] =
                 "Added test: rides service and history projection coverage validates note persistence and retrieval after schema migration.",
+            ["20260417194545_AddExpensesTable"] =
+                "Added test: expense endpoint integration tests validate expense creation, editing, deletion, and receipt handling after schema migration.",
         };
 
     [Fact]

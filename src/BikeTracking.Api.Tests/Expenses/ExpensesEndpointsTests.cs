@@ -259,7 +259,8 @@ public sealed class ExpensesEndpointsTests
         Assert.Equal(HttpStatusCode.NoContent, putResponse.StatusCode);
 
         var historyResponse = await host.Client.GetWithAuthAsync("/api/expenses", riderId);
-        var historyPayload = await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
+        var historyPayload =
+            await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
         Assert.NotNull(historyPayload);
         var row = Assert.Single(historyPayload.Expenses);
         Assert.True(row.HasReceipt);
@@ -287,7 +288,8 @@ public sealed class ExpensesEndpointsTests
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
         var historyResponse = await host.Client.GetWithAuthAsync("/api/expenses", riderId);
-        var historyPayload = await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
+        var historyPayload =
+            await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
         Assert.NotNull(historyPayload);
         var row = Assert.Single(historyPayload.Expenses);
         Assert.False(row.HasReceipt);

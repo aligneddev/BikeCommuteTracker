@@ -45,12 +45,25 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext)
 
         var savings = CalculateSavings(rides);
 
+        var totalManualExpenses =
+            await dbContext
+                .Expenses.Where(e => e.RiderId == riderId && !e.IsDeleted)
+                .SumAsync(e => (decimal?)e.Amount, cancellationToken)
+            ?? 0m;
+
+        var expenseSummary = CalculateExpenseSummary(
+            totalManualExpenses,
+            rides.Sum(r => r.Miles),
+            settings?.OilChangePrice
+        );
+
         return new DashboardResponse(
             Totals: new DashboardTotals(
                 CurrentMonthMiles: CreateMileageMetric(currentMonthRides, "thisMonth"),
                 YearToDateMiles: CreateMileageMetric(currentYearRides, "thisYear"),
                 AllTimeMiles: CreateMileageMetric(rides, "allTime"),
-                MoneySaved: savings.Totals
+                MoneySaved: savings.Totals,
+                ExpenseSummary: expenseSummary
             ),
             Averages: new DashboardAverages(
                 AverageTemperature: CalculateAverageTemperature(rides),
@@ -71,6 +84,34 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext)
                 RidesMissingDuration: rides.Count(ride => ride.RideMinutes is null)
             ),
             GeneratedAtUtc: DateTime.UtcNow
+        );
+    }
+
+    private static DashboardExpenseSummary CalculateExpenseSummary(
+        decimal totalManualExpenses,
+        decimal totalMiles,
+        decimal? oilChangePrice
+    )
+    {
+        if (oilChangePrice is null)
+        {
+            return new DashboardExpenseSummary(
+                TotalManualExpenses: totalManualExpenses,
+                OilChangeSavings: null,
+                NetExpenses: null,
+                OilChangeIntervalCount: 0
+            );
+        }
+
+        var intervalCount = (int)Math.Floor(totalMiles / 3000m);
+        var oilChangeSavings = intervalCount * oilChangePrice.Value;
+        var netExpenses = totalManualExpenses - oilChangeSavings;
+
+        return new DashboardExpenseSummary(
+            TotalManualExpenses: totalManualExpenses,
+            OilChangeSavings: oilChangeSavings,
+            NetExpenses: netExpenses,
+            OilChangeIntervalCount: intervalCount
         );
     }
 

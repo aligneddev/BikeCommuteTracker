@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DashboardStatusPanel } from '../../components/dashboard/dashboard-status-panel'
 import { DashboardSummaryCard } from '../../components/dashboard/dashboard-summary-card'
+import { ExpenseSummaryCard } from './ExpenseSummaryCard'
 import { getDashboard, type DashboardResponse } from '../../services/dashboard-api'
 import './dashboard-page.css'
 
@@ -36,6 +37,12 @@ function buildEmptyDashboard(): DashboardResponse {
         fuelCostAvoided: null,
         combinedSavings: null,
         qualifiedRideCount: 0,
+      },
+      expenseSummary: {
+        totalManualExpenses: 0,
+        oilChangeSavings: null,
+        netExpenses: null,
+        oilChangeIntervalCount: 0,
       },
     },
     averages: {
@@ -207,6 +214,7 @@ export function DashboardPage() {
             <span>Fuel {formatCurrency(dashboard.totals.moneySaved.fuelCostAvoided)}</span>
           </div>
         </DashboardSummaryCard>
+        <ExpenseSummaryCard expenseSummary={dashboard.totals.expenseSummary} />
       </section>
 
       <section className="dashboard-averages-grid" aria-label="Dashboard averages">

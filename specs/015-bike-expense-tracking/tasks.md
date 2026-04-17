@@ -179,17 +179,17 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 5.1: Backend Service Extension
 
-- [ ] T057 [US3] [CONFIRM RED TESTS] Write failing unit tests for expense calculation in `GetDashboardService` in `src/BikeTracking.Api.Tests/Dashboard/GetDashboardServiceTests.cs`, run them, and capture user confirmation before implementation
-- [ ] T058 [US3] Extend `GetDashboardService` in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs` to query `Expenses` table (non-deleted), sum amounts, calculate oil-change savings
-- [ ] T059 [US3] Define `DashboardExpenseSummary` record in `src/BikeTracking.Api/Contracts/DashboardContracts.cs` with fields: TotalManualExpenses, OilChangeSavings?, NetExpenses?, OilChangeIntervalCount
-- [ ] T060 [US3] Add `ExpenseSummary` property to `DashboardTotals` record in `src/BikeTracking.Api/Contracts/DashboardContracts.cs`
+- [X] T057 [US3] [CONFIRM RED TESTS] Write failing unit tests for expense calculation in `GetDashboardService` in `src/BikeTracking.Api.Tests/Dashboard/GetDashboardServiceTests.cs`, run them, and capture user confirmation before implementation
+- [X] T058 [US3] Extend `GetDashboardService` in `src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs` to query `Expenses` table (non-deleted), sum amounts, calculate oil-change savings
+- [X] T059 [US3] Define `DashboardExpenseSummary` record in `src/BikeTracking.Api/Contracts/DashboardContracts.cs` with fields: TotalManualExpenses, OilChangeSavings?, NetExpenses?, OilChangeIntervalCount
+- [X] T060 [US3] Add `ExpenseSummary` property to `DashboardTotals` record in `src/BikeTracking.Api/Contracts/DashboardContracts.cs`
 
 ### Sub-Phase 5.2: Frontend Dashboard Update
 
-- [ ] T061 [US3] Write failing Vitest unit tests for expense summary display in `src/BikeTracking.Frontend/src/pages/dashboard/DashboardPage.test.tsx`
-- [ ] T062 [US3] Update `DashboardPage.tsx` in `src/BikeTracking.Frontend/src/pages/dashboard/DashboardPage.tsx` to render `ExpenseSummary` card from dashboard response
-- [ ] T063 [US3] Create new component `ExpenseSummaryCard.tsx` in `src/BikeTracking.Frontend/src/pages/dashboard/ExpenseSummaryCard.tsx` displaying TotalManualExpenses, OilChangeSavings, NetExpenses
-- [ ] T064 [US3] Add CSS styling for `ExpenseSummaryCard` in `src/BikeTracking.Frontend/src/pages/dashboard/ExpenseSummaryCard.css`
+- [X] T061 [US3] Write failing Vitest unit tests for expense summary display in `src/BikeTracking.Frontend/src/pages/dashboard/DashboardPage.test.tsx`
+- [X] T062 [US3] Update `DashboardPage.tsx` in `src/BikeTracking.Frontend/src/pages/dashboard/DashboardPage.tsx` to render `ExpenseSummary` card from dashboard response
+- [X] T063 [US3] Create new component `ExpenseSummaryCard.tsx` in `src/BikeTracking.Frontend/src/pages/dashboard/ExpenseSummaryCard.tsx` displaying TotalManualExpenses, OilChangeSavings, NetExpenses
+- [X] T064 [US3] Add CSS styling for `ExpenseSummaryCard` in `src/BikeTracking.Frontend/src/pages/dashboard/ExpenseSummaryCard.css`
 
 ### Sub-Phase 5.3: E2E Tests (Optional; TDD if included)
 
@@ -211,10 +211,10 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 6.1: Calculation & Display Logic
 
-- [ ] T066 [US4] [CONFIRM RED TESTS] Write failing unit tests for net expense calculation in `GetDashboardService` tests, run them, and capture user confirmation before implementation
-- [ ] T067 [US4] Verify `GetDashboardService` correctly computes `NetExpenses = TotalManualExpenses - OilChangeSavings` (null if oil price not set)
-- [ ] T068 [US4] Update `ExpenseSummaryCard.tsx` to display net total with visual indicator (e.g., green for savings, red for expense)
-- [ ] T069 [US4] Add CSS styling for net total indicator in `ExpenseSummaryCard.css`
+- [X] T066 [US4] [CONFIRM RED TESTS] Write failing unit tests for net expense calculation in `GetDashboardService` tests, run them, and capture user confirmation before implementation
+- [X] T067 [US4] Verify `GetDashboardService` correctly computes `NetExpenses = TotalManualExpenses - OilChangeSavings` (null if oil price not set)
+- [X] T068 [US4] Update `ExpenseSummaryCard.tsx` to display net total with visual indicator (e.g., green for savings, red for expense)
+- [X] T069 [US4] Add CSS styling for net total indicator in `ExpenseSummaryCard.css`
 
 ### Sub-Phase 6.2: Integration Validation
 
