@@ -193,7 +193,7 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 5.3: E2E Tests (Optional; TDD if included)
 
-- [ ] T065 [US3] Write Playwright E2E test: record expense, view dashboard, verify totals updated in `src/BikeTracking.Frontend/tests/e2e/dashboard-expenses.spec.ts`
+- [X] T065 [US3] Write Playwright E2E test: record expense, view dashboard, verify totals updated in `src/BikeTracking.Frontend/tests/e2e/dashboard-expenses.spec.ts`
 
 ---
 
@@ -218,8 +218,8 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 6.2: Integration Validation
 
-- [ ] T070 [US4] Write failing E2E test covering: record expense + ride combo, update oil price, verify dashboard recalculation in `src/BikeTracking.Frontend/tests/e2e/savings-calculation.spec.ts`
-- [ ] T071 [US4] Verify all integration tests pass: expense recording, editing, deletion, dashboard updates
+- [X] T070 [US4] Write failing E2E test covering: record expense + ride combo, update oil price, verify dashboard recalculation in `src/BikeTracking.Frontend/tests/e2e/savings-calculation.spec.ts`
+- [X] T071 [US4] Verify all integration tests pass: expense recording, editing, deletion, dashboard updates
 
 ---
 
