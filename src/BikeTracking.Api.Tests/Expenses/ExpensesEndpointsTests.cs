@@ -102,6 +102,135 @@ public sealed class ExpensesEndpointsTests
         Assert.Equal(new DateTime(2026, 4, 10), payload.Expenses[0].ExpenseDate);
     }
 
+    [Fact]
+    public async Task PutExpense_WithValidRequest_ReturnsOkAndUpdatesExpense()
+    {
+        await using var host = await ExpensesApiHost.StartAsync();
+        var riderId = await host.SeedUserAsync("edit-success-rider");
+        var expenseId = await host.SeedExpenseAsync(
+            riderId,
+            new DateTime(2026, 4, 12),
+            25m,
+            "Before edit",
+            null,
+            false
+        );
+
+        var editRequest = new EditExpenseRequest(
+            ExpenseDate: new DateTime(2026, 4, 13),
+            Amount: 31.40m,
+            Notes: "After edit",
+            ExpectedVersion: 1
+        );
+
+        var editResponse = await host.Client.PutWithAuthAsync(
+            $"/api/expenses/{expenseId}",
+            editRequest,
+            riderId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+        var payload = await editResponse.Content.ReadFromJsonAsync<EditExpenseResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(expenseId, payload.ExpenseId);
+        Assert.Equal(2, payload.NewVersion);
+
+        var historyResponse = await host.Client.GetWithAuthAsync("/api/expenses", riderId);
+        Assert.Equal(HttpStatusCode.OK, historyResponse.StatusCode);
+        var historyPayload =
+            await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
+        Assert.NotNull(historyPayload);
+        var row = Assert.Single(historyPayload.Expenses);
+        Assert.Equal(31.40m, row.Amount);
+        Assert.Equal("After edit", row.Notes);
+        Assert.Equal(2, row.Version);
+    }
+
+    [Fact]
+    public async Task PutExpense_WithStaleExpectedVersion_ReturnsConflict()
+    {
+        await using var host = await ExpensesApiHost.StartAsync();
+        var riderId = await host.SeedUserAsync("edit-conflict-rider");
+        var expenseId = await host.SeedExpenseAsync(
+            riderId,
+            new DateTime(2026, 4, 14),
+            12.50m,
+            null,
+            null,
+            false
+        );
+
+        var response = await host.Client.PutWithAuthAsync(
+            $"/api/expenses/{expenseId}",
+            new EditExpenseRequest(
+                ExpenseDate: new DateTime(2026, 4, 14),
+                Amount: 20m,
+                Notes: "Conflict",
+                ExpectedVersion: 99
+            ),
+            riderId
+        );
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteExpense_WithValidOwner_ReturnsNoContentAndExcludesFromHistory()
+    {
+        await using var host = await ExpensesApiHost.StartAsync();
+        var riderId = await host.SeedUserAsync("delete-success-rider");
+        var expenseId = await host.SeedExpenseAsync(
+            riderId,
+            new DateTime(2026, 4, 15),
+            18.75m,
+            "Delete me",
+            null,
+            false
+        );
+
+        var deleteResponse = await host.Client.DeleteWithAuthAsync(
+            $"/api/expenses/{expenseId}",
+            riderId
+        );
+
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var historyResponse = await host.Client.GetWithAuthAsync("/api/expenses", riderId);
+        Assert.Equal(HttpStatusCode.OK, historyResponse.StatusCode);
+        var historyPayload =
+            await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
+        Assert.NotNull(historyPayload);
+        Assert.Empty(historyPayload.Expenses);
+    }
+
+    [Fact]
+    public async Task DeleteExpense_WhenAlreadyDeleted_ReturnsConflict()
+    {
+        await using var host = await ExpensesApiHost.StartAsync();
+        var riderId = await host.SeedUserAsync("delete-conflict-rider");
+        var expenseId = await host.SeedExpenseAsync(
+            riderId,
+            new DateTime(2026, 4, 16),
+            9.99m,
+            null,
+            null,
+            false
+        );
+
+        var firstDelete = await host.Client.DeleteWithAuthAsync(
+            $"/api/expenses/{expenseId}",
+            riderId
+        );
+        Assert.Equal(HttpStatusCode.NoContent, firstDelete.StatusCode);
+
+        var secondDelete = await host.Client.DeleteWithAuthAsync(
+            $"/api/expenses/{expenseId}",
+            riderId
+        );
+
+        Assert.Equal(HttpStatusCode.Conflict, secondDelete.StatusCode);
+    }
+
     private static MultipartFormDataContent BuildForm(
         string expenseDate,
         string amount,
@@ -270,6 +399,32 @@ internal static class ExpensesHttpClientExtensions
     )
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        request.Headers.Add("X-User-Id", userId.ToString());
+        return await client.SendAsync(request);
+    }
+
+    public static async Task<HttpResponseMessage> PutWithAuthAsync<T>(
+        this HttpClient client,
+        string requestUri,
+        T value,
+        long userId
+    )
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Put, requestUri)
+        {
+            Content = JsonContent.Create(value),
+        };
+        request.Headers.Add("X-User-Id", userId.ToString());
+        return await client.SendAsync(request);
+    }
+
+    public static async Task<HttpResponseMessage> DeleteWithAuthAsync(
+        this HttpClient client,
+        string requestUri,
+        long userId
+    )
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
         request.Headers.Add("X-User-Id", userId.ToString());
         return await client.SendAsync(request);
     }

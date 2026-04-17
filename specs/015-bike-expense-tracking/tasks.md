@@ -101,7 +101,7 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 - [X] T031 [US1] Register `/api/expenses` endpoints in `src/BikeTracking.Api/Program.cs`
 - [X] T031A [US1] Write failing integration security tests proving unauthenticated requests to expense endpoints are rejected in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
 - [X] T031B [US1] Write failing integration security tests proving rider A cannot read, edit, delete, or fetch receipts for rider B's expenses in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
-- [ ] T031C [US1] Write failing integration security tests proving receipt file access ignores user-supplied paths and blocks path traversal or direct file access attempts in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
+- [X] T031C [US1] Write failing integration security tests proving receipt file access ignores user-supplied paths and blocks path traversal or direct file access attempts in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsSecurityTests.cs`
 
 ### Sub-Phase 3.3: Frontend Entry Page (TDD)
 
@@ -142,7 +142,7 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 4.2: API Endpoints
 
-- [ ] T044 [US2] Write failing integration tests for `PUT /api/expenses/{id}`, `DELETE /api/expenses/{id}` in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsTests.cs`
+- [X] T044 [US2] Write failing integration tests for `PUT /api/expenses/{id}`, `DELETE /api/expenses/{id}` in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsTests.cs`
 - [ ] T045 [US2] Implement `PUT /api/expenses/{id}` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting JSON (date, amount, notes, expectedVersion), calling `EditExpenseService`, returning 200 with success or 409 conflict
 - [ ] T046 [US2] Implement `DELETE /api/expenses/{id}` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` calling `DeleteExpenseService`, returning 204
 - [ ] T047 [US2] Implement `PUT /api/expenses/{id}/receipt` endpoint for receipt upload in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs`

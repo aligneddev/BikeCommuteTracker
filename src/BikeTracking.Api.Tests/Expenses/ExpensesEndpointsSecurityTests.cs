@@ -146,6 +146,48 @@ public sealed class ExpensesEndpointsSecurityTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task GetExpenseReceipt_WithUserSuppliedPathQuery_IgnoresQueryAndReturnsOwnerReceipt()
+    {
+        await using var host = await SecurityHost.StartAsync();
+        var ownerId = await host.SeedUserAsync("query-owner");
+        var expenseId = await host.SeedExpenseAsync(
+            ownerId,
+            new DateTime(2026, 4, 20),
+            28.15m,
+            "Ignore user path query",
+            "1/1/receipt.pdf"
+        );
+
+        var response = await host.Client.GetWithAuthAsync(
+            $"/api/expenses/{expenseId}/receipt?relativePath=../../../../etc/passwd",
+            ownerId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetExpenseReceipt_WithTraversalLikeStoredPath_ReturnsNotFound()
+    {
+        await using var host = await SecurityHost.StartAsync();
+        var ownerId = await host.SeedUserAsync("traversal-owner");
+        var expenseId = await host.SeedExpenseAsync(
+            ownerId,
+            new DateTime(2026, 4, 21),
+            39.95m,
+            "Traversal attempt",
+            "../../../../etc/passwd"
+        );
+
+        var response = await host.Client.GetWithAuthAsync(
+            $"/api/expenses/{expenseId}/receipt",
+            ownerId
+        );
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     private sealed class SecurityHost(WebApplication app) : IAsyncDisposable
     {
         public WebApplication App { get; } = app;
