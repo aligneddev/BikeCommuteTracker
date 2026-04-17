@@ -160,7 +160,7 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 4.4: E2E Tests (Optional; TDD if included)
 
-- [ ] T056 [US2] Write Playwright E2E test: navigate to history, view expenses, filter by date, inline edit, delete in `src/BikeTracking.Frontend/tests/e2e/manage-expenses.spec.ts`
+- [X] T056 [US2] Write Playwright E2E test: navigate to history, view expenses, filter by date, inline edit, delete in `src/BikeTracking.Frontend/tests/e2e/manage-expenses.spec.ts`
 
 ---
 
@@ -232,8 +232,8 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 - [ ] T072 [P] Add comprehensive error handling and logging for receipt upload failures in `FileSystemReceiptStorage.cs` and endpoints, covering disk-full, permission-denied, and non-writable-path scenarios; preserve other form data, save the expense without a receipt when allowed by the spec, and show a clear user-facing message that the receipt was not attached while logging riderId, expenseId, and the failure reason
 - [ ] T073 [P] Add request/response logging for expense endpoints in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs`
 - [ ] T074 [P] Validate receipt file types and sizes on both client (browser) and server (API); reject unsupported formats with clear messages that explicitly name the accepted formats (JPEG, PNG, WEBP, PDF) and the 5 MB maximum, without clearing the other entered form fields
-- [ ] T075 [P] Add accessibility attributes (aria-labels, role hints) to form fields in `ExpenseEntryPage.tsx` and `ExpenseHistoryPage.tsx`
-- [ ] T076 [P] Add responsive design breakpoints for mobile/tablet in `ExpenseEntryPage.css`, `ExpenseHistoryPage.css`, `ExpenseSummaryCard.css`
+- [X] T075 [P] Add accessibility attributes (aria-labels, role hints) to form fields in `ExpenseEntryPage.tsx` and `ExpenseHistoryPage.tsx`
+- [X] T076 [P] Add responsive design breakpoints for mobile/tablet in `ExpenseEntryPage.css`, `ExpenseHistoryPage.css`, `ExpenseSummaryCard.css`
 - [ ] T077 [P] Run code formatting via `csharpier format .` and ESLint/Stylelint on all new files
 - [ ] T078 [P] Verify `dotnet test BikeTracking.slnx` and `npm run test:unit` all pass with >85% code coverage
 - [ ] T079 [P] Run full E2E test suite `npm run test:e2e` against live API/DB and verify all pass

@@ -106,7 +106,7 @@ export function ExpenseHistoryPage() {
     <main className="expense-history-page">
       <h1 className="expense-history-title">Expense History</h1>
 
-      <div className="expense-history-filters">
+      <div className="expense-history-filters" role="group" aria-label="Expense history filters">
         <label htmlFor="expense-filter-from">From</label>
         <input
           id="expense-filter-from"
@@ -126,7 +126,7 @@ export function ExpenseHistoryPage() {
         </button>
       </div>
 
-      <p className="expense-history-total">
+      <p className="expense-history-total" id="expense-history-total" role="status" aria-live="polite">
         {filterApplied ? (
           <>Filtered total: {formatCurrency(filteredTotal)}</>
         ) : (
@@ -134,95 +134,97 @@ export function ExpenseHistoryPage() {
         )}
       </p>
 
-      {errorMessage ? <p role="alert" className="expense-history-error">{errorMessage}</p> : null}
-      {successMessage ? <p className="expense-history-success">{successMessage}</p> : null}
+      {errorMessage ? <p role="alert" aria-live="assertive" className="expense-history-error">{errorMessage}</p> : null}
+      {successMessage ? <p role="status" aria-live="polite" className="expense-history-success">{successMessage}</p> : null}
 
-      <table className="expense-history-table" aria-label="Expense history table">
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Notes</th>
-            <th scope="col">Receipt</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {expenses.map((expense) => (
-            <tr key={expense.expenseId}>
-              <td>
-                {editingExpenseId === expense.expenseId ? (
-                  <input
-                    type="date"
-                    value={editDate}
-                    onChange={(e) => setEditDate(e.target.value)}
-                    aria-label="Edit date"
-                  />
-                ) : (
-                  formatExpenseDate(expense.expenseDate)
-                )}
-              </td>
-              <td>
-                {editingExpenseId === expense.expenseId ? (
-                  <input
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={editAmount}
-                    onChange={(e) => setEditAmount(e.target.value)}
-                    aria-label="Edit amount"
-                  />
-                ) : (
-                  formatCurrency(expense.amount)
-                )}
-              </td>
-              <td>
-                {editingExpenseId === expense.expenseId ? (
-                  <input
-                    type="text"
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
-                    aria-label="Edit notes"
-                    maxLength={500}
-                  />
-                ) : (
-                  expense.notes ?? ''
-                )}
-              </td>
-              <td>{expense.hasReceipt ? 'Yes' : 'No'}</td>
-              <td className="expense-history-actions">
-                {editingExpenseId === expense.expenseId ? (
-                  <>
-                    <button type="button" onClick={() => handleSaveEdit(expense)}>
-                      Save
-                    </button>
-                    <button type="button" onClick={handleCancelEdit}>
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Edit expense"
-                      onClick={() => handleStartEdit(expense)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Delete expense"
-                      onClick={() => handleDelete(expense)}
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </td>
+      <div className="expense-history-table-wrap">
+        <table className="expense-history-table" aria-label="Expense history table" aria-describedby="expense-history-total">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Notes</th>
+              <th scope="col">Receipt</th>
+              <th scope="col">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {expenses.map((expense) => (
+              <tr key={expense.expenseId}>
+                <td>
+                  {editingExpenseId === expense.expenseId ? (
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      aria-label="Edit date"
+                    />
+                  ) : (
+                    formatExpenseDate(expense.expenseDate)
+                  )}
+                </td>
+                <td>
+                  {editingExpenseId === expense.expenseId ? (
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(e.target.value)}
+                      aria-label="Edit amount"
+                    />
+                  ) : (
+                    formatCurrency(expense.amount)
+                  )}
+                </td>
+                <td>
+                  {editingExpenseId === expense.expenseId ? (
+                    <input
+                      type="text"
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      aria-label="Edit notes"
+                      maxLength={500}
+                    />
+                  ) : (
+                    expense.notes ?? ''
+                  )}
+                </td>
+                <td>{expense.hasReceipt ? 'Yes' : 'No'}</td>
+                <td className="expense-history-actions">
+                  {editingExpenseId === expense.expenseId ? (
+                    <>
+                      <button type="button" onClick={() => handleSaveEdit(expense)}>
+                        Save
+                      </button>
+                      <button type="button" onClick={handleCancelEdit}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Edit expense"
+                        onClick={() => handleStartEdit(expense)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Delete expense"
+                        onClick={() => handleDelete(expense)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {expenses.length === 0 ? (
         <p className="expense-history-empty">No expenses found.</p>

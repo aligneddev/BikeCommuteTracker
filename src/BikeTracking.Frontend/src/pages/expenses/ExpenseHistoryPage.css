@@ -61,6 +61,10 @@
   margin-top: 0.5rem;
 }
 
+.expense-history-table-wrap {
+  overflow-x: auto;
+}
+
 .expense-history-table th,
 .expense-history-table td {
   padding: 0.6rem 0.75rem;
@@ -100,7 +104,31 @@
     margin-top: 1rem;
   }
 
+  .expense-history-filters {
+    align-items: stretch;
+  }
+
+  .expense-history-filters input[type='date'],
+  .expense-history-filters button {
+    width: 100%;
+  }
+
   .expense-history-table {
     font-size: 0.875rem;
+    min-width: 40rem;
+  }
+
+  .expense-history-actions {
+    flex-direction: column;
+  }
+
+  .expense-history-actions button {
+    width: 100%;
+  }
+}
+
+@media (width <= 420px) {
+  .expense-history-page {
+    padding-inline: 0.75rem;
   }
 }

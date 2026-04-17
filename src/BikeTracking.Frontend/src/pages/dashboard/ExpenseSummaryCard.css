@@ -33,3 +33,10 @@
 .expense-summary-card-row-net-neutral {
   color: var(--dashboard-ink);
 }
+
+@media (width <= 640px) {
+  .expense-summary-card-row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+}

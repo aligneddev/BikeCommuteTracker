@@ -67,4 +67,24 @@
   .expense-entry-page {
     margin-top: 1rem;
   }
+
+  .expense-entry-form {
+    padding: 0.85rem;
+  }
+
+  .expense-entry-submit {
+    width: 100%;
+    justify-self: stretch;
+  }
+}
+
+@media (width <= 420px) {
+  .expense-entry-page {
+    padding-inline: 0.75rem;
+  }
+
+  .expense-entry-field input,
+  .expense-entry-field textarea {
+    padding: 0.5rem 0.6rem;
+  }
 }

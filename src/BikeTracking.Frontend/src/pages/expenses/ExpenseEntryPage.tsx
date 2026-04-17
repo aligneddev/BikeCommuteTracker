@@ -76,7 +76,12 @@ export function ExpenseEntryPage() {
   return (
     <main className="expense-entry-page">
       <h1 className="expense-entry-title">Record Expense</h1>
-      <form className="expense-entry-form" onSubmit={handleSubmit} noValidate>
+      <form
+        className="expense-entry-form"
+        onSubmit={handleSubmit}
+        noValidate
+        aria-label="Expense entry form"
+      >
         <div className="expense-entry-field">
           <label htmlFor="expense-date">Expense Date</label>
           <input
@@ -124,17 +129,25 @@ export function ExpenseEntryPage() {
           />
         </div>
 
-        <button className="expense-entry-submit" type="submit" disabled={isSubmitting}>
+        <button
+          className="expense-entry-submit"
+          type="submit"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Recording Expense...' : 'Record Expense'}
         </button>
       </form>
 
       {errorMessages.map((message) => (
-        <p key={message} className="expense-entry-error" role="alert">
+        <p key={message} className="expense-entry-error" role="alert" aria-live="assertive">
           {message}
         </p>
       ))}
-      {successMessage ? <p className="expense-entry-success">{successMessage}</p> : null}
+      {successMessage ? (
+        <p className="expense-entry-success" role="status" aria-live="polite">
+          {successMessage}
+        </p>
+      ) : null}
     </main>
   )
 }
