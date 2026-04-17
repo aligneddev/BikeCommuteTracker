@@ -11,9 +11,41 @@ vi.mock('../../services/expenses-api', () => ({
   deleteReceipt: vi.fn(),
 }))
 
+import * as expensesApi from '../../services/expenses-api'
+
+const mockGetExpenseHistory = vi.mocked(expensesApi.getExpenseHistory)
+
+const SAMPLE_EXPENSE = {
+  expenseId: 1,
+  expenseDate: '2026-04-17',
+  amount: 23.45,
+  notes: 'Chain lube',
+  hasReceipt: false,
+  version: 1,
+  createdAtUtc: '2026-04-17T10:00:00Z',
+}
+
+const EMPTY_RESPONSE = {
+  ok: true as const,
+  status: 200,
+  data: { expenses: [], totalAmount: 0, expenseCount: 0, generatedAtUtc: '2026-04-17T10:00:00Z' },
+}
+
+const ONE_EXPENSE_RESPONSE = {
+  ok: true as const,
+  status: 200,
+  data: {
+    expenses: [SAMPLE_EXPENSE],
+    totalAmount: 23.45,
+    expenseCount: 1,
+    generatedAtUtc: '2026-04-17T10:00:00Z',
+  },
+}
+
 describe('ExpenseHistoryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetExpenseHistory.mockResolvedValue(EMPTY_RESPONSE)
   })
 
   it('renders list rows from expense history', async () => {
@@ -50,6 +82,8 @@ describe('ExpenseHistoryPage', () => {
   })
 
   it('supports inline edit and delete actions', async () => {
+    mockGetExpenseHistory.mockResolvedValue(ONE_EXPENSE_RESPONSE)
+
     render(
       <BrowserRouter>
         <ExpenseHistoryPage />

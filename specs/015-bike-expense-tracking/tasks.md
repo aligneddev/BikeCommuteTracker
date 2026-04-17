@@ -151,12 +151,12 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 ### Sub-Phase 4.3: Frontend History Page (TDD)
 
 - [X] T049 [US2] Write failing Vitest unit tests for `ExpenseHistoryPage` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.test.tsx`: renders list, filters by date, inline edit, delete
-- [ ] T050 [US2] Implement `ExpenseHistoryPage.tsx` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.tsx` following `HistoryPage.tsx` pattern: fetch expenses, render table, support inline edit with save/cancel, delete action, date-range filter
-- [ ] T051 [US2] Implement `ExpenseHistoryPage.css` styling in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.css`
-- [ ] T052 [US2] Implement `expense-page.helpers.ts` utility functions in `src/BikeTracking.Frontend/src/pages/expenses/expense-page.helpers.ts`: format helpers, validation helpers
-- [ ] T053 [US2] Add functions to `expenses-api.ts`: `getExpenseHistory(startDate?, endDate?)`, `editExpense(id, request)`, `deleteExpense(id)`, `uploadReceipt(id, file)`, `deleteReceipt(id)`
-- [ ] T054 [US2] Add route `/expenses/history` → `ExpenseHistoryPage` in `src/BikeTracking.Frontend/src/App.tsx`
-- [ ] T055 [US2] Add navigation menu link "Expense History" → `/expenses/history` in `src/BikeTracking.Frontend/src/[nav component]`
+- [X] T050 [US2] Implement `ExpenseHistoryPage.tsx` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.tsx` following `HistoryPage.tsx` pattern: fetch expenses, render table, support inline edit with save/cancel, delete action, date-range filter
+- [X] T051 [US2] Implement `ExpenseHistoryPage.css` styling in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.css`
+- [X] T052 [US2] Implement `expense-page.helpers.ts` utility functions in `src/BikeTracking.Frontend/src/pages/expenses/expense-page.helpers.ts`: format helpers, validation helpers
+- [X] T053 [US2] Add functions to `expenses-api.ts`: `getExpenseHistory(startDate?, endDate?)`, `editExpense(id, request)`, `deleteExpense(id)`, `uploadReceipt(id, file)`, `deleteReceipt(id)`
+- [X] T054 [US2] Add route `/expenses/history` → `ExpenseHistoryPage` in `src/BikeTracking.Frontend/src/App.tsx`
+- [X] T055 [US2] Add navigation menu link "Expense History" → `/expenses/history` in `src/BikeTracking.Frontend/src/[nav component]`
 
 ### Sub-Phase 4.4: E2E Tests (Optional; TDD if included)
 
