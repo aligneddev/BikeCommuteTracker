@@ -231,6 +231,68 @@ public sealed class ExpensesEndpointsTests
         Assert.Equal(HttpStatusCode.Conflict, secondDelete.StatusCode);
     }
 
+    [Fact]
+    public async Task PutExpenseReceipt_WithValidReceipt_ReturnsNoContentAndMarksExpenseHasReceipt()
+    {
+        await using var host = await ExpensesApiHost.StartAsync();
+        var riderId = await host.SeedUserAsync("receipt-put-rider");
+        var expenseId = await host.SeedExpenseAsync(
+            riderId,
+            new DateTime(2026, 4, 16),
+            14.25m,
+            "Receipt pending",
+            null,
+            false
+        );
+
+        using var form = new MultipartFormDataContent();
+        var content = new ByteArrayContent("receipt-binary"u8.ToArray());
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse("image/png");
+        form.Add(content, "receipt", "receipt.png");
+
+        var putResponse = await host.Client.PutWithAuthMultipartAsync(
+            $"/api/expenses/{expenseId}/receipt",
+            form,
+            riderId
+        );
+
+        Assert.Equal(HttpStatusCode.NoContent, putResponse.StatusCode);
+
+        var historyResponse = await host.Client.GetWithAuthAsync("/api/expenses", riderId);
+        var historyPayload = await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
+        Assert.NotNull(historyPayload);
+        var row = Assert.Single(historyPayload.Expenses);
+        Assert.True(row.HasReceipt);
+    }
+
+    [Fact]
+    public async Task DeleteExpenseReceipt_WithExistingReceipt_ReturnsNoContentAndClearsReceipt()
+    {
+        await using var host = await ExpensesApiHost.StartAsync();
+        var riderId = await host.SeedUserAsync("receipt-delete-rider");
+        var expenseId = await host.SeedExpenseAsync(
+            riderId,
+            new DateTime(2026, 4, 16),
+            14.25m,
+            "Receipt set",
+            "1/2/old-receipt.png",
+            false
+        );
+
+        var deleteResponse = await host.Client.DeleteWithAuthAsync(
+            $"/api/expenses/{expenseId}/receipt",
+            riderId
+        );
+
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var historyResponse = await host.Client.GetWithAuthAsync("/api/expenses", riderId);
+        var historyPayload = await historyResponse.Content.ReadFromJsonAsync<ExpenseHistoryResponse>();
+        Assert.NotNull(historyPayload);
+        var row = Assert.Single(historyPayload.Expenses);
+        Assert.False(row.HasReceipt);
+    }
+
     private static MultipartFormDataContent BuildForm(
         string expenseDate,
         string amount,
@@ -414,6 +476,18 @@ internal static class ExpensesHttpClientExtensions
         {
             Content = JsonContent.Create(value),
         };
+        request.Headers.Add("X-User-Id", userId.ToString());
+        return await client.SendAsync(request);
+    }
+
+    public static async Task<HttpResponseMessage> PutWithAuthMultipartAsync(
+        this HttpClient client,
+        string requestUri,
+        MultipartFormDataContent form,
+        long userId
+    )
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = form };
         request.Headers.Add("X-User-Id", userId.ToString());
         return await client.SendAsync(request);
     }

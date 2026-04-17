@@ -105,12 +105,12 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 3.3: Frontend Entry Page (TDD)
 
-- [ ] T032 [US1] Write failing Vitest unit tests for `ExpenseEntryPage` component in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseEntryPage.test.tsx`: renders form fields, validates client-side, calls API on submit
-- [ ] T033 [US1] Implement `ExpenseEntryPage.tsx` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseEntryPage.tsx` with form (date, amount, note, receipt file input), client-side validation, POST to `/api/expenses`, success/error states
-- [ ] T034 [US1] Implement `ExpenseEntryPage.css` styling for form layout and responsive design in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseEntryPage.css`
-- [ ] T035 [US1] Implement `expenses-api.ts` functions: `recordExpense(formData)` → Promise<RecordExpenseResponse> in `src/BikeTracking.Frontend/src/services/expenses-api.ts`
-- [ ] T036 [US1] Add route `/expenses/entry` → `ExpenseEntryPage` in `src/BikeTracking.Frontend/src/App.tsx`
-- [ ] T037 [US1] Add navigation menu link "Record Expense" → `/expenses/entry` in `src/BikeTracking.Frontend/src/[nav component]`
+- [X] T032 [US1] Write failing Vitest unit tests for `ExpenseEntryPage` component in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseEntryPage.test.tsx`: renders form fields, validates client-side, calls API on submit
+- [X] T033 [US1] Implement `ExpenseEntryPage.tsx` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseEntryPage.tsx` with form (date, amount, note, receipt file input), client-side validation, POST to `/api/expenses`, success/error states
+- [X] T034 [US1] Implement `ExpenseEntryPage.css` styling for form layout and responsive design in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseEntryPage.css`
+- [X] T035 [US1] Implement `expenses-api.ts` functions: `recordExpense(formData)` → Promise<RecordExpenseResponse> in `src/BikeTracking.Frontend/src/services/expenses-api.ts`
+- [X] T036 [US1] Add route `/expenses/entry` → `ExpenseEntryPage` in `src/BikeTracking.Frontend/src/App.tsx`
+- [X] T037 [US1] Add navigation menu link "Record Expense" → `/expenses/entry` in `src/BikeTracking.Frontend/src/[nav component]`
 
 ### Sub-Phase 3.4: E2E Tests (Optional; TDD if included)
 
@@ -134,23 +134,23 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 4.1: Backend Services (TDD)
 
-- [ ] T039 [US2] [CONFIRM RED TESTS] Write failing unit tests for `EditExpenseService` in `src/BikeTracking.Api.Tests/Expenses/EditExpenseServiceTests.cs`: optimistic concurrency check, version increment, validation; run them and capture user confirmation before implementing the service
-- [ ] T040 [US2] Implement `EditExpenseService` in `src/BikeTracking.Api/Application/Expenses/EditExpenseService.cs`: accepts `EditExpenseRequest` (id, date, amount, notes, expectedVersion), validates concurrency, updates entity, increments version
-- [ ] T041 [US2] [CONFIRM RED TESTS] Write failing unit tests for `DeleteExpenseService` in `src/BikeTracking.Api.Tests/Expenses/DeleteExpenseServiceTests.cs`: sets IsDeleted, removes receipt file; run them and capture user confirmation before implementing the service
-- [ ] T042 [US2] Implement `DeleteExpenseService` in `src/BikeTracking.Api/Application/Expenses/DeleteExpenseService.cs`: accepts `DeleteExpenseRequest` (id), sets IsDeleted=true, calls receipt storage delete
-- [ ] T043 [US2] Define `EditExpenseRequest`, `EditExpenseResponse`, `DeleteExpenseRequest` DTOs in `src/BikeTracking.Api/Contracts/ExpenseContracts.cs`
+- [X] T039 [US2] [CONFIRM RED TESTS] Write failing unit tests for `EditExpenseService` in `src/BikeTracking.Api.Tests/Expenses/EditExpenseServiceTests.cs`: optimistic concurrency check, version increment, validation; run them and capture user confirmation before implementing the service
+- [X] T040 [US2] Implement `EditExpenseService` in `src/BikeTracking.Api/Application/Expenses/EditExpenseService.cs`: accepts `EditExpenseRequest` (id, date, amount, notes, expectedVersion), validates concurrency, updates entity, increments version
+- [X] T041 [US2] [CONFIRM RED TESTS] Write failing unit tests for `DeleteExpenseService` in `src/BikeTracking.Api.Tests/Expenses/DeleteExpenseServiceTests.cs`: sets IsDeleted, removes receipt file; run them and capture user confirmation before implementing the service
+- [X] T042 [US2] Implement `DeleteExpenseService` in `src/BikeTracking.Api/Application/Expenses/DeleteExpenseService.cs`: accepts `DeleteExpenseRequest` (id), sets IsDeleted=true, calls receipt storage delete
+- [X] T043 [US2] Define `EditExpenseRequest`, `EditExpenseResponse`, `DeleteExpenseRequest` DTOs in `src/BikeTracking.Api/Contracts/ExpenseContracts.cs`
 
 ### Sub-Phase 4.2: API Endpoints
 
 - [X] T044 [US2] Write failing integration tests for `PUT /api/expenses/{id}`, `DELETE /api/expenses/{id}` in `src/BikeTracking.Api.Tests/Expenses/ExpensesEndpointsTests.cs`
-- [ ] T045 [US2] Implement `PUT /api/expenses/{id}` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting JSON (date, amount, notes, expectedVersion), calling `EditExpenseService`, returning 200 with success or 409 conflict
-- [ ] T046 [US2] Implement `DELETE /api/expenses/{id}` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` calling `DeleteExpenseService`, returning 204
-- [ ] T047 [US2] Implement `PUT /api/expenses/{id}/receipt` endpoint for receipt upload in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs`
-- [ ] T048 [US2] Implement `DELETE /api/expenses/{id}/receipt` endpoint for receipt removal in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs`
+- [X] T045 [US2] Implement `PUT /api/expenses/{id}` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` accepting JSON (date, amount, notes, expectedVersion), calling `EditExpenseService`, returning 200 with success or 409 conflict
+- [X] T046 [US2] Implement `DELETE /api/expenses/{id}` endpoint in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs` calling `DeleteExpenseService`, returning 204
+- [X] T047 [US2] Implement `PUT /api/expenses/{id}/receipt` endpoint for receipt upload in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs`
+- [X] T048 [US2] Implement `DELETE /api/expenses/{id}/receipt` endpoint for receipt removal in `src/BikeTracking.Api/Endpoints/ExpensesEndpoints.cs`
 
 ### Sub-Phase 4.3: Frontend History Page (TDD)
 
-- [ ] T049 [US2] Write failing Vitest unit tests for `ExpenseHistoryPage` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.test.tsx`: renders list, filters by date, inline edit, delete
+- [X] T049 [US2] Write failing Vitest unit tests for `ExpenseHistoryPage` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.test.tsx`: renders list, filters by date, inline edit, delete
 - [ ] T050 [US2] Implement `ExpenseHistoryPage.tsx` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.tsx` following `HistoryPage.tsx` pattern: fetch expenses, render table, support inline edit with save/cancel, delete action, date-range filter
 - [ ] T051 [US2] Implement `ExpenseHistoryPage.css` styling in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.css`
 - [ ] T052 [US2] Implement `expense-page.helpers.ts` utility functions in `src/BikeTracking.Frontend/src/pages/expenses/expense-page.helpers.ts`: format helpers, validation helpers

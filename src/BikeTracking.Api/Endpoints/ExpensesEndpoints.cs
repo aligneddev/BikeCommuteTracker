@@ -64,6 +64,26 @@ public static class ExpensesEndpoints
             .RequireAuthorization();
 
         group
+            .MapPut("/{expenseId:long}/receipt", PutExpenseReceipt)
+            .WithName("PutExpenseReceipt")
+            .WithSummary("Upload or replace a receipt for an existing expense")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<ErrorResponse>(StatusCodes.Status422UnprocessableEntity)
+            .RequireAuthorization();
+
+        group
+            .MapDelete("/{expenseId:long}/receipt", DeleteExpenseReceipt)
+            .WithName("DeleteExpenseReceipt")
+            .WithSummary("Remove a receipt from an expense")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .RequireAuthorization();
+
+        group
             .MapGet("/{expenseId:long}/receipt", GetExpenseReceipt)
             .WithName("GetExpenseReceipt")
             .WithSummary("Get the receipt for an expense owned by the authenticated rider")
@@ -299,6 +319,106 @@ public static class ExpensesEndpoints
         };
     }
 
+    private static async Task<IResult> PutExpenseReceipt(
+        [FromRoute] long expenseId,
+        HttpContext context,
+        BikeTrackingDbContext dbContext,
+        IReceiptStorage receiptStorage,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        {
+            return Results.Unauthorized();
+        }
+
+        var expense = await dbContext
+            .Expenses.Where(current => current.Id == expenseId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (expense is null || expense.RiderId != riderId || expense.IsDeleted)
+        {
+            return Results.NotFound(
+                new ErrorResponse("EXPENSE_NOT_FOUND", $"Expense {expenseId} was not found.")
+            );
+        }
+
+        var form = await context.Request.ReadFormAsync(cancellationToken);
+        var receipt = form.Files.GetFile("receipt");
+        if (receipt is null)
+        {
+            return Results.BadRequest(
+                new ErrorResponse("VALIDATION_FAILED", "Receipt file is required.")
+            );
+        }
+
+        if (!AllowedReceiptContentTypes.Contains(receipt.ContentType))
+        {
+            return Results.UnprocessableEntity(
+                new ErrorResponse(
+                    "UNSUPPORTED_RECEIPT",
+                    "Receipt must be JPEG, PNG, WEBP, or PDF and no larger than 5 MB"
+                )
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(expense.ReceiptPath))
+        {
+            await receiptStorage.DeleteAsync(expense.ReceiptPath);
+        }
+
+        await using var receiptStream = receipt.OpenReadStream();
+        expense.ReceiptPath = await receiptStorage.SaveAsync(
+            riderId,
+            expense.Id,
+            receipt.FileName,
+            receiptStream
+        );
+        expense.UpdatedAtUtc = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> DeleteExpenseReceipt(
+        [FromRoute] long expenseId,
+        HttpContext context,
+        BikeTrackingDbContext dbContext,
+        IReceiptStorage receiptStorage,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        {
+            return Results.Unauthorized();
+        }
+
+        var expense = await dbContext
+            .Expenses.Where(current => current.Id == expenseId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (expense is null || expense.RiderId != riderId || expense.IsDeleted)
+        {
+            return Results.NotFound(
+                new ErrorResponse("EXPENSE_NOT_FOUND", $"Expense {expenseId} was not found.")
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(expense.ReceiptPath))
+        {
+            return Results.NoContent();
+        }
+
+        await receiptStorage.DeleteAsync(expense.ReceiptPath);
+        expense.ReceiptPath = null;
+        expense.UpdatedAtUtc = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> GetExpenseReceipt(
         [FromRoute] long expenseId,
         HttpContext context,
@@ -323,6 +443,7 @@ public static class ExpensesEndpoints
             || expense.RiderId != riderId
             || expense.IsDeleted
             || string.IsNullOrWhiteSpace(expense.ReceiptPath)
+            || !IsSafeReceiptRelativePath(expense.ReceiptPath)
         )
         {
             return Results.NotFound(
@@ -352,5 +473,27 @@ public static class ExpensesEndpoints
         return ReceiptContentTypeProvider.TryGetContentType(receiptPath, out var contentType)
             ? contentType
             : "application/octet-stream";
+    }
+
+    private static bool IsSafeReceiptRelativePath(string relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath) || Path.IsPathRooted(relativePath))
+        {
+            return false;
+        }
+
+        var normalized = relativePath.Replace('\\', '/');
+        if (normalized.StartsWith('/') || normalized.Contains(":", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var segments = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 0)
+        {
+            return false;
+        }
+
+        return segments.All(segment => segment != "." && segment != "..");
     }
 }
