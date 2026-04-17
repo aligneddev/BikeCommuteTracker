@@ -5,7 +5,9 @@ import { recordExpense } from "./support/expense-helpers";
 const TEST_PIN = "87654321";
 
 test.describe("015-manage-expenses e2e", () => {
-  test("history page supports filtering, inline edit, and delete", async ({ page }) => {
+  test("history page supports filtering, inline edit, and delete", async ({
+    page,
+  }) => {
     const userName = uniqueUser("e2e-manage-expense");
 
     await createAndLoginUser(page, userName, TEST_PIN);
@@ -21,7 +23,9 @@ test.describe("015-manage-expenses e2e", () => {
     });
 
     await page.goto("/expenses/history");
-    await expect(page.getByRole("table", { name: /expense history table/i })).toBeVisible();
+    await expect(
+      page.getByRole("table", { name: /expense history table/i }),
+    ).toBeVisible();
     await expect(page.getByText("Brake pads")).toBeVisible();
     await expect(page.getByText("Old tube")).toBeVisible();
 
@@ -35,7 +39,7 @@ test.describe("015-manage-expenses e2e", () => {
 
     await page.getByRole("button", { name: /edit expense/i }).click();
     await page.getByLabel("Edit amount").fill("35.75");
-    await page.getByLabel("Edit notes").fill("Brake pads and cable")
+    await page.getByLabel("Edit notes").fill("Brake pads and cable");
     await page.getByRole("button", { name: "Save" }).click();
 
     await expect(page.getByText(/expense updated/i)).toBeVisible();
