@@ -89,9 +89,9 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 3.1: Backend Services (TDD)
 
-- [ ] T025 [US1] [CONFIRM RED TESTS] Write failing unit tests for `RecordExpenseService` in `src/BikeTracking.Api.Tests/Expenses/RecordExpenseServiceTests.cs`: validates amount > 0, validates notes ≤ 500 chars, saves to DB, calls receipt storage; run them and capture user confirmation before implementing the service
-- [ ] T026 [US1] Implement `RecordExpenseService` in `src/BikeTracking.Api/Application/Expenses/RecordExpenseService.cs`: accepts `RecordExpenseRequest` (date, amount, notes), calls domain validators, creates `ExpenseEntity`, saves to context, returns success with expenseId
-- [ ] T027 [US1] Define `RecordExpenseRequest` and `RecordExpenseResponse` DTOs in `src/BikeTracking.Api/Contracts/ExpenseContracts.cs`
+- [X] T025 [US1] [CONFIRM RED TESTS] Write failing unit tests for `RecordExpenseService` in `src/BikeTracking.Api.Tests/Expenses/RecordExpenseServiceTests.cs`: validates amount > 0, validates notes ≤ 500 chars, saves to DB, calls receipt storage; run them and capture user confirmation before implementing the service
+- [X] T026 [US1] Implement `RecordExpenseService` in `src/BikeTracking.Api/Application/Expenses/RecordExpenseService.cs`: accepts `RecordExpenseRequest` (date, amount, notes), calls domain validators, creates `ExpenseEntity`, saves to context, returns success with expenseId
+- [X] T027 [US1] Define `RecordExpenseRequest` and `RecordExpenseResponse` DTOs in `src/BikeTracking.Api/Contracts/ExpenseContracts.cs`
 
 ### Sub-Phase 3.2: API Endpoints (TDD)
 
