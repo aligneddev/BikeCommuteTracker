@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Expenses\ExpenseEvents.fs" />
     <Compile Include="Users\UserEvents.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>

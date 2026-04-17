@@ -24,14 +24,14 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Tasks
 
-- [ ] T001 Create new F# module file `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` with empty module declaration
-- [ ] T002 Register `ExpenseEvents.fs` in `src/BikeTracking.Domain.FSharp/BikeTracking.Domain.FSharp.fsproj` compilation order
-- [ ] T003 Create new EF Core entity file `src/BikeTracking.Api/Infrastructure/Persistence/Entities/ExpenseEntity.cs` with table mapping
-- [ ] T004 Create new folder structure `src/BikeTracking.Api/Application/Expenses/` for application services
-- [ ] T005 Create new folder structure `src/BikeTracking.Api/Infrastructure/Receipts/` for receipt storage adapter
-- [ ] T006 Create new folder structure `src/BikeTracking.Api/Endpoints/` (reuse if exists) ready for endpoints
-- [ ] T007 Create new frontend folder `src/BikeTracking.Frontend/src/pages/expenses/` for entry and history pages
-- [ ] T008 Create new frontend service file `src/BikeTracking.Frontend/src/services/expenses-api.ts` (placeholder with imports)
+- [X] T001 Create new F# module file `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` with empty module declaration
+- [X] T002 Register `ExpenseEvents.fs` in `src/BikeTracking.Domain.FSharp/BikeTracking.Domain.FSharp.fsproj` compilation order
+- [X] T003 Create new EF Core entity file `src/BikeTracking.Api/Infrastructure/Persistence/Entities/ExpenseEntity.cs` with table mapping
+- [X] T004 Create new folder structure `src/BikeTracking.Api/Application/Expenses/` for application services
+- [X] T005 Create new folder structure `src/BikeTracking.Api/Infrastructure/Receipts/` for receipt storage adapter
+- [X] T006 Create new folder structure `src/BikeTracking.Api/Endpoints/` (reuse if exists) ready for endpoints
+- [X] T007 Create new frontend folder `src/BikeTracking.Frontend/src/pages/expenses/` for entry and history pages
+- [X] T008 Create new frontend service file `src/BikeTracking.Frontend/src/services/expenses-api.ts` (placeholder with imports)
 
 ---
 
@@ -49,28 +49,28 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 
 ### Sub-Phase 2.1: F# Domain (TDD)
 
-- [ ] T009 [P] [CONFIRM RED TESTS] Write failing F# unit tests for `validateAmount`: reject ≤ 0 decimals; accept > 0 (decimal amount) in `src/BikeTracking.Api.Tests/Expenses/ExpenseDomainTests.fs`, run them, and capture user confirmation that the failures are behavioral rather than setup issues
-- [ ] T010 [P] Implement `validateAmount` function in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` returning `Result<decimal, string>`
-- [ ] T011 [P] Write failing F# unit tests for `validateNotes`: reject strings > 500 chars; accept None; accept short valid strings in `src/BikeTracking.Api.Tests/Expenses/ExpenseDomainTests.fs`
-- [ ] T012 [P] Implement `validateNotes` function in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` returning `Result<string option, string>`
-- [ ] T013 [P] Write failing F# unit tests for `validateDate`: reject DateTime.MinValue; accept valid dates in `src/BikeTracking.Api.Tests/Expenses/ExpenseDomainTests.fs`
-- [ ] T014 [P] Implement `validateDate` function in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` returning `Result<DateTime, string>`
-- [ ] T015 [P] Define F# discriminated union types `ExpenseEvent` (ExpenseRecorded | ExpenseEdited | ExpenseDeleted) in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs`
+- [X] T009 [P] [CONFIRM RED TESTS] Write failing F# unit tests for `validateAmount`: reject ≤ 0 decimals; accept > 0 (decimal amount) in `src/BikeTracking.Api.Tests/Expenses/ExpenseDomainTests.fs`, run them, and capture user confirmation that the failures are behavioral rather than setup issues
+- [X] T010 [P] Implement `validateAmount` function in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` returning `Result<decimal, string>`
+- [X] T011 [P] Write failing F# unit tests for `validateNotes`: reject strings > 500 chars; accept None; accept short valid strings in `src/BikeTracking.Api.Tests/Expenses/ExpenseDomainTests.fs`
+- [X] T012 [P] Implement `validateNotes` function in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` returning `Result<string option, string>`
+- [X] T013 [P] Write failing F# unit tests for `validateDate`: reject DateTime.MinValue; accept valid dates in `src/BikeTracking.Api.Tests/Expenses/ExpenseDomainTests.fs`
+- [X] T014 [P] Implement `validateDate` function in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs` returning `Result<DateTime, string>`
+- [X] T015 [P] Define F# discriminated union types `ExpenseEvent` (ExpenseRecorded | ExpenseEdited | ExpenseDeleted) in `src/BikeTracking.Domain.FSharp/Expenses/ExpenseEvents.fs`
 
 ### Sub-Phase 2.2: Data Model (EF Core)
 
-- [ ] T016 [P] Implement `ExpenseEntity.cs` with columns: Id, RiderId, ExpenseDate, Amount, Notes, ReceiptPath, IsDeleted, Version, CreatedAtUtc, UpdatedAtUtc in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/ExpenseEntity.cs`
-- [ ] T017 [P] Add `DbSet<ExpenseEntity> Expenses { get; set; }` to `BikeTrackingDbContext.cs`
-- [ ] T018 [P] Add EF Core model configuration for ExpenseEntity in `BikeTrackingDbContext.OnModelCreating()`: primary key, foreign key (RiderId → Users), check constraint (Amount > 0), indexes (RiderId ASC + ExpenseDate DESC, RiderId + IsDeleted)
-- [ ] T019 [P] Generate EF Core migration via `dotnet ef migrations add AddExpensesTable --project src/BikeTracking.Api` from repository root
-- [ ] T020 [P] Verify migration compiles and applies to test database without errors
+- [X] T016 [P] Implement `ExpenseEntity.cs` with columns: Id, RiderId, ExpenseDate, Amount, Notes, ReceiptPath, IsDeleted, Version, CreatedAtUtc, UpdatedAtUtc in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/ExpenseEntity.cs`
+- [X] T017 [P] Add `DbSet<ExpenseEntity> Expenses { get; set; }` to `BikeTrackingDbContext.cs`
+- [X] T018 [P] Add EF Core model configuration for ExpenseEntity in `BikeTrackingDbContext.OnModelCreating()`: primary key, foreign key (RiderId → Users), check constraint (Amount > 0), indexes (RiderId ASC + ExpenseDate DESC, RiderId + IsDeleted)
+- [X] T019 [P] Generate EF Core migration via `dotnet ef migrations add AddExpensesTable --project src/BikeTracking.Api` from repository root
+- [X] T020 [P] Verify migration compiles and applies to test database without errors
 
 ### Sub-Phase 2.3: Receipt Storage Port/Adapter (TDD)
 
-- [ ] T021 [P] Define `IReceiptStorage` port interface in `src/BikeTracking.Api/Application/Expenses/IReceiptStorage.cs` with methods: `SaveAsync(riderId, expenseId, filename, stream)` → Task<string> (relative path), `DeleteAsync(relativePath)` → Task, `GetAsync(relativePath)` → Task<Stream>
-- [ ] T022 [P] Implement `FileSystemReceiptStorage.cs` in `src/BikeTracking.Api/Infrastructure/Receipts/FileSystemReceiptStorage.cs` with local filesystem storage (receipts/ subfolder strategy)
-- [ ] T023 [P] Write unit tests for `FileSystemReceiptStorage` using temporary directories (in-memory stubs for fast feedback) in `src/BikeTracking.Api.Tests/Expenses/ReceiptStorageTests.cs`
-- [ ] T024 [P] Register `IReceiptStorage` → `FileSystemReceiptStorage` in `src/BikeTracking.Api/Program.cs` dependency injection
+- [X] T021 [P] Define `IReceiptStorage` port interface in `src/BikeTracking.Api/Application/Expenses/IReceiptStorage.cs` with methods: `SaveAsync(riderId, expenseId, filename, stream)` → Task<string> (relative path), `DeleteAsync(relativePath)` → Task, `GetAsync(relativePath)` → Task<Stream>
+- [X] T022 [P] Implement `FileSystemReceiptStorage.cs` in `src/BikeTracking.Api/Infrastructure/Receipts/FileSystemReceiptStorage.cs` with local filesystem storage (receipts/ subfolder strategy)
+- [X] T023 [P] Write unit tests for `FileSystemReceiptStorage` using temporary directories (in-memory stubs for fast feedback) in `src/BikeTracking.Api.Tests/Expenses/ReceiptStorageTests.cs`
+- [X] T024 [P] Register `IReceiptStorage` → `FileSystemReceiptStorage` in `src/BikeTracking.Api/Program.cs` dependency injection
 
 ---
 

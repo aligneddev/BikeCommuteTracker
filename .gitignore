@@ -59,6 +59,8 @@ coverage/
 paket-files/
 
 src/.vs/*
+.vscode/
+packages/
 
 .fake
 src/BikeTracking.Frontend/test-results/
