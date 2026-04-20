@@ -285,6 +285,69 @@ public sealed class WeatherLookupServiceTests
         Assert.Equal(0, handler.CallCount);
     }
 
+    [Fact]
+    public async Task GetOrFetchAsync_WhenDuplicateKeyDuringSuccessCacheInsert_DoesNotPoisonDbContext()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+
+        await using var context = CreateSqliteContext(connection);
+        await context.Database.EnsureCreatedAsync();
+
+        var lookupHour = new DateTime(2026, 4, 2, 9, 0, 0, DateTimeKind.Utc);
+        context.WeatherLookups.Add(
+            new WeatherLookupEntity
+            {
+                LookupHourUtc = lookupHour,
+                LatitudeRounded = 40.71m,
+                LongitudeRounded = -74.01m,
+                DataSource = "OpenMeteo",
+                RetrievedAtUtc = DateTime.UtcNow,
+                Status = "error",
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                CreateHourlyResponseJson(),
+                Encoding.UTF8,
+                "application/json"
+            ),
+        });
+        var factory = new StubHttpClientFactory(
+            new HttpClient(handler) { BaseAddress = new Uri("https://api.open-meteo.com") }
+        );
+        var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
+
+        var service = new OpenMeteoWeatherLookupService(
+            context,
+            factory,
+            config,
+            NullLogger<OpenMeteoWeatherLookupService>.Instance
+        );
+
+        var result = await service.GetOrFetchAsync(40.7128m, -74.0060m, lookupHour);
+
+        Assert.NotNull(result);
+        Assert.Equal(60.5m, result!.Temperature);
+
+        context.WeatherLookups.Add(
+            new WeatherLookupEntity
+            {
+                LookupHourUtc = lookupHour.AddHours(1),
+                LatitudeRounded = 40.71m,
+                LongitudeRounded = -74.01m,
+                DataSource = "OpenMeteo",
+                RetrievedAtUtc = DateTime.UtcNow,
+                Status = "error",
+            }
+        );
+
+        await context.SaveChangesAsync();
+    }
+
     private static BikeTrackingDbContext CreateSqliteContext(SqliteConnection connection)
     {
         var options = new DbContextOptionsBuilder<BikeTrackingDbContext>()
