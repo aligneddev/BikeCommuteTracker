@@ -17,6 +17,8 @@ import * as expensesApi from '../../services/expenses-api'
 
 const mockGetExpenseHistory = vi.mocked(expensesApi.getExpenseHistory)
 const mockDownloadExpenseReceipt = vi.mocked(expensesApi.downloadExpenseReceipt)
+const mockEditExpense = vi.mocked(expensesApi.editExpense)
+const mockUploadReceipt = vi.mocked(expensesApi.uploadReceipt)
 
 const SAMPLE_EXPENSE = {
   expenseId: 1,
@@ -49,6 +51,12 @@ describe('ExpenseHistoryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetExpenseHistory.mockResolvedValue(EMPTY_RESPONSE)
+    mockEditExpense.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { expenseId: 1, savedAtUtc: '2026-04-17T10:01:00Z', newVersion: 2 },
+    })
+    mockUploadReceipt.mockResolvedValue({ ok: true, status: 204 })
     mockDownloadExpenseReceipt.mockResolvedValue({
       ok: true,
       status: 200,
@@ -108,6 +116,37 @@ describe('ExpenseHistoryPage', () => {
     const notesInput = screen.getByLabelText(/edit notes/i)
     expect(notesInput.tagName).toBe('TEXTAREA')
     expect(notesInput).toHaveClass('expense-history-edit-notes')
+    expect(screen.getByLabelText(/replace receipt/i)).toBeInTheDocument()
+  })
+
+  it('uploads replacement receipt when saving an edited expense', async () => {
+    mockGetExpenseHistory.mockResolvedValue(ONE_EXPENSE_RESPONSE)
+
+    render(
+      <BrowserRouter>
+        <ExpenseHistoryPage />
+      </BrowserRouter>
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /edit expense/i }))
+
+    const file = new File(['updated'], 'updated-receipt.png', { type: 'image/png' })
+    const fileInput = screen.getByLabelText(/replace receipt/i)
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+    fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+
+    await waitFor(() => {
+      expect(mockEditExpense).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          amount: 23.45,
+          expenseDate: '2026-04-17',
+          expectedVersion: 1,
+        }),
+      )
+      expect(mockUploadReceipt).toHaveBeenCalledWith(1, file)
+    })
   })
 
   it('renders receipt view and download links when a receipt exists', async () => {

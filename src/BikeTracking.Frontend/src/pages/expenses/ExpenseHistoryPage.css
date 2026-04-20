@@ -80,8 +80,29 @@
 
 .expense-history-actions {
   display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 0.4rem;
   white-space: nowrap;
+}
+
+.expense-history-receipt-replace {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #1f2937;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.expense-history-receipt-replace input[type='file'] {
+  max-width: 13rem;
+  font-size: 0.75rem;
+}
+
+.expense-history-receipt-missing {
+  color: #6b7280;
+  font-size: 0.8rem;
 }
 
 .expense-history-edit-notes {
@@ -157,6 +178,10 @@
 
   .expense-history-actions button {
     width: 100%;
+  }
+
+  .expense-history-receipt-replace input[type='file'] {
+    max-width: 100%;
   }
 
   .expense-history-edit-notes {

@@ -6,6 +6,7 @@ import {
   editExpense,
   getExpenseReceiptUrl,
   getExpenseHistory,
+  uploadReceipt,
 } from '../../services/expenses-api'
 import { formatCurrency, formatExpenseDate } from './expense-page.helpers'
 import './ExpenseHistoryPage.css'
@@ -22,6 +23,7 @@ export function ExpenseHistoryPage() {
   const [editDate, setEditDate] = useState<string>('')
   const [editAmount, setEditAmount] = useState<string>('')
   const [editNotes, setEditNotes] = useState<string>('')
+  const [editReceiptFile, setEditReceiptFile] = useState<File | null>(null)
 
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [successMessage, setSuccessMessage] = useState<string>('')
@@ -61,11 +63,13 @@ export function ExpenseHistoryPage() {
     setEditDate(expense.expenseDate.slice(0, 10))
     setEditAmount(String(expense.amount))
     setEditNotes(expense.notes ?? '')
+    setEditReceiptFile(null)
     setErrorMessage('')
   }
 
   const handleCancelEdit = () => {
     setEditingExpenseId(null)
+    setEditReceiptFile(null)
     setErrorMessage('')
   }
 
@@ -84,7 +88,16 @@ export function ExpenseHistoryPage() {
     })
 
     if (result.ok) {
+      if (editReceiptFile) {
+        const receiptResult = await uploadReceipt(expense.expenseId, editReceiptFile)
+        if (!receiptResult.ok) {
+          setErrorMessage(receiptResult.error?.message ?? 'Failed to replace receipt')
+          return
+        }
+      }
+
       setEditingExpenseId(null)
+      setEditReceiptFile(null)
       setSuccessMessage('Expense updated')
       await loadHistory(filterFrom || undefined, filterTo || undefined)
       setTimeout(() => setSuccessMessage(''), 3000)
@@ -218,6 +231,8 @@ export function ExpenseHistoryPage() {
                         Download receipt
                       </button>
                     </div>
+                  ) : editingExpenseId === expense.expenseId ? (
+                    <span className="expense-history-receipt-missing">No receipt yet</span>
                   ) : (
                     'No'
                   )}
@@ -225,6 +240,15 @@ export function ExpenseHistoryPage() {
                 <td className="expense-history-actions">
                   {editingExpenseId === expense.expenseId ? (
                     <>
+                      <label className="expense-history-receipt-replace">
+                        Replace receipt
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          aria-label="Replace receipt"
+                          onChange={(e) => setEditReceiptFile(e.target.files?.[0] ?? null)}
+                        />
+                      </label>
                       <button type="button" onClick={() => handleSaveEdit(expense)}>
                         Save
                       </button>
