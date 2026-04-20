@@ -84,6 +84,39 @@
   white-space: nowrap;
 }
 
+.expense-history-edit-notes {
+  width: min(100%, 20rem);
+  min-height: 6.5rem;
+  resize: vertical;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.expense-history-receipt-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.expense-history-receipt-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #2563eb;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.expense-history-receipt-link:hover {
+  text-decoration: underline;
+}
+
 .expense-history-actions button {
   padding: 0.3rem 0.65rem;
   border: 1px solid #cbd5e1;
@@ -124,6 +157,11 @@
 
   .expense-history-actions button {
     width: 100%;
+  }
+
+  .expense-history-edit-notes {
+    width: 100%;
+    min-width: 12rem;
   }
 }
 

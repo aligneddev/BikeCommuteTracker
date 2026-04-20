@@ -70,6 +70,100 @@ export interface DeleteExpenseResponse {
   deletedAtUtc: string;
 }
 
+function resolveReceiptDownloadName(
+  expenseId: number,
+  headers: Headers,
+): string {
+  const contentDisposition = headers.get("content-disposition");
+  const filenameMatch = contentDisposition?.match(
+    /filename\*?=(?:UTF-8''|"?)([^";]+)/i,
+  );
+  if (filenameMatch?.[1]) {
+    return decodeURIComponent(filenameMatch[1].replace(/"/g, ""));
+  }
+
+  const contentType = headers.get("content-type")?.toLowerCase() ?? "";
+  if (contentType.includes("pdf")) {
+    return `expense-${expenseId}-receipt.pdf`;
+  }
+
+  if (contentType.includes("png")) {
+    return `expense-${expenseId}-receipt.png`;
+  }
+
+  if (contentType.includes("webp")) {
+    return `expense-${expenseId}-receipt.webp`;
+  }
+
+  return `expense-${expenseId}-receipt.jpg`;
+}
+
+function getAuthenticatedReceiptQuery(): string {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) {
+      return "";
+    }
+
+    const parsed = JSON.parse(raw) as { userId?: number };
+    if (typeof parsed.userId === "number" && parsed.userId > 0) {
+      return `?userId=${encodeURIComponent(parsed.userId.toString())}`;
+    }
+  } catch {
+    // Ignore malformed session payloads and continue unauthenticated.
+  }
+
+  return "";
+}
+
+export function getExpenseReceiptUrl(expenseId: number): string {
+  return `${API_BASE_URL}/api/expenses/${expenseId}/receipt${getAuthenticatedReceiptQuery()}`;
+}
+
+export async function downloadExpenseReceipt(
+  expenseId: number,
+): Promise<ApiResult<{ fileName: string }, ErrorResponse>> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/expenses/${expenseId}/receipt`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (response.ok) {
+    const blob = await response.blob();
+    const fileName = resolveReceiptDownloadName(expenseId, response.headers);
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = objectUrl;
+    link.download = fileName;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+
+    return {
+      ok: true,
+      status: response.status,
+      data: { fileName },
+    };
+  }
+
+  let parsedError: ErrorResponse | undefined;
+  try {
+    parsedError = (await response.json()) as ErrorResponse;
+  } catch {
+    parsedError = undefined;
+  }
+
+  return {
+    ok: false,
+    status: response.status,
+    error: parsedError,
+  };
+}
+
 export async function getExpenseHistory(
   startDate?: string,
   endDate?: string,

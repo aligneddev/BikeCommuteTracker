@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import type { ExpenseHistoryRow } from '../../services/expenses-api'
 import {
   deleteExpense,
+  downloadExpenseReceipt,
   editExpense,
+  getExpenseReceiptUrl,
   getExpenseHistory,
 } from '../../services/expenses-api'
 import { formatCurrency, formatExpenseDate } from './expense-page.helpers'
@@ -102,6 +104,13 @@ export function ExpenseHistoryPage() {
     }
   }
 
+  const handleDownloadReceipt = async (expense: ExpenseHistoryRow) => {
+    const result = await downloadExpenseReceipt(expense.expenseId)
+    if (!result.ok) {
+      setErrorMessage(result.error?.message ?? 'Failed to download receipt')
+    }
+  }
+
   return (
     <main className="expense-history-page">
       <h1 className="expense-history-title">Expense History</h1>
@@ -179,18 +188,40 @@ export function ExpenseHistoryPage() {
                 </td>
                 <td>
                   {editingExpenseId === expense.expenseId ? (
-                    <input
-                      type="text"
+                    <textarea
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
                       aria-label="Edit notes"
+                      className="expense-history-edit-notes"
                       maxLength={500}
                     />
                   ) : (
                     expense.notes ?? ''
                   )}
                 </td>
-                <td>{expense.hasReceipt ? 'Yes' : 'No'}</td>
+                <td>
+                  {expense.hasReceipt ? (
+                    <div className="expense-history-receipt-links">
+                      <a
+                        href={getExpenseReceiptUrl(expense.expenseId)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="expense-history-receipt-link"
+                      >
+                        View receipt
+                      </a>
+                      <button
+                        type="button"
+                        className="expense-history-receipt-link"
+                        onClick={() => handleDownloadReceipt(expense)}
+                      >
+                        Download receipt
+                      </button>
+                    </div>
+                  ) : (
+                    'No'
+                  )}
+                </td>
                 <td className="expense-history-actions">
                   {editingExpenseId === expense.expenseId ? (
                     <>
