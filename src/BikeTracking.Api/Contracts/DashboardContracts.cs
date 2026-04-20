@@ -13,7 +13,8 @@ public sealed record DashboardTotals(
     DashboardMileageMetric CurrentMonthMiles,
     DashboardMileageMetric YearToDateMiles,
     DashboardMileageMetric AllTimeMiles,
-    DashboardMoneySaved MoneySaved
+    DashboardMoneySaved MoneySaved,
+    DashboardExpenseSummary ExpenseSummary
 );
 
 public sealed record DashboardMileageMetric(decimal Miles, int RideCount, string Period);
@@ -53,6 +54,13 @@ public sealed record DashboardMetricSuggestion(
     bool IsEnabled,
     decimal? Value = null,
     string? UnitLabel = null
+);
+
+public sealed record DashboardExpenseSummary(
+    decimal TotalManualExpenses,
+    decimal? OilChangeSavings,
+    decimal? NetExpenses,
+    int OilChangeIntervalCount
 );
 
 public sealed record DashboardMissingData(

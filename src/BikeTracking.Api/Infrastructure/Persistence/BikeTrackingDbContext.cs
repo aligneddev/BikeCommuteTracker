@@ -11,6 +11,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<AuthAttemptStateEntity> AuthAttemptStates => Set<AuthAttemptStateEntity>();
     public DbSet<OutboxEventEntity> OutboxEvents => Set<OutboxEventEntity>();
     public DbSet<RideEntity> Rides => Set<RideEntity>();
+    public DbSet<ExpenseEntity> Expenses => Set<ExpenseEntity>();
     public DbSet<ImportJobEntity> ImportJobs => Set<ImportJobEntity>();
     public DbSet<ImportRowEntity> ImportRows => Set<ImportRowEntity>();
     public DbSet<GasPriceLookupEntity> GasPriceLookups => Set<GasPriceLookupEntity>();
@@ -145,6 +146,49 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                 .HasDatabaseName("IX_Rides_RiderId_CreatedAtUtc_Desc");
 
             // Foreign key to Users
+            entity
+                .HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(static x => x.RiderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExpenseEntity>(static entity =>
+        {
+            entity.ToTable(
+                "Expenses",
+                static tableBuilder =>
+                {
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Expenses_Amount_Positive",
+                        "CAST(\"Amount\" AS REAL) > 0"
+                    );
+                }
+            );
+            entity.HasKey(static x => x.Id);
+            entity.Property(static x => x.RiderId).IsRequired();
+            entity.Property(static x => x.ExpenseDate).IsRequired();
+            entity.Property(static x => x.Amount).IsRequired().HasPrecision(10, 2);
+            entity.Property(static x => x.Notes).HasMaxLength(500);
+            entity.Property(static x => x.ReceiptPath).HasMaxLength(500);
+            entity.Property(static x => x.IsDeleted).HasDefaultValue(false);
+            entity
+                .Property(static x => x.Version)
+                .IsRequired()
+                .HasDefaultValue(1)
+                .IsConcurrencyToken();
+            entity.Property(static x => x.CreatedAtUtc).IsRequired();
+            entity.Property(static x => x.UpdatedAtUtc).IsRequired();
+
+            entity
+                .HasIndex(static x => new { x.RiderId, x.ExpenseDate })
+                .IsDescending(false, true)
+                .HasDatabaseName("IX_Expenses_RiderId_ExpenseDate_Desc");
+
+            entity
+                .HasIndex(static x => new { x.RiderId, x.IsDeleted })
+                .HasDatabaseName("IX_Expenses_RiderId_IsDeleted");
+
             entity
                 .HasOne<UserEntity>()
                 .WithMany()

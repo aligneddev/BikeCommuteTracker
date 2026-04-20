@@ -1,0 +1,197 @@
+.expense-history-page {
+  max-width: 64rem;
+  margin: 2rem auto;
+  padding: 0 1rem 2rem;
+}
+
+.expense-history-title {
+  margin: 0 0 1rem;
+  color: #0f172a;
+}
+
+.expense-history-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.expense-history-filters label {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.expense-history-filters input[type='date'] {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font: inherit;
+}
+
+.expense-history-filters button {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid #2563eb;
+  border-radius: 0.375rem;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.expense-history-total {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.75rem;
+}
+
+.expense-history-error {
+  color: #b91c1c;
+  margin: 0.35rem 0;
+}
+
+.expense-history-success {
+  color: #166534;
+  margin: 0.35rem 0;
+}
+
+.expense-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.expense-history-table-wrap {
+  overflow-x: auto;
+}
+
+.expense-history-table th,
+.expense-history-table td {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.expense-history-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.expense-history-actions {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.expense-history-receipt-replace {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #1f2937;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.expense-history-receipt-replace input[type='file'] {
+  max-width: 13rem;
+  font-size: 0.75rem;
+}
+
+.expense-history-receipt-missing {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.expense-history-edit-notes {
+  width: min(100%, 20rem);
+  min-height: 6.5rem;
+  resize: vertical;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.expense-history-receipt-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.expense-history-receipt-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #2563eb;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.expense-history-receipt-link:hover {
+  text-decoration: underline;
+}
+
+.expense-history-actions button {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.expense-history-empty {
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+@media (width <= 640px) {
+  .expense-history-page {
+    margin-top: 1rem;
+  }
+
+  .expense-history-filters {
+    align-items: stretch;
+  }
+
+  .expense-history-filters input[type='date'],
+  .expense-history-filters button {
+    width: 100%;
+  }
+
+  .expense-history-table {
+    font-size: 0.875rem;
+    min-width: 40rem;
+  }
+
+  .expense-history-actions {
+    flex-direction: column;
+  }
+
+  .expense-history-actions button {
+    width: 100%;
+  }
+
+  .expense-history-receipt-replace input[type='file'] {
+    max-width: 100%;
+  }
+
+  .expense-history-edit-notes {
+    width: 100%;
+    min-width: 12rem;
+  }
+}
+
+@media (width <= 420px) {
+  .expense-history-page {
+    padding-inline: 0.75rem;
+  }
+}

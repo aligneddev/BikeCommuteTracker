@@ -1,0 +1,95 @@
+.expense-entry-page {
+  max-width: 40rem;
+  margin: 2rem auto;
+  padding: 0 1rem 2rem;
+}
+
+.expense-entry-title {
+  margin: 0 0 1rem;
+  color: #0f172a;
+}
+
+.expense-entry-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #d4dbe5;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.expense-entry-field {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.expense-entry-field label {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.expense-entry-field input,
+.expense-entry-field textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font: inherit;
+}
+
+.expense-entry-submit {
+  width: fit-content;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid #2563eb;
+  border-radius: 0.375rem;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.expense-entry-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.expense-entry-error {
+  color: #b91c1c;
+  margin: 0.35rem 0 0;
+}
+
+.expense-entry-success {
+  color: #166534;
+  margin: 0.35rem 0 0;
+}
+
+.expense-entry-warning {
+  color: #92400e;
+  margin: 0.35rem 0 0;
+}
+
+@media (width <= 640px) {
+  .expense-entry-page {
+    margin-top: 1rem;
+  }
+
+  .expense-entry-form {
+    padding: 0.85rem;
+  }
+
+  .expense-entry-submit {
+    width: 100%;
+    justify-self: stretch;
+  }
+}
+
+@media (width <= 420px) {
+  .expense-entry-page {
+    padding-inline: 0.75rem;
+  }
+
+  .expense-entry-field input,
+  .expense-entry-field textarea {
+    padding: 0.5rem 0.6rem;
+  }
+}

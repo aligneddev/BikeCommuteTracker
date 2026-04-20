@@ -9,6 +9,8 @@ import { RecordRidePage } from './pages/RecordRidePage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
 import { ImportRidesPage } from './pages/import-rides/ImportRidesPage'
+import { ExpenseEntryPage } from './pages/expenses/ExpenseEntryPage'
+import { ExpenseHistoryPage } from './pages/expenses/ExpenseHistoryPage'
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
             <Route path="/rides/history" element={<HistoryPage />} />
             <Route path="/rides/record" element={<RecordRidePage />} />
             <Route path="/rides/import" element={<ImportRidesPage />} />
+            <Route path="/expenses/entry" element={<ExpenseEntryPage />} />
+            <Route path="/expenses/history" element={<ExpenseHistoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>

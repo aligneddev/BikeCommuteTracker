@@ -502,10 +502,6 @@ describe('HistoryPage', () => {
         name: /gas price/i,
       }) as HTMLInputElement
       expect(gasPriceInput.value).toBe('3.9999')
-      // I moved this to a tooltip
-      // expect(
-      //   screen.getByText('Source: U.S. Energy Information Administration (EIA)')
-      // ).toBeInTheDocument()
     })
   })
 

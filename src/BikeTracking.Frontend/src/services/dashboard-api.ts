@@ -11,11 +11,19 @@ export interface DashboardMoneySaved {
   qualifiedRideCount: number;
 }
 
+export interface DashboardExpenseSummary {
+  totalManualExpenses: number;
+  oilChangeSavings: number | null;
+  netExpenses: number | null;
+  oilChangeIntervalCount: number;
+}
+
 export interface DashboardTotals {
   currentMonthMiles: DashboardMileageMetric;
   yearToDateMiles: DashboardMileageMetric;
   allTimeMiles: DashboardMileageMetric;
   moneySaved: DashboardMoneySaved;
+  expenseSummary: DashboardExpenseSummary;
 }
 
 export interface DashboardAverages {

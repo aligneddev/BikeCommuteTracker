@@ -1,0 +1,42 @@
+.dashboard-summary-card-accent-expenses {
+  background: linear-gradient(180deg, #7c3aed, #f97316);
+}
+
+.expense-summary-card-details {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.expense-summary-card-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--dashboard-muted);
+  font-size: 0.92rem;
+}
+
+.expense-summary-card-row-net {
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--dashboard-border);
+  color: var(--dashboard-ink);
+  font-weight: 700;
+}
+
+.expense-summary-card-row-net-savings {
+  color: #166534;
+}
+
+.expense-summary-card-row-net-expense {
+  color: #b91c1c;
+}
+
+.expense-summary-card-row-net-neutral {
+  color: var(--dashboard-ink);
+}
+
+@media (width <= 640px) {
+  .expense-summary-card-row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+}
