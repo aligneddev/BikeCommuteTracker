@@ -77,6 +77,21 @@ describe('ExpenseHistoryPage', () => {
     })
   })
 
+  it('renders an import expenses link near the history controls', async () => {
+    render(
+      <BrowserRouter>
+        <ExpenseHistoryPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /import expenses/i })).toHaveAttribute(
+        'href',
+        '/expenses/import',
+      )
+    })
+  })
+
   it('applies date range filter', async () => {
     render(
       <BrowserRouter>

@@ -12,6 +12,8 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<OutboxEventEntity> OutboxEvents => Set<OutboxEventEntity>();
     public DbSet<RideEntity> Rides => Set<RideEntity>();
     public DbSet<ExpenseEntity> Expenses => Set<ExpenseEntity>();
+    public DbSet<ExpenseImportJobEntity> ExpenseImportJobs => Set<ExpenseImportJobEntity>();
+    public DbSet<ExpenseImportRowEntity> ExpenseImportRows => Set<ExpenseImportRowEntity>();
     public DbSet<ImportJobEntity> ImportJobs => Set<ImportJobEntity>();
     public DbSet<ImportRowEntity> ImportRows => Set<ImportRowEntity>();
     public DbSet<GasPriceLookupEntity> GasPriceLookups => Set<GasPriceLookupEntity>();
@@ -195,6 +197,59 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                 .HasForeignKey(static x => x.RiderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+            modelBuilder.Entity<ExpenseImportJobEntity>(static entity =>
+            {
+                entity.ToTable("ExpenseImportJobs");
+                entity.HasKey(static x => x.Id);
+                entity.Property(static x => x.RiderId).IsRequired();
+                entity.Property(static x => x.FileName).IsRequired().HasMaxLength(255);
+                entity.Property(static x => x.TotalRows).HasDefaultValue(0);
+                entity.Property(static x => x.ValidRows).HasDefaultValue(0);
+                entity.Property(static x => x.InvalidRows).HasDefaultValue(0);
+                entity.Property(static x => x.ImportedRows).HasDefaultValue(0);
+                entity.Property(static x => x.SkippedRows).HasDefaultValue(0);
+                entity.Property(static x => x.OverrideAllDuplicates).HasDefaultValue(false);
+                entity.Property(static x => x.Status).IsRequired().HasMaxLength(50);
+                entity.Property(static x => x.LastError).HasMaxLength(1000);
+                entity.Property(static x => x.CreatedAtUtc).IsRequired();
+                entity.Property(static x => x.CompletedAtUtc);
+
+                entity.HasIndex(static x => x.RiderId).HasDatabaseName("IX_ExpenseImportJobs_RiderId");
+
+                entity
+                .HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(static x => x.RiderId)
+                .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ExpenseImportRowEntity>(static entity =>
+            {
+                entity.ToTable("ExpenseImportRows");
+                entity.HasKey(static x => x.Id);
+                entity.Property(static x => x.ImportJobId).IsRequired();
+                entity.Property(static x => x.RowNumber).IsRequired();
+                entity.Property(static x => x.ExpenseDateLocal);
+                entity.Property(static x => x.Amount).HasPrecision(10, 2);
+                entity.Property(static x => x.Notes).HasMaxLength(500);
+                entity.Property(static x => x.ValidationStatus).IsRequired().HasMaxLength(30);
+                entity.Property(static x => x.ValidationErrorsJson);
+                entity.Property(static x => x.DuplicateStatus).IsRequired().HasMaxLength(30);
+                entity.Property(static x => x.DuplicateResolution).HasMaxLength(30);
+                entity.Property(static x => x.ProcessingStatus).IsRequired().HasMaxLength(30);
+                entity.Property(static x => x.ExistingExpenseIdsJson);
+                entity.Property(static x => x.CreatedExpenseId);
+
+                entity.HasIndex(static x => x.ImportJobId).HasDatabaseName("IX_ExpenseImportRows_ImportJobId");
+                entity.HasIndex(static x => new { x.ImportJobId, x.RowNumber }).IsUnique();
+
+                entity
+                .HasOne(static x => x.ImportJob)
+                .WithMany(static x => x.Rows)
+                .HasForeignKey(static x => x.ImportJobId)
+                .OnDelete(DeleteBehavior.Cascade);
+            });
 
         modelBuilder.Entity<ImportJobEntity>(static entity =>
         {

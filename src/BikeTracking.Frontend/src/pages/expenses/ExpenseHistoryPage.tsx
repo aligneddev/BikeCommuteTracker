@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { ExpenseHistoryRow } from '../../services/expenses-api'
 import {
   deleteExpense,
@@ -127,6 +128,12 @@ export function ExpenseHistoryPage() {
   return (
     <main className="expense-history-page">
       <h1 className="expense-history-title">Expense History</h1>
+
+      <div className="expense-history-primary-actions">
+        <Link className="expense-history-import-link" to="/expenses/import">
+          Import Expenses
+        </Link>
+      </div>
 
       <div className="expense-history-filters" role="group" aria-label="Expense history filters">
         <label htmlFor="expense-filter-from">From</label>
