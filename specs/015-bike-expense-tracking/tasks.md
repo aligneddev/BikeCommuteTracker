@@ -234,13 +234,13 @@ This implementation follows Test-Driven Development (TDD) — each task is prece
 - [ ] T074 [P] Validate receipt file types and sizes on both client (browser) and server (API); reject unsupported formats with clear messages that explicitly name the accepted formats (JPEG, PNG, WEBP, PDF) and the 5 MB maximum, without clearing the other entered form fields
 - [X] T075 [P] Add accessibility attributes (aria-labels, role hints) to form fields in `ExpenseEntryPage.tsx` and `ExpenseHistoryPage.tsx`
 - [X] T076 [P] Add responsive design breakpoints for mobile/tablet in `ExpenseEntryPage.css`, `ExpenseHistoryPage.css`, `ExpenseSummaryCard.css`
-- [ ] T077 [P] Run code formatting via `csharpier format .` and ESLint/Stylelint on all new files
-- [ ] T078 [P] Verify `dotnet test BikeTracking.slnx` and `npm run test:unit` all pass with >85% code coverage
-- [ ] T079 [P] Run full E2E test suite `npm run test:e2e` against live API/DB and verify all pass
-- [ ] T080 [P] Create feature documentation in `README.md` (if needed) or project wiki describing the new expense tracking feature
-- [ ] T080A [P] Document platform-specific receipt storage paths and configuration expectations for Windows, macOS, and Linux so the app-data / `receipts/` location is explicit for support and troubleshooting
-- [ ] T080B [P] Document local backup and restore guidance for the SQLite database and `receipts/` folder so end users can preserve expense history and attachments together
-- [ ] T081 [P] Clean up any temporary test files or commented-out code before final commit
+- [X] T077 [P] Run code formatting via `csharpier format .` and ESLint/Stylelint on all new files
+- [X] T078 [P] Verify `dotnet test BikeTracking.slnx` and `npm run test:unit` all pass with >85% code coverage
+- [X] T079 [P] Run full E2E test suite `npm run test:e2e` against live API/DB and verify all pass
+- [X] T080 [P] Create feature documentation in `README.md` (if needed) or project wiki describing the new expense tracking feature
+- [X] T080A [P] Document platform-specific receipt storage paths and configuration expectations for Windows, macOS, and Linux so the app-data / `receipts/` location is explicit for support and troubleshooting
+- [X] T080B [P] Document local backup and restore guidance for the SQLite database and `receipts/` folder so end users can preserve expense history and attachments together
+- [X] T081 [P] Clean up any temporary test files or commented-out code before final commit
 
 ---
 

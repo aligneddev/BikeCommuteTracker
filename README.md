@@ -9,6 +9,9 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 - Duplicate-name rejection using trimmed, case-insensitive normalization
 - User identification with progressive retry delay (up to 30 seconds)
 - User registration outbox with background retry until successful publication
+- Manual bike expense entry with date, amount, optional note, and optional receipt
+- Expense history with date filtering, inline edit, soft delete, and receipt management
+- Dashboard expense summary with manual totals, oil-change savings, and net position
 
 ## Project Structure
 
@@ -162,6 +165,60 @@ For local-first deployment to end-user machines, the default persistence model i
 - Before schema upgrades, create a safety backup copy of the SQLite file.
 - Use SQL Server LocalDB or SQL Server Express only when local multi-user requirements exceed the single-user SQLite profile.
 
+## Bike Expense Tracking
+
+The expense tracking slice adds a full local-first workflow for bike ownership costs.
+
+- Record manual expenses with required date and amount.
+- Attach an optional receipt in JPEG, PNG, WEBP, or PDF format up to 5 MB.
+- Browse expense history with date filters, inline edit, delete, and receipt replacement/removal.
+- View dashboard totals that combine manual expenses with automatic oil-change savings.
+
+Receipt upload failures are handled as non-fatal storage errors when recording a new expense. If receipt storage fails because of a non-writable path, permission issue, or disk/storage error, the expense is still saved and the UI shows that the receipt was not attached.
+
+## Receipt Storage
+
+Receipt files are stored in a `receipts/` folder next to the configured SQLite database file.
+
+- Default development database: `src/BikeTracking.Api/biketracking.local.db`
+- Default development receipt root: `src/BikeTracking.Api/receipts/`
+- If `ConnectionStrings:BikeTracking` points to a different SQLite path, the receipt root moves with it.
+
+The storage rule is:
+
+- Database: `/path/to/biketracking.local.db`
+- Receipts: `/path/to/receipts/`
+
+For packaged installs, configure the SQLite database in a user-writable app-data directory and allow the app to create the sibling `receipts/` directory there.
+
+Suggested packaged-install locations:
+
+- Windows: `%LocalAppData%/CommuteBikeTracker/biketracking.local.db` and `%LocalAppData%/CommuteBikeTracker/receipts/`
+- macOS: `~/Library/Application Support/CommuteBikeTracker/biketracking.local.db` and `~/Library/Application Support/CommuteBikeTracker/receipts/`
+- Linux: `${XDG_DATA_HOME:-~/.local/share}/CommuteBikeTracker/biketracking.local.db` and `${XDG_DATA_HOME:-~/.local/share}/CommuteBikeTracker/receipts/`
+
+When deploying outside development, prefer setting the database path explicitly with configuration such as `ConnectionStrings__BikeTracking` so both the database and receipt root land in the intended writable directory.
+
+## Backup And Restore
+
+Back up the SQLite database file and the sibling `receipts/` directory together. Keeping only one of them can leave expense records pointing at missing attachments or leave orphaned receipt files with no matching expense rows.
+
+Recommended backup workflow:
+
+1. Stop the application.
+2. Copy `biketracking.local.db`.
+3. Copy the entire `receipts/` directory from the same parent folder.
+4. Store both copies together with the same timestamp.
+
+Recommended restore workflow:
+
+1. Stop the application.
+2. Restore `biketracking.local.db` to the configured data directory.
+3. Restore the matching `receipts/` directory to the same parent folder.
+4. Start the application and verify expense history plus a few receipt downloads.
+
+If the application is upgraded and migrations are about to run, make the backup before first startup on the new version.
+
 
 ## Automated Tests
 
@@ -171,6 +228,10 @@ frontend end-to-end tests: `npm run test:e2e` (Playwright)
 - These use the local SQLlite database, so they are more like integration tests. The values are thrown away after each test, but they do test the full stack of the API and database layers.
 
 backend tests: `dotnet test` from repo root (xUnit)
+
+formatting: `dotnet csharpier format .`
+
+frontend lint: `cd src/BikeTracking.Frontend && npm run lint`
 
 These are ran in the .github\workflows\ci.yml pipeline on every PR
 
