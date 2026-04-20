@@ -19,6 +19,11 @@ public static class ExpensesEndpoints
         "application/pdf",
     ];
 
+    private const long MaxReceiptSizeBytes = 5L * 1024 * 1024; // 5 MB
+
+    private const string AllowedReceiptFormatsMessage =
+        "Receipt must be JPEG, PNG, WEBP, or PDF and cannot exceed 5 MB.";
+
     public static IEndpointRouteBuilder MapExpensesEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/expenses");
@@ -97,15 +102,19 @@ public static class ExpensesEndpoints
 
     private static async Task<IResult> PostExpense(
         HttpContext context,
+        ILoggerFactory loggerFactory,
         RecordExpenseService recordExpenseService,
         CancellationToken cancellationToken
     )
     {
+        var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
         var userIdString = context.User.FindFirst("sub")?.Value;
         if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
         {
             return Results.Unauthorized();
         }
+
+        logger.LogInformation("POST /api/expenses — riderId={RiderId}", riderId);
 
         var form = await context.Request.ReadFormAsync(cancellationToken);
         var expenseDateValue = form["expenseDate"].ToString();
@@ -114,6 +123,10 @@ public static class ExpensesEndpoints
 
         if (!DateTime.TryParse(expenseDateValue, out var expenseDate))
         {
+            logger.LogWarning(
+                "POST /api/expenses rejected: invalid date — riderId={RiderId}",
+                riderId
+            );
             return Results.BadRequest(
                 new ErrorResponse("VALIDATION_FAILED", "Expense date is required")
             );
@@ -121,17 +134,35 @@ public static class ExpensesEndpoints
 
         if (!decimal.TryParse(amountValue, out var amount))
         {
+            logger.LogWarning(
+                "POST /api/expenses rejected: invalid amount — riderId={RiderId}",
+                riderId
+            );
             return Results.BadRequest(new ErrorResponse("VALIDATION_FAILED", "Amount is required"));
         }
 
         var receipt = form.Files.GetFile("receipt");
+        if (receipt is not null && receipt.Length > MaxReceiptSizeBytes)
+        {
+            logger.LogWarning(
+                "POST /api/expenses rejected: receipt too large ({Size} bytes) — riderId={RiderId}",
+                receipt.Length,
+                riderId
+            );
+            return Results.UnprocessableEntity(
+                new ErrorResponse("UNSUPPORTED_RECEIPT", AllowedReceiptFormatsMessage)
+            );
+        }
+
         if (receipt is not null && !AllowedReceiptContentTypes.Contains(receipt.ContentType))
         {
+            logger.LogWarning(
+                "POST /api/expenses rejected: unsupported receipt type {ContentType} — riderId={RiderId}",
+                receipt.ContentType,
+                riderId
+            );
             return Results.UnprocessableEntity(
-                new ErrorResponse(
-                    "UNSUPPORTED_RECEIPT",
-                    "Receipt must be JPEG, PNG, WEBP, or PDF and no larger than 5 MB"
-                )
+                new ErrorResponse("UNSUPPORTED_RECEIPT", AllowedReceiptFormatsMessage)
             );
         }
 
@@ -152,27 +183,60 @@ public static class ExpensesEndpoints
                 cancellationToken
             );
 
+            if (response.ReceiptError is not null)
+            {
+                logger.LogWarning(
+                    "POST /api/expenses expenseId={ExpenseId} saved without receipt for riderId={RiderId}: {ReceiptError}",
+                    response.ExpenseId,
+                    riderId,
+                    response.ReceiptError
+                );
+            }
+            else
+            {
+                logger.LogInformation(
+                    "POST /api/expenses expenseId={ExpenseId} created for riderId={RiderId}, receiptAttached={ReceiptAttached}",
+                    response.ExpenseId,
+                    riderId,
+                    response.ReceiptAttached
+                );
+            }
+
             return Results.Created($"/api/expenses/{response.ExpenseId}", response);
         }
         catch (ArgumentException ex)
         {
+            logger.LogWarning(
+                ex,
+                "POST /api/expenses domain validation failed — riderId={RiderId}",
+                riderId
+            );
             return Results.BadRequest(new ErrorResponse("VALIDATION_FAILED", ex.Message));
         }
     }
 
     private static async Task<IResult> GetExpenses(
         HttpContext context,
+        ILoggerFactory loggerFactory,
         BikeTrackingDbContext dbContext,
         string? startDate,
         string? endDate,
         CancellationToken cancellationToken
     )
     {
+        var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
         var userIdString = context.User.FindFirst("sub")?.Value;
         if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
         {
             return Results.Unauthorized();
         }
+
+        logger.LogInformation(
+            "GET /api/expenses — riderId={RiderId}, startDate={StartDate}, endDate={EndDate}",
+            riderId,
+            startDate,
+            endDate
+        );
 
         DateTime? parsedStartDate = null;
         if (!string.IsNullOrWhiteSpace(startDate))
@@ -238,6 +302,12 @@ public static class ExpensesEndpoints
             GeneratedAtUtc: DateTime.UtcNow
         );
 
+        logger.LogInformation(
+            "GET /api/expenses — riderId={RiderId} returned {Count} expenses",
+            riderId,
+            response.ExpenseCount
+        );
+
         return Results.Ok(response);
     }
 
@@ -245,15 +315,23 @@ public static class ExpensesEndpoints
         [FromRoute] long expenseId,
         [FromBody] EditExpenseRequest request,
         HttpContext context,
+        ILoggerFactory loggerFactory,
         [FromServices] EditExpenseService editExpenseService,
         CancellationToken cancellationToken
     )
     {
+        var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
         var userIdString = context.User.FindFirst("sub")?.Value;
         if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
         {
             return Results.Unauthorized();
         }
+
+        logger.LogInformation(
+            "PUT /api/expenses/{ExpenseId} — riderId={RiderId}",
+            expenseId,
+            riderId
+        );
 
         var result = await editExpenseService.ExecuteAsync(
             riderId,
@@ -264,6 +342,11 @@ public static class ExpensesEndpoints
 
         if (result.IsSuccess && result.Response is not null)
         {
+            logger.LogInformation(
+                "PUT /api/expenses/{ExpenseId} — updated for riderId={RiderId}",
+                expenseId,
+                riderId
+            );
             return Results.Ok(result.Response);
         }
 
@@ -289,20 +372,33 @@ public static class ExpensesEndpoints
     private static async Task<IResult> DeleteExpense(
         [FromRoute] long expenseId,
         HttpContext context,
+        ILoggerFactory loggerFactory,
         DeleteExpenseService deleteExpenseService,
         CancellationToken cancellationToken
     )
     {
+        var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
         var userIdString = context.User.FindFirst("sub")?.Value;
         if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
         {
             return Results.Unauthorized();
         }
 
+        logger.LogInformation(
+            "DELETE /api/expenses/{ExpenseId} — riderId={RiderId}",
+            expenseId,
+            riderId
+        );
+
         var result = await deleteExpenseService.ExecuteAsync(riderId, expenseId, cancellationToken);
 
         if (result.IsSuccess)
         {
+            logger.LogInformation(
+                "DELETE /api/expenses/{ExpenseId} — deleted for riderId={RiderId}",
+                expenseId,
+                riderId
+            );
             return Results.NoContent();
         }
 
@@ -322,16 +418,24 @@ public static class ExpensesEndpoints
     private static async Task<IResult> PutExpenseReceipt(
         [FromRoute] long expenseId,
         HttpContext context,
+        ILoggerFactory loggerFactory,
         BikeTrackingDbContext dbContext,
         IReceiptStorage receiptStorage,
         CancellationToken cancellationToken
     )
     {
+        var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
         var userIdString = context.User.FindFirst("sub")?.Value;
         if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
         {
             return Results.Unauthorized();
         }
+
+        logger.LogInformation(
+            "PUT /api/expenses/{ExpenseId}/receipt — riderId={RiderId}",
+            expenseId,
+            riderId
+        );
 
         var expense = await dbContext
             .Expenses.Where(current => current.Id == expenseId)
@@ -356,10 +460,20 @@ public static class ExpensesEndpoints
         if (!AllowedReceiptContentTypes.Contains(receipt.ContentType))
         {
             return Results.UnprocessableEntity(
-                new ErrorResponse(
-                    "UNSUPPORTED_RECEIPT",
-                    "Receipt must be JPEG, PNG, WEBP, or PDF and no larger than 5 MB"
-                )
+                new ErrorResponse("UNSUPPORTED_RECEIPT", AllowedReceiptFormatsMessage)
+            );
+        }
+
+        if (receipt.Length > MaxReceiptSizeBytes)
+        {
+            logger.LogWarning(
+                "PUT /api/expenses/{ExpenseId}/receipt rejected: file too large ({Size} bytes) — riderId={RiderId}",
+                expenseId,
+                receipt.Length,
+                riderId
+            );
+            return Results.UnprocessableEntity(
+                new ErrorResponse("UNSUPPORTED_RECEIPT", AllowedReceiptFormatsMessage)
             );
         }
 
@@ -368,32 +482,63 @@ public static class ExpensesEndpoints
             await receiptStorage.DeleteAsync(expense.ReceiptPath);
         }
 
-        await using var receiptStream = receipt.OpenReadStream();
-        expense.ReceiptPath = await receiptStorage.SaveAsync(
-            riderId,
-            expense.Id,
-            receipt.FileName,
-            receiptStream
-        );
+        try
+        {
+            await using var receiptStream = receipt.OpenReadStream();
+            expense.ReceiptPath = await receiptStorage.SaveAsync(
+                riderId,
+                expense.Id,
+                receipt.FileName,
+                receiptStream
+            );
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(
+                ex,
+                "PUT /api/expenses/{ExpenseId}/receipt storage failure for riderId={RiderId}: {Reason}",
+                expenseId,
+                riderId,
+                ex.Message
+            );
+            return Results.Problem(
+                detail: "Receipt could not be saved due to a storage error. Please try again later.",
+                statusCode: StatusCodes.Status500InternalServerError
+            );
+        }
+
         expense.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "PUT /api/expenses/{ExpenseId}/receipt — saved for riderId={RiderId}",
+            expenseId,
+            riderId
+        );
         return Results.NoContent();
     }
 
     private static async Task<IResult> DeleteExpenseReceipt(
         [FromRoute] long expenseId,
         HttpContext context,
+        ILoggerFactory loggerFactory,
         BikeTrackingDbContext dbContext,
         IReceiptStorage receiptStorage,
         CancellationToken cancellationToken
     )
     {
+        var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
         var userIdString = context.User.FindFirst("sub")?.Value;
         if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
         {
             return Results.Unauthorized();
         }
+
+        logger.LogInformation(
+            "DELETE /api/expenses/{ExpenseId}/receipt — riderId={RiderId}",
+            expenseId,
+            riderId
+        );
 
         var expense = await dbContext
             .Expenses.Where(current => current.Id == expenseId)
@@ -416,17 +561,24 @@ public static class ExpensesEndpoints
         expense.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "DELETE /api/expenses/{ExpenseId}/receipt — removed for riderId={RiderId}",
+            expenseId,
+            riderId
+        );
         return Results.NoContent();
     }
 
     private static async Task<IResult> GetExpenseReceipt(
         [FromRoute] long expenseId,
         HttpContext context,
+        ILoggerFactory loggerFactory,
         BikeTrackingDbContext dbContext,
         IReceiptStorage receiptStorage,
         CancellationToken cancellationToken
     )
     {
+        var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
         var userIdString = context.User.FindFirst("sub")?.Value;
         if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
         {

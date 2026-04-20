@@ -14,7 +14,8 @@ public sealed record RecordExpenseResponse(
     long ExpenseId,
     long RiderId,
     DateTime SavedAtUtc,
-    bool ReceiptAttached
+    bool ReceiptAttached,
+    string? ReceiptError = null
 );
 
 public sealed record ExpenseHistoryRow(

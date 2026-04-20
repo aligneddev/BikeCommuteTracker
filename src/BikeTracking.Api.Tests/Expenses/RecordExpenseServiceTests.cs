@@ -4,6 +4,7 @@ using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using BikeTracking.Api.Tests.TestSupport;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BikeTracking.Api.Tests.Expenses;
 
@@ -15,7 +16,11 @@ public sealed class RecordExpenseServiceTests
         await using var context = TestFactories.CreateDbContext();
         var user = await SeedUserAsync(context, "amount-check");
         var receiptStorage = new SpyReceiptStorage();
-        var service = new RecordExpenseService(context, receiptStorage);
+        var service = new RecordExpenseService(
+            context,
+            receiptStorage,
+            NullLogger<RecordExpenseService>.Instance
+        );
 
         var request = new RecordExpenseRequest(DateTime.Today, 0m, null);
 
@@ -30,7 +35,11 @@ public sealed class RecordExpenseServiceTests
         await using var context = TestFactories.CreateDbContext();
         var user = await SeedUserAsync(context, "notes-check");
         var receiptStorage = new SpyReceiptStorage();
-        var service = new RecordExpenseService(context, receiptStorage);
+        var service = new RecordExpenseService(
+            context,
+            receiptStorage,
+            NullLogger<RecordExpenseService>.Instance
+        );
 
         var request = new RecordExpenseRequest(DateTime.Today, 19.95m, new string('n', 501));
 
@@ -45,7 +54,11 @@ public sealed class RecordExpenseServiceTests
         await using var context = TestFactories.CreateDbContext();
         var user = await SeedUserAsync(context, "save-check");
         var receiptStorage = new SpyReceiptStorage();
-        var service = new RecordExpenseService(context, receiptStorage);
+        var service = new RecordExpenseService(
+            context,
+            receiptStorage,
+            NullLogger<RecordExpenseService>.Instance
+        );
 
         var request = new RecordExpenseRequest(DateTime.Today, 49.95m, "New tube");
 
@@ -69,7 +82,11 @@ public sealed class RecordExpenseServiceTests
         await using var context = TestFactories.CreateDbContext();
         var user = await SeedUserAsync(context, "receipt-check");
         var receiptStorage = new SpyReceiptStorage();
-        var service = new RecordExpenseService(context, receiptStorage);
+        var service = new RecordExpenseService(
+            context,
+            receiptStorage,
+            NullLogger<RecordExpenseService>.Instance
+        );
         await using var receiptStream = new MemoryStream("stub"u8.ToArray());
 
         var response = await service.ExecuteAsync(

@@ -9,7 +9,8 @@ namespace BikeTracking.Api.Application.Expenses;
 
 public sealed class RecordExpenseService(
     BikeTrackingDbContext dbContext,
-    IReceiptStorage receiptStorage
+    IReceiptStorage receiptStorage,
+    ILogger<RecordExpenseService> logger
 )
 {
     public async Task<RecordExpenseResponse> ExecuteAsync(
@@ -53,24 +54,53 @@ public sealed class RecordExpenseService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var receiptAttached = false;
+        string? receiptError = null;
         if (!string.IsNullOrWhiteSpace(receiptFileName) && receiptStream is not null)
         {
-            expense.ReceiptPath = await receiptStorage.SaveAsync(
-                riderId,
-                expense.Id,
-                receiptFileName,
-                receiptStream
-            );
-            expense.UpdatedAtUtc = DateTime.UtcNow;
-            await dbContext.SaveChangesAsync(cancellationToken);
-            receiptAttached = true;
+            try
+            {
+                expense.ReceiptPath = await receiptStorage.SaveAsync(
+                    riderId,
+                    expense.Id,
+                    receiptFileName,
+                    receiptStream
+                );
+                expense.UpdatedAtUtc = DateTime.UtcNow;
+                await dbContext.SaveChangesAsync(cancellationToken);
+                receiptAttached = true;
+            }
+            catch (IOException ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Receipt upload failed for riderId={RiderId}, expenseId={ExpenseId}: I/O or disk error — {Reason}",
+                    riderId,
+                    expense.Id,
+                    ex.Message
+                );
+                receiptError =
+                    "Receipt could not be saved due to a storage error. The expense has been recorded without the receipt.";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Receipt upload failed for riderId={RiderId}, expenseId={ExpenseId}: permission denied — {Reason}",
+                    riderId,
+                    expense.Id,
+                    ex.Message
+                );
+                receiptError =
+                    "Receipt could not be saved due to a permission error. The expense has been recorded without the receipt.";
+            }
         }
 
         return new RecordExpenseResponse(
             expense.Id,
             riderId,
             expense.UpdatedAtUtc,
-            receiptAttached
+            receiptAttached,
+            receiptError
         );
     }
 

@@ -12,6 +12,7 @@ export interface RecordExpenseResponse {
   riderId: number;
   savedAtUtc: string;
   receiptAttached: boolean;
+  receiptError?: string;
 }
 
 function getAuthHeaders(): Record<string, string> {

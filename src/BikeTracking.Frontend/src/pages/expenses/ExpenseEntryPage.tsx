@@ -3,6 +3,10 @@ import { recordExpense } from '../../services/expenses-api'
 import './ExpenseEntryPage.css'
 
 const MAX_NOTE_LENGTH = 500
+const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
+const ALLOWED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+const ALLOWED_RECEIPT_FORMATS_MESSAGE =
+  'Receipt must be JPEG, PNG, WEBP, or PDF and cannot exceed 5 MB.'
 
 export function ExpenseEntryPage() {
   const [expenseDate, setExpenseDate] = useState<string>('')
@@ -11,6 +15,8 @@ export function ExpenseEntryPage() {
   const [receipt, setReceipt] = useState<File | null>(null)
 
   const [errorMessages, setErrorMessages] = useState<string[]>([])
+  const [receiptError, setReceiptError] = useState<string>('')
+  const [receiptWarning, setReceiptWarning] = useState<string>('')
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
@@ -37,6 +43,7 @@ export function ExpenseEntryPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessages([])
+    setReceiptWarning('')
     setSuccessMessage('')
 
     if (!validate()) {
@@ -63,6 +70,9 @@ export function ExpenseEntryPage() {
         return
       }
 
+      if (result.data?.receiptError) {
+        setReceiptWarning(result.data.receiptError)
+      }
       setSuccessMessage('Expense recorded successfully')
     } catch (error) {
       setErrorMessages([
@@ -125,8 +135,35 @@ export function ExpenseEntryPage() {
             id="expense-receipt"
             name="receipt"
             type="file"
-            onChange={(event) => setReceipt(event.target.files?.[0] ?? null)}
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            aria-describedby={receiptError ? 'receipt-error' : undefined}
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null
+              if (file) {
+                if (
+                  !ALLOWED_RECEIPT_TYPES.includes(file.type) ||
+                  file.size > MAX_RECEIPT_BYTES
+                ) {
+                  setReceiptError(ALLOWED_RECEIPT_FORMATS_MESSAGE)
+                  setReceipt(null)
+                  event.target.value = ''
+                  return
+                }
+              }
+              setReceiptError('')
+              setReceipt(file)
+            }}
           />
+          {receiptError ? (
+            <p
+              id="receipt-error"
+              className="expense-entry-error"
+              role="alert"
+              aria-live="assertive"
+            >
+              {receiptError}
+            </p>
+          ) : null}
         </div>
 
         <button
@@ -143,6 +180,11 @@ export function ExpenseEntryPage() {
           {message}
         </p>
       ))}
+      {receiptWarning ? (
+        <p className="expense-entry-warning" role="status" aria-live="polite">
+          {receiptWarning}
+        </p>
+      ) : null}
       {successMessage ? (
         <p className="expense-entry-success" role="status" aria-live="polite">
           {successMessage}

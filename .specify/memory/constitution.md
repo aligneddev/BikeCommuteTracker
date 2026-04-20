@@ -86,7 +86,7 @@ Red-Green-Refactor cycle is **non-negotiable** and follows a strict, gate-contro
 5. **Run After Each Change**: Tests are run after each meaningful implementation change to track incremental progress toward green.
 6. **All Tests Pass**: Implementation is complete only when all tests pass. No merge occurs until the full test suite is green.
 7. **Consider Refactoring**: Once tests are green, evaluate the implementation for clarity, duplication, and simplicity. Refactor while keeping tests green. Refactoring is optional but explicitly encouraged at this stage.
-8. **Commit At Each TDD Gate**: Commits are mandatory at each TDD gate transition with clear gate intent in the message. Required checkpoints: (a) red baseline committed after failing tests are written and user confirms failures, (b) green implementation committed when approved tests pass, (c) refactor committed separately when refactoring is performed.
+8. **Commit At Each TDD Gate**: Git Commits are mandatory at each TDD gate transition with clear gate intent in the message. Required checkpoints: (a) red baseline committed after failing tests are written and user confirms failures, (b) green implementation committed when approved tests pass, (c) refactor committed separately when refactoring is performed.
 
 TDD commit messages must include gate and spec/task context (for example: "TDD-RED: spec-006 ride history edit conflict tests" or "TDD-GREEN: spec-006 make edit totals refresh pass").
 
@@ -285,7 +285,7 @@ All development follows Trunk-Based Development with git worktrees for parallel 
 1. Create a GitHub issue describing the work
 2. Create a short-lived feature branch from `main` (e.g., `feature/issue-42-record-ride`)
 3. Use `git worktree add` to work on the branch in a separate directory when parallel work is needed
-4. Commit frequently with meaningful messages using `semantic commits or conventional commits` format; push to remote regularly
+4. Git Commit frequently with meaningful messages using `semantic commits or conventional commits` format; push to remote regularly
 5. Open a PR referencing the GitHub issue (e.g., "Closes #42") as soon as the first commit is ready (draft PR for work-in-progress)
 6. Keep the branch up-to-date with `main` via rebase
 7. Once CI passes and review feedback is addressed, the owner completes the PR

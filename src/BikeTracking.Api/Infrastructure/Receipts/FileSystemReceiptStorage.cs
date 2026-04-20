@@ -1,18 +1,27 @@
 using BikeTracking.Api.Application.Expenses;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BikeTracking.Api.Infrastructure.Receipts;
 
 public sealed class FileSystemReceiptStorage : IReceiptStorage
 {
     private readonly string receiptsRootPath;
+    private readonly ILogger<FileSystemReceiptStorage> logger;
 
-    public FileSystemReceiptStorage(IConfiguration configuration)
-        : this(ResolveReceiptsRoot(configuration)) { }
+    public FileSystemReceiptStorage(
+        IConfiguration configuration,
+        ILogger<FileSystemReceiptStorage> logger
+    )
+        : this(ResolveReceiptsRoot(configuration))
+    {
+        this.logger = logger;
+    }
 
     public FileSystemReceiptStorage(string receiptsRootPath)
     {
         this.receiptsRootPath = Path.GetFullPath(receiptsRootPath);
+        this.logger = NullLogger<FileSystemReceiptStorage>.Instance;
     }
 
     public async Task<string> SaveAsync(
@@ -42,8 +51,35 @@ public sealed class FileSystemReceiptStorage : IReceiptStorage
             stream.Position = 0;
         }
 
-        await using var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
-        await stream.CopyToAsync(fileStream);
+        try
+        {
+            await using var fileStream = new FileStream(
+                fullPath,
+                FileMode.Create,
+                FileAccess.Write
+            );
+            await stream.CopyToAsync(fileStream);
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to write receipt file at {FullPath}: I/O or disk error — {Reason}",
+                fullPath,
+                ex.Message
+            );
+            throw;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to write receipt file at {FullPath}: permission denied — {Reason}",
+                fullPath,
+                ex.Message
+            );
+            throw;
+        }
 
         return relativePath.Replace(Path.DirectorySeparatorChar, '/');
     }

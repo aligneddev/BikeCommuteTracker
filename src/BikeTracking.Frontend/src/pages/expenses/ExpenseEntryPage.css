@@ -63,6 +63,11 @@
   margin: 0.35rem 0 0;
 }
 
+.expense-entry-warning {
+  color: #92400e;
+  margin: 0.35rem 0 0;
+}
+
 @media (width <= 640px) {
   .expense-entry-page {
     margin-top: 1rem;
