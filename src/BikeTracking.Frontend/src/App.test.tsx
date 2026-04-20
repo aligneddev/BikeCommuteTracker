@@ -26,6 +26,9 @@ vi.mock('./pages/settings/SettingsPage', () => ({
 vi.mock('./pages/import-rides/ImportRidesPage', () => ({
   ImportRidesPage: () => <div>Import Rides Page</div>,
 }))
+vi.mock('./pages/expenses/ExpenseImportPage', () => ({
+  ExpenseImportPage: () => <div>Expense Import Page</div>,
+}))
 vi.mock('./components/app-header/app-header', () => ({
   AppHeader: () => <div>App Header</div>,
 }))

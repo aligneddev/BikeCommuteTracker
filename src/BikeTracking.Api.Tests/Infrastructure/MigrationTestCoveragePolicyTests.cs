@@ -38,6 +38,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: rides service and history projection coverage validates note persistence and retrieval after schema migration.",
             ["20260417194545_AddExpensesTable"] =
                 "Added test: expense endpoint integration tests validate expense creation, editing, deletion, and receipt handling after schema migration.",
+            ["20260420155250_AddExpenseImportTables"] =
+                "Added test: expense import endpoint integration tests validate ExpenseImportJobs and ExpenseImportRows schema behavior after migration.",
         };
 
     [Fact]
