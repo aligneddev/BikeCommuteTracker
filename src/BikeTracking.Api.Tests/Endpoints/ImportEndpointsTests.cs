@@ -36,6 +36,32 @@ public sealed class ImportEndpointsTests
     }
 
     [Fact]
+    public async Task ImportProgressHub_Negotiate_Preflight_AllowsCredentialedLocalhostCors()
+    {
+        await using var host = await ImportApiHost.StartAsync();
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Options,
+            "/hubs/import-progress/negotiate?access_token=1&negotiateVersion=1"
+        );
+        request.Headers.Add("Origin", "http://localhost:5173");
+        request.Headers.Add("Access-Control-Request-Method", "POST");
+        request.Headers.Add("Access-Control-Request-Headers", "content-type,x-user-id");
+
+        var response = await host.Client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(
+            "http://localhost:5173",
+            response.Headers.GetValues("Access-Control-Allow-Origin").Single()
+        );
+        Assert.Equal(
+            "true",
+            response.Headers.GetValues("Access-Control-Allow-Credentials").Single()
+        );
+    }
+
+    [Fact]
     public async Task PostPreview_WithValidCsv_ReturnsSummaryAndRows()
     {
         await using var host = await ImportApiHost.StartAsync();
@@ -426,8 +452,19 @@ public sealed class ImportEndpointsTests
             builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
             builder.Services.AddSingleton<IImportJobProcessor, ImportJobProcessor>();
             builder.Services.AddSignalR();
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                    policy
+                        .SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials()
+                );
+            });
 
             var app = builder.Build();
+            app.UseCors();
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapImportEndpoints();
