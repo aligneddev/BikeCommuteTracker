@@ -2,6 +2,7 @@
 
 **Feature**: 016-csv-expense-import
 **Date**: 2026-04-20
+**Clarified**: 2026-04-20
 **Base path**: `/api/expense-imports`
 
 ---
@@ -108,7 +109,7 @@ public sealed record ExpenseImportSummaryResponse(
 - If `OverrideAllDuplicates = true`, `DuplicateChoices` is ignored — all valid rows are imported.
 - If `OverrideAllDuplicates = false`, any duplicate rows without a corresponding `DuplicateChoices` entry default to `keep-existing`.
 - Rows created by this endpoint are created via `RecordExpenseService`, which applies all domain validation and event sourcing rules.
-- Rows with `Resolution = replace-with-import` update the matching existing expense via `EditExpenseService`.
+- Rows with `Resolution = replace-with-import` update the matching existing expense via `EditExpenseService` with **partial-update note semantics**: the note is only overwritten when the incoming CSV row provides a non-blank note value; a blank CSV note preserves the existing note unchanged.
 - All imported expenses have `ReceiptPath = null` (receipts cannot be imported).
 
 ---
@@ -138,6 +139,28 @@ public sealed record ExpenseImportStatusResponse(
 - `401 Unauthorized` — unauthenticated rider
 - `403 Forbidden` — `jobId` belongs to a different rider
 - `404 Not Found` — `jobId` does not exist
+
+---
+
+### DELETE `/api/expense-imports/{jobId}`
+
+Deletes an import job and all associated import row records. Called client-side when the rider navigates away from the summary page. Import jobs are session-scoped and do not persist beyond the current import session.
+
+**Path parameters**:
+- `jobId` (long)
+
+**Response**: `204 No Content`
+
+**Error responses**:
+- `401 Unauthorized` — unauthenticated rider
+- `403 Forbidden` — `jobId` belongs to a different rider
+- `404 Not Found` — `jobId` does not exist (idempotent; clients may safely re-call)
+
+**Notes**:
+- Deletion is cascade: the job and all child `ExpenseImportRow` records are removed in one operation.
+- Already-imported `ExpenseEntity` records are **not** affected — only the import job metadata is removed.
+- The frontend calls this endpoint via `useEffect` cleanup and `beforeunload` event handler.
+- If the delete call fails silently (e.g., network drop), the orphaned job row has no functional impact; a safety-net cleanup of jobs older than 24 hours may be added in a future phase.
 
 ---
 
@@ -196,6 +219,17 @@ export interface ExpenseImportSummaryResponse {
   importedRows: number;
   skippedRows: number;
   failedRows: number;
+}
+
+// Matches ExpenseImportStatusResponse
+export interface ExpenseImportStatusResponse {
+  jobId: number;
+  status: 'previewing' | 'awaiting-confirmation' | 'processing' | 'completed' | 'failed';
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  duplicateCount: number;
+  summary: ExpenseImportSummaryResponse | null;
 }
 
 // Matches ExpenseImportStatusResponse

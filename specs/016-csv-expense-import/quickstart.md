@@ -65,7 +65,7 @@ src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseParser.cs
 Parsing rules to implement:
 - Case-insensitive header matching for Date, Amount, Note
 - Skip fully blank rows
-- Strip currency symbols (`$`, `£`, `€`, `¥`) and commas from Amount before decimal parse
+- Amount normalization pipeline: trim → strip leading `$£€¥` → remove commas → strip trailing ISO code (`USD`, `GBP`, `EUR`, etc.) via regex `\s*[A-Z]{3}$` → parse decimal
 - Accept common date formats: YYYY-MM-DD, MM/DD/YYYY, M/D/YYYY, DD-MMM-YYYY, MMM DD YYYY
 - Validate: Amount > 0, parseable date, Note ≤ 500 chars when present
 - Extra columns silently ignored
@@ -85,6 +85,7 @@ Key behavior:
 - Load active (non-deleted) rider expenses from DB; build lookup dictionary keyed by `(date, amount)`
 - Return matching existing expense IDs for each duplicate row
 - Deleted expenses are excluded from duplicate matching
+- **Intra-file rows are never compared against each other** — only against existing history records; two identical rows in the same CSV are both treated as independent import candidates
 
 ### Step 5: Import orchestration service
 
@@ -98,6 +99,7 @@ src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs
 `CsvExpenseImportService` responsibilities:
 - **Preview**: Parse CSV, validate rows, detect duplicates, persist `ExpenseImportJob` + `ExpenseImportRow` entities, return `ExpenseImportPreviewResponse`
 - **Confirm**: Load persisted job + rows, apply duplicate resolutions, create expenses via `RecordExpenseService` (or update via `EditExpenseService` for `replace-with-import`), update job status to `completed`, return `ExpenseImportSummaryResponse`
+- **Replace-with-Import partial note update**: when `EditExpenseService` is called for a `replace-with-import` row, pass the incoming note only when it is non-blank; omit the note field from the update payload when CSV note is blank so the existing note is preserved unchanged.
 
 ### Step 6: Minimal API endpoints
 
@@ -105,10 +107,11 @@ src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs
 src/BikeTracking.Api/Endpoints/ExpenseImportEndpoints.cs
 ```
 
-Three endpoints:
+Four endpoints:
 - `POST /api/expense-imports/preview` — multipart form-data, returns preview
 - `POST /api/expense-imports/{jobId}/confirm` — JSON body, returns summary
 - `GET /api/expense-imports/{jobId}/status` — returns current job status (for page reload recovery)
+- `DELETE /api/expense-imports/{jobId}` — deletes job + rows (called client-side on navigation away from summary)
 
 Register in `Program.cs`.
 
@@ -122,6 +125,7 @@ Typed functions:
 - `previewExpenseImport(file: File): Promise<ExpenseImportPreviewResponse>`
 - `confirmExpenseImport(jobId: number, request: ConfirmExpenseImportRequest): Promise<ExpenseImportSummaryResponse>`
 - `getExpenseImportStatus(jobId: number): Promise<ExpenseImportStatusResponse>`
+- `deleteExpenseImport(jobId: number): Promise<void>` — called on summary page unmount and beforeunload
 
 ### Step 8: Frontend import page
 
@@ -136,6 +140,8 @@ UI states:
 2. **Preview** — row counts (valid, invalid, duplicates), error table, duplicate resolution panel, confirm/cancel buttons
 3. **Processing** — brief loading indicator (synchronous, typically < 1s)
 4. **Summary** — imported/skipped/failed counts, link to expense history
+
+> **Session cleanup**: On the Summary state, wire a `useEffect` cleanup function and a `beforeunload` listener that call `deleteExpenseImport(jobId)` so the import job is removed from the database when the rider navigates away or closes the tab.
 
 Add `ExpenseDuplicateResolutionPanel` component:
 
@@ -183,9 +189,9 @@ Never write implementation before the corresponding test is red.
 | Field | Rule | Error Message |
 |-------|------|---------------|
 | Date | Required; parseable date | "Date is required" / "Date is not a valid date" |
-| Amount | Required; > 0 after symbol stripping | "Amount is required" / "Amount must be greater than zero" |
+| Amount | Required; > 0 after full normalization | "Amount is required" / "Amount must be greater than zero" |
 | Note | Optional; ≤ 500 characters | "Note must be 500 characters or fewer" |
-| Amount format | Strip `$£€¥` and commas, then parse | "Amount is not a valid number" |
+| Amount format | Strip leading `$£€¥`, commas, trailing ISO code, then parse | "Amount is not a valid number" |
 
 ---
 
@@ -195,13 +201,16 @@ Never write implementation before the corresponding test is red.
 Date,Amount,Note
 2026-01-10,25.00,Tube replacement
 2026-01-15,$12.50,Lube
+2026-01-15,$12.50,Second lube (same date+amount as above; both imported)
 2026-02-01,0,Zero amount should fail
 2026-02-05,-5.00,Negative should fail
 bad-date,10.00,Bad date row
-2026-03-01,1250.00,"Wheel rebuild, labor"
+2026-03-01,"1,250.00","Wheel rebuild, labor"
+2026-03-15,"15.00 USD",Trailing currency code stripped
+2026-03-20,,Existing note preserved when blank (only relevant in replace-with-import flow)
 ```
 
-Expected preview: 3 valid rows, 3 invalid rows (zero amount, negative amount, bad date).
+Expected preview: 5 valid rows, 3 invalid rows (zero amount, negative amount, bad date). The two identical rows (2026-01-15, $12.50) are both valid import candidates with no intra-file duplicate flagging.
 
 ---
 

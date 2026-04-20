@@ -2,6 +2,7 @@
 
 **Feature**: 016-csv-expense-import
 **Date**: 2026-04-20
+**Clarified**: 2026-04-20
 **Status**: Complete
 
 ## Overview
@@ -45,7 +46,7 @@ Represents one uploaded CSV expense import request.
 ```
 previewing → awaiting-confirmation → processing → completed
                                                ↘ failed
-```
+[any state] → deleted (triggered by client-side navigation away from summary)```
 
 - `previewing`: CSV has been received and is being parsed (transient; resolves quickly).
 - `awaiting-confirmation`: Parse and validation complete; preview data available; waiting for rider to confirm or cancel.
@@ -90,9 +91,19 @@ Duplicate detection key per incoming row.
 | Component | Source |
 |-----------|--------|
 | `Date` | `ExpenseImportRow.ExpenseDateLocal` |
-| `Amount` | `ExpenseImportRow.Amount` |
+| `Amount` | `ExpenseImportRow.Amount` (rounded to 2 decimal places) |
 
-A row is a duplicate when an existing active (non-deleted) rider expense matches both the date and the amount (to 2 decimal places).
+A row is a duplicate when an existing active (non-deleted) rider expense matches both the date and the amount (to 2 decimal places). Intra-file rows are never compared against each other — only against existing history records.
+
+## Derived model: AmountNormalizationPipeline
+
+Applied in `CsvExpenseParser.NormalizeAmount` before decimal parsing:
+
+1. Trim leading/trailing whitespace
+2. Strip leading currency symbol: `$`, `£`, `€`, `¥`
+3. Remove commas (thousands separators)
+4. Strip trailing ISO currency code via regex `\s*[A-Z]{3}$` (e.g., ` USD`, ` GBP`, ` EUR`)
+5. Parse result as `decimal`; must be > 0 or row is invalid
 
 ---
 
@@ -130,8 +141,8 @@ Returned to the client after confirm + execute completes.
 
 ## Relationship map
 
-- One rider has many `ExpenseImportJob` records.
-- One `ExpenseImportJob` has many `ExpenseImportRow` records.
+- One rider has many `ExpenseImportJob` records (session-scoped; deleted after summary is dismissed).
+- One `ExpenseImportJob` has many `ExpenseImportRow` records (cascade-deleted with the job).
 - One `ExpenseImportRow` may create one `ExpenseEntity` through the existing expense write service.
 
 ---

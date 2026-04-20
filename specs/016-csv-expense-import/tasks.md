@@ -1,7 +1,7 @@
 # Tasks: CSV Expense Import
 
 **Input**: Design documents from `/specs/016-csv-expense-import/`
-**Prerequisites**: `plan.md` (required), `spec.md` (required for user stories), `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
+**Prerequisites**: `plan.md` (required), `spec.md` (required for user stories), `research.md`, `data-model.md`, `contracts/api-contracts.md`, `quickstart.md`
 **Dependency**: Spec 015 (Bike Expense Tracking) must be fully implemented — `RecordExpenseService`, `EditExpenseService`, `ExpenseEntity`, and `Expenses` table are required.
 
 **Tests**: Tests are required for this feature. Strict TDD gate applies: write failing tests before each implementation step.
@@ -49,7 +49,7 @@
 ### Tests for User Story 1
 
 - [ ] T013 [P] [US1] Add parser header/required-column tests in `src/BikeTracking.Api.Tests/Application/ExpenseImports/CsvExpenseParserTests.cs`
-- [ ] T014 [P] [US1] Add row validation tests (date, amount, note rules; currency symbol stripping) in `src/BikeTracking.Api.Tests/Application/ExpenseImports/CsvExpenseParserTests.cs`
+- [ ] T014 [P] [US1] Add row validation tests (date, amount, note rules; full amount normalization pipeline including trailing ISO currency codes) in `src/BikeTracking.Api.Tests/Application/ExpenseImports/CsvExpenseParserTests.cs`
 - [ ] T015 [P] [US1] Add preview endpoint contract tests in `src/BikeTracking.Api.Tests/Endpoints/ExpenseImportEndpointsTests.cs`
 - [ ] T016 [P] [US1] Add frontend preview rendering unit tests in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseImportPage.test.tsx`
 - [ ] T017 [US1] Add E2E happy-path upload-preview-confirm-import test in `src/BikeTracking.Frontend/tests/e2e/expense-import.spec.ts`
@@ -61,7 +61,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T023 [US1] Implement CSV parsing and header normalization in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseParser.cs`
+- [ ] T023 [US1] Implement CSV parsing, header normalization, and `NormalizeAmount` pipeline (leading symbol strip → comma removal → trailing ISO code strip → decimal parse) in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseParser.cs`
 - [ ] T024 [US1] Implement row validation rules (date parsing, amount > 0, currency stripping, note length) in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseParser.cs`
 - [ ] T025 [US1] Implement preview orchestration (parse → validate → persist job + rows) in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs`
 - [ ] T026 [US1] Implement confirm + execute orchestration (load rows → apply resolutions → create expenses → update job) in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs`
@@ -89,8 +89,8 @@
 
 ### Tests for User Story 2
 
-- [ ] T038 [P] [US2] Add duplicate key and match tests in `src/BikeTracking.Api.Tests/Application/ExpenseImports/ExpenseDuplicateDetectorTests.cs`
-- [ ] T039 [P] [US2] Add duplicate resolution orchestration tests in `src/BikeTracking.Api.Tests/Application/ExpenseImports/CsvExpenseImportServiceTests.cs`
+- [ ] T038 [P] [US2] Add duplicate key and match tests (including: intra-file rows never compared against each other; deleted expenses not matched) in `src/BikeTracking.Api.Tests/Application/ExpenseImports/ExpenseDuplicateDetectorTests.cs`
+- [ ] T039 [P] [US2] Add duplicate resolution orchestration tests (including: `replace-with-import` + blank CSV note → existing note preserved; `replace-with-import` + non-blank note → note updated) in `src/BikeTracking.Api.Tests/Application/ExpenseImports/CsvExpenseImportServiceTests.cs`
 - [ ] T040 [P] [US2] Add confirm endpoint duplicate resolution tests in `src/BikeTracking.Api.Tests/Endpoints/ExpenseImportEndpointsTests.cs`
 - [ ] T041 [P] [US2] Add duplicate resolution panel unit tests in `src/BikeTracking.Frontend/src/components/expense-import/ExpenseDuplicateResolutionPanel.test.tsx`
 - [ ] T042 [US2] Add E2E duplicate keep-existing test in `src/BikeTracking.Frontend/tests/e2e/expense-import.spec.ts`
@@ -102,7 +102,7 @@
 - [ ] T045 [US2] Implement duplicate detection by date+amount in `src/BikeTracking.Api/Application/ExpenseImports/ExpenseDuplicateDetector.cs`
 - [ ] T046 [US2] Integrate duplicate detection into preview orchestration in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs`
 - [ ] T047 [US2] Implement `keep-existing` resolution (skip row, increment `SkippedRows`) in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs`
-- [ ] T048 [US2] Implement `replace-with-import` resolution (update existing expense via `EditExpenseService`) in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs`
+- [ ] T048 [US2] Implement `replace-with-import` resolution with **partial-note semantics** via `EditExpenseService`: update date and amount always; update note only when CSV note is non-blank; preserve existing note when CSV note is blank in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs`
 - [ ] T049 [US2] Implement `override-all-duplicates` bypass (import all valid rows including duplicates) in `src/BikeTracking.Api/Application/ExpenseImports/CsvExpenseImportService.cs`
 - [ ] T050 [US2] Return duplicate conflict details in preview endpoint response in `src/BikeTracking.Api/Endpoints/ExpenseImportEndpoints.cs`
 - [ ] T051 [US2] Build `ExpenseDuplicateResolutionPanel` component with per-row and override-all controls in `src/BikeTracking.Frontend/src/components/expense-import/ExpenseDuplicateResolutionPanel.tsx`
@@ -121,15 +121,19 @@
 ### Tests for User Story 3
 
 - [ ] T053 [P] [US3] Add unit test confirming "Import Expenses" button/link renders in `ExpenseHistoryPage` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.test.tsx` (or existing test file)
-- [ ] T054 [US3] Add E2E test: navigation from Expenses page to import page in `src/BikeTracking.Frontend/tests/e2e/expense-import.spec.ts`
-- [ ] T055 [US3] Add E2E test: unauthenticated access to `/expenses/import` redirects to login in `src/BikeTracking.Frontend/tests/e2e/expense-import.spec.ts`
+- [ ] T054 [P] [US3] Add DELETE endpoint integration tests in `src/BikeTracking.Api.Tests/Endpoints/ExpenseImportEndpointsTests.cs` — valid job → 204 and job+rows deleted; wrong rider → 403; job not found → 404 (idempotent)
+- [ ] T055 [US3] Add E2E test: navigation from Expenses page to import page in `src/BikeTracking.Frontend/tests/e2e/expense-import.spec.ts`
+- [ ] T056 [US3] Add E2E test: unauthenticated access to `/expenses/import` redirects to login in `src/BikeTracking.Frontend/tests/e2e/expense-import.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T056 [US3] Add "Import Expenses" button/link to `ExpenseHistoryPage` header area in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.tsx`
-- [ ] T057 [US3] Ensure `/expenses/import` route is covered by the existing auth guard in `src/BikeTracking.Frontend/src/App.tsx`
+- [ ] T057 [US3] Implement `DELETE /api/expense-imports/{jobId}` endpoint (ownership check, cascade delete of job + rows, 204 response) in `src/BikeTracking.Api/Endpoints/ExpenseImportEndpoints.cs`
+- [ ] T058 [US3] Add `deleteExpenseImport(jobId: number): Promise<void>` function to `src/BikeTracking.Frontend/src/services/expense-import-api.ts`
+- [ ] T059 [US3] Wire `useEffect` cleanup and `beforeunload` listener on summary state to call `deleteExpenseImport(jobId)` in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseImportPage.tsx`
+- [ ] T060 [US3] Add "Import Expenses" button/link to `ExpenseHistoryPage` header area in `src/BikeTracking.Frontend/src/pages/expenses/ExpenseHistoryPage.tsx`
+- [ ] T061 [US3] Ensure `/expenses/import` route is covered by the existing auth guard in `src/BikeTracking.Frontend/src/App.tsx`
 
-**Checkpoint**: User Story 3 is independently functional (navigation link, auth guard, receipts notice).
+**Checkpoint**: User Story 3 is independently functional (navigation link, auth guard, receipts notice, session cleanup on summary dismiss).
 
 ---
 
@@ -137,10 +141,10 @@
 
 **Purpose**: Verify all quality gates before the feature branch is considered complete.
 
-- [ ] T058 Run `dotnet test BikeTracking.slnx` and confirm all backend tests pass
-- [ ] T059 Run EF migration (`dotnet ef database update`) and confirm schema applies cleanly
-- [ ] T060 Run `npm run lint` from `src/BikeTracking.Frontend` and confirm no lint errors
-- [ ] T061 Run `npm run build` from `src/BikeTracking.Frontend` and confirm clean build
-- [ ] T062 Run `npm run test:unit` from `src/BikeTracking.Frontend` and confirm all unit tests pass
-- [ ] T063 Run `npm run test:e2e` from `src/BikeTracking.Frontend` against live Aspire stack and confirm all E2E tests pass
-- [ ] T064 Run `csharpier format .` from repo root and confirm no formatting changes required
+- [ ] T062 Run `dotnet test BikeTracking.slnx` and confirm all backend tests pass
+- [ ] T063 Run EF migration (`dotnet ef database update`) and confirm schema applies cleanly
+- [ ] T064 Run `npm run lint` from `src/BikeTracking.Frontend` and confirm no lint errors
+- [ ] T065 Run `npm run build` from `src/BikeTracking.Frontend` and confirm clean build
+- [ ] T066 Run `npm run test:unit` from `src/BikeTracking.Frontend` and confirm all unit tests pass
+- [ ] T067 Run `npm run test:e2e` from `src/BikeTracking.Frontend` against live Aspire stack and confirm all E2E tests pass
+- [ ] T068 Run `csharpier format .` from repo root and confirm no formatting changes required

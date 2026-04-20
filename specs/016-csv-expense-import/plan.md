@@ -1,6 +1,6 @@
 # Implementation Plan: CSV Expense Import
 
-**Branch**: `016-csv-expense-import` | **Date**: 2026-04-20 | **Spec**: [spec.md](./spec.md)
+**Branch**: `016-csv-expense-import` | **Date**: 2026-04-20 | **Clarified**: 2026-04-20 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `specs/016-csv-expense-import/spec.md`
 
 ---
@@ -133,21 +133,35 @@ src/BikeTracking.Api.Tests/Infrastructure/MigrationTestCoveragePolicyTests.cs
 
 Preview (phase 1) parses the CSV and detects duplicates, persisting results as `ExpenseImportJob` + `ExpenseImportRow` records in `awaiting-confirmation` status. Confirm (phase 2) reads the persisted rows, applies duplicate resolutions, and creates expenses via `RecordExpenseService`. Both phases return in < 2s for expected data volumes. No background threads, no polling, no SignalR required.
 
-### 2. Reuse Existing Expense Write Path
+### 2. Reuse Existing Expense Write Path; Partial Update for Replace-with-Import
 
-Confirmed import rows are created via the existing `RecordExpenseService` from spec 015 — the same application service used by the manual expense entry form. This ensures all domain validation, event sourcing, and outbox publishing apply equally to imported expenses. No separate import-only write path.
+Confirmed import rows are created via the existing `RecordExpenseService` from spec 015. `Replace with Import` rows use `EditExpenseService`, but with **partial-update semantics for the note field**: the note is updated only when the incoming CSV row provides a non-blank note value. A blank CSV note preserves the existing expense's note unchanged. This prevents silently erasing notes that were entered manually but omitted from the CSV export.
 
-### 3. Duplicate Key: Date + Amount (2dp)
+### 3. Duplicate Key: Date + Amount (2dp) — History-Only Scope
 
-Duplicate detection compares `(ExpenseDateLocal, Amount)` against active (non-deleted) rider expenses. Amount comparison uses 2 decimal places (`Math.Round(amount, 2)`) to avoid floating-point drift. This is a low-false-positive key for typical personal expense imports.
+Duplicate detection compares `(ExpenseDateLocal, Amount)` against active (non-deleted) rider expenses in history. Amount comparison uses 2 decimal places (`Math.Round(amount, 2)`) to avoid floating-point drift.
 
-### 4. Receipt Exclusion
+**Intra-file scope**: Rows within the same CSV are never compared against each other. Two rows in the same file with identical date+amount are both treated as distinct import candidates and are both imported (each may independently match a history record and be flagged). This avoids silently dropping legitimate repeated expenses (e.g., two $5 coffee purchases on the same day) that happen to appear in the same CSV export.
+
+### 4. Session-Scoped Import Job Cleanup
+
+Import job records (`ExpenseImportJob` + child `ExpenseImportRow` rows) are session-scoped. They are deleted when the rider navigates away from the summary page. Cleanup is triggered client-side: `ExpenseImportPage` calls `DELETE /api/expense-imports/{jobId}` in its `useEffect` cleanup function (and on `beforeunload`). The server-side handler deletes the job + rows immediately (cascade delete) regardless of status. This keeps the database lean and requires no background cleanup job.
+
+If the delete call fails (e.g., network error), the orphaned job row has no impact on the expense history — the imported expenses were already committed. A periodic admin-level cleanup can purge orphaned jobs older than 24 hours as a safety net, but is not required for MVP.
+
+### 5. Receipt Exclusion
 
 Imported expenses are created with `ReceiptPath = null`. The import UI shows a persistent informational note: "Receipts cannot be imported. To add a receipt, find the expense in your history and use the edit option." No UI surface for receipt upload exists on the import page.
 
-### 5. Currency Symbol Stripping
+### 5. Amount Normalization (Currency Symbols, Trailing Codes, Commas)
 
-Before decimal parsing, the `CsvExpenseParser` removes leading/trailing whitespace, then strips known currency prefix symbols (`$`, `£`, `€`, `¥`) and removes commas used as thousands separators. If the resulting string does not parse to a positive decimal, the row is flagged as invalid.
+Before decimal parsing, `CsvExpenseParser.NormalizeAmount` applies this pipeline in order:
+1. Trim leading/trailing whitespace
+2. Strip leading currency symbols: `$`, `£`, `€`, `¥`
+3. Remove commas used as thousands separators (e.g., `1,250.00` → `1250.00`)
+4. Strip trailing ISO currency codes via regex `\s*[A-Z]{3}$` (e.g., `25.00 USD` → `25.00`, `12.50 GBP` → `12.50`)
+
+If the resulting string does not parse to a positive decimal, the row is flagged as invalid. Per-cell size limits are not enforced separately; the 5 MB file cap and field-level validation (Note ≤ 500 chars, Amount must parse) are sufficient.
 
 ---
 
@@ -162,6 +176,9 @@ Before decimal parsing, the `CsvExpenseParser` removes leading/trailing whitespa
 - Missing Amount column → returns parse error
 - Amount with `$` prefix stripped and parsed correctly
 - Amount with comma thousands separator (1,250.00) parsed correctly
+- Amount with trailing currency code ("25.00 USD") stripped and parsed correctly
+- Amount with trailing currency code ("12.50 GBP") stripped and parsed correctly
+- Amount with unrecognized trailing text → row invalid
 - Amount of 0 → row invalid
 - Amount of -5 → row invalid
 - Note exceeding 500 chars → row invalid
@@ -176,12 +193,15 @@ Before decimal parsing, the `CsvExpenseParser` removes leading/trailing whitespa
 - Row with same amount but different date → not a duplicate
 - Row matching a deleted expense → not a duplicate (IsDeleted=true excluded)
 - Multiple rows with same date+amount → each flagged independently
+- Two CSV rows with same date+amount (intra-file) → both imported; no intra-file duplicate check performed
 
 **CsvExpenseImportServiceTests**
 - Preview with all valid rows → returns correct `ValidRows`, `InvalidRows`, `DuplicateCount`
 - Preview with mixed valid/invalid → only valid rows in import candidates
 - Confirm with `KeepExisting` resolution → duplicate row skipped, `SkippedRows` incremented
-- Confirm with `ReplaceWithImport` resolution → existing expense updated via edit service
+- Confirm with `ReplaceWithImport` + non-blank CSV note → existing expense note updated
+- Confirm with `ReplaceWithImport` + blank CSV note → existing expense note preserved unchanged
+- Confirm with `ReplaceWithImport` → date and amount always updated from CSV
 - Confirm with `OverrideAllDuplicates=true` → all valid rows imported including duplicates
 - Confirm happy path (no duplicates) → `ImportedRows` matches `ValidRows`
 
@@ -194,6 +214,8 @@ Before decimal parsing, the `CsvExpenseParser` removes leading/trailing whitespa
 - `POST /api/expense-imports/{jobId}/confirm` with valid job ID → 200 with summary
 - `POST /api/expense-imports/{jobId}/confirm` with wrong rider → 403
 - `POST /api/expense-imports/{jobId}/confirm` with expired/completed job → 409
+- `DELETE /api/expense-imports/{jobId}` with valid job ID → 204 and job+rows deleted
+- `DELETE /api/expense-imports/{jobId}` with wrong rider → 403
 
 ### Frontend Unit Tests (Vitest)
 
