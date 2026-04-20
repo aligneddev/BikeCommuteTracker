@@ -32,19 +32,29 @@ public sealed class CsvExpenseParser
             return new ParsedExpenseCsvDocument([]);
         }
 
-        var headers = SplitCsvLine(lines[0]).Select(static value => NormalizeHeader(value)).ToArray();
-        var missingRequired = RequiredColumns.Where(required => !headers.Contains(required)).ToArray();
+        var headers = SplitCsvLine(lines[0])
+            .Select(static value => NormalizeHeader(value))
+            .ToArray();
+        var missingRequired = RequiredColumns
+            .Where(required => !headers.Contains(required))
+            .ToArray();
         if (missingRequired.Length > 0)
         {
             var displayNames = missingRequired.Select(static required =>
                 required[..1] + required[1..].ToLowerInvariant()
             );
-            throw new ArgumentException($"Missing required columns: {string.Join(", ", displayNames)}");
+            throw new ArgumentException(
+                $"Missing required columns: {string.Join(", ", displayNames)}"
+            );
         }
 
         var columnIndex = headers
             .Select((header, index) => new { header, index })
-            .ToDictionary(static value => value.header, static value => value.index, StringComparer.Ordinal);
+            .ToDictionary(
+                static value => value.header,
+                static value => value.index,
+                StringComparer.Ordinal
+            );
 
         var rows = new List<ParsedExpenseCsvRow>();
         for (var lineIndex = 1; lineIndex < lines.Length; lineIndex++)
@@ -84,17 +94,35 @@ public sealed class CsvExpenseParser
         var errors = new List<ExpenseImportValidationError>();
         if (!TryParseDate(row.Date, out _))
         {
-            errors.Add(new ExpenseImportValidationError("INVALID_DATE", "Date", "Date is required and must be parseable."));
+            errors.Add(
+                new ExpenseImportValidationError(
+                    "INVALID_DATE",
+                    "Date",
+                    "Date is required and must be parseable."
+                )
+            );
         }
 
         if (!TryParseAmount(row.Amount, out var parsedAmount) || parsedAmount <= 0m)
         {
-            errors.Add(new ExpenseImportValidationError("INVALID_AMOUNT", "Amount", "Amount must be greater than zero."));
+            errors.Add(
+                new ExpenseImportValidationError(
+                    "INVALID_AMOUNT",
+                    "Amount",
+                    "Amount must be greater than zero."
+                )
+            );
         }
 
         if (row.Note is not null && row.Note.Length > 500)
         {
-            errors.Add(new ExpenseImportValidationError("NOTE_TOO_LONG", "Note", "Note must be 500 characters or fewer."));
+            errors.Add(
+                new ExpenseImportValidationError(
+                    "NOTE_TOO_LONG",
+                    "Note",
+                    "Note must be 500 characters or fewer."
+                )
+            );
         }
 
         return errors;
@@ -107,7 +135,12 @@ public sealed class CsvExpenseParser
         var normalized = amount.Trim();
         normalized = normalized.TrimStart('$', '£', '€', '¥');
         normalized = normalized.Replace(",", string.Empty, StringComparison.Ordinal);
-        normalized = Regex.Replace(normalized, "\\s*[A-Z]{3}$", string.Empty, RegexOptions.CultureInvariant);
+        normalized = Regex.Replace(
+            normalized,
+            "\\s*[A-Z]{3}$",
+            string.Empty,
+            RegexOptions.CultureInvariant
+        );
         return normalized.Trim();
     }
 

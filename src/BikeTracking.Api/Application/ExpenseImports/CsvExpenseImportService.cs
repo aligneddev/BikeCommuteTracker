@@ -57,14 +57,20 @@ public sealed class CsvExpenseImportService(
 
             if (!isValid)
             {
-                errors.AddRange(validationErrors.Select(error =>
-                    new ExpenseImportRowErrorView(row.RowNumber, error.Field, error.Message)
-                ));
+                errors.AddRange(
+                    validationErrors.Select(error => new ExpenseImportRowErrorView(
+                        row.RowNumber,
+                        error.Field,
+                        error.Message
+                    ))
+                );
             }
 
             if (isValid && parsedDate.HasValue && parsedAmount.HasValue)
             {
-                candidates.Add(new ExpenseImportCandidate(row.RowNumber, parsedDate.Value, parsedAmount.Value));
+                candidates.Add(
+                    new ExpenseImportCandidate(row.RowNumber, parsedDate.Value, parsedAmount.Value)
+                );
             }
 
             persistedRows.Add(
@@ -75,9 +81,10 @@ public sealed class CsvExpenseImportService(
                     Amount = parsedAmount,
                     Notes = string.IsNullOrWhiteSpace(row.Note) ? null : row.Note,
                     ValidationStatus = isValid ? "valid" : "invalid",
-                    ValidationErrorsJson = validationErrors.Count == 0
-                        ? null
-                        : System.Text.Json.JsonSerializer.Serialize(validationErrors),
+                    ValidationErrorsJson =
+                        validationErrors.Count == 0
+                            ? null
+                            : System.Text.Json.JsonSerializer.Serialize(validationErrors),
                     DuplicateStatus = "none",
                     DuplicateResolution = null,
                     ProcessingStatus = isValid ? "pending" : "failed",
@@ -87,7 +94,11 @@ public sealed class CsvExpenseImportService(
             );
         }
 
-        var duplicateLookup = await duplicateDetector.GetDuplicateMatchesAsync(riderId, candidates, cancellationToken);
+        var duplicateLookup = await duplicateDetector.GetDuplicateMatchesAsync(
+            riderId,
+            candidates,
+            cancellationToken
+        );
         var duplicateViews = new List<ExpenseImportDuplicateView>();
         foreach (var row in persistedRows.Where(static row => row.ValidationStatus == "valid"))
         {
@@ -97,19 +108,23 @@ public sealed class CsvExpenseImportService(
             }
 
             row.DuplicateStatus = "duplicate";
-            row.ExistingExpenseIdsJson = ExpenseDuplicateDetector.SerializeExistingExpenseIds(matches);
+            row.ExistingExpenseIdsJson = ExpenseDuplicateDetector.SerializeExistingExpenseIds(
+                matches
+            );
             duplicateViews.Add(
                 new ExpenseImportDuplicateView(
                     row.RowNumber,
                     row.ExpenseDateLocal!.Value,
                     row.Amount!.Value,
                     row.Notes,
-                    matches.Select(match => new ExistingExpenseMatchView(
-                        match.Id,
-                        DateOnly.FromDateTime(match.ExpenseDate),
-                        match.Amount,
-                        match.Notes
-                    )).ToArray()
+                    matches
+                        .Select(match => new ExistingExpenseMatchView(
+                            match.Id,
+                            DateOnly.FromDateTime(match.ExpenseDate),
+                            match.Amount,
+                            match.Notes
+                        ))
+                        .ToArray()
                 )
             );
         }
@@ -226,12 +241,21 @@ public sealed class CsvExpenseImportService(
                     continue;
                 }
 
-                if (isDuplicate && !request.OverrideAllDuplicates && resolution == "replace-with-import")
+                if (
+                    isDuplicate
+                    && !request.OverrideAllDuplicates
+                    && resolution == "replace-with-import"
+                )
                 {
-                    var existingExpenseIds = ExpenseDuplicateDetector.DeserializeExistingExpenseIds(row.ExistingExpenseIdsJson);
+                    var existingExpenseIds = ExpenseDuplicateDetector.DeserializeExistingExpenseIds(
+                        row.ExistingExpenseIdsJson
+                    );
                     var existingExpenseId = existingExpenseIds.FirstOrDefault();
                     var existingExpense = await dbContext.Expenses.SingleOrDefaultAsync(
-                        expense => expense.Id == existingExpenseId && expense.RiderId == riderId && !expense.IsDeleted,
+                        expense =>
+                            expense.Id == existingExpenseId
+                            && expense.RiderId == riderId
+                            && !expense.IsDeleted,
                         cancellationToken
                     );
 
@@ -242,7 +266,9 @@ public sealed class CsvExpenseImportService(
                         continue;
                     }
 
-                    var notes = string.IsNullOrWhiteSpace(row.Notes) ? existingExpense.Notes : row.Notes;
+                    var notes = string.IsNullOrWhiteSpace(row.Notes)
+                        ? existingExpense.Notes
+                        : row.Notes;
                     var editResult = await editExpenseService.ExecuteAsync(
                         riderId,
                         existingExpense.Id,
@@ -343,7 +369,9 @@ public sealed class CsvExpenseImportService(
                 job.TotalRows,
                 job.ImportedRows,
                 job.SkippedRows,
-                job.Rows.Count(row => row.ValidationStatus == "invalid" || row.ProcessingStatus == "failed")
+                job.Rows.Count(row =>
+                    row.ValidationStatus == "invalid" || row.ProcessingStatus == "failed"
+                )
             );
         }
 

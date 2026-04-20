@@ -16,5 +16,5 @@ public sealed class ExpenseImportJobEntity
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
 
-    public ICollection<ExpenseImportRowEntity> Rows { get; set; } = new List<ExpenseImportRowEntity>();
+    public ICollection<ExpenseImportRowEntity> Rows { get; set; } = [];
 }

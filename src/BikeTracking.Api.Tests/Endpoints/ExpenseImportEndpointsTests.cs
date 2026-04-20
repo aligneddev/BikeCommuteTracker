@@ -20,9 +20,17 @@ public sealed class ExpenseImportEndpointsTests
         await using var host = await ExpenseImportApiHost.StartAsync();
         var userId = await host.SeedUserAsync("expense-import-preview");
 
-        using var form = BuildCsvForm("expenses.csv", "Date,Amount,Note\n2026-04-01,12.50,Coffee\n2026-04-02,0,Invalid");
+        using var form = BuildCsvForm(
+            "expenses.csv",
+            "Date,Amount,Note\n2026-04-01,12.50,Coffee\n2026-04-02,0,Invalid"
+        );
 
-        var response = await PostMultipartAsAuthAsync(host.Client, "/api/expense-imports/preview", form, userId);
+        var response = await PostMultipartAsAuthAsync(
+            host.Client,
+            "/api/expense-imports/preview",
+            form,
+            userId
+        );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var payload = await response.Content.ReadFromJsonAsync<ExpenseImportPreviewResponse>();
@@ -40,9 +48,18 @@ public sealed class ExpenseImportEndpointsTests
         var userId = await host.SeedUserAsync("expense-import-confirm");
         await host.SeedExpenseAsync(userId, new DateTime(2026, 4, 1), 12.50m, "Original note");
 
-        using var form = BuildCsvForm("expenses.csv", "Date,Amount,Note\n2026-04-01,12.50,Imported note");
-        var previewResponse = await PostMultipartAsAuthAsync(host.Client, "/api/expense-imports/preview", form, userId);
-        var previewPayload = await previewResponse.Content.ReadFromJsonAsync<ExpenseImportPreviewResponse>();
+        using var form = BuildCsvForm(
+            "expenses.csv",
+            "Date,Amount,Note\n2026-04-01,12.50,Imported note"
+        );
+        var previewResponse = await PostMultipartAsAuthAsync(
+            host.Client,
+            "/api/expense-imports/preview",
+            form,
+            userId
+        );
+        var previewPayload =
+            await previewResponse.Content.ReadFromJsonAsync<ExpenseImportPreviewResponse>();
         Assert.NotNull(previewPayload);
 
         var confirmResponse = await PostJsonAsAuthAsync(
@@ -53,7 +70,8 @@ public sealed class ExpenseImportEndpointsTests
         );
 
         Assert.Equal(HttpStatusCode.OK, confirmResponse.StatusCode);
-        var summary = await confirmResponse.Content.ReadFromJsonAsync<ExpenseImportSummaryResponse>();
+        var summary =
+            await confirmResponse.Content.ReadFromJsonAsync<ExpenseImportSummaryResponse>();
         Assert.NotNull(summary);
         Assert.Equal(0, summary.ImportedRows);
         Assert.Equal(1, summary.SkippedRows);
@@ -64,11 +82,22 @@ public sealed class ExpenseImportEndpointsTests
     {
         await using var host = await ExpenseImportApiHost.StartAsync();
         var userId = await host.SeedUserAsync("expense-import-replace");
-        var expenseId = await host.SeedExpenseAsync(userId, new DateTime(2026, 4, 1), 12.50m, "Keep me");
+        var expenseId = await host.SeedExpenseAsync(
+            userId,
+            new DateTime(2026, 4, 1),
+            12.50m,
+            "Keep me"
+        );
 
         using var form = BuildCsvForm("expenses.csv", "Date,Amount,Note\n2026-04-01,12.50,");
-        var previewResponse = await PostMultipartAsAuthAsync(host.Client, "/api/expense-imports/preview", form, userId);
-        var previewPayload = await previewResponse.Content.ReadFromJsonAsync<ExpenseImportPreviewResponse>();
+        var previewResponse = await PostMultipartAsAuthAsync(
+            host.Client,
+            "/api/expense-imports/preview",
+            form,
+            userId
+        );
+        var previewPayload =
+            await previewResponse.Content.ReadFromJsonAsync<ExpenseImportPreviewResponse>();
         Assert.NotNull(previewPayload);
 
         var confirmResponse = await PostJsonAsAuthAsync(
@@ -98,11 +127,21 @@ public sealed class ExpenseImportEndpointsTests
         var userId = await host.SeedUserAsync("expense-import-delete");
 
         using var form = BuildCsvForm("expenses.csv", "Date,Amount,Note\n2026-04-01,12.50,Coffee");
-        var previewResponse = await PostMultipartAsAuthAsync(host.Client, "/api/expense-imports/preview", form, userId);
-        var previewPayload = await previewResponse.Content.ReadFromJsonAsync<ExpenseImportPreviewResponse>();
+        var previewResponse = await PostMultipartAsAuthAsync(
+            host.Client,
+            "/api/expense-imports/preview",
+            form,
+            userId
+        );
+        var previewPayload =
+            await previewResponse.Content.ReadFromJsonAsync<ExpenseImportPreviewResponse>();
         Assert.NotNull(previewPayload);
 
-        var deleteResponse = await DeleteAsAuthAsync(host.Client, $"/api/expense-imports/{previewPayload.JobId}", userId);
+        var deleteResponse = await DeleteAsAuthAsync(
+            host.Client,
+            $"/api/expense-imports/{previewPayload.JobId}",
+            userId
+        );
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
         await using var scope = host.App.Services.CreateAsyncScope();
@@ -213,7 +252,12 @@ public sealed class ExpenseImportEndpointsTests
             return user.UserId;
         }
 
-        public async Task<long> SeedExpenseAsync(long riderId, DateTime expenseDate, decimal amount, string? notes)
+        public async Task<long> SeedExpenseAsync(
+            long riderId,
+            DateTime expenseDate,
+            decimal amount,
+            string? notes
+        )
         {
             using var scope = App.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();

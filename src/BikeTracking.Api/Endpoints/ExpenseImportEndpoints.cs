@@ -9,7 +9,9 @@ public static class ExpenseImportEndpoints
 {
     private const int MaxUploadBytes = 5 * 1024 * 1024;
 
-    public static IEndpointRouteBuilder MapExpenseImportEndpoints(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapExpenseImportEndpoints(
+        this IEndpointRouteBuilder endpoints
+    )
     {
         var group = endpoints.MapGroup("/api/expense-imports");
 
@@ -104,26 +106,41 @@ public static class ExpenseImportEndpoints
         var file = form.Files.GetFile("file");
         if (file is null || file.Length == 0)
         {
-            return Results.BadRequest(new ErrorResponse("VALIDATION_FAILED", "A CSV file is required."));
+            return Results.BadRequest(
+                new ErrorResponse("VALIDATION_FAILED", "A CSV file is required.")
+            );
         }
 
         if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
-            return Results.BadRequest(new ErrorResponse("VALIDATION_FAILED", "Please upload a .csv file."));
+            return Results.BadRequest(
+                new ErrorResponse("VALIDATION_FAILED", "Please upload a .csv file.")
+            );
         }
 
         if (file.Length > MaxUploadBytes)
         {
-            return Results.BadRequest(new ErrorResponse("VALIDATION_FAILED", "CSV file must be 5 MB or smaller."));
+            return Results.BadRequest(
+                new ErrorResponse("VALIDATION_FAILED", "CSV file must be 5 MB or smaller.")
+            );
         }
 
         using var stream = file.OpenReadStream();
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(
+            stream,
+            Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true
+        );
         var csvText = await reader.ReadToEndAsync(cancellationToken);
 
         try
         {
-            var response = await importService.PreviewAsync(riderId, file.FileName, csvText, cancellationToken);
+            var response = await importService.PreviewAsync(
+                riderId,
+                file.FileName,
+                csvText,
+                cancellationToken
+            );
             return Results.Ok(response);
         }
         catch (ArgumentException exception)
@@ -145,7 +162,9 @@ public static class ExpenseImportEndpoints
             return Results.Unauthorized();
         }
 
-        return ToResult(await importService.ConfirmAsync(riderId, jobId, request, cancellationToken));
+        return ToResult(
+            await importService.ConfirmAsync(riderId, jobId, request, cancellationToken)
+        );
     }
 
     private static async Task<IResult> GetStatusCore(
@@ -194,13 +213,19 @@ public static class ExpenseImportEndpoints
     {
         return error.StatusCode switch
         {
-            StatusCodes.Status400BadRequest => Results.BadRequest(new ErrorResponse(error.Code, error.Message)),
+            StatusCodes.Status400BadRequest => Results.BadRequest(
+                new ErrorResponse(error.Code, error.Message)
+            ),
             StatusCodes.Status403Forbidden => Results.Json(
                 new ErrorResponse(error.Code, error.Message),
                 statusCode: StatusCodes.Status403Forbidden
             ),
-            StatusCodes.Status404NotFound => Results.NotFound(new ErrorResponse(error.Code, error.Message)),
-            StatusCodes.Status409Conflict => Results.Conflict(new ErrorResponse(error.Code, error.Message)),
+            StatusCodes.Status404NotFound => Results.NotFound(
+                new ErrorResponse(error.Code, error.Message)
+            ),
+            StatusCodes.Status409Conflict => Results.Conflict(
+                new ErrorResponse(error.Code, error.Message)
+            ),
             _ => Results.BadRequest(new ErrorResponse(error.Code, error.Message)),
         };
     }
