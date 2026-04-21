@@ -204,6 +204,8 @@ public sealed class OpenMeteoWeatherLookupService(
             }
             catch (DbUpdateException ex)
             {
+                dbContext.Entry(entry).State = EntityState.Detached;
+
                 // Race condition: another request already cached this entry. Query and return it.
                 logger.LogDebug(
                     ex,
@@ -264,9 +266,11 @@ public sealed class OpenMeteoWeatherLookupService(
         CancellationToken cancellationToken
     )
     {
+        WeatherLookupEntity? failureEntry = null;
+
         try
         {
-            var failureEntry = new WeatherLookupEntity
+            failureEntry = new WeatherLookupEntity
             {
                 LookupHourUtc = lookupHourUtc,
                 LatitudeRounded = latRounded,
@@ -281,6 +285,11 @@ public sealed class OpenMeteoWeatherLookupService(
         }
         catch (Exception ex)
         {
+            if (failureEntry is not null)
+            {
+                dbContext.Entry(failureEntry).State = EntityState.Detached;
+            }
+
             logger.LogDebug(ex, "Failed to cache error entry for weather lookup");
         }
     }

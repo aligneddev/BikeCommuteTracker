@@ -125,6 +125,7 @@ builder.Services.AddCors(options =>
             .SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
             .AllowAnyHeader()
             .AllowAnyMethod()
+            .AllowCredentials()
     );
 });
 
