@@ -113,6 +113,8 @@ Add `src/BikeTracking.Domain.FSharp/AdvancedDashboardCalculations.fs`:
 - `calculateMileageRateSavings : RideSnapshot list -> decimal option`
 - `buildSuggestions : RideHistory -> SuggestionResult list`
 
+> **Implementation note**: The F# helpers in `AdvancedDashboardCalculations.fs` were created and cover the pure calculation logic. In the actual implementation, `GetAdvancedDashboardService` reimplements equivalent logic inline in C# for directness and to avoid an F#-interop layer in the hot path. The F# module remains available for future extraction or as a pure-function reference implementation. No behavioural difference exists between the two; all tests pass through the C# service layer.
+
 ### 3c. Implement service
 
 Create `src/BikeTracking.Api/Application/Dashboard/GetAdvancedDashboardService.cs`:

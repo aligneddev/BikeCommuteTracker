@@ -1,14 +1,22 @@
+/** Savings metrics for a single calendar window (weekly, monthly, yearly, or all-time). */
 export interface AdvancedSavingsWindow {
+  /** Window identifier matching the backend period key. */
   period: 'weekly' | 'monthly' | 'yearly' | 'allTime'
   rideCount: number
   totalMiles: number
+  /** Total gallons saved vs driving. Null when no rides have a valid MPG snapshot. */
   gallonsSaved: number | null
+  /** Fuel cost avoided in USD. Null when gas price data is unavailable. */
   fuelCostAvoided: number | null
+  /** True when any ride in this window used a fallback gas-price lookup. */
   fuelCostEstimated: boolean
+  /** IRS mileage-rate savings in USD. Null when no rides have a mileage-rate snapshot. */
   mileageRateSavings: number | null
+  /** Sum of fuelCostAvoided and mileageRateSavings. Null when both are null. */
   combinedSavings: number | null
 }
 
+/** Four calendar time-window savings breakdown returned by the advanced dashboard endpoint. */
 export interface AdvancedSavingsWindows {
   weekly: AdvancedSavingsWindow
   monthly: AdvancedSavingsWindow
@@ -16,18 +24,25 @@ export interface AdvancedSavingsWindows {
   allTime: AdvancedSavingsWindow
 }
 
+/**
+ * A deterministic rule-based suggestion card. Three suggestions are always included in
+ * the response; only those with isEnabled = true should be displayed to the user.
+ */
 export interface AdvancedDashboardSuggestion {
+  /** Stable key: "consistency" | "milestone" | "comeback". */
   suggestionKey: 'consistency' | 'milestone' | 'comeback'
   title: string
   description: string
   isEnabled: boolean
 }
 
+/** Reminder flags indicating which user settings are missing and blocking savings calculations. */
 export interface AdvancedDashboardReminders {
   mpgReminderRequired: boolean
   mileageRateReminderRequired: boolean
 }
 
+/** Full response shape from GET /api/dashboard/advanced. */
 export interface AdvancedDashboardResponse {
   savingsWindows: AdvancedSavingsWindows
   suggestions: AdvancedDashboardSuggestion[]

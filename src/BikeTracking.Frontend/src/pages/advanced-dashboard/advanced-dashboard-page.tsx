@@ -8,6 +8,14 @@ import { SavingsWindowsTable } from './SavingsWindowsTable'
 import { AdvancedSuggestionsPanel } from './AdvancedSuggestionsPanel'
 import './advanced-dashboard-page.css'
 
+/**
+ * Advanced Statistics Dashboard page.
+ *
+ * Fetches the user's advanced savings data on mount and renders:
+ * - Reminder cards when MPG or mileage-rate settings are missing
+ * - A 4-row savings breakdown table (weekly / monthly / yearly / all-time)
+ * - Personalised suggestion cards (consistency, milestone, comeback)
+ */
 export function AdvancedDashboardPage() {
   const [data, setData] = useState<AdvancedDashboardResponse | null>(null)
   const [loading, setLoading] = useState(true)

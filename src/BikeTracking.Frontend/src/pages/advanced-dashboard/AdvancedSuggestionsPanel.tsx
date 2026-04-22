@@ -4,6 +4,10 @@ interface AdvancedSuggestionsPanelProps {
   suggestions: AdvancedDashboardSuggestion[]
 }
 
+/**
+ * Renders suggestion cards for each enabled suggestion.
+ * Returns null when all suggestions are disabled (nothing to show).
+ */
 export function AdvancedSuggestionsPanel({ suggestions }: AdvancedSuggestionsPanelProps) {
   const enabled = suggestions.filter((s) => s.isEnabled)
 

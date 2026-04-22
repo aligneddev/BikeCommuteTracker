@@ -7,6 +7,7 @@ interface SavingsWindowsTableProps {
   allTime: AdvancedSavingsWindow
 }
 
+/** Formats a dollar amount as USD currency, or "—" when null. */
 function formatCurrency(value: number | null): string {
   if (value === null) return '—'
   return new Intl.NumberFormat('en-US', {
@@ -16,11 +17,13 @@ function formatCurrency(value: number | null): string {
   }).format(value)
 }
 
+/** Formats a gallon value to 2 decimal places, or "—" when null. */
 function formatGallons(value: number | null): string {
   if (value === null) return '—'
   return `${value.toFixed(2)} gal`
 }
 
+/** Formats a mileage value to 1 decimal place. */
 function formatMiles(value: number): string {
   return `${value.toFixed(1)} mi`
 }
@@ -61,6 +64,11 @@ function WindowRow({ window: w }: WindowRowProps) {
   )
 }
 
+/**
+ * Renders a 4-row table showing savings broken down by weekly, monthly, yearly,
+ * and all-time calendar windows. Shows an "Est." badge on the fuel-cost cell
+ * when the value was calculated using a fallback gas-price lookup.
+ */
 export function SavingsWindowsTable({
   weekly,
   monthly,

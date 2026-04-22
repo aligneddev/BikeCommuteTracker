@@ -4,8 +4,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Application.Dashboard;
 
+/// <summary>
+/// Returns advanced statistics for the authenticated user including savings broken down
+/// by weekly, monthly, yearly, and all-time calendar windows, personalised suggestions,
+/// and reminder flags when required user settings are missing.
+/// </summary>
 public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
 {
+    /// <summary>
+    /// Loads all rides, user settings, and gas-price lookups for <paramref name="riderId"/>,
+    /// then computes savings windows, rule-based suggestions, and reminder flags.
+    /// </summary>
+    /// <param name="riderId">The internal user ID of the authenticated rider.</param>
+    /// <param name="cancellationToken">Token to cancel the async operation.</param>
+    /// <returns>A fully populated <see cref="AdvancedDashboardResponse"/>.</returns>
     public async Task<AdvancedDashboardResponse> GetAsync(
         long riderId,
         CancellationToken cancellationToken = default
@@ -28,7 +40,11 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
 
         var nowLocal = DateTime.Now;
 
-        // Calendar time-window boundaries
+        // Calendar-based windows (not rolling) for consistency with the main dashboard.
+        // Using calendar periods means "this week" always starts on Monday, "this month"
+        // on the 1st, and "this year" on Jan 1 — matching how users think about time.
+        // Rolling windows (e.g. last 7 days) were rejected to avoid diverging from the
+        // main dashboard's monthly/yearly totals. See research.md Decision 1.
         var weekStart = nowLocal.Date.AddDays(-(((int)nowLocal.DayOfWeek - 1 + 7) % 7));
         var weekEnd = weekStart.AddDays(7);
         var monthStart = new DateTime(nowLocal.Year, nowLocal.Month, 1);
@@ -69,6 +85,13 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
         );
     }
 
+    /// <summary>
+    /// Aggregates savings metrics for a set of rides within a named time window.
+    /// Uses per-ride snapshots (MPG, mileage rate) for historical accuracy — if a user
+    /// changes their settings, past savings are not retroactively altered (Decision 2/4).
+    /// When <c>GasPricePerGallon</c> is null on a ride, the most recent gas-price lookup
+    /// on or before the ride date is used as a fallback and the estimated flag is set (Decision 3).
+    /// </summary>
     private static AdvancedSavingsWindow BuildWindow(
         string period,
         IReadOnlyList<Infrastructure.Persistence.Entities.RideEntity> windowRides,
@@ -143,6 +166,12 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
         );
     }
 
+    /// <summary>
+    /// Produces the three deterministic rule-based suggestions: consistency (rode this week),
+    /// milestone (combined savings crossed a threshold), and comeback (inactive &gt; 7 days).
+    /// All three are always returned; <c>IsEnabled</c> reflects whether the condition is met.
+    /// See research.md Decision 5 for threshold values and trigger conditions.
+    /// </summary>
     private static IReadOnlyList<AdvancedDashboardSuggestion> BuildSuggestions(
         IReadOnlyList<Infrastructure.Persistence.Entities.RideEntity> allRides,
         IReadOnlyList<Infrastructure.Persistence.Entities.RideEntity> weeklyRides,
@@ -199,6 +228,7 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
         ];
     }
 
+    /// <summary>Rounds a decimal value to 2 places using standard rounding (0.5 rounds up).</summary>
     private static decimal RoundTo2(decimal value) =>
         decimal.Round(value, 2, MidpointRounding.AwayFromZero);
 }
