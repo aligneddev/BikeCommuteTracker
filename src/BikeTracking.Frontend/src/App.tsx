@@ -12,6 +12,7 @@ import { ImportRidesPage } from './pages/import-rides/ImportRidesPage'
 import { ExpenseEntryPage } from './pages/expenses/ExpenseEntryPage'
 import { ExpenseImportPage } from './pages/expenses/ExpenseImportPage'
 import { ExpenseHistoryPage } from './pages/expenses/ExpenseHistoryPage'
+import { AdvancedDashboardPage } from './pages/advanced-dashboard/advanced-dashboard-page'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/advanced" element={<AdvancedDashboardPage />} />
             <Route path="/miles" element={<MilesShellPage />} />
             <Route path="/rides/history" element={<HistoryPage />} />
             <Route path="/rides/record" element={<RecordRidePage />} />

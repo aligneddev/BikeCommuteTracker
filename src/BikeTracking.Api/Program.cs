@@ -41,6 +41,7 @@ builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<IdentifyService>();
 builder.Services.AddScoped<UserSettingsService>();
 builder.Services.AddScoped<GetDashboardService>();
+builder.Services.AddScoped<GetAdvancedDashboardService>();
 
 builder
     .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)

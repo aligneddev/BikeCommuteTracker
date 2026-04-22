@@ -217,6 +217,12 @@ export function DashboardPage() {
         <ExpenseSummaryCard expenseSummary={dashboard.totals.expenseSummary} />
       </section>
 
+      <div className="dashboard-advanced-link-row">
+        <Link to="/dashboard/advanced" className="dashboard-advanced-link">
+          View Advanced Stats →
+        </Link>
+      </div>
+
       <section className="dashboard-averages-grid" aria-label="Dashboard averages">
         <article className="dashboard-average-card">
           <p className="dashboard-average-label">Average temperature</p>

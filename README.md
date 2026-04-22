@@ -165,6 +165,15 @@ For local-first deployment to end-user machines, the default persistence model i
 - Before schema upgrades, create a safety backup copy of the SQLite file.
 - Use SQL Server LocalDB or SQL Server Express only when local multi-user requirements exceed the single-user SQLite profile.
 
+## Advanced Statistics Dashboard
+
+Navigate to `/dashboard/advanced` (or click **Advanced Stats** in the top nav, or **View Advanced Stats →** on the main dashboard) for a deep-dive into your savings.
+
+- Gallons of gas saved, fuel cost avoided, and IRS mileage-rate savings — broken down by **week**, **month**, **year**, and **all time**.
+- Fuel-cost values are marked **Est.** when a fallback gas-price lookup was used because no price was recorded at ride time.
+- Three personalised, rule-based suggestion cards: **Consistency** (rode this week), **Milestone** (combined savings crossed a threshold), and **Comeback** (inactive for >7 days).
+- Reminder cards prompt you to set your average car MPG and mileage rate in Settings when those values are missing.
+
 ## Bike Expense Tracking
 
 The expense tracking slice adds a full local-first workflow for bike ownership costs.
