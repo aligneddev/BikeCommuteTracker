@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Expenses\ExpenseEvents.fs" />
     <Compile Include="Users\UserEvents.fs" />
+    <Compile Include="AdvancedDashboardCalculations.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
 

@@ -238,3 +238,26 @@
     flex-direction: column;
   }
 }
+
+.dashboard-advanced-link-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.75rem 0 0;
+}
+
+.dashboard-advanced-link {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid #bfd2ea;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+  color: #1e3a5f;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.dashboard-advanced-link:hover {
+  background: #e8f1fc;
+}

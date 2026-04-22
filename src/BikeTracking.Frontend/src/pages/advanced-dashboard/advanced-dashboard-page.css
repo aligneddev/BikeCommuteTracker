@@ -1,0 +1,213 @@
+.advanced-dashboard-page {
+  --adv-ink: #122033;
+  --adv-muted: #51627a;
+  --adv-panel: #fff;
+  --adv-border: #d7e3f1;
+  --adv-shadow: 0 18px 40px rgb(18 32 51 / 9%);
+  --adv-reminder-bg: #fffbeb;
+  --adv-reminder-border: #f59e0b;
+
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--adv-ink);
+}
+
+.advanced-dashboard-hero {
+  display: grid;
+  grid-template-columns: 1.6fr minmax(14rem, 0.8fr);
+  gap: 1.25rem;
+  padding: 1.4rem;
+  border: 1px solid #bfd2ea;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(circle at top left, rgb(16 185 129 / 12%), transparent 40%),
+    linear-gradient(135deg, #f4fbf9 0%, #edfaf5 100%);
+  box-shadow: var(--adv-shadow);
+  margin-bottom: 1.5rem;
+}
+
+.advanced-dashboard-kicker {
+  margin: 0 0 0.35rem;
+  color: #065f46;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.advanced-dashboard-hero h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.5vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.advanced-dashboard-intro {
+  max-width: 44rem;
+  margin: 0.75rem 0 0;
+  color: var(--adv-muted);
+  font-size: 1rem;
+}
+
+.advanced-dashboard-hero-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.advanced-dashboard-back-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--adv-border);
+  border-radius: 0.5rem;
+  background: var(--adv-panel);
+  color: var(--adv-ink);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.advanced-dashboard-back-link:hover {
+  background: #f0f6ff;
+}
+
+.advanced-dashboard-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: #fee2e2;
+  color: #991b1b;
+  margin-bottom: 1rem;
+}
+
+.advanced-dashboard-reminder-card {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--adv-reminder-border);
+  border-radius: 0.75rem;
+  background: var(--adv-reminder-bg);
+  margin-bottom: 1rem;
+}
+
+.advanced-dashboard-reminder-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #92400e;
+}
+
+.advanced-dashboard-reminder-card p {
+  margin: 0;
+  color: #78350f;
+  font-size: 0.9rem;
+}
+
+.advanced-dashboard-section-heading {
+  font-size: 1.25rem;
+  margin: 1.5rem 0 0.75rem;
+  color: var(--adv-ink);
+}
+
+.advanced-dashboard-loading {
+  color: var(--adv-muted);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+/* Savings Windows Table */
+.savings-windows-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--adv-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--adv-shadow);
+  background: var(--adv-panel);
+}
+
+.savings-windows-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.savings-windows-cell {
+  padding: 0.65rem 1rem;
+  text-align: right;
+  border-bottom: 1px solid var(--adv-border);
+}
+
+.savings-windows-cell:first-child {
+  text-align: left;
+}
+
+.savings-windows-header {
+  background: #f8fafc;
+  color: var(--adv-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.savings-windows-period {
+  font-weight: 600;
+  color: var(--adv-ink);
+}
+
+.savings-windows-combined {
+  font-weight: 700;
+  color: #065f46;
+}
+
+.savings-windows-row:last-child .savings-windows-cell {
+  border-bottom: none;
+}
+
+.savings-windows-estimated-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* Suggestions Panel */
+.advanced-suggestions-panel {
+  margin-top: 2rem;
+}
+
+.advanced-suggestions-heading {
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+  color: var(--adv-ink);
+}
+
+.advanced-suggestions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.advanced-suggestion-card {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--adv-border);
+  border-radius: 0.75rem;
+  background: var(--adv-panel);
+  box-shadow: var(--adv-shadow);
+}
+
+.advanced-suggestion-title {
+  margin: 0 0 0.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--adv-ink);
+}
+
+.advanced-suggestion-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--adv-muted);
+}

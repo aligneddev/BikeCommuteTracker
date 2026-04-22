@@ -1,0 +1,207 @@
+{
+  "version": "1.0",
+  "featureId": "018-advanced-dashboard",
+  "description": "Task parallelization configuration for Advanced Statistics Dashboard",
+  "createdAt": "2026-04-22",
+  "taskGroups": [
+    {
+      "phase": 1,
+      "name": "Phase1_Setup",
+      "description": "Backend contracts, service scaffold, endpoint routing",
+      "parallel": false,
+      "tasks": [
+        "T001: Create AdvancedDashboardContracts.cs with all response records",
+        "T002: Create GetAdvancedDashboardService.cs scaffold with empty GetAsync method",
+        "T003: Register GetAdvancedDashboardService in Program.cs DI container",
+        "T004: Add GET /api/dashboard/advanced route in DashboardEndpoints.cs",
+        "T005: Create advanced-dashboard-api.ts with typed getAdvancedDashboard function"
+      ],
+      "notes": "Must complete sequentially—each task builds on previous; setup foundation for all downstream work"
+    },
+    {
+      "phase": 2,
+      "name": "Phase2_Foundational",
+      "description": "F# pure calculation helpers and their failing tests",
+      "parallel": false,
+      "tasks": [
+        "T006: Create AdvancedDashboardCalculations.fs with pure functions (calculateGallonsSaved, calculateFuelCostAvoided, calculateMileageRateSavings)",
+        "T007: Create GetAdvancedDashboardServiceTests.cs with failing RED tests for pure helpers"
+      ],
+      "notes": "Sequential: T007 depends on T006 structure being defined (even if empty); both must pass red-green-refactor cycle"
+    },
+    {
+      "phase": 3,
+      "name": "Phase3_Tests",
+      "description": "All backend/frontend unit tests for US1 (aggregate fuel and cost savings)",
+      "parallel": true,
+      "tasks": [
+        "T008: Backend test - GetAdvancedDashboardService_WithRidesInMultipleYears_ReturnsCorrectAllTimeGallonsSaved",
+        "T009: Backend test - GetAdvancedDashboardService_WithRideMissingGasPrice_FlagsFuelCostEstimatedTrue",
+        "T010: Backend test - GetAdvancedDashboardService_UserWithNoMpgSetting_ReturnsMpgReminderRequired",
+        "T011: Backend test - GetAdvancedDashboardService_UserWithNoMileageRateSetting_ReturnsMileageRateReminderRequired",
+        "T012: Frontend test - AdvancedDashboardPage_OnLoad_DisplaysAllTimeSavingsCorrectly",
+        "T013: Frontend test - AdvancedDashboardPage_MpgReminderRequired_ShowsReminderCard",
+        "T014: Frontend test - AdvancedDashboardPage_MileageRateReminderRequired_ShowsReminderCard"
+      ],
+      "notes": "All 7 tests are independent; no test depends on output of another test. Run all in parallel, then verify all RED before proceeding to implementation."
+    },
+    {
+      "phase": 3,
+      "name": "Phase3_Implementation",
+      "description": "US1 implementation: service logic and frontend components",
+      "parallel": false,
+      "tasks": [
+        "T015: Implement GetAdvancedDashboardService.GetAsync() core logic (load rides, compute all-time savings)",
+        "T016: Create advanced-dashboard-page.tsx component (call API, render savings, show reminders)",
+        "T017: Create advanced-dashboard-page.css with card styles",
+        "T018: Create SavingsWindowsTable.tsx component scaffold (stub for multi-window table)",
+        "T019: Add route in App.tsx inside ProtectedRoute"
+      ],
+      "notes": "Depends on Phase3_Tests completing and passing RED. T015 must complete before frontend tests validate backend API contract."
+    },
+    {
+      "phase": 4,
+      "name": "Phase4_Tests",
+      "description": "Backend/frontend tests for US2 (savings rate metrics per time window)",
+      "parallel": true,
+      "tasks": [
+        "T020: Backend test - GetAdvancedDashboardService_WithRidesInMultipleWindows_ReturnsCorrectGallonsSavedPerWindow",
+        "T021: Backend test - GetAdvancedDashboardService_PartialMonthCalculation_DoesNotDivideByZero",
+        "T022: Backend test - GetAdvancedDashboardService_WeeklyMonthlyYearlyAllTime_CalculationsConsistent",
+        "T023: Frontend test - SavingsWindowsTable_DisplaysAllFourWindows_Correctly",
+        "T024: Frontend test - SavingsWindowsTable_WithNullValues_DisplaysDashes"
+      ],
+      "notes": "All 5 tests are independent. Run in parallel after Phase3_Implementation complete."
+    },
+    {
+      "phase": 4,
+      "name": "Phase4_Implementation",
+      "description": "US2 implementation: multi-window savings table",
+      "parallel": false,
+      "tasks": [
+        "T025: Implement T015 enhancement - compute weekly/monthly/yearly windows in GetAdvancedDashboardService",
+        "T026: Create SavingsWindowsTable.tsx component with 4-row table (weekly/monthly/yearly/all-time)",
+        "T027: Create SavingsWindowsTable.css with table row styles"
+      ],
+      "notes": "Depends on Phase4_Tests RED and Phase3_Implementation complete."
+    },
+    {
+      "phase": 5,
+      "name": "Phase5_Tests",
+      "description": "Backend/frontend tests for US3 (rule-based suggestions)",
+      "parallel": true,
+      "tasks": [
+        "T029: Backend test - GetAdvancedDashboardService_ConsistencySuggestion_EnabledWhen1RideThisWeek",
+        "T030: Backend test - GetAdvancedDashboardService_ComebackSuggestion_EnabledWhenMoreThan7DaysSinceLast",
+        "T031: Backend test - GetAdvancedDashboardService_MilestoneSuggestion_EnabledWhenCrossesThreshold",
+        "T032: Frontend test - AdvancedSuggestionsPanel_DisplaysEnabledSuggestions_Only",
+        "T033: Frontend test - AdvancedSuggestionsPanel_HidesDisabledSuggestions"
+      ],
+      "notes": "All 5 tests are independent. Run in parallel after Phase4 complete."
+    },
+    {
+      "phase": 5,
+      "name": "Phase5_Implementation",
+      "description": "US3 implementation: suggestion generation and display",
+      "parallel": false,
+      "tasks": [
+        "T034: Implement T015 enhancement - compute consistency/milestone/comeback suggestions in GetAdvancedDashboardService",
+        "T035: Create F# helper for suggestion logic (threshold checks, day calculation)",
+        "T036: Create AdvancedSuggestionsPanel.tsx component (render enabled suggestions as cards)",
+        "T037: Create AdvancedSuggestionsPanel.test.tsx",
+        "T038: Update advanced-dashboard-page.tsx to render AdvancedSuggestionsPanel"
+      ],
+      "notes": "Depends on Phase5_Tests RED and Phase4 complete."
+    },
+    {
+      "phase": 6,
+      "name": "Phase6_Tests",
+      "description": "Frontend/E2E tests for US4 (navigation to advanced dashboard)",
+      "parallel": true,
+      "tasks": [
+        "T039: Frontend test - DashboardPage_AdvancedStatsLink_NavigatesToAdvancedDashboard",
+        "T040: Frontend test - AppHeader_AdvancedStatsNavLink_NavigatesToAdvancedDashboard",
+        "T041: E2E test - Navigate from main dashboard to advanced dashboard via card link",
+        "T042: E2E test - Navigate via top nav Advanced Stats link"
+      ],
+      "notes": "All 4 tests are independent. Run in parallel after Phase5 complete."
+    },
+    {
+      "phase": 6,
+      "name": "Phase6_Implementation",
+      "description": "US4 implementation: navigation entry points",
+      "parallel": true,
+      "tasks": [
+        "T043: Update app-header.tsx - add NavLink to /dashboard/advanced labeled 'Advanced Stats'",
+        "T044: Update dashboard-page.tsx - add card link 'View Advanced Stats' below savings section",
+        "T045: Verify navigation session preserved (auth token persists, no unexpected reloads)"
+      ],
+      "notes": "T043 and T044 are independent and can run in parallel. T045 is a verification step (may be manual)."
+    },
+    {
+      "phase": 7,
+      "name": "Phase7_QualityGates",
+      "description": "Full suite validation, formatting, documentation",
+      "parallel": false,
+      "tasks": [
+        "T046: Run full backend test suite: dotnet test BikeTracking.slnx",
+        "T047: Run full frontend test suite: npm run test:unit && npm run test:e2e",
+        "T048: Verify backend lint/build: dotnet build && csharpier format .",
+        "T049: Verify frontend lint/build: npm run lint && npm run build"
+      ],
+      "notes": "Quality gates must run sequentially to catch regressions systematically."
+    },
+    {
+      "phase": 7,
+      "name": "Phase7_Documentation",
+      "description": "Code comments, documentation, README updates",
+      "parallel": true,
+      "tasks": [
+        "T051: Add XML documentation comments to public methods (GetAdvancedDashboardService, AdvancedDashboardContracts, F# helpers)",
+        "T052: Add TypeScript JSDoc comments (advanced-dashboard-api.ts, all components)",
+        "T053: Add inline comments explaining time-window bucketing logic"
+      ],
+      "notes": "All 3 documentation tasks are independent and can run in parallel."
+    },
+    {
+      "phase": 7,
+      "name": "Phase7_Finalization",
+      "description": "Git, PR, and review workflow",
+      "parallel": false,
+      "tasks": [
+        "T057: Rebase branch on main: git rebase origin/main",
+        "T058: Create Pull Request with reference to GitHub issue (spec 018)",
+        "T059: Request Copilot code review on PR",
+        "T060: Address review feedback; ensure all checks pass before merge"
+      ],
+      "notes": "Git workflow steps must run sequentially. Each step depends on previous completion."
+    }
+  ],
+  "executionSequence": [
+    "Phase 1 (Setup) → Sequential",
+    "Phase 2 (Foundational) → Sequential",
+    "Phase 3 (US1) → Tests parallel, then Implementation sequential",
+    "Phase 4 (US2) → Tests parallel, then Implementation sequential",
+    "Phase 5 (US3) → Tests parallel, then Implementation sequential",
+    "Phase 6 (US4) → Tests parallel, then Implementation parallel",
+    "Phase 7 (Polish) → Quality gates sequential, Docs parallel, Git sequential"
+  ],
+  "parallelizationNotes": {
+    "summary": "18 tasks marked [P] for parallelization out of 60 total tasks (~30% of work)",
+    "criticalPath": [
+      "Phase 1-2: Setup + Foundational (must complete first)",
+      "Phase 3: US1 core (blocks all other features)",
+      "Phase 4-5: US2 + US3 (can run in parallel after US1)",
+      "Phase 6: US4 (navigation can run in parallel with US2+US3)",
+      "Phase 7: Polish (quality gates block finalization)"
+    ],
+    "recommendations": [
+      "Day 1: Execute Phase 1-2 (setup foundation)",
+      "Day 2: Execute Phase 3 (US1 core MVP)",
+      "Day 3: Execute Phase 4 + 5 in parallel (US2 + US3 simultaneously)",
+      "Day 4: Execute Phase 6 (navigation) + start Phase 7 quality gates",
+      "Day 5: Complete Phase 7 quality gates and documentation",
+      "Expected single-developer timeline: 5-7 days"
+    ]
+  }
+}

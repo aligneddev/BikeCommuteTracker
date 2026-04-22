@@ -22,6 +22,14 @@ export function AppHeader() {
             Dashboard
           </NavLink>
           <NavLink
+            to="/dashboard/advanced"
+            className={({ isActive }) =>
+              isActive ? 'nav-link nav-link-active' : 'nav-link'
+            }
+          >
+            Advanced Stats
+          </NavLink>
+          <NavLink
             to="/rides/record"
             className={({ isActive }) =>
               isActive ? 'nav-link nav-link-active' : 'nav-link'
