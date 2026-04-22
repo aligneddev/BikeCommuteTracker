@@ -217,7 +217,39 @@
 
 ---
 
-## Dependencies & Parallelization
+## Phase 8: User Story 5 — Expenses in Savings Breakdown (FR-016–FR-020)
+
+**Goal**: Each time window shows total expenses (by ExpenseDate), oil-change savings offset (windowed by cumulative mile intervals), and net savings (combined savings + oil-change savings − expenses, can be negative).
+
+**Independent Test**: Verify that recording a $50 expense in the current month makes the monthly net savings decrease by $50. Verify that a user with no oil change price configured sees null for oil-change savings but still sees total expenses and net savings.
+
+### Tests (RED first)
+
+- [ ] T061 [P] [US5] Backend test: `GetAdvancedDashboardService_WithExpensesInWindow_IncludesExpensesInCorrectWindow`
+- [ ] T062 [P] [US5] Backend test: `GetAdvancedDashboardService_WithExpenses_NetSavingsIsCombinedMinusExpenses`
+- [ ] T063 [P] [US5] Backend test: `GetAdvancedDashboardService_ExpensesExceedSavings_NetSavingsIsNegative`
+- [ ] T064 [P] [US5] Backend test: `GetAdvancedDashboardService_WithOilChangePrice_IncludesWindowedOilChangeSavings`
+- [ ] T065 [P] [US5] Backend test: `GetAdvancedDashboardService_WithNoOilChangePrice_OilChangeSavingsIsNull`
+- [ ] T066 [P] [US5] Frontend test: `SavingsWindowsTable_WithExpenses_ShowsExpensesAndNetSavingsColumns`
+- [ ] T067 [P] [US5] Frontend test: `SavingsWindowsTable_NegativeNetSavings_AppliesRedStyle`
+
+**Confirm all tests RED before implementation**
+
+### Implementation (GREEN)
+
+- [ ] T068 [US5] Update `AdvancedDashboardContracts.cs` — add to `AdvancedSavingsWindow`: `TotalExpenses: decimal`, `OilChangeSavings: decimal?`, `NetSavings: decimal?`
+- [ ] T069 [US5] Update `GetAdvancedDashboardService.GetAsync()`:
+  - Load all non-deleted expenses for user alongside rides
+  - For each window: sum expenses with `ExpenseDate` within window boundaries
+  - For each window: compute windowed oil-change savings using cumulative-miles interval crossing formula
+  - Compute `NetSavings` per window
+- [ ] T070 [P] [US5] Update `advanced-dashboard-api.ts` — add `totalExpenses`, `oilChangeSavings`, `netSavings` to `AdvancedSavingsWindow` interface
+- [ ] T071 [P] [US5] Update `SavingsWindowsTable.tsx` — add Expenses, Oil Change Savings, Net Savings columns; apply red class when `netSavings < 0`
+- [ ] T072 [P] [US5] Update `advanced-dashboard-page.css` — add `.savings-windows-negative` rule for red negative net savings
+
+**Run tests**: `dotnet test ... GetAdvancedDashboardService` and `npm run test:unit` — confirm all GREEN
+
+---
 
 ### Critical Path (Must Complete in Order)
 

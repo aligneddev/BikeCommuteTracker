@@ -36,7 +36,21 @@ public sealed record AdvancedSavingsWindow(
     /// <summary>Total IRS mileage-rate savings in USD. Null when no rides have a valid mileage-rate snapshot.</summary>
     decimal? MileageRateSavings,
     /// <summary>Sum of <see cref="FuelCostAvoided"/> and <see cref="MileageRateSavings"/>. Null when both are null.</summary>
-    decimal? CombinedSavings
+    decimal? CombinedSavings,
+    /// <summary>Sum of non-deleted manual expense amounts with ExpenseDate within this window's date range.</summary>
+    decimal TotalExpenses,
+    /// <summary>
+    /// Oil-change savings attributed to this window, computed by the number of 3000-mile intervals
+    /// crossed during the window (cumulative miles before window start vs window end) × OilChangePrice.
+    /// Null when OilChangePrice is not configured in user settings.
+    /// </summary>
+    decimal? OilChangeSavings,
+    /// <summary>
+    /// Net financial position: (FuelCostAvoided ?? 0) + (MileageRateSavings ?? 0) + (OilChangeSavings ?? 0) − TotalExpenses.
+    /// Null only when all savings components are null and expenses are zero.
+    /// Can be negative when expenses exceed savings.
+    /// </summary>
+    decimal? NetSavings
 );
 
 /// <summary>

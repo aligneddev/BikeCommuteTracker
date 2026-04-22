@@ -38,6 +38,11 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
             .OrderByDescending(g => g.PriceDate)
             .ToListAsync(cancellationToken);
 
+        var expenses = await dbContext
+            .Expenses.Where(e => e.RiderId == riderId && !e.IsDeleted)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
         var nowLocal = DateTime.Now;
 
         // Calendar-based windows (not rolling) for consistency with the main dashboard.
@@ -62,16 +67,63 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
             .Where(r => r.RideDateTimeLocal >= yearStart && r.RideDateTimeLocal < yearEnd)
             .ToList();
 
+        // Cumulative miles before each window start — used to compute windowed oil-change intervals.
+        var milesBeforeWeekStart = rides
+            .Where(r => r.RideDateTimeLocal < weekStart)
+            .Sum(r => r.Miles);
+        var milesBeforeMonthStart = rides
+            .Where(r => r.RideDateTimeLocal < monthStart)
+            .Sum(r => r.Miles);
+        var milesBeforeYearStart = rides
+            .Where(r => r.RideDateTimeLocal < yearStart)
+            .Sum(r => r.Miles);
+
         var reminders = new AdvancedDashboardReminders(
             MpgReminderRequired: settings?.AverageCarMpg is null,
             MileageRateReminderRequired: settings?.MileageRateCents is null
         );
 
         var savingsWindows = new AdvancedSavingsWindows(
-            Weekly: BuildWindow("weekly", weeklyRides, gasPriceLookups),
-            Monthly: BuildWindow("monthly", monthlyRides, gasPriceLookups),
-            Yearly: BuildWindow("yearly", yearlyRides, gasPriceLookups),
-            AllTime: BuildWindow("allTime", rides, gasPriceLookups)
+            Weekly: BuildWindow(
+                "weekly",
+                weeklyRides,
+                gasPriceLookups,
+                expenses,
+                weekStart,
+                weekEnd,
+                milesBeforeWeekStart,
+                settings?.OilChangePrice
+            ),
+            Monthly: BuildWindow(
+                "monthly",
+                monthlyRides,
+                gasPriceLookups,
+                expenses,
+                monthStart,
+                monthEnd,
+                milesBeforeMonthStart,
+                settings?.OilChangePrice
+            ),
+            Yearly: BuildWindow(
+                "yearly",
+                yearlyRides,
+                gasPriceLookups,
+                expenses,
+                yearStart,
+                yearEnd,
+                milesBeforeYearStart,
+                settings?.OilChangePrice
+            ),
+            AllTime: BuildWindow(
+                "allTime",
+                rides,
+                gasPriceLookups,
+                expenses,
+                windowStart: null,
+                windowEnd: null,
+                cumulativeMilesBeforeWindow: 0m,
+                settings?.OilChangePrice
+            )
         );
 
         var allTimeSavings = savingsWindows.AllTime;
@@ -91,11 +143,18 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
     /// changes their settings, past savings are not retroactively altered (Decision 2/4).
     /// When <c>GasPricePerGallon</c> is null on a ride, the most recent gas-price lookup
     /// on or before the ride date is used as a fallback and the estimated flag is set (Decision 3).
+    /// Expenses are filtered by <c>ExpenseDate</c> within the window's date range.
+    /// Oil-change savings are computed by counting 3000-mile interval crossings during the window.
     /// </summary>
     private static AdvancedSavingsWindow BuildWindow(
         string period,
         IReadOnlyList<Infrastructure.Persistence.Entities.RideEntity> windowRides,
-        IReadOnlyList<Infrastructure.Persistence.Entities.GasPriceLookupEntity> gasPriceLookups
+        IReadOnlyList<Infrastructure.Persistence.Entities.GasPriceLookupEntity> gasPriceLookups,
+        IReadOnlyList<Infrastructure.Persistence.Entities.ExpenseEntity> allExpenses,
+        DateTime? windowStart,
+        DateTime? windowEnd,
+        decimal cumulativeMilesBeforeWindow,
+        decimal? oilChangePrice
     )
     {
         var totalMiles = windowRides.Sum(r => r.Miles);
@@ -154,6 +213,40 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
                 ? RoundTo2((fuelCostAvoided ?? 0m) + (mileageRateSavings ?? 0m))
                 : null;
 
+        // Expenses within this window (filtered by ExpenseDate; null bounds = all-time)
+        var totalExpenses = allExpenses
+            .Where(e =>
+                (windowStart is null || e.ExpenseDate >= windowStart.Value)
+                && (windowEnd is null || e.ExpenseDate < windowEnd.Value)
+            )
+            .Sum(e => e.Amount);
+        totalExpenses = RoundTo2(totalExpenses);
+
+        // Oil-change savings for this window: count 3000-mile intervals crossed during the window.
+        // A crossing occurs when cumulative miles at window end passes a multiple of 3000
+        // that was not yet reached at window start.
+        decimal? oilChangeSavings = null;
+        if (oilChangePrice.HasValue)
+        {
+            var milesInWindow = windowRides.Sum(r => r.Miles);
+            var cumulativeAtEnd = cumulativeMilesBeforeWindow + milesInWindow;
+            var intervalsBefore = (int)Math.Floor(cumulativeMilesBeforeWindow / 3000m);
+            var intervalsAtEnd = (int)Math.Floor(cumulativeAtEnd / 3000m);
+            var crossings = intervalsAtEnd - intervalsBefore;
+            oilChangeSavings = crossings > 0 ? RoundTo2(crossings * oilChangePrice.Value) : 0m;
+        }
+
+        // Net savings: gross savings + oil-change offset − expenses.
+        // Null only when all savings are unavailable and there are no expenses.
+        decimal? netSavings = null;
+        bool hasSavingsData = combinedSavings.HasValue || oilChangeSavings.HasValue;
+        if (hasSavingsData || totalExpenses > 0m)
+        {
+            netSavings = RoundTo2(
+                (combinedSavings ?? 0m) + (oilChangeSavings ?? 0m) - totalExpenses
+            );
+        }
+
         return new AdvancedSavingsWindow(
             Period: period,
             RideCount: rideCount,
@@ -162,7 +255,10 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
             FuelCostAvoided: fuelCostAvoided,
             FuelCostEstimated: fuelCostEstimated,
             MileageRateSavings: mileageRateSavings,
-            CombinedSavings: combinedSavings
+            CombinedSavings: combinedSavings,
+            TotalExpenses: totalExpenses,
+            OilChangeSavings: oilChangeSavings,
+            NetSavings: netSavings
         );
     }
 

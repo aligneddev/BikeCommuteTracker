@@ -364,6 +364,207 @@ public sealed class GetAdvancedDashboardServiceTests
         Assert.Equal(6.70m, result.SavingsWindows.AllTime.MileageRateSavings);
     }
 
+    // ── US5: Expenses in Savings Breakdown ────────────────────────────────
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_WithExpensesInWindow_IncludesExpensesInCorrectWindow()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Expenses Window Rider");
+
+        var now = DateTime.Now;
+        var monthStart = new DateTime(now.Year, now.Month, 1);
+
+        // Expense in current month
+        dbContext.Expenses.Add(
+            new ExpenseEntity
+            {
+                RiderId = rider.UserId,
+                ExpenseDate = monthStart.AddDays(1),
+                Amount = 50m,
+                IsDeleted = false,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        // Expense in last year — should NOT appear in monthly or weekly window
+        dbContext.Expenses.Add(
+            new ExpenseEntity
+            {
+                RiderId = rider.UserId,
+                ExpenseDate = new DateTime(now.Year - 1, 6, 1),
+                Amount = 200m,
+                IsDeleted = false,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext);
+        var result = await service.GetAsync(rider.UserId);
+
+        Assert.Equal(50m, result.SavingsWindows.Monthly.TotalExpenses);
+        Assert.Equal(250m, result.SavingsWindows.AllTime.TotalExpenses);
+        Assert.Equal(0m, result.SavingsWindows.Weekly.TotalExpenses);
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_WithExpenses_NetSavingsIsCombinedMinusExpenses()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "NetSavings Rider");
+
+        dbContext.Rides.Add(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = DateTime.Now.AddMonths(-3),
+                Miles = 100m,
+                SnapshotMileageRateCents = 67m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        // $30 expense — should reduce all-time net savings
+        dbContext.Expenses.Add(
+            new ExpenseEntity
+            {
+                RiderId = rider.UserId,
+                ExpenseDate = DateTime.Now.AddMonths(-3),
+                Amount = 30m,
+                IsDeleted = false,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext);
+        var result = await service.GetAsync(rider.UserId);
+
+        // 100 miles × $0.67 = $67 combined savings - $30 expenses = $37 net
+        Assert.Equal(67m, result.SavingsWindows.AllTime.CombinedSavings);
+        Assert.Equal(30m, result.SavingsWindows.AllTime.TotalExpenses);
+        Assert.Equal(37m, result.SavingsWindows.AllTime.NetSavings);
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_ExpensesExceedSavings_NetSavingsIsNegative()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Negative NetSavings Rider");
+
+        dbContext.Rides.Add(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = DateTime.Now.AddMonths(-1),
+                Miles = 10m,
+                SnapshotMileageRateCents = 67m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        // $20 expense — more than the $6.70 in savings
+        dbContext.Expenses.Add(
+            new ExpenseEntity
+            {
+                RiderId = rider.UserId,
+                ExpenseDate = DateTime.Now.AddMonths(-1),
+                Amount = 20m,
+                IsDeleted = false,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext);
+        var result = await service.GetAsync(rider.UserId);
+
+        // Net savings should be negative: $6.70 - $20 = -$13.30
+        Assert.NotNull(result.SavingsWindows.AllTime.NetSavings);
+        Assert.True(result.SavingsWindows.AllTime.NetSavings < 0m);
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_WithOilChangePrice_IncludesWindowedOilChangeSavings()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "OilChange Rider");
+
+        // Settings with oil change price
+        dbContext.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = rider.UserId,
+                OilChangePrice = 40m,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+
+        var now = DateTime.Now;
+        var yearStart = new DateTime(now.Year, 1, 1);
+
+        // Add rides this year that accumulate >3000 miles (crosses one oil change interval)
+        dbContext.Rides.AddRange(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = yearStart.AddDays(10),
+                Miles = 1600m,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = yearStart.AddDays(20),
+                Miles = 1600m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext);
+        var result = await service.GetAsync(rider.UserId);
+
+        // 3200 miles total — crosses one 3000-mile interval → 1 oil change × $40 = $40
+        Assert.Equal(40m, result.SavingsWindows.AllTime.OilChangeSavings);
+        Assert.Equal(40m, result.SavingsWindows.Yearly.OilChangeSavings);
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_WithNoOilChangePrice_OilChangeSavingsIsNull()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "NoOilChange Rider");
+
+        // Settings without OilChangePrice
+        dbContext.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = rider.UserId,
+                OilChangePrice = null,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+
+        dbContext.Rides.Add(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = DateTime.Now.AddDays(-5),
+                Miles = 5000m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext);
+        var result = await service.GetAsync(rider.UserId);
+
+        Assert.Null(result.SavingsWindows.AllTime.OilChangeSavings);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private static async Task<UserEntity> CreateRiderAsync(

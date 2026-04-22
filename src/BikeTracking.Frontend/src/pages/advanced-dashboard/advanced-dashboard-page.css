@@ -211,3 +211,8 @@
   font-size: 0.875rem;
   color: var(--adv-muted);
 }
+
+.savings-windows-negative {
+  color: #dc2626;
+  font-weight: 600;
+}

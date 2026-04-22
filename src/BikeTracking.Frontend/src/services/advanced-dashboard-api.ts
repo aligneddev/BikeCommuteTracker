@@ -14,6 +14,18 @@ export interface AdvancedSavingsWindow {
   mileageRateSavings: number | null
   /** Sum of fuelCostAvoided and mileageRateSavings. Null when both are null. */
   combinedSavings: number | null
+  /** Sum of manual expense amounts with ExpenseDate within this window's date range. */
+  totalExpenses: number
+  /**
+   * Oil-change savings attributed to this window (3000-mile interval crossings × OilChangePrice).
+   * Null when OilChangePrice is not configured.
+   */
+  oilChangeSavings: number | null
+  /**
+   * Net financial position: combinedSavings + oilChangeSavings − totalExpenses.
+   * Null only when all savings are null and expenses are zero. Can be negative.
+   */
+  netSavings: number | null
 }
 
 /** Four calendar time-window savings breakdown returned by the advanced dashboard endpoint. */

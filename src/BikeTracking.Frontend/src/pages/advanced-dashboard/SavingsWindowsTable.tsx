@@ -40,6 +40,8 @@ interface WindowRowProps {
 }
 
 function WindowRow({ window: w }: WindowRowProps) {
+  const isNegativeNet = w.netSavings !== null && w.netSavings < 0
+
   return (
     <tr className="savings-windows-row">
       <td className="savings-windows-cell savings-windows-period">
@@ -60,6 +62,13 @@ function WindowRow({ window: w }: WindowRowProps) {
       <td className="savings-windows-cell savings-windows-combined">
         {formatCurrency(w.combinedSavings)}
       </td>
+      <td className="savings-windows-cell">{formatCurrency(w.totalExpenses)}</td>
+      <td className="savings-windows-cell">{formatCurrency(w.oilChangeSavings)}</td>
+      <td
+        className={`savings-windows-cell savings-windows-net${isNegativeNet ? ' savings-windows-negative' : ''}`}
+      >
+        {formatCurrency(w.netSavings)}
+      </td>
     </tr>
   )
 }
@@ -68,6 +77,7 @@ function WindowRow({ window: w }: WindowRowProps) {
  * Renders a 4-row table showing savings broken down by weekly, monthly, yearly,
  * and all-time calendar windows. Shows an "Est." badge on the fuel-cost cell
  * when the value was calculated using a fallback gas-price lookup.
+ * Net savings cells are highlighted red when the value is negative.
  */
 export function SavingsWindowsTable({
   weekly,
@@ -87,6 +97,9 @@ export function SavingsWindowsTable({
             <th className="savings-windows-cell savings-windows-header">Fuel Cost Avoided</th>
             <th className="savings-windows-cell savings-windows-header">Mileage Rate</th>
             <th className="savings-windows-cell savings-windows-header">Combined Savings</th>
+            <th className="savings-windows-cell savings-windows-header">Expenses</th>
+            <th className="savings-windows-cell savings-windows-header">Oil Change Savings</th>
+            <th className="savings-windows-cell savings-windows-header">Net Savings</th>
           </tr>
         </thead>
         <tbody>

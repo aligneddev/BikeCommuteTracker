@@ -100,7 +100,32 @@ The user is on the main dashboard and wants to drill down into more detailed sta
 
 ---
 
-### Edge Cases
+### User Story 5 - View Net Savings After Expenses (Priority: P1)
+
+The user wants to know their true financial picture from biking — not just gross savings, but net savings after deducting the real costs of bike ownership (maintenance, parts, etc.). They see expenses broken down by the same time windows as their savings, plus a net savings figure that shows whether they're truly ahead financially.
+
+**Why this priority**: P1 because expense tracking already exists in the app; showing expenses alongside savings gives users the full financial story and is the primary value of the combined view. Without this, users could believe they are saving money when they are actually behind.
+
+**Independent Test**: Can be tested by recording expenses and verifying they appear in the correct time windows on the advanced dashboard, and that net savings = combined savings + oil-change savings offset − total expenses.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user has bike expenses recorded, **When** they view the advanced dashboard, **Then** each time window (weekly, monthly, yearly, all-time) shows:
+   - Total expenses (sum of manual expense amounts dated within that window)
+   - Oil-change savings offset for that window (if OilChangePrice is configured in settings)
+   - Net savings = (FuelCostAvoided + MileageRateSavings + OilChangeSavings) − TotalExpenses
+
+2. **Given** a user has more expenses than savings in a window, **When** they view that window, **Then** net savings is shown as a negative value highlighted in red
+
+3. **Given** a user has no expenses recorded, **When** they view the advanced dashboard, **Then** expenses columns show $0.00 and net savings equals combined savings
+
+4. **Given** the user has not set an OilChangePrice in settings, **When** they view the advanced dashboard, **Then** OilChangeSavings shows as not available (—) and net savings is computed from combined savings minus expenses only
+
+5. **Given** a user views the weekly window, **When** expenses are shown, **Then** only expenses with an ExpenseDate within the current calendar week are included (consistent with how rides are windowed)
+
+---
+
+
 
 - What happens when a user has rides but no ride-date gas price data is available? (System should fall back to latest known gas price and flag result as estimated)
 - How does the system handle very old rides where gas prices may not be reliably known? (Use ride-date gas prices when available; otherwise latest known price)
@@ -108,6 +133,8 @@ The user is on the main dashboard and wants to drill down into more detailed sta
 - What if a user has not configured a mileage rate setting? (Mileage-rate savings should show as not available and prompt the user to set a mileage rate)
 - What if no rides exist yet? (Dashboard should show zero values gracefully, not error)
 - How are multi-vehicle users handled if that becomes a future feature? (Current spec assumes single vehicle; document for future enhancement)
+- What if expenses exceed savings in a window? (Net savings is negative, shown in red — the user is currently in a deficit for that period)
+- How are oil-change savings attributed to a time window? (Oil changes are counted by 3000-mile intervals; a window's oil-change savings = intervals crossed during that window × OilChangePrice, computed from cumulative miles before window start vs window end)
 
 ## Requirements *(mandatory)*
 
@@ -129,13 +156,19 @@ The user is on the main dashboard and wants to drill down into more detailed sta
 - **FR-014**: System MUST calculate total mileage-rate savings based on cumulative ride distance and the user's configured mileage rate setting
 - Formula note: mileage-rate savings = cumulative ride distance × user mileage rate setting
 - **FR-015**: System MUST display a reminder card on the advanced dashboard when user mileage rate is not configured in settings
+- **FR-016**: System MUST include total expenses (sum of non-deleted manual expenses with ExpenseDate within the window's date range) in each time window of the advanced dashboard
+- **FR-017**: System MUST compute per-window oil-change savings using cumulative miles: OilChangeSavings = (floor(cumulativeMilesAtWindowEnd / 3000) − floor(cumulativeMilesBeforeWindowStart / 3000)) × OilChangePrice; null when OilChangePrice is not configured
+- **FR-018**: System MUST display net savings per window: NetSavings = (FuelCostAvoided ?? 0) + (MileageRateSavings ?? 0) + (OilChangeSavings ?? 0) − TotalExpenses; null only when all savings components are null AND expenses are zero
+- **FR-019**: System MUST display negative net savings in red (visual indicator) when a window's expenses exceed its savings
+- **FR-020**: System MUST display expense and net savings columns in the savings breakdown table on the advanced dashboard
 
 ### Key Entities *(include if feature involves data)*
 
 - **Ride**: Represents a single bike commute with distance, date, time, and vehicle info; linked to user
 - **Gas Price Data**: Historical or current gas prices used to calculate money savings
 - **Mileage Rate Setting**: User-configured per-distance monetary rate used to calculate mileage-rate savings
-- **Dashboard Metrics**: Computed/cached values for total savings, rate, and suggestions (may be calculated on-demand or pre-aggregated)
+- **Expenses**: Manual bike expenses recorded by the user (maintenance, parts, accessories); scoped per time window by ExpenseDate
+- **Oil-Change Savings**: Computed offset reducing net expenses; based on OilChangePrice setting and 3000-mile intervals (cumulative, windowed by interval crossings)
 - **User Preferences**: Vehicle MPG and other configurable settings used in savings calculations
 
 ## Success Criteria *(mandatory)*
