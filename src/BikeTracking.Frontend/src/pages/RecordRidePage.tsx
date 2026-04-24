@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import type { QuickRideOption, RecordRideRequest } from '../services/ridesService'
+import type { CompassDirection, QuickRideOption, RecordRideRequest } from '../services/ridesService'
 import {
   getGasPrice,
   getRideWeather,
   getQuickRideOptions,
   recordRide,
   getRideDefaults,
+  COMPASS_DIRECTIONS,
 } from '../services/ridesService'
+import { suggestDifficulty } from '../utils/windResistance'
 
 const EIA_GAS_PRICE_SOURCE = 'Source: U.S. Energy Information Administration (EIA)'
 
@@ -25,6 +27,10 @@ export function RecordRidePage() {
   const [gasPrice, setGasPrice] = useState<string>('')
   const [gasPriceSource, setGasPriceSource] = useState<string>('')
   const [quickRideOptions, setQuickRideOptions] = useState<QuickRideOption[]>([])
+
+  const [primaryTravelDirection, setPrimaryTravelDirection] = useState<CompassDirection | ''>('')
+  const [difficulty, setDifficulty] = useState<string>('')
+  const [difficultyAutoSuggested, setDifficultyAutoSuggested] = useState<boolean>(false)
 
   const [loading, setLoading] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
@@ -173,6 +179,19 @@ export function RecordRidePage() {
     return () => clearTimeout(timerId)
   }, [rideDateTimeLocal])
 
+  useEffect(() => {
+    if (!primaryTravelDirection) return
+    const suggestion = suggestDifficulty(
+      windSpeedMph ? parseFloat(windSpeedMph) : undefined,
+      primaryTravelDirection,
+      windDirectionDeg ? parseInt(windDirectionDeg) : undefined
+    )
+    if (suggestion !== null) {
+      setDifficulty(suggestion.toString())
+      setDifficultyAutoSuggested(true)
+    }
+  }, [primaryTravelDirection, windSpeedMph, windDirectionDeg])
+
   const applyQuickRideOption = (option: QuickRideOption) => {
     setMiles(option.miles.toString())
     setRideMinutes(option.rideMinutes.toString())
@@ -205,6 +224,14 @@ export function RecordRidePage() {
       return
     }
 
+    if (difficulty) {
+      const diffNum = parseInt(difficulty)
+      if (diffNum < 1 || diffNum > 5) {
+        setErrorMessage('Difficulty must be between 1 and 5')
+        return
+      }
+    }
+
     if (gasPrice) {
       const gasPriceNum = parseFloat(gasPrice)
       if (Number.isNaN(gasPriceNum) || gasPriceNum < 0.01 || gasPriceNum > 999.9999) {
@@ -230,6 +257,8 @@ export function RecordRidePage() {
         note: note.length > 0 ? note : undefined,
         weatherUserOverridden: weatherEdited,
         gasPricePerGallon: gasPrice ? parseFloat(gasPrice) : undefined,
+        difficulty: difficulty ? parseInt(difficulty) : undefined,
+        primaryTravelDirection: primaryTravelDirection || undefined,
       }
 
       const response = await recordRide(request)
@@ -251,6 +280,9 @@ export function RecordRidePage() {
         setWeatherEdited(false)
         setGasPrice('')
         setGasPriceSource('')
+        setPrimaryTravelDirection('')
+        setDifficulty('')
+        setDifficultyAutoSuggested(false)
         setSuccessMessage('')
       }, 3000)
     } catch (error) {
@@ -423,6 +455,55 @@ export function RecordRidePage() {
             maxLength={500}
             onChange={(e) => setNote(e.target.value)}
           />
+        </div>
+
+        <div className="form-group">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <label htmlFor="primaryTravelDirection">Primary Direction of Travel (optional)</label>
+            <span
+              className="info-icon"
+              title="Your primary travel direction is used with wind data to calculate wind resistance — how much the wind helped or hindered your ride."
+              aria-label="Direction info"
+              style={{ cursor: 'help' }}
+            >
+              ℹ️
+            </span>
+          </div>
+          <select
+            id="primaryTravelDirection"
+            value={primaryTravelDirection}
+            onChange={(e) => {
+              setPrimaryTravelDirection(e.target.value as CompassDirection | '')
+              setDifficultyAutoSuggested(false)
+            }}
+          >
+            <option value="">-- Select direction --</option>
+            {COMPASS_DIRECTIONS.map((dir) => (
+              <option key={dir} value={dir}>{dir}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="difficulty">
+            Difficulty (1 = Very Easy, 5 = Very Hard, optional)
+            {difficultyAutoSuggested && difficulty ? ' ✦ auto-suggested' : ''}
+          </label>
+          <select
+            id="difficulty"
+            value={difficulty}
+            onChange={(e) => {
+              setDifficulty(e.target.value)
+              setDifficultyAutoSuggested(false)
+            }}
+          >
+            <option value="">-- Select difficulty --</option>
+            <option value="1">1 – Very Easy</option>
+            <option value="2">2 – Easy</option>
+            <option value="3">3 – Moderate</option>
+            <option value="4">4 – Hard</option>
+            <option value="5">5 – Very Hard</option>
+          </select>
         </div>
 
         <div className="form-group">

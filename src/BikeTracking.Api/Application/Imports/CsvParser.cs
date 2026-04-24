@@ -7,7 +7,9 @@ public sealed record ParsedCsvRow(
     string? Time,
     string? Temp,
     string? Tags,
-    string? Notes
+    string? Notes,
+    string? Difficulty = null,
+    string? Direction = null
 );
 
 public sealed record ParsedCsvDocument(IReadOnlyList<ParsedCsvRow> Rows);
@@ -74,6 +76,8 @@ public static class CsvParser
             var temp = GetValue("TEMP");
             var tags = GetValue("TAGS");
             var notes = GetValue("NOTES");
+            var difficulty = GetValue("DIFFICULTY");
+            var direction = GetValue("DIRECTION");
 
             if (
                 date is null
@@ -82,6 +86,8 @@ public static class CsvParser
                 && temp is null
                 && tags is null
                 && notes is null
+                && difficulty is null
+                && direction is null
             )
             {
                 continue;
@@ -95,7 +101,9 @@ public static class CsvParser
                     Time: time,
                     Temp: temp,
                     Tags: tags,
-                    Notes: notes
+                    Notes: notes,
+                    Difficulty: difficulty,
+                    Direction: direction
                 )
             );
         }

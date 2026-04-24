@@ -11,6 +11,8 @@ public sealed class ImportRowEntity
     public decimal? Temperature { get; set; }
     public string? TagsRaw { get; set; }
     public string? Notes { get; set; }
+    public int? Difficulty { get; set; }
+    public string? Direction { get; set; }
     public required string ValidationStatus { get; set; }
     public string? ValidationErrorsJson { get; set; }
     public required string DuplicateStatus { get; set; }

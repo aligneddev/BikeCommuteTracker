@@ -262,7 +262,7 @@ public sealed class RecordRideWithDifficultyTests
     }
 }
 
-file sealed class NullGasPriceLookupService : IGasPriceLookupService
+internal sealed class NullGasPriceLookupService : IGasPriceLookupService
 {
     public Task<decimal?> GetOrFetchAsync(
         DateOnly date,

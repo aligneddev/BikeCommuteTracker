@@ -42,6 +42,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: expense import endpoint integration tests validate ExpenseImportJobs and ExpenseImportRows schema behavior after migration.",
             ["20260424194044_AddRideDifficultyAndWindRating"] =
                 "Added test: RidesPersistenceTests validates Difficulty, PrimaryTravelDirection, WindResistanceRating columns; RecordRideWithDifficultyTests and EditRideWithDifficultyTests cover end-to-end wind resistance calculation and persistence.",
+            ["20260424203433_AddImportRowDifficultyDirection"] =
+                "Added test: CsvImportDifficultyTests validates Difficulty and Direction column parsing, validation rules, and storage in ImportRowEntity after schema migration.",
         };
 
     [Fact]

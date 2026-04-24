@@ -1,3 +1,4 @@
+using BikeTracking.Api.Application.Imports;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
@@ -87,6 +88,14 @@ public static class RidesEndpoints
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status403Forbidden)
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .RequireAuthorization();
+
+        group
+            .MapGet("/csv-sample", GetCsvSample)
+            .WithName("GetCsvSample")
+            .WithSummary("Download a sample CSV file for ride import")
+            .Produces(StatusCodes.Status200OK, contentType: "text/csv")
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .RequireAuthorization();
 
         return endpoints;
@@ -417,6 +426,17 @@ public static class RidesEndpoints
                 new ErrorResponse("ERROR", "An error occurred while editing the ride")
             );
         }
+    }
+
+    private static IResult GetCsvSample()
+    {
+        var csv = SampleCsvGenerator.Generate();
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
+        return Results.File(
+            bytes,
+            contentType: "text/csv",
+            fileDownloadName: "ride-import-sample.csv"
+        );
     }
 
     private static async Task<IResult> DeleteRide(

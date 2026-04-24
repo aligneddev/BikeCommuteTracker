@@ -461,6 +461,20 @@ export function HistoryPage() {
     return () => clearTimeout(timerId)
   }, [editingRideId, editedRideDateTimeLocal])
 
+  useEffect(() => {
+    if (editingRideId === null || !editedPrimaryTravelDirection) return
+    const suggestion = suggestDifficulty(
+      editedWindSpeedMph ? parseFloat(editedWindSpeedMph) : undefined,
+      editedPrimaryTravelDirection,
+      editedWindDirectionDeg ? parseInt(editedWindDirectionDeg) : undefined
+    )
+    if (suggestion !== null && !difficultyAutoSuggested) {
+      setEditedDifficulty(suggestion.toString())
+      setDifficultyAutoSuggested(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editedPrimaryTravelDirection]) // Only trigger on direction change, not every wind change
+
   async function handleSaveEdit(ride: RideHistoryRow): Promise<void> {
     const milesValue = Number(editedMiles)
     if (!Number.isFinite(milesValue) || milesValue <= 0) {
@@ -519,6 +533,8 @@ export function HistoryPage() {
       precipitationType: precipitationTypeValue,
       note: editedNote,
       weatherUserOverridden: weatherEditedManually,
+      difficulty: editedDifficulty ? parseInt(editedDifficulty) : undefined,
+      primaryTravelDirection: editedPrimaryTravelDirection || undefined,
       // Version tokens are added to history rows in later tasks; use baseline v1 for now.
       expectedVersion: 1,
     })
@@ -548,6 +564,9 @@ export function HistoryPage() {
     setWeatherEditedManually(false)
     setEditedGasPrice('')
     setEditedGasPriceSource('')
+    setEditedDifficulty('')
+    setEditedPrimaryTravelDirection('')
+    setDifficultyAutoSuggested(false)
 
     await loadHistory({
       from: fromDate || undefined,
@@ -722,6 +741,15 @@ export function HistoryPage() {
           onEditedGasPriceChange={(value) => {
             setEditedGasPrice(value)
             setEditedGasPriceSource('')
+          }}
+          editedDifficulty={editedDifficulty}
+          editedPrimaryTravelDirection={editedPrimaryTravelDirection}
+          onEditedDifficultyChange={(value) => {
+            setEditedDifficulty(value)
+            setDifficultyAutoSuggested(false)
+          }}
+          onEditedPrimaryTravelDirectionChange={(value) => {
+            setEditedPrimaryTravelDirection(value)
           }}
           onLoadWeather={() => void handleLoadWeather()}
           onSaveEdit={(ride) => void handleSaveEdit(ride)}
