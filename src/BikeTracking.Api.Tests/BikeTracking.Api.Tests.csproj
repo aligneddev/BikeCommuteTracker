@@ -23,5 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BikeTracking.Api\BikeTracking.Api.csproj" />
+    <ProjectReference Include="..\BikeTracking.Domain.FSharp\BikeTracking.Domain.FSharp.fsproj" />
   </ItemGroup>
 </Project>

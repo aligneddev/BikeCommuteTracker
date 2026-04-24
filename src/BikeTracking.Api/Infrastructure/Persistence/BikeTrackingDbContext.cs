@@ -116,6 +116,14 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                         "CK_Rides_SnapshotOilChangePrice_Positive",
                         "\"SnapshotOilChangePrice\" IS NULL OR CAST(\"SnapshotOilChangePrice\" AS REAL) > 0"
                     );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_Difficulty",
+                        "Difficulty IS NULL OR (Difficulty >= 1 AND Difficulty <= 5)"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_Rides_WindResistanceRating",
+                        "WindResistanceRating IS NULL OR (WindResistanceRating >= -4 AND WindResistanceRating <= 4)"
+                    );
                 }
             );
             entity.HasKey(static x => x.Id);
@@ -133,6 +141,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.CloudCoverPercent);
             entity.Property(static x => x.PrecipitationType).HasMaxLength(50);
             entity.Property(static x => x.Notes).HasMaxLength(500);
+            entity.Property(static x => x.PrimaryTravelDirection).HasMaxLength(5);
             entity.Property(static x => x.WeatherUserOverridden).HasDefaultValue(false);
             entity
                 .Property(static x => x.Version)

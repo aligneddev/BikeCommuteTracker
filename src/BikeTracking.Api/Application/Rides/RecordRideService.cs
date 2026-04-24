@@ -2,7 +2,9 @@ using BikeTracking.Api.Application.Events;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using BikeTracking.Domain.FSharp;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FSharp.Core;
 
 namespace BikeTracking.Api.Application.Rides;
 
@@ -39,6 +41,11 @@ public sealed class RecordRideService(
         if (request.Note is not null && request.Note.Length > 500)
         {
             throw new ArgumentException("Note must be 500 characters or fewer", nameof(request));
+        }
+
+        if (request.Difficulty.HasValue && (request.Difficulty.Value < 1 || request.Difficulty.Value > 5))
+        {
+            throw new ArgumentException("Difficulty must be between 1 and 5", nameof(request));
         }
 
         var userSettings = await dbContext
@@ -78,6 +85,46 @@ public sealed class RecordRideService(
             request.PrecipitationType
         );
 
+        // Compute WindResistanceRating if direction and wind data are available
+        int? computedWindResistanceRating = null;
+        string? canonicalDirection = null;
+
+        if (request.PrimaryTravelDirection is not null)
+        {
+            var parsedDirection = WindResistance.tryParseCompassDirection(
+                request.PrimaryTravelDirection
+            );
+            if (OptionModule.IsSome(parsedDirection))
+            {
+                canonicalDirection = request.PrimaryTravelDirection; // already canonical from tryParse
+
+                var windSpeedOption = windSpeedMph.HasValue
+                    ? FSharpOption<decimal>.Some(windSpeedMph.Value)
+                    : FSharpOption<decimal>.None;
+                var windDirOption = windDirectionDeg.HasValue
+                    ? FSharpOption<int>.Some(windDirectionDeg.Value)
+                    : FSharpOption<int>.None;
+
+                var result = WindResistance.calculateDifficulty(
+                    windSpeedOption,
+                    parsedDirection.Value,
+                    windDirOption
+                );
+                if (result.IsOk)
+                {
+                    computedWindResistanceRating = result.ResultValue.Item1;
+                }
+            }
+            else
+            {
+                // Invalid direction string — return 400
+                throw new ArgumentException(
+                    $"Invalid primary travel direction '{request.PrimaryTravelDirection}'. Accepted values: {string.Join(", ", WindResistance.validDirectionNames)}",
+                    nameof(request)
+                );
+            }
+        }
+
         var rideEntity = new RideEntity
         {
             RiderId = riderId,
@@ -97,6 +144,9 @@ public sealed class RecordRideService(
             PrecipitationType = precipitationType,
             Notes = request.Note,
             WeatherUserOverridden = request.WeatherUserOverridden,
+            Difficulty = request.Difficulty,
+            PrimaryTravelDirection = canonicalDirection,
+            WindResistanceRating = computedWindResistanceRating,
             CreatedAtUtc = DateTime.UtcNow,
         };
 
@@ -120,7 +170,10 @@ public sealed class RecordRideService(
             snapshotAverageCarMpg: rideEntity.SnapshotAverageCarMpg,
             snapshotMileageRateCents: rideEntity.SnapshotMileageRateCents,
             snapshotYearlyGoalMiles: rideEntity.SnapshotYearlyGoalMiles,
-            snapshotOilChangePrice: rideEntity.SnapshotOilChangePrice
+            snapshotOilChangePrice: rideEntity.SnapshotOilChangePrice,
+            difficulty: request.Difficulty,
+            primaryTravelDirection: canonicalDirection,
+            windResistanceRating: computedWindResistanceRating
         );
 
         logger.LogInformation(

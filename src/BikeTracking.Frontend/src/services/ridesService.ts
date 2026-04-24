@@ -1,3 +1,24 @@
+export type CompassDirection =
+  | "North"
+  | "NE"
+  | "NW"
+  | "South"
+  | "SE"
+  | "SW"
+  | "East"
+  | "West";
+
+export const COMPASS_DIRECTIONS: CompassDirection[] = [
+  "North",
+  "NE",
+  "East",
+  "SE",
+  "South",
+  "SW",
+  "West",
+  "NW",
+];
+
 export interface RecordRideRequest {
   rideDateTimeLocal: string;
   miles: number;
@@ -11,6 +32,8 @@ export interface RecordRideRequest {
   precipitationType?: string;
   note?: string;
   weatherUserOverridden?: boolean;
+  difficulty?: number;
+  primaryTravelDirection?: CompassDirection;
 }
 
 export interface RecordRideSuccessResponse {
@@ -76,6 +99,8 @@ export interface EditRideRequest {
   precipitationType?: string;
   note?: string;
   weatherUserOverridden?: boolean;
+  difficulty?: number;
+  primaryTravelDirection?: CompassDirection;
   expectedVersion: number;
 }
 
@@ -143,6 +168,9 @@ export interface RideHistoryRow {
   precipitationType?: string;
   note?: string;
   weatherUserOverridden?: boolean;
+  difficulty?: number;
+  primaryTravelDirection?: CompassDirection;
+  windResistanceRating?: number;
 }
 
 /**

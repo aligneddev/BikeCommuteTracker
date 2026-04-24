@@ -28,7 +28,11 @@ public sealed record RecordRideRequest(
         string? PrecipitationType = null,
     [property: MaxLength(500, ErrorMessage = "Note must be 500 characters or fewer")]
         string? Note = null,
-    bool WeatherUserOverridden = false
+    bool WeatherUserOverridden = false,
+    [property: Range(1, 5, ErrorMessage = "Difficulty must be between 1 and 5")]
+        int? Difficulty = null,
+    [property: MaxLength(5, ErrorMessage = "Primary travel direction must be 5 characters or fewer")]
+        string? PrimaryTravelDirection = null
 );
 
 public sealed record RecordRideSuccessResponse(
@@ -109,7 +113,11 @@ public sealed record EditRideRequest(
         string? PrecipitationType = null,
     [property: MaxLength(500, ErrorMessage = "Note must be 500 characters or fewer")]
         string? Note = null,
-    bool WeatherUserOverridden = false
+    bool WeatherUserOverridden = false,
+    [property: Range(1, 5, ErrorMessage = "Difficulty must be between 1 and 5")]
+        int? Difficulty = null,
+    [property: MaxLength(5, ErrorMessage = "Primary travel direction must be 5 characters or fewer")]
+        string? PrimaryTravelDirection = null
 );
 
 public sealed record EditRideResponse(long RideId, int NewVersion, string Message);
@@ -141,7 +149,10 @@ public sealed record RideHistoryRow(
     int? CloudCoverPercent = null,
     string? PrecipitationType = null,
     string? Note = null,
-    bool WeatherUserOverridden = false
+    bool WeatherUserOverridden = false,
+    int? Difficulty = null,
+    string? PrimaryTravelDirection = null,
+    int? WindResistanceRating = null
 );
 
 /// <summary>
