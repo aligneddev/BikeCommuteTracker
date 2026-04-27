@@ -25,7 +25,8 @@ public int? Difficulty { get; set; }
 
 /// <summary>
 /// Primary travel direction selected by the rider at record or import time.
-/// Stored as canonical string: "North", "NE", "NW", "South", "SE", "SW", "East", "West".
+/// Stored as canonical 2-letter abbreviation: `N, NE, E, SE, S, SW, W, NW`.
+/// Inputs (form or CSV) MAY be full names or abbreviations; the importer/API normalize to the canonical abbreviations.
 /// Null when not provided.
 /// </summary>
 public string? PrimaryTravelDirection { get; set; }
@@ -45,7 +46,7 @@ public int? WindResistanceRating { get; set; }
 |--------|-----------|
 | `Difficulty` | `Difficulty IS NULL OR (Difficulty >= 1 AND Difficulty <= 5)` |
 | `WindResistanceRating` | `WindResistanceRating IS NULL OR (WindResistanceRating >= -4 AND WindResistanceRating <= 4)` |
-| `PrimaryTravelDirection` | Length ≤ 5 characters (via EF `HasMaxLength(5)`) |
+| `PrimaryTravelDirection` | Length ≤ 2 characters when persisted (via EF `HasMaxLength(2)`) |
 
 ---
 
@@ -361,7 +362,7 @@ let calculateWindResistanceDistribution
 | Field | Layer 1: React client | Layer 2: API DataAnnotations | Layer 3: DB constraint |
 |-------|----------------------|------------------------------|----------------------|
 | `Difficulty` | Optional; if present, integer 1–5 | `[Range(1, 5)]` optional | `CHECK (Difficulty IS NULL OR (Difficulty >= 1 AND Difficulty <= 5))` |
-| `PrimaryTravelDirection` | Optional; if present, must be one of 8 values | `[MaxLength(5)]` + custom validator | `HasMaxLength(5)` |
+| `PrimaryTravelDirection` | Optional; if present, accepts full names or 2‑letter abbreviations and is normalized to canonical 2‑letter abbreviations | `[MaxLength(2)]` + custom validator | `HasMaxLength(2)` |
 | `WindResistanceRating` | Not editable by user (system-computed only) | Not in request contract | `CHECK (WindResistanceRating IS NULL OR (WindResistanceRating >= -4 AND WindResistanceRating <= 4))` |
 
 ### 4.2 CSV Import Validation
@@ -369,7 +370,7 @@ let calculateWindResistanceDistribution
 | Column | Rule | Error code |
 |--------|------|-----------|
 | `Difficulty` | Optional integer 1–5 | `INVALID_DIFFICULTY` |
-| `Direction` | Optional; one of: North, NE, NW, South, SE, SW, East, West (case-insensitive) | `INVALID_DIRECTION` |
+| `Direction` | Optional; accepts full names or 2‑letter abbreviations (case-insensitive); normalized internally to `N, NE, E, SE, S, SW, W, NW` | `INVALID_DIRECTION` |
 
 ---
 

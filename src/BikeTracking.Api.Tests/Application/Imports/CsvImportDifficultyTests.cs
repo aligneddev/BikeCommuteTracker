@@ -9,16 +9,14 @@ namespace BikeTracking.Api.Tests.Application.Imports;
 /// </summary>
 public sealed class CsvImportDifficultyTests
 {
-    // --- CsvParser: column recognition ---
-
     [Fact]
     public void Parse_WithDifficultyAndDirectionColumns_ExtractsValues()
     {
-        var csv = "Date,Miles,Difficulty,Direction\n2026-01-15,12.5,3,NE";
+        var csv = "Date,Miles,Difficulty,PrimaryTravelDirection\n2026-01-15,12.5,3,NE";
         var result = CsvParser.Parse(csv);
         Assert.Single(result.Rows);
         Assert.Equal("3", result.Rows[0].Difficulty);
-        Assert.Equal("NE", result.Rows[0].Direction);
+        Assert.Equal("NE", result.Rows[0].PrimaryTravelDirection);
     }
 
     [Fact]
@@ -28,17 +26,17 @@ public sealed class CsvImportDifficultyTests
         var result = CsvParser.Parse(csv);
         Assert.Single(result.Rows);
         Assert.Null(result.Rows[0].Difficulty);
-        Assert.Null(result.Rows[0].Direction);
+        Assert.Null(result.Rows[0].PrimaryTravelDirection);
     }
 
     [Fact]
     public void Parse_WithCaseInsensitiveDifficultyDirectionHeaders_ParsesCorrectly()
     {
-        var csv = "date,miles,DIFFICULTY,DIRECTION\n2026-01-15,12.5,2,south";
+        var csv = "date,miles,DIFFICULTY,PRIMARYTRAVELDIRECTION\n2026-01-15,12.5,2,south";
         var result = CsvParser.Parse(csv);
         Assert.Single(result.Rows);
         Assert.Equal("2", result.Rows[0].Difficulty);
-        Assert.Equal("south", result.Rows[0].Direction);
+        Assert.Equal("south", result.Rows[0].PrimaryTravelDirection);
     }
 
     // --- CsvValidationRules: difficulty ---
@@ -92,9 +90,9 @@ public sealed class CsvImportDifficultyTests
     [InlineData("NW")]
     public void ValidateRow_WithValidDirection_NoErrors(string value)
     {
-        var row = MakeRow(direction: value);
+        var row = MakeRow(primaryTravelDirection: value);
         var errors = CsvValidationRules.ValidateRow(row);
-        Assert.DoesNotContain(errors, e => e.Field == "Direction");
+        Assert.DoesNotContain(errors, e => e.Field == "PrimaryTravelDirection");
     }
 
     [Theory]
@@ -103,9 +101,9 @@ public sealed class CsvImportDifficultyTests
     [InlineData("ne")]
     public void ValidateRow_WithValidDirectionCaseInsensitive_NoErrors(string value)
     {
-        var row = MakeRow(direction: value);
+        var row = MakeRow(primaryTravelDirection: value);
         var errors = CsvValidationRules.ValidateRow(row);
-        Assert.DoesNotContain(errors, e => e.Field == "Direction");
+        Assert.DoesNotContain(errors, e => e.Field == "PrimaryTravelDirection");
     }
 
     [Theory]
@@ -115,9 +113,9 @@ public sealed class CsvImportDifficultyTests
     [InlineData("Invalid")]
     public void ValidateRow_WithInvalidDirection_ReturnsError(string value)
     {
-        var row = MakeRow(direction: value);
+        var row = MakeRow(primaryTravelDirection: value);
         var errors = CsvValidationRules.ValidateRow(row);
-        var error = Assert.Single(errors.Where(e => e.Field == "Direction"));
+        var error = Assert.Single(errors.Where(e => e.Field == "PrimaryTravelDirection"));
         Assert.Equal("INVALID_DIRECTION", error.Code);
         // Should list accepted values
         Assert.Contains("North", error.Message);
@@ -127,9 +125,9 @@ public sealed class CsvImportDifficultyTests
     [Fact]
     public void ValidateRow_WithNullDirection_NoErrors()
     {
-        var row = MakeRow(direction: null);
+        var row = MakeRow(primaryTravelDirection: null);
         var errors = CsvValidationRules.ValidateRow(row);
-        Assert.DoesNotContain(errors, e => e.Field == "Direction");
+        Assert.DoesNotContain(errors, e => e.Field == "PrimaryTravelDirection");
     }
 
     [Fact]
@@ -144,22 +142,25 @@ public sealed class CsvImportDifficultyTests
             Tags: null,
             Notes: null,
             Difficulty: null,
-            Direction: null
+            PrimaryTravelDirection: null
         );
         var errors = CsvValidationRules.ValidateRow(row);
-        Assert.DoesNotContain(errors, e => e.Field is "Difficulty" or "Direction");
+        Assert.DoesNotContain(errors, e => e.Field is "Difficulty" or "PrimaryTravelDirection");
     }
 
     [Fact]
     public void ValidateRow_WithOnlyDifficultyPresent_ValidatesOnlyDifficulty()
     {
-        var row = MakeRow(difficulty: "3", direction: null);
+        var row = MakeRow(difficulty: "3", primaryTravelDirection: null);
         var errors = CsvValidationRules.ValidateRow(row);
-        Assert.DoesNotContain(errors, e => e.Field is "Difficulty" or "Direction");
+        Assert.DoesNotContain(errors, e => e.Field is "Difficulty" or "PrimaryTravelDirection");
     }
 
-    private static ParsedCsvRow MakeRow(string? difficulty = null, string? direction = null)
-        => new ParsedCsvRow(
+    private static ParsedCsvRow MakeRow(
+        string? difficulty = null,
+        string? primaryTravelDirection = null
+    ) =>
+        new(
             RowNumber: 1,
             Date: "2026-01-15",
             Miles: "12.5",
@@ -168,6 +169,6 @@ public sealed class CsvImportDifficultyTests
             Tags: null,
             Notes: null,
             Difficulty: difficulty,
-            Direction: direction
+            PrimaryTravelDirection: primaryTravelDirection
         );
 }

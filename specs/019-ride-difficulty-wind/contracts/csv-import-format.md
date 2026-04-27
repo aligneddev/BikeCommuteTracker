@@ -18,13 +18,13 @@ This document specifies the extended CSV import column format, new validation ru
 | `Temp` | No | Decimal | Any numeric | Existing column (°F) |
 | `Notes` | No | String | Max 500 chars | Existing column |
 | `Difficulty` | No | Integer | 1, 2, 3, 4, or 5 | **NEW** |
-| `Direction` | No | String | North, NE, NW, South, SE, SW, East, West | **NEW** |
+| `PrimaryTravelDirection` | No | String | Accepts full names or 2-letter abbreviations (normalized to N, NE, E, SE, S, SW, W, NW) | **NEW; canonical internal column name** |
 
 ### Notes
 - Column header names are case-insensitive (existing behaviour).
 - Columns may appear in any order (existing behaviour).
-- When `Difficulty` and `Direction` columns are absent from the CSV entirely, the import succeeds without error (FR-018).
-- When only one of `Difficulty` / `Direction` is present, the present field is imported and the absent field is null (FR-018).
+- When `Difficulty` and `PrimaryTravelDirection` columns are absent from the CSV entirely, the import succeeds without error (FR-018).
+- When only one of `Difficulty` / `PrimaryTravelDirection` is present, the present field is imported and the absent field is null (FR-018).
 
 ---
 
@@ -94,10 +94,11 @@ public sealed record ParsedCsvRow(
 );
 ```
 
-Header name detection (case-insensitive):
+Header name detection (case-insensitive): the parser MUST accept the canonical `PrimaryTravelDirection` header and map it to the `PrimaryTravelDirection` property on the parsed row. Legacy aliases are not supported.
 ```csharp
 "difficulty" => (row) => row with { Difficulty = value },
-"direction"  => (row) => row with { Direction = value },
+"direction"  => (row) => row with { PrimaryTravelDirection = value },
+"primarytraveldirection" => (row) => row with { PrimaryTravelDirection = value },
 ```
 
 ---
@@ -115,11 +116,11 @@ if (row.Difficulty is not null && int.TryParse(row.Difficulty, out var d))
     difficulty = d;
 }
 
-// Parse Direction (case-insensitive → canonical casing)
+// Parse PrimaryTravelDirection (accepts header "Direction" or "PrimaryTravelDirection")
 string? primaryTravelDirection = null;
-if (row.Direction is not null)
+if (row.PrimaryTravelDirection is not null)
 {
-    var parsed = WindResistance.tryParseCompassDirection(row.Direction.Trim());
+    var parsed = WindResistance.tryParseCompassDirection(row.PrimaryTravelDirection.Trim());
     if (parsed is FSharpOption<CompassDirection> { IsNone: false })
     {
         primaryTravelDirection = /* canonical name from F# value */;
@@ -155,8 +156,8 @@ rideEntity.WindResistanceRating = windResistanceRating;
 #   Temp        - optional. Temperature in Fahrenheit (decimal)
 #   Notes       - optional. Max 500 characters
 #   Difficulty  - optional. Integer 1 (Very Easy) to 5 (Very Hard)
-#   Direction   - optional. Primary travel direction: North, NE, NW, South, SE, SW, East, West
-Date,Miles,Time,Temp,Notes,Difficulty,Direction
+#   PrimaryTravelDirection - optional. Primary travel direction: CSV header MUST be `PrimaryTravelDirection`; accepts full names or 2-letter abbreviations; normalized to N, NE, E, SE, S, SW, W, NW
+Date,Miles,Time,Temp,Notes,Difficulty,PrimaryTravelDirection
 2026-01-15,12.5,45,38,"Morning commute, light rain",3,NE
 2026-01-16,12.5,43,41,,1,South
 2026-01-17,12.5,,35,"Windy day, fought headwind all the way",5,North
@@ -175,13 +176,13 @@ public static class SampleCsvGenerator
         // Legend rows starting with '#'
         sb.AppendLine("# Sample CSV for bike ride import");
         // ... legend lines ...
-        sb.AppendLine("Date,Miles,Time,Temp,Notes,Difficulty,Direction");
-        // Example rows with realistic data
-        sb.AppendLine("2026-01-15,12.5,45,38,\"Morning commute, light rain\",3,NE");
-        sb.AppendLine("2026-01-16,12.5,43,41,,1,South");
-        sb.AppendLine("2026-01-17,12.5,,35,\"Windy day\",5,North");
-        sb.AppendLine("2026-01-18,8.0,32,42,\"Short route\",,");
-        sb.AppendLine("2026-01-19,12.5,44,39,,2,SW");
+         sb.AppendLine("Date,Miles,Time,Temp,Notes,Difficulty,PrimaryTravelDirection");
+         // Example rows with realistic data
+         sb.AppendLine("2026-01-15,12.5,45,38,\"Morning commute, light rain\",3,NE");
+         sb.AppendLine("2026-01-16,12.5,43,41,,1,South");
+         sb.AppendLine("2026-01-17,12.5,,35,\"Windy day, fought headwind all the way\",5,North");
+         sb.AppendLine("2026-01-18,8.0,32,42,\"Short route\",,");
+         sb.AppendLine("2026-01-19,12.5,44,39,,2,SW");
         return sb.ToString();
     }
 }
@@ -199,4 +200,4 @@ public static class SampleCsvGenerator
 | `INVALID_TEMP` | Temp | *(existing)* |
 | `NOTE_TOO_LONG` | Notes | *(existing)* |
 | `INVALID_DIFFICULTY` | Difficulty | `Difficulty '{value}' is not valid. Must be an integer between 1 (Very Easy) and 5 (Very Hard).` |
-| `INVALID_DIRECTION` | Direction | `Direction '{value}' is not recognised. Accepted values: North, NE, NW, South, SE, SW, East, West.` |
+| `INVALID_DIRECTION` | Direction | `Direction '{value}' is not recognised. Accepted inputs: full names or abbreviations. Accepted canonical values: N, NE, E, SE, S, SW, W, NW.` |

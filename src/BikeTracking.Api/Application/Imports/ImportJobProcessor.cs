@@ -218,7 +218,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
             Note: row.Notes,
             WeatherUserOverridden: csvTemperature.HasValue,
             Difficulty: row.Difficulty,
-            PrimaryTravelDirection: row.Direction
+            PrimaryTravelDirection: row.PrimaryTravelDirection
         );
     }
 

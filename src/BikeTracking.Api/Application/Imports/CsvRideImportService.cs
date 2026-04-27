@@ -272,16 +272,26 @@ public sealed class CsvRideImportService(
     )
     {
         int? parsedDifficulty = null;
-        if (parsedRow.Difficulty is not null && int.TryParse(parsedRow.Difficulty, out var diffInt) && diffInt >= 1 && diffInt <= 5)
+        if (
+            parsedRow.Difficulty is not null
+            && int.TryParse(parsedRow.Difficulty, out var diffInt)
+            && diffInt >= 1
+            && diffInt <= 5
+        )
         {
             parsedDifficulty = diffInt;
         }
 
         string? parsedDirection = null;
-        if (parsedRow.Direction is not null)
+        if (parsedRow.PrimaryTravelDirection is not null)
         {
-            parsedDirection = WindResistance.validDirectionNames
-                .FirstOrDefault(d => string.Equals(d, parsedRow.Direction.Trim(), StringComparison.OrdinalIgnoreCase));
+            parsedDirection = WindResistance.validDirectionNames.FirstOrDefault(d =>
+                string.Equals(
+                    d,
+                    parsedRow.PrimaryTravelDirection.Trim(),
+                    StringComparison.OrdinalIgnoreCase
+                )
+            );
         }
 
         return new ImportRowEntity
@@ -294,7 +304,7 @@ public sealed class CsvRideImportService(
             TagsRaw = parsedRow.Tags,
             Notes = parsedRow.Notes,
             Difficulty = isValid ? parsedDifficulty : null,
-            Direction = isValid ? parsedDirection : null,
+            PrimaryTravelDirection = isValid ? parsedDirection : null,
             ValidationStatus = isValid ? "valid" : "invalid",
             ValidationErrorsJson = isValid ? null : JsonSerializer.Serialize(errors),
             DuplicateStatus = "none",

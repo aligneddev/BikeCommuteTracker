@@ -9,7 +9,7 @@ public sealed record ParsedCsvRow(
     string? Tags,
     string? Notes,
     string? Difficulty = null,
-    string? Direction = null
+    string? PrimaryTravelDirection = null
 );
 
 public sealed record ParsedCsvDocument(IReadOnlyList<ParsedCsvRow> Rows);
@@ -77,7 +77,8 @@ public static class CsvParser
             var tags = GetValue("TAGS");
             var notes = GetValue("NOTES");
             var difficulty = GetValue("DIFFICULTY");
-            var direction = GetValue("DIRECTION");
+            // Only accept the canonical header `PrimaryTravelDirection` (no legacy aliases)
+            var primaryTravelDirection = GetValue("PRIMARYTRAVELDIRECTION");
 
             if (
                 date is null
@@ -87,7 +88,7 @@ public static class CsvParser
                 && tags is null
                 && notes is null
                 && difficulty is null
-                && direction is null
+                && primaryTravelDirection is null
             )
             {
                 continue;
@@ -103,7 +104,7 @@ public static class CsvParser
                     Tags: tags,
                     Notes: notes,
                     Difficulty: difficulty,
-                    Direction: direction
+                    PrimaryTravelDirection: primaryTravelDirection
                 )
             );
         }

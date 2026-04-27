@@ -97,7 +97,7 @@ This guide walks a developer through implementing the full feature end-to-end, i
        && windSpeedMph.HasValue
        && windDirectionDeg.HasValue)
    {
-       var directionResult = WindResistance.tryParseCompassDirection(request.PrimaryTravelDirection);
+      var directionResult = WindResistance.tryParseCompassDirection(request.PrimaryTravelDirection);
        if (directionResult is FSharpOption<CompassDirection>.Some dir)
        {
            var result = WindResistance.calculateDifficulty(

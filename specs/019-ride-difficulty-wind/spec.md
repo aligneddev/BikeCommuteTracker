@@ -16,7 +16,7 @@ A rider finishes a tough headwind commute and records the ride. They see optiona
 
 **Acceptance Scenarios**:
 
-1. **Given** a rider is on the Record Ride page, **When** they view the form, **Then** they see two new optional fields: a "Difficulty" dropdown (values 1–5) and a "Primary Travel Direction" dropdown (values: North, NE, NW, South, SE, SW, East, West)
+1. **Given** a rider is on the Record Ride page, **When** they view the form, **Then** they see two new optional fields: a "Difficulty" dropdown (values 1–5) and a "Primary Travel Direction" dropdown (accepted inputs: full compass names or 2‑letter abbreviations; normalized internally to `N, NE, E, SE, S, SW, W, NW`).
 2. **Given** the Record Ride page is displayed, **When** the rider hovers or taps the info icon next to "Primary Travel Direction," **Then** a tooltip or popover explains: "Your primary direction of travel helps us calculate wind resistance. Since rides can involve multiple directions, choose the direction you rode the most."
 3. **Given** a ride already has wind speed captured from weather data, **When** the rider selects a Primary Travel Direction, **Then** the Difficulty field is automatically populated with a calculated value (1–5) based on wind speed and the headwind/tailwind relationship to the selected direction
 4. **Given** the Difficulty field has been auto-calculated, **When** the rider changes the value in the Difficulty dropdown, **Then** the updated value is saved (the auto-calculated value is a suggestion only)
@@ -32,17 +32,17 @@ A rider with historical ride data in a spreadsheet wants to import it including 
 
 **Why this priority**: P1 because without CSV import support for these fields, bulk historical data will be missing difficulty entirely, which would produce incomplete analytics. Parity with manual entry is important for data consistency.
 
-**Independent Test**: Can be fully tested by downloading the sample CSV, adding a few rows with Difficulty and Direction values, importing the file, and confirming those values appear on the imported rides.
+**Independent Test**: Can be fully tested by downloading the sample CSV, adding a few rows with `Difficulty` and `PrimaryTravelDirection` (or `Direction` alias) values, importing the file, and confirming those values appear on the imported rides.
 
 **Acceptance Scenarios**:
 
-1. **Given** a rider is on the CSV Import page, **When** they view the page, **Then** they see a "Download Sample CSV" link that downloads a properly formatted example file containing all supported columns including `Difficulty` and `Direction`
-2. **Given** the sample CSV is downloaded, **When** the rider opens it, **Then** it contains example rows with realistic data, column headers matching expected import format, and inline comments or a legend row explaining valid values (1–5 for Difficulty; compass direction names for Direction)
-3. **Given** a CSV containing `Difficulty` and `Direction` columns with valid values, **When** the rider imports it, **Then** each ride record is created with the specified difficulty and direction values
+1. **Given** a rider is on the CSV Import page, **When** they view the page, **Then** they see a "Download Sample CSV" link that downloads a properly formatted example file containing all supported columns including `Difficulty` and `PrimaryTravelDirection` (CSV import requires the `PrimaryTravelDirection` header)
+2. **Given** the sample CSV is downloaded, **When** the rider opens it, **Then** it contains example rows with realistic data, column headers matching expected import format, and inline comments or a legend row explaining valid values (1–5 for Difficulty; compass direction names for `PrimaryTravelDirection`)
+3. **Given** a CSV containing `Difficulty` and `PrimaryTravelDirection` (or `Direction`) columns with valid values, **When** the rider imports it, **Then** each ride record is created with the specified difficulty and primary travel direction values
 4. **Given** a CSV containing a `Difficulty` value outside the 1–5 range (e.g., 0, 6, or "hard"), **When** the file is parsed, **Then** the system flags that row with a validation error describing the expected range, and excludes it from the import while allowing other valid rows to proceed
-5. **Given** a CSV containing an unrecognized `Direction` value (e.g., "Northeast" instead of "NE"), **When** the file is parsed, **Then** the system flags that row with a validation error listing accepted direction values
-6. **Given** a CSV where `Difficulty` and `Direction` columns are absent entirely, **When** imported, **Then** the import succeeds without error — these columns are optional
-7. **Given** a CSV where `Difficulty` is present but `Direction` is absent (or vice versa), **When** imported, **Then** the ride is created with whichever field was provided, and the missing field is left blank
+5. **Given** a CSV containing an unrecognized `PrimaryTravelDirection`/`Direction` value (e.g., "Northeast" instead of "NE"), **When** the file is parsed, **Then** the system flags that row with a validation error listing accepted direction values
+6. **Given** a CSV where `Difficulty` and `PrimaryTravelDirection`/`Direction` columns are absent entirely, **When** imported, **Then** the import succeeds without error — these columns are optional
+7. **Given** a CSV where `Difficulty` is present but `PrimaryTravelDirection`/`Direction` is absent (or vice versa), **When** imported, **Then** the ride is created with whichever field was provided, and the missing field is left blank
 
 ---
 
@@ -85,7 +85,7 @@ A rider visits the Advanced Dashboard and sees a new difficulty analytics sectio
 #### Record Ride Form
 
 - **FR-001**: The Record Ride form MUST include an optional "Difficulty" dropdown with values 1 (Very Easy), 2 (Easy), 3 (Moderate), 4 (Hard), 5 (Very Hard)
-- **FR-002**: The Record Ride form MUST include an optional "Primary Travel Direction" dropdown with values: North, NE, NW, South, SE, SW, East, West
+- **FR-002**: The Record Ride form MUST include an optional "Primary Travel Direction" dropdown with canonical internal values: `N, NE, E, SE, S, SW, W, NW`. The form and import endpoints MAY accept either full compass names (e.g., "North", "Northeast") or 2‑letter abbreviations; all inputs MUST be normalized to the canonical 2‑letter abbreviation before persistence or calculation.
 - **FR-003**: The "Primary Travel Direction" field MUST display an info icon; activating it MUST show a description explaining that the user should choose the direction they traveled most, and that this value is used to calculate wind resistance against captured wind speed
 - **FR-004**: When a rider selects a Primary Travel Direction AND wind speed data is available for the ride, the system MUST automatically calculate and populate the Difficulty field using the wind resistance formula
 - **FR-005**: The auto-populated Difficulty value MUST be overridable by the rider at any time before saving
@@ -98,11 +98,18 @@ A rider visits the Advanced Dashboard and sees a new difficulty analytics sectio
 - **FR-009**: A headwind (wind directly opposing travel) MUST produce a positive resistance rating (harder); a tailwind (wind directly behind travel) MUST produce a negative resistance rating (easier)
 - **FR-010**: The wind resistance rating scale MUST range from −4 (strong tailwind assistance) to +4 (strong headwind resistance), with 0 representing calm or crosswind conditions
 - **FR-011**: The Difficulty auto-calculation MUST map the wind resistance rating to the 1–5 difficulty scale: strong tailwind biases toward 1–2, neutral toward 3, strong headwind toward 4–5
+ 
+    - **Explicit mapping (authoritative)**: the system MUST use the following mapping from persisted `WindResistanceRating` (−4..+4) to `Difficulty` (1..5) when deriving or persisting suggested difficulty values:
+       - `WindResistanceRating <= -3`  → `Difficulty = 1` (Very Easy)
+       - `WindResistanceRating = -2 or -1` → `Difficulty = 2` (Easy)
+       - `WindResistanceRating = 0` → `Difficulty = 3` (Moderate)
+       - `WindResistanceRating = 1 or 2` → `Difficulty = 4` (Hard)
+       - `WindResistanceRating >= 3` → `Difficulty = 5` (Very Hard)
 - **FR-012**: When wind speed is zero, calculated difficulty MUST default to 1
 
-#### CSV Import
+-#### CSV Import
 
-- **FR-013**: The CSV Import page MUST support two new optional columns: `Difficulty` (integer 1–5) and `Direction` (one of: North, NE, NW, South, SE, SW, East, West)
+- **FR-013**: The CSV Import page MUST support two new optional columns: `Difficulty` (integer 1–5) and `Direction` (accepts either full compass names or 2‑letter abbreviations). The import/validator MUST normalize accepted `Direction` inputs to the canonical 2‑letter abbreviations used internally: `N, NE, E, SE, S, SW, W, NW`.
 - **FR-014**: The CSV Import page MUST display a "Download Sample CSV" link that triggers a download of an example file
 - **FR-015**: The sample CSV MUST include all supported import columns (including `Difficulty` and `Direction`), realistic example data rows, and a clear legend or comment row describing valid values
 - **FR-016**: The import validator MUST reject rows with `Difficulty` values outside the integer range 1–5 and display a specific error message
@@ -157,7 +164,12 @@ A rider visits the Advanced Dashboard and sees a new difficulty analytics sectio
 ### Session 2026-04-24
 
 - Q: Should the Wind Resistance Rating (−4 to +4) be persisted on the Ride record, or always computed on-the-fly? → A: Persist it. Store `WindResistanceRating` as a column on the Ride record, calculated at ride-save time (or import time); dashboard reads it directly.
-- Q: What wind speed should map to a +4 (maximum headwind) rating? → A: 20 mph direct headwind = +4; threshold constant = 5 mph. Wind speed is stored and displayed in mph.
+ - Q: What wind speed should map to a +4 (maximum headwind) rating? → A: 20 mph direct headwind = +4; threshold constant = 5 mph. Wind speed is stored and displayed in mph.
+ - Q: How is a `WindResistanceRating` translated to `Difficulty` for persistence and analytics? → A: Use the explicit mapping table in FR-011 (≤ −3 → 1, −2/−1 → 2, 0 → 3, +1/+2 → 4, ≥ +3 → 5). This mapping is the authoritative source for dashboard aggregates and tests.
 - Q: How should "most difficult months" be aggregated on the dashboard? → A: Calendar month roll-up: all Januaries averaged together, all Februaries averaged together; exactly 12 possible rows/bars (no year-level breakdown).
 - Q: What happens to WindResistanceRating when a rider edits a saved ride and changes PrimaryTravelDirection? → A: Recalculate `WindResistanceRating` automatically whenever `PrimaryTravelDirection` is changed on an edit; same formula as initial save; recalculated value is persisted when the edit is saved.
 - Q: What happens to the stored Difficulty value when a rider edits a saved ride and changes PrimaryTravelDirection? → A: Suggest only — recalculate and pre-fill the Difficulty field in the edit form as a new suggestion; rider can accept or change before saving; stored Difficulty updates only on save (no silent auto-overwrite).
+
+### Session 2026-04-27
+
+- Q: Should CSV and form inputs accept 2‑letter abbreviations, full compass names, or only one format for `Direction` values? → A: Accept both abbreviations and full names on input; normalize to canonical 2‑letter abbreviations internally (N, NE, E, SE, S, SW, W, NW).

@@ -361,7 +361,7 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<int?>("Difficulty")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Direction")
+                    b.Property<string>("PrimaryTravelDirection")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DuplicateResolution")

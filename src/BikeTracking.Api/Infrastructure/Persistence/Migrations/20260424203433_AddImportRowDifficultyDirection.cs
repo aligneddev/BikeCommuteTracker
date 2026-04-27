@@ -14,25 +14,23 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                 name: "Difficulty",
                 table: "ImportRows",
                 type: "INTEGER",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
-                name: "Direction",
+                name: "PrimaryTravelDirection",
                 table: "ImportRows",
                 type: "TEXT",
-                nullable: true);
+                nullable: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Difficulty",
-                table: "ImportRows");
+            migrationBuilder.DropColumn(name: "Difficulty", table: "ImportRows");
 
-            migrationBuilder.DropColumn(
-                name: "Direction",
-                table: "ImportRows");
+            migrationBuilder.DropColumn(name: "PrimaryTravelDirection", table: "ImportRows");
         }
     }
 }

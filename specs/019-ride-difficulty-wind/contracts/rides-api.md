@@ -28,17 +28,18 @@ public sealed record RecordRideRequest(
 
     /// <summary>
     /// Rider's primary travel direction, used to compute WindResistanceRating.
-    /// Accepted values: "North", "NE", "NW", "South", "SE", "SW", "East", "West".
+    /// Accepted inputs: full compass names (e.g., "North", "Northeast") or 2-letter abbreviations.
+    /// Values are normalized server-side to canonical 2-letter abbreviations: `N, NE, E, SE, S, SW, W, NW`.
     /// </summary>
-    [property: MaxLength(5, ErrorMessage = "Primary travel direction must be 5 characters or fewer")]
-    string? PrimaryTravelDirection = null
+    [property: MaxLength(2, ErrorMessage = "Primary travel direction must be 2 characters or fewer")]
+        string? PrimaryTravelDirection = null
 );
 ```
 
 **Server-side behaviour**:
 - `WindResistanceRating` is **not** in the request; it is computed server-side in `RecordRideService`.
-- If `PrimaryTravelDirection` is provided and `WindSpeedMph` + `WindDirectionDeg` are available, `WindResistanceRating` is computed via `WindResistance.calculateDifficulty` and persisted.
-- `PrimaryTravelDirection` must be parsed via `WindResistance.tryParseCompassDirection`; if invalid, return `400 Bad Request` with error message listing accepted values.
+-- If `PrimaryTravelDirection` is provided and `WindSpeedMph` + `WindDirectionDeg` are available, `WindResistanceRating` is computed via `WindResistance.calculateDifficulty` and persisted.
+-- `PrimaryTravelDirection` must be parsed via `WindResistance.tryParseCompassDirection`; if invalid, return `400 Bad Request` with error message listing accepted values.
 
 ---
 
@@ -59,14 +60,14 @@ public sealed record EditRideRequest(
     [property: Range(1, 5, ErrorMessage = "Difficulty must be between 1 and 5")]
     int? Difficulty = null,
 
-    [property: MaxLength(5, ErrorMessage = "Primary travel direction must be 5 characters or fewer")]
-    string? PrimaryTravelDirection = null
+    [property: MaxLength(2, ErrorMessage = "Primary travel direction must be 2 characters or fewer")]
+        string? PrimaryTravelDirection = null
 );
 ```
 
 **Server-side behaviour** (FR-026, FR-027):
-- When `PrimaryTravelDirection` changes relative to the stored value, `EditRideService` recomputes `WindResistanceRating` using current `WindSpeedMph` and `WindDirectionDeg` and persists the new value.
-- When `PrimaryTravelDirection` is sent as `null` (direction cleared), `WindResistanceRating` is set to `null`.
+-- When `PrimaryTravelDirection` changes relative to the stored value, `EditRideService` recomputes `WindResistanceRating` using current `WindSpeedMph` and `WindDirectionDeg` and persists the new value.
+-- When `PrimaryTravelDirection` is sent as `null` (direction cleared), `WindResistanceRating` is set to `null`.
 - `Difficulty` is the rider's final choice — stored as-is (no silent server override).
 
 ---
@@ -91,7 +92,7 @@ public sealed record RideHistoryRow(
 
     // NEW fields:
     int? Difficulty = null,
-    string? PrimaryTravelDirection = null,
+        string? PrimaryTravelDirection = null,
     int? WindResistanceRating = null
 );
 ```
@@ -121,7 +122,7 @@ Content-Disposition: attachment; filename="ride-import-sample.csv"
 # Temp: optional. Fahrenheit (decimal).
 # Notes: optional. Max 500 characters.
 # Difficulty: optional. Integer 1 (Very Easy) to 5 (Very Hard).
-# Direction: optional. One of: North, NE, NW, South, SE, SW, East, West.
+# Direction: optional. Accepts full names or 2-letter abbreviations; normalized to N, NE, E, SE, S, SW, W, NW.
 Date,Miles,Time,Temp,Notes,Difficulty,Direction
 2026-01-15,12.5,45,38,"Morning commute, light rain",3,NE
 2026-01-16,12.5,43,41,,1,South
@@ -145,7 +146,7 @@ All existing `400 Bad Request` responses continue to use the existing problem de
 {
   "errors": {
     "Difficulty": ["Difficulty must be between 1 and 5"],
-    "PrimaryTravelDirection": ["Primary travel direction must be one of: North, NE, NW, South, SE, SW, East, West"]
+    "PrimaryTravelDirection": ["Primary travel direction must be one of: N, NE, E, SE, S, SW, W, NW (accepts full names or abbreviations)"]
   }
 }
 ```
