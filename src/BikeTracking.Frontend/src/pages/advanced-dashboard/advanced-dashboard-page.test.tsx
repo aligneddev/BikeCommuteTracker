@@ -6,6 +6,10 @@ vi.mock('../../services/advanced-dashboard-api', () => ({
   getAdvancedDashboard: vi.fn(),
 }))
 
+vi.mock('./DifficultyAnalyticsSection', () => ({
+  DifficultyAnalyticsSection: () => null,
+}))
+
 import * as advancedDashboardApi from '../../services/advanced-dashboard-api'
 import type { AdvancedDashboardResponse } from '../../services/advanced-dashboard-api'
 
@@ -24,6 +28,9 @@ function buildWindow(
     fuelCostEstimated: false,
     mileageRateSavings: null,
     combinedSavings: null,
+    totalExpenses: 0,
+    oilChangeSavings: null,
+    netSavings: null,
     ...overrides,
   }
 }
@@ -48,6 +55,7 @@ function buildResponse(
       mileageRateReminderRequired: false,
     },
     generatedAtUtc: new Date().toISOString(),
+    difficultySection: null,
     ...overrides,
   }
 }

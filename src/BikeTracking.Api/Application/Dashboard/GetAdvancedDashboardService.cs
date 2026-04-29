@@ -1,6 +1,9 @@
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
+using BikeTracking.Domain.FSharp;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 
 namespace BikeTracking.Api.Application.Dashboard;
 
@@ -129,11 +132,14 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
         var allTimeSavings = savingsWindows.AllTime;
         var suggestions = BuildSuggestions(rides, weeklyRides, allTimeSavings, nowLocal);
 
+        var difficultySection = BuildDifficultySection(rides);
+
         return new AdvancedDashboardResponse(
             SavingsWindows: savingsWindows,
             Suggestions: suggestions,
             Reminders: reminders,
-            GeneratedAtUtc: DateTime.UtcNow
+            GeneratedAtUtc: DateTime.UtcNow,
+            DifficultySection: difficultySection
         );
     }
 
@@ -327,4 +333,95 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
     /// <summary>Rounds a decimal value to 2 places using standard rounding (0.5 rounds up).</summary>
     private static decimal RoundTo2(decimal value) =>
         decimal.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    /// <summary>
+    /// Builds the difficulty analytics section from all rides.
+    /// Projects rides to RideDifficultySnapshot, calls F# calculation functions,
+    /// and returns an AdvancedDashboardDifficultySection.
+    /// </summary>
+    private static AdvancedDashboardDifficultySection BuildDifficultySection(
+        IReadOnlyList<Infrastructure.Persistence.Entities.RideEntity> rides
+    )
+    {
+        var snapshots = rides
+            .Select(r => new AdvancedDashboardCalculations.RideDifficultySnapshot(
+                RideDate: r.RideDateTimeLocal,
+                Difficulty: r.Difficulty.HasValue
+                    ? FSharpOption<int>.Some(r.Difficulty.Value)
+                    : FSharpOption<int>.None,
+                WindResistanceRating: r.WindResistanceRating.HasValue
+                    ? FSharpOption<int>.Some(r.WindResistanceRating.Value)
+                    : FSharpOption<int>.None,
+                WindSpeedMph: r.WindSpeedMph.HasValue
+                    ? FSharpOption<decimal>.Some(r.WindSpeedMph.Value)
+                    : FSharpOption<decimal>.None,
+                PrimaryTravelDirection: r.PrimaryTravelDirection is not null
+                    ? FSharpOption<string>.Some(r.PrimaryTravelDirection)
+                    : FSharpOption<string>.None,
+                WindDirectionDeg: r.WindDirectionDeg.HasValue
+                    ? FSharpOption<int>.Some(r.WindDirectionDeg.Value)
+                    : FSharpOption<int>.None
+            ))
+            .ToList();
+
+        var fsharpList = ListModule.OfSeq(snapshots);
+
+        var overallAverage = AdvancedDashboardCalculations.calculateOverallAverageDifficulty(
+            fsharpList
+        );
+        var byMonthSeq = AdvancedDashboardCalculations.calculateDifficultyByMonth(fsharpList);
+        var distributionSeq = AdvancedDashboardCalculations.calculateWindResistanceDistribution(
+            fsharpList
+        );
+
+        var difficultyByMonth = byMonthSeq
+            .Select(r => new DifficultyByMonth(
+                r.MonthNumber,
+                r.MonthName,
+                r.AverageDifficulty,
+                r.RideCount
+            ))
+            .ToList();
+
+        var mostDifficultMonths = difficultyByMonth
+            .OrderByDescending(r => r.AverageDifficulty)
+            .ThenByDescending(r => r.MonthNumber)
+            .ToList();
+
+        var windResistanceBins = distributionSeq
+            .Select(b => new WindResistanceBin(
+                Rating: b.Rating,
+                RideCount: b.RideCount,
+                Label: GetWindResistanceLabel(b.Rating),
+                IsAssisted: b.Rating < 0
+            ))
+            .ToList();
+
+        var isEmpty = !OptionModule.IsSome(overallAverage) && difficultyByMonth.Count == 0;
+
+        return new AdvancedDashboardDifficultySection(
+            OverallAverageDifficulty: OptionModule.IsSome(overallAverage)
+                ? overallAverage.Value
+                : null,
+            DifficultyByMonth: difficultyByMonth,
+            MostDifficultMonths: mostDifficultMonths,
+            WindResistanceDistribution: windResistanceBins,
+            IsEmpty: isEmpty
+        );
+    }
+
+    private static string GetWindResistanceLabel(int rating) =>
+        rating switch
+        {
+            -4 => "\u22124 (strong tailwind)",
+            -3 => "\u22123 (tailwind)",
+            -2 => "\u22122 (tailwind)",
+            -1 => "\u22121 (light tailwind)",
+            0 => "0 (neutral)",
+            1 => "+1 (light headwind)",
+            2 => "+2 (headwind)",
+            3 => "+3 (headwind)",
+            4 => "+4 (strong headwind)",
+            _ => $"{(rating > 0 ? "+" : "")}{rating}",
+        };
 }
