@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import type {
+  CompassDirection,
   GetRideHistoryParams,
   RideHistoryResponse,
   RideHistoryRow,
 } from '../services/ridesService'
 import {
+  COMPASS_DIRECTIONS,
   deleteRide,
   editRide,
   getGasPrice,
   getRideHistory,
   getRideWeather,
 } from '../services/ridesService'
+import { suggestDifficulty } from '../utils/windResistance'
 import { RideDeleteDialog } from '../components/RideDeleteDialog/RideDeleteDialog'
 import { MileageSummaryCard } from '../components/mileage-summary-card/mileage-summary-card'
 import {
@@ -37,6 +40,8 @@ function HistoryTable({
   editedNote,
   editedGasPrice,
   editedGasPriceSource,
+  editedDifficulty,
+  editedPrimaryTravelDirection,
   loadingWeather,
   onStartEdit,
   onEditedRideDateTimeLocalChange,
@@ -49,6 +54,8 @@ function HistoryTable({
   onEditedPrecipitationTypeChange,
   onEditedNoteChange,
   onEditedGasPriceChange,
+  onEditedDifficultyChange,
+  onEditedPrimaryTravelDirectionChange,
   onLoadWeather,
   onSaveEdit,
   onCancelEdit,
@@ -67,6 +74,8 @@ function HistoryTable({
   editedNote: string
   editedGasPrice: string
   editedGasPriceSource: string
+  editedDifficulty: string
+  editedPrimaryTravelDirection: CompassDirection | ''
   loadingWeather: boolean
   onStartEdit: (ride: RideHistoryRow) => void
   onEditedRideDateTimeLocalChange: (value: string) => void
@@ -79,6 +88,8 @@ function HistoryTable({
   onEditedPrecipitationTypeChange: (value: string) => void
   onEditedNoteChange: (value: string) => void
   onEditedGasPriceChange: (value: string) => void
+  onEditedDifficultyChange: (value: string) => void
+  onEditedPrimaryTravelDirectionChange: (value: CompassDirection | '') => void
   onLoadWeather: () => void
   onSaveEdit: (ride: RideHistoryRow) => void
   onCancelEdit: () => void
@@ -94,11 +105,14 @@ function HistoryTable({
     <table className="history-page-table" aria-label="Ride history table">
       <thead>
         <tr>
-          <th scope="col">Dateddddd</th>
+          <th scope="col">Date</th>
           <th scope="col">Miles</th>
           <th scope="col">Duration</th>
           <th scope="col">Temperature</th>
           <th scope="col">Gas Price</th>
+          <th scope="col">Direction</th>
+          <th scope="col">Difficulty</th>
+          <th scope="col">Wind Resistance</th>
           <th scope="col">Notes</th>
           <th scope="col">Actions</th>
         </tr>
@@ -222,6 +236,57 @@ function HistoryTable({
             <td>
               {editingRideId === ride.rideId ? (
                 <div className="history-page-inline-editor">
+                  <label htmlFor={`edit-ride-direction-${ride.rideId}`}>Direction</label>
+                  <select
+                    id={`edit-ride-direction-${ride.rideId}`}
+                    value={editedPrimaryTravelDirection}
+                    onChange={(event) =>
+                      onEditedPrimaryTravelDirectionChange(event.target.value as CompassDirection | '')
+                    }
+                  >
+                    <option value="">— none —</option>
+                    {COMPASS_DIRECTIONS.map((dir) => (
+                      <option key={dir} value={dir}>{dir}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                ride.primaryTravelDirection ?? '—'
+              )}
+            </td>
+            <td>
+              {editingRideId === ride.rideId ? (
+                <div className="history-page-inline-editor">
+                  <label htmlFor={`edit-ride-difficulty-${ride.rideId}`}>Difficulty</label>
+                  <select
+                    id={`edit-ride-difficulty-${ride.rideId}`}
+                    value={editedDifficulty}
+                    onChange={(event) => onEditedDifficultyChange(event.target.value)}
+                  >
+                    <option value="">— none —</option>
+                    <option value="1">1 — Very Easy</option>
+                    <option value="2">2 — Easy</option>
+                    <option value="3">3 — Moderate</option>
+                    <option value="4">4 — Hard</option>
+                    <option value="5">5 — Very Hard</option>
+                  </select>
+                </div>
+              ) : (
+                ride.difficulty != null ? ride.difficulty.toString() : '—'
+              )}
+            </td>
+            <td>
+              {ride.windResistanceRating != null ? (
+                <span className={ride.windResistanceRating < 0 ? 'wind-resistance-assisted' : 'wind-resistance-headwind'}>
+                  {ride.windResistanceRating > 0 ? `+${ride.windResistanceRating}` : ride.windResistanceRating.toString()}
+                </span>
+              ) : (
+                '—'
+              )}
+            </td>
+            <td>
+              {editingRideId === ride.rideId ? (
+                <div className="history-page-inline-editor">
                   <label htmlFor={`edit-ride-note-${ride.rideId}`}>Notes</label>
                   <textarea
                     id={`edit-ride-note-${ride.rideId}`}
@@ -311,6 +376,9 @@ export function HistoryPage() {
   const [editedGasPriceSource, setEditedGasPriceSource] = useState<string>('')
   const [loadingWeather, setLoadingWeather] = useState<boolean>(false)
   const [ridePendingDelete, setRidePendingDelete] = useState<RideHistoryRow | null>(null)
+  const [editedDifficulty, setEditedDifficulty] = useState<string>('')
+  const [editedPrimaryTravelDirection, setEditedPrimaryTravelDirection] = useState<CompassDirection | ''>('')
+  const [difficultyAutoSuggested, setDifficultyAutoSuggested] = useState<boolean>(false)
 
   function applyLoadedWeather(weather: {
     temperature?: number
@@ -390,6 +458,9 @@ export function HistoryPage() {
     setEditedGasPrice(
       ride.gasPricePerGallon != null ? ride.gasPricePerGallon.toFixed(4) : ''
     )
+    setEditedDifficulty(ride.difficulty != null ? ride.difficulty.toString() : '')
+    setEditedPrimaryTravelDirection((ride.primaryTravelDirection as CompassDirection | undefined) ?? '')
+    setDifficultyAutoSuggested(false)
   }
 
   function handleCancelEdit(): void {
@@ -461,6 +532,20 @@ export function HistoryPage() {
     return () => clearTimeout(timerId)
   }, [editingRideId, editedRideDateTimeLocal])
 
+  useEffect(() => {
+    if (editingRideId === null || !editedPrimaryTravelDirection) return
+    const suggestion = suggestDifficulty(
+      editedWindSpeedMph ? parseFloat(editedWindSpeedMph) : undefined,
+      editedPrimaryTravelDirection,
+      editedWindDirectionDeg ? parseInt(editedWindDirectionDeg) : undefined
+    )
+    if (suggestion !== null && !difficultyAutoSuggested) {
+      setEditedDifficulty(suggestion.toString())
+      setDifficultyAutoSuggested(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editedPrimaryTravelDirection]) // Only trigger on direction change, not every wind change
+
   async function handleSaveEdit(ride: RideHistoryRow): Promise<void> {
     const milesValue = Number(editedMiles)
     if (!Number.isFinite(milesValue) || milesValue <= 0) {
@@ -519,6 +604,8 @@ export function HistoryPage() {
       precipitationType: precipitationTypeValue,
       note: editedNote,
       weatherUserOverridden: weatherEditedManually,
+      difficulty: editedDifficulty ? parseInt(editedDifficulty) : undefined,
+      primaryTravelDirection: editedPrimaryTravelDirection || undefined,
       // Version tokens are added to history rows in later tasks; use baseline v1 for now.
       expectedVersion: 1,
     })
@@ -548,6 +635,9 @@ export function HistoryPage() {
     setWeatherEditedManually(false)
     setEditedGasPrice('')
     setEditedGasPriceSource('')
+    setEditedDifficulty('')
+    setEditedPrimaryTravelDirection('')
+    setDifficultyAutoSuggested(false)
 
     await loadHistory({
       from: fromDate || undefined,
@@ -722,6 +812,15 @@ export function HistoryPage() {
           onEditedGasPriceChange={(value) => {
             setEditedGasPrice(value)
             setEditedGasPriceSource('')
+          }}
+          editedDifficulty={editedDifficulty}
+          editedPrimaryTravelDirection={editedPrimaryTravelDirection}
+          onEditedDifficultyChange={(value) => {
+            setEditedDifficulty(value)
+            setDifficultyAutoSuggested(false)
+          }}
+          onEditedPrimaryTravelDirectionChange={(value) => {
+            setEditedPrimaryTravelDirection(value)
           }}
           onLoadWeather={() => void handleLoadWeather()}
           onSaveEdit={(ride) => void handleSaveEdit(ride)}

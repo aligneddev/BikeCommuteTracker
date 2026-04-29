@@ -1,5 +1,7 @@
 using System.Globalization;
 using BikeTracking.Api.Contracts;
+using BikeTracking.Domain.FSharp;
+using Microsoft.FSharp.Core;
 
 namespace BikeTracking.Api.Application.Imports;
 
@@ -91,6 +93,49 @@ public static class CsvValidationRules
                     "Notes"
                 )
             );
+        }
+
+        if (row.Difficulty is not null)
+        {
+            if (
+                !int.TryParse(row.Difficulty, out var difficulty)
+                || difficulty < 1
+                || difficulty > 5
+            )
+            {
+                errors.Add(
+                    new ImportValidationError(
+                        row.RowNumber,
+                        "INVALID_DIFFICULTY",
+                        $"Difficulty '{row.Difficulty}' is not valid. Must be an integer between 1 (Very Easy) and 5 (Very Hard).",
+                        "Difficulty"
+                    )
+                );
+            }
+        }
+
+        if (row.PrimaryTravelDirection is not null)
+        {
+            var validDirections = WindResistance.validDirectionNames.ToList();
+            var isValid = validDirections.Any(d =>
+                string.Equals(
+                    d,
+                    row.PrimaryTravelDirection.Trim(),
+                    StringComparison.OrdinalIgnoreCase
+                )
+            );
+
+            if (!isValid)
+            {
+                errors.Add(
+                    new ImportValidationError(
+                        row.RowNumber,
+                        "INVALID_DIRECTION",
+                        $"PrimaryTravelDirection '{row.PrimaryTravelDirection}' is not recognised. Accepted values: {string.Join(", ", validDirections)}.",
+                        "PrimaryTravelDirection"
+                    )
+                );
+            }
         }
 
         return errors;

@@ -140,6 +140,103 @@ public sealed class RidesPersistenceTests
         Assert.NotNull(exception);
     }
 
+    [Fact]
+    public async Task DbContext_CanRoundTrip_NewDifficultyColumns()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Difficulty Test Rider",
+            NormalizedName = "difficulty test rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var ride = new RideEntity
+        {
+            RiderId = (int)user.UserId,
+            RideDateTimeLocal = DateTime.Now,
+            Miles = 8.0m,
+            CreatedAtUtc = DateTime.UtcNow,
+            Difficulty = 3,
+            PrimaryTravelDirection = "NE",
+            WindResistanceRating = 2,
+        };
+
+        context.Rides.Add(ride);
+        await context.SaveChangesAsync();
+
+        context.ChangeTracker.Clear();
+        var retrieved = await context.Rides.FirstAsync(r => r.Difficulty == 3);
+        Assert.Equal(3, retrieved.Difficulty);
+        Assert.Equal("NE", retrieved.PrimaryTravelDirection);
+        Assert.Equal(2, retrieved.WindResistanceRating);
+    }
+
+    [Fact]
+    public async Task DbContext_AllowsNull_ForAllThreeNewColumns()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "Null Fields Rider",
+            NormalizedName = "null fields rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var ride = new RideEntity
+        {
+            RiderId = (int)user.UserId,
+            RideDateTimeLocal = DateTime.Now,
+            Miles = 5.0m,
+            CreatedAtUtc = DateTime.UtcNow,
+            Difficulty = null,
+            PrimaryTravelDirection = null,
+            WindResistanceRating = null,
+        };
+
+        context.Rides.Add(ride);
+        await context.SaveChangesAsync();
+
+        context.ChangeTracker.Clear();
+        var retrieved = await context.Rides.FirstAsync(r => r.Miles == 5.0m);
+        Assert.Null(retrieved.Difficulty);
+        Assert.Null(retrieved.PrimaryTravelDirection);
+        Assert.Null(retrieved.WindResistanceRating);
+    }
+
+    [Fact(
+        Skip = "In-memory SQLite does not enforce MaxLength; enforced by EF model metadata and API-layer DataAnnotations"
+    )]
+    public async Task DbContext_Enforces_MaxLength5_ForPrimaryTravelDirection()
+    {
+        using var context = CreateDbContext();
+        var user = new UserEntity
+        {
+            DisplayName = "MaxLength Rider",
+            NormalizedName = "maxlength rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        // "Southwest" is 9 chars — exceeds the 5-char limit for PrimaryTravelDirection
+        var ride = new RideEntity
+        {
+            RiderId = (int)user.UserId,
+            RideDateTimeLocal = DateTime.Now,
+            Miles = 3.0m,
+            CreatedAtUtc = DateTime.UtcNow,
+            PrimaryTravelDirection = "Southwest", // too long
+        };
+
+        context.Rides.Add(ride);
+        await Assert.ThrowsAnyAsync<Exception>(async () => await context.SaveChangesAsync());
+    }
+
     private static BikeTrackingDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<BikeTrackingDbContext>()

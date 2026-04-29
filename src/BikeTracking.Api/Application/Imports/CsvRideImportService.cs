@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using BikeTracking.Domain.FSharp;
 
 namespace BikeTracking.Api.Application.Imports;
 
@@ -270,6 +271,29 @@ public sealed class CsvRideImportService(
         IReadOnlyList<ImportValidationError> errors
     )
     {
+        int? parsedDifficulty = null;
+        if (
+            parsedRow.Difficulty is not null
+            && int.TryParse(parsedRow.Difficulty, out var diffInt)
+            && diffInt >= 1
+            && diffInt <= 5
+        )
+        {
+            parsedDifficulty = diffInt;
+        }
+
+        string? parsedDirection = null;
+        if (parsedRow.PrimaryTravelDirection is not null)
+        {
+            parsedDirection = WindResistance.validDirectionNames.FirstOrDefault(d =>
+                string.Equals(
+                    d,
+                    parsedRow.PrimaryTravelDirection.Trim(),
+                    StringComparison.OrdinalIgnoreCase
+                )
+            );
+        }
+
         return new ImportRowEntity
         {
             RowNumber = parsedRow.RowNumber,
@@ -279,6 +303,8 @@ public sealed class CsvRideImportService(
             Temperature = parsedTemp,
             TagsRaw = parsedRow.Tags,
             Notes = parsedRow.Notes,
+            Difficulty = isValid ? parsedDifficulty : null,
+            PrimaryTravelDirection = isValid ? parsedDirection : null,
             ValidationStatus = isValid ? "valid" : "invalid",
             ValidationErrorsJson = isValid ? null : JsonSerializer.Serialize(errors),
             DuplicateStatus = "none",

@@ -10,6 +10,11 @@ vi.mock('../services/ridesService', () => ({
   getRideWeather: vi.fn(),
   getQuickRideOptions: vi.fn(),
   recordRide: vi.fn(),
+  COMPASS_DIRECTIONS: ['North', 'NE', 'East', 'SE', 'South', 'SW', 'West', 'NW'],
+}))
+
+vi.mock('../utils/windResistance', () => ({
+  suggestDifficulty: vi.fn().mockReturnValue(null),
 }))
 
 import * as ridesService from '../services/ridesService'

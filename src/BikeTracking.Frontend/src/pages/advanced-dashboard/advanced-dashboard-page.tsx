@@ -6,6 +6,7 @@ import {
 } from '../../services/advanced-dashboard-api'
 import { SavingsWindowsTable } from './SavingsWindowsTable'
 import { AdvancedSuggestionsPanel } from './AdvancedSuggestionsPanel'
+import { DifficultyAnalyticsSection } from './DifficultyAnalyticsSection'
 import './advanced-dashboard-page.css'
 
 /**
@@ -110,6 +111,10 @@ export function AdvancedDashboardPage() {
           </section>
 
           <AdvancedSuggestionsPanel suggestions={data.suggestions} />
+
+          {data.difficultySection ? (
+            <DifficultyAnalyticsSection section={data.difficultySection} />
+          ) : null}
         </>
       ) : null}
 
