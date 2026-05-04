@@ -6,6 +6,17 @@ import {
   type UserSettingsResponse,
   type UserSettingsUpsertRequest,
 } from '../../services/users-api'
+import {
+  COMPASS_DIRECTIONS,
+  createRidePreset,
+  deleteRidePreset,
+  getRidePresets,
+  updateRidePreset,
+  type RidePreset,
+  type RidePresetPeriodTag,
+  type UpsertRidePresetRequest,
+} from '../../services/ridesService'
+import { PERIOD_TAG_DEFAULT_DIRECTIONS } from '../../services/ridesService'
 import './SettingsPage.css'
 
 interface SettingsFormSnapshot {
@@ -66,6 +77,13 @@ export function SettingsPage() {
   const [saving, setSaving] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
   const [success, setSuccess] = useState<string>('')
+  const [ridePresets, setRidePresets] = useState<RidePreset[]>([])
+  const [editingPresetId, setEditingPresetId] = useState<number | null>(null)
+  const [presetName, setPresetName] = useState<string>('')
+  const [presetPrimaryDirection, setPresetPrimaryDirection] = useState<string>('SW')
+  const [presetPeriodTag, setPresetPeriodTag] = useState<RidePresetPeriodTag>('morning')
+  const [presetExactStartTimeLocal, setPresetExactStartTimeLocal] = useState<string>('07:45')
+  const [presetDurationMinutes, setPresetDurationMinutes] = useState<number | ''>('')
 
   useEffect(() => {
     let isMounted = true
@@ -73,11 +91,14 @@ export function SettingsPage() {
     async function load(): Promise<void> {
       setError('')
       try {
-        const response = await getUserSettings()
+        const [settingsResponse, presetsResponse] = await Promise.all([
+          getUserSettings(),
+          getRidePresets(),
+        ])
         if (!isMounted) return
 
-        if (response.ok && response.data) {
-          const settings = response.data.settings
+        if (settingsResponse.ok && settingsResponse.data) {
+          const settings = settingsResponse.data.settings
           setAverageCarMpg(settings.averageCarMpg ?? '')
           setYearlyGoalMiles(settings.yearlyGoalMiles ?? '')
           setOilChangePrice(settings.oilChangePrice ?? '')
@@ -87,9 +108,10 @@ export function SettingsPage() {
           setLongitude(settings.longitude ?? '')
           setDashboardGallonsAvoidedEnabled(settings.dashboardGallonsAvoidedEnabled)
           setDashboardGoalProgressEnabled(settings.dashboardGoalProgressEnabled)
-          setInitialSnapshot(toSnapshot(response.data))
+          setInitialSnapshot(toSnapshot(settingsResponse.data))
+          setRidePresets(presetsResponse.presets)
         } else {
-          setError(response.error?.message ?? 'Failed to load settings')
+          setError(settingsResponse.error?.message ?? 'Failed to load settings')
         }
       } catch {
         if (isMounted) {
@@ -136,6 +158,87 @@ export function SettingsPage() {
         maximumAge: 0,
       }
     )
+  }
+
+  function resetPresetForm(): void {
+    setEditingPresetId(null)
+    setPresetName('')
+    setPresetPrimaryDirection('SW')
+    setPresetPeriodTag('morning')
+    setPresetExactStartTimeLocal('07:45')
+    setPresetDurationMinutes('')
+  }
+
+  function onPeriodTagChange(tag: RidePresetPeriodTag): void {
+    setPresetPeriodTag(tag)
+    setPresetPrimaryDirection(PERIOD_TAG_DEFAULT_DIRECTIONS[tag])
+  }
+
+  async function onSubmitPreset(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (presetName.trim().length === 0) {
+      setError('Preset name is required.')
+      return
+    }
+
+    if (presetDurationMinutes === '' || presetDurationMinutes <= 0) {
+      setError('Duration minutes must be greater than 0.')
+      return
+    }
+
+    const request: UpsertRidePresetRequest = {
+      name: presetName.trim(),
+      primaryDirection: presetPrimaryDirection as UpsertRidePresetRequest['primaryDirection'],
+      periodTag: presetPeriodTag,
+      exactStartTimeLocal: presetExactStartTimeLocal,
+      durationMinutes: presetDurationMinutes,
+    }
+
+    try {
+      if (editingPresetId === null) {
+        const created = await createRidePreset(request)
+        setRidePresets((current) => [created, ...current])
+        setSuccess('Preset created.')
+      } else {
+        const updated = await updateRidePreset(editingPresetId, request)
+        setRidePresets((current) =>
+          current.map((preset) => (preset.presetId === updated.presetId ? updated : preset))
+        )
+        setSuccess('Preset updated.')
+      }
+
+      resetPresetForm()
+    } catch {
+      setError('Failed to save preset')
+    }
+  }
+
+  function onEditPreset(preset: RidePreset): void {
+    setEditingPresetId(preset.presetId)
+    setPresetName(preset.name)
+    setPresetPrimaryDirection(preset.primaryDirection)
+    setPresetPeriodTag(preset.periodTag)
+    setPresetExactStartTimeLocal(preset.exactStartTimeLocal)
+    setPresetDurationMinutes(preset.durationMinutes)
+  }
+
+  async function onDeletePreset(presetId: number): Promise<void> {
+    setError('')
+    setSuccess('')
+
+    try {
+      await deleteRidePreset(presetId)
+      setRidePresets((current) => current.filter((preset) => preset.presetId !== presetId))
+      if (editingPresetId === presetId) {
+        resetPresetForm()
+      }
+      setSuccess('Preset deleted.')
+    } catch {
+      setError('Failed to delete preset')
+    }
   }
 
   async function onSave(event: React.FormEvent<HTMLFormElement>): Promise<void> {
@@ -370,6 +473,120 @@ export function SettingsPage() {
             </button>
           </div>
         </form>
+
+        <section className="settings-presets" aria-label="Ride presets">
+          <h2>Ride Presets</h2>
+
+          <form onSubmit={onSubmitPreset} className="settings-presets-form">
+            <div className="settings-grid">
+              <div className="settings-field">
+                <label htmlFor="presetName">Preset Name</label>
+                <input
+                  id="presetName"
+                  type="text"
+                  value={presetName}
+                  onChange={(event) => setPresetName(event.target.value)}
+                />
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="presetPrimaryDirection">Primary Direction</label>
+                <select
+                  id="presetPrimaryDirection"
+                  value={presetPrimaryDirection}
+                  onChange={(event) => setPresetPrimaryDirection(event.target.value)}
+                >
+                  {COMPASS_DIRECTIONS.map((direction) => (
+                    <option key={direction} value={direction}>
+                      {direction}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="presetPeriodTag">Period Tag</label>
+                <select
+                  id="presetPeriodTag"
+                  value={presetPeriodTag}
+                  onChange={(event) =>
+                    onPeriodTagChange(event.target.value as RidePresetPeriodTag)
+                  }
+                >
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                </select>
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="presetExactStartTimeLocal">Exact Start Time</label>
+                <input
+                  id="presetExactStartTimeLocal"
+                  type="time"
+                  value={presetExactStartTimeLocal}
+                  onChange={(event) => setPresetExactStartTimeLocal(event.target.value)}
+                />
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="presetDurationMinutes">Duration Minutes</label>
+                <input
+                  id="presetDurationMinutes"
+                  type="number"
+                  min={1}
+                  value={presetDurationMinutes}
+                  onChange={(event) =>
+                    setPresetDurationMinutes(
+                      event.target.value === '' ? '' : Number(event.target.value)
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="settings-actions">
+              <button type="submit" className="settings-save">
+                {editingPresetId === null ? 'Add Preset' : 'Save Preset'}
+              </button>
+              {editingPresetId === null ? null : (
+                <button
+                  type="button"
+                  className="settings-secondary-action"
+                  onClick={resetPresetForm}
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+          </form>
+
+          <ul className="settings-presets-list">
+            {ridePresets.map((preset) => (
+              <li key={preset.presetId} className="settings-presets-item">
+                <span>
+                  {preset.name} ({preset.primaryDirection}, {preset.periodTag}, {preset.exactStartTimeLocal},{' '}
+                  {preset.durationMinutes} min)
+                </span>
+                <div className="settings-inline-actions">
+                  <button
+                    type="button"
+                    className="settings-secondary-action"
+                    onClick={() => onEditPreset(preset)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="settings-secondary-action"
+                    onClick={() => void onDeletePreset(preset.presetId)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       </section>
     </main>
   )

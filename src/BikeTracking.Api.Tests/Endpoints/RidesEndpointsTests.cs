@@ -390,60 +390,136 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
-    public async Task GetQuickRideOptions_WithAuth_Returns200()
+    public async Task RidePresetCrud_FullRoundTrip_IncludingExactTimeAndDelete()
     {
         await using var host = await RecordRideApiHost.StartAsync();
-        var userId = await host.SeedUserAsync("QuickOptionsUser");
-        await host.RecordRideAsync(userId, miles: 11.5m, rideMinutes: 39, temperature: 65m);
+        var userId = await host.SeedUserAsync("PresetCrud");
 
-        var response = await host.Client.GetWithAuthAsync("/api/rides/quick-options", userId);
+        var createRequest = new UpsertRidePresetRequest(
+            Name: "Morning Commute",
+            PrimaryDirection: "SW",
+            PeriodTag: "morning",
+            ExactStartTimeLocal: "07:45",
+            DurationMinutes: 34
+        );
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payload = await response.Content.ReadFromJsonAsync<QuickRideOptionsResponse>();
-        Assert.NotNull(payload);
-        Assert.NotNull(payload.Options);
-        Assert.NotEmpty(payload.Options);
+        var createResponse = await host.Client.PostWithAuthAsync(
+            "/api/rides/presets",
+            createRequest,
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var created = await createResponse.Content.ReadFromJsonAsync<RidePresetDto>();
+        Assert.NotNull(created);
+        Assert.Equal("07:45", created.ExactStartTimeLocal);
+
+        var listResponse = await host.Client.GetWithAuthAsync("/api/rides/presets", userId);
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+
+        var listed = await listResponse.Content.ReadFromJsonAsync<RidePresetsResponse>();
+        Assert.NotNull(listed);
+        var existing = Assert.Single(listed.Presets);
+        Assert.Equal(created.PresetId, existing.PresetId);
+
+        var updateRequest = new UpsertRidePresetRequest(
+            Name: "Morning Commute",
+            PrimaryDirection: "NE",
+            PeriodTag: "morning",
+            ExactStartTimeLocal: "08:05",
+            DurationMinutes: 40
+        );
+
+        var updateResponse = await host.Client.PutWithAuthAsync(
+            $"/api/rides/presets/{created.PresetId}",
+            updateRequest,
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updated = await updateResponse.Content.ReadFromJsonAsync<RidePresetDto>();
+        Assert.NotNull(updated);
+        Assert.Equal("08:05", updated.ExactStartTimeLocal);
+        Assert.Equal("NE", updated.PrimaryDirection);
+
+        var deleteRequest = new HttpRequestMessage(
+            HttpMethod.Delete,
+            $"/api/rides/presets/{created.PresetId}"
+        );
+        deleteRequest.Headers.Add("X-User-Id", userId.ToString());
+        var deleteResponse = await host.Client.SendAsync(deleteRequest);
+
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
     }
 
     [Fact]
-    public async Task GetQuickRideOptions_WithoutAuth_Returns401()
+    public async Task CreateRidePreset_DuplicateNameForSameRider_Returns400()
     {
         await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("PresetDuplicate");
 
-        var response = await host.Client.GetAsync("/api/rides/quick-options");
+        var request = new UpsertRidePresetRequest(
+            Name: "Afternoon Return",
+            PrimaryDirection: "NE",
+            PeriodTag: "afternoon",
+            ExactStartTimeLocal: "17:35",
+            DurationMinutes: 32
+        );
 
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var first = await host.Client.PostWithAuthAsync("/api/rides/presets", request, userId);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        var second = await host.Client.PostWithAuthAsync("/api/rides/presets", request, userId);
+        Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
     }
 
     [Fact]
-    public async Task GetQuickRideOptions_ExcludesRidesWithoutRideMinutes()
+    public async Task CreateRidePreset_MorningWithOverrideDirection_PersistsOverrideNotDefault()
     {
         await using var host = await RecordRideApiHost.StartAsync();
-        var userId = await host.SeedUserAsync("QuickOptionsIncomplete");
-        await host.RecordRideAsync(userId, miles: 11.5m, rideMinutes: 39, temperature: 65m);
-        await host.RecordRideAsync(userId, miles: 7.25m, rideMinutes: null, temperature: 55m);
+        var userId = await host.SeedUserAsync("PresetDirectionOverride");
 
-        var response = await host.Client.GetWithAuthAsync("/api/rides/quick-options", userId);
+        // Morning default would be SW, but rider overrides to North
+        var request = new UpsertRidePresetRequest(
+            Name: "Custom Morning",
+            PrimaryDirection: "North",
+            PeriodTag: "morning",
+            ExactStartTimeLocal: "07:30",
+            DurationMinutes: 35
+        );
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payload = await response.Content.ReadFromJsonAsync<QuickRideOptionsResponse>();
-        Assert.NotNull(payload);
-        Assert.All(payload.Options, option => Assert.True(option.RideMinutes > 0));
-        Assert.DoesNotContain(payload.Options, option => option.Miles == 7.25m);
+        var response = await host.Client.PostWithAuthAsync("/api/rides/presets", request, userId);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var created = await response.Content.ReadFromJsonAsync<RidePresetDto>();
+        Assert.NotNull(created);
+        Assert.Equal("North", created.PrimaryDirection);
+        Assert.Equal("morning", created.PeriodTag);
     }
 
     [Fact]
-    public async Task GetQuickRideOptions_WithoutEligibleRides_ReturnsEmptyOptionsArray()
+    public async Task CreateRidePreset_AfternoonWithOverrideDirection_PersistsOverrideNotDefault()
     {
         await using var host = await RecordRideApiHost.StartAsync();
-        var userId = await host.SeedUserAsync("QuickOptionsEmpty");
+        var userId = await host.SeedUserAsync("PresetDirectionOverrideAft");
 
-        var response = await host.Client.GetWithAuthAsync("/api/rides/quick-options", userId);
+        // Afternoon default would be NE, but rider overrides to South
+        var request = new UpsertRidePresetRequest(
+            Name: "Custom Afternoon",
+            PrimaryDirection: "South",
+            PeriodTag: "afternoon",
+            ExactStartTimeLocal: "17:15",
+            DurationMinutes: 30
+        );
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payload = await response.Content.ReadFromJsonAsync<QuickRideOptionsResponse>();
-        Assert.NotNull(payload);
-        Assert.Empty(payload.Options);
+        var response = await host.Client.PostWithAuthAsync("/api/rides/presets", request, userId);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var created = await response.Content.ReadFromJsonAsync<RidePresetDto>();
+        Assert.NotNull(created);
+        Assert.Equal("South", created.PrimaryDirection);
+        Assert.Equal("afternoon", created.PeriodTag);
     }
 
     // History endpoint tests
@@ -785,7 +861,7 @@ public sealed class RidesEndpointsTests
             // Add Rides services
             builder.Services.AddScoped<RecordRideService>();
             builder.Services.AddScoped<GetRideDefaultsService>();
-            builder.Services.AddScoped<GetQuickRideOptionsService>();
+            builder.Services.AddScoped<IRidePresetService, RidePresetService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
             builder.Services.AddScoped<IGasPriceLookupService, StubGasPriceLookupService>();

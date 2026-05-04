@@ -158,11 +158,7 @@ public sealed class RecordRideWithDifficultyTests
         var recordRequest = new HttpRequestMessage(HttpMethod.Post, "/api/rides")
         {
             Content = JsonContent.Create(
-                new RecordRideRequest(
-                    RideDateTimeLocal: DateTime.Now,
-                    Miles: 5.0m,
-                    Difficulty: 6
-                )
+                new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: 5.0m, Difficulty: 6)
             ),
         };
         recordRequest.Headers.Add("X-User-Id", userId.ToString());
@@ -220,7 +216,6 @@ public sealed class RecordRideWithDifficultyTests
 
             builder.Services.AddScoped<RecordRideService>();
             builder.Services.AddScoped<GetRideDefaultsService>();
-            builder.Services.AddScoped<GetQuickRideOptionsService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
             builder.Services.AddScoped<IGasPriceLookupService, NullGasPriceLookupService>();

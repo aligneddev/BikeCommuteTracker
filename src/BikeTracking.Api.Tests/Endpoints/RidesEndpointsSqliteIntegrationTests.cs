@@ -39,6 +39,146 @@ public sealed class RidesEndpointsSqliteIntegrationTests
         Assert.Equal(3.4567m, ride.GasPricePerGallon);
     }
 
+    [Fact]
+    public async Task RidePreset_WithDuplicateNameForSameRider_ViolatesUniqueConstraint()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var riderId = await host.SeedUserAsync("PresetUnique");
+
+        await host.CreateRidePresetAsync(riderId, "Morning", "07:45", 30);
+
+        await Assert.ThrowsAsync<DbUpdateException>(async () =>
+            await host.CreateRidePresetAsync(riderId, "Morning", "08:15", 40)
+        );
+    }
+
+    [Fact]
+    public async Task RidePreset_WithSameNameAcrossRiders_IsAllowed()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var riderA = await host.SeedUserAsync("PresetRiderA");
+        var riderB = await host.SeedUserAsync("PresetRiderB");
+
+        await host.CreateRidePresetAsync(riderA, "Morning", "07:45", 30);
+        await host.CreateRidePresetAsync(riderB, "Morning", "08:15", 40);
+
+        var riderAPresets = await host.GetPresetCountForRiderAsync(riderA);
+        var riderBPresets = await host.GetPresetCountForRiderAsync(riderB);
+
+        Assert.Equal(1, riderAPresets);
+        Assert.Equal(1, riderBPresets);
+    }
+
+    [Fact]
+    public async Task RidePreset_StoresExactStartTime()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var riderId = await host.SeedUserAsync("PresetTime");
+        var presetId = await host.CreateRidePresetAsync(riderId, "Afternoon", "17:35", 32);
+
+        var preset = await host.GetRidePresetAsync(presetId);
+
+        Assert.NotNull(preset);
+        Assert.Equal(new TimeOnly(17, 35), preset.ExactStartTimeLocal);
+        Assert.Equal("afternoon", preset.PeriodTag);
+    }
+
+    [Fact]
+    public async Task RidePresets_AreOrderedByMostRecentlyUsedAfterSuccessfulRideSave()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var riderId = await host.SeedUserAsync("PresetMruOrder");
+        var morningPresetId = await host.CreateRidePresetAsync(riderId, "Morning", "07:45", 30);
+        var afternoonPresetId = await host.CreateRidePresetAsync(riderId, "Afternoon", "17:35", 32);
+
+        var recordRideResponse = await host.Client.PostWithAuthAsync(
+            "/api/rides",
+            new RecordRideRequest(
+                RideDateTimeLocal: DateTime.Now,
+                Miles: 8.2m,
+                RideMinutes: 30,
+                SelectedPresetId: morningPresetId
+            ),
+            riderId
+        );
+        Assert.Equal(HttpStatusCode.Created, recordRideResponse.StatusCode);
+
+        var presetsResponse = await host.Client.GetWithAuthAsync("/api/rides/presets", riderId);
+        Assert.Equal(HttpStatusCode.OK, presetsResponse.StatusCode);
+
+        var payload = await presetsResponse.Content.ReadFromJsonAsync<RidePresetsResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(2, payload.Presets.Count);
+        Assert.Equal(morningPresetId, payload.Presets[0].PresetId);
+        Assert.Equal(afternoonPresetId, payload.Presets[1].PresetId);
+    }
+
+    [Fact]
+    public async Task RecordRide_WithSelectedPreset_UpdatesPresetLastUsedAtUtc()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var riderId = await host.SeedUserAsync("PresetMruUpdate");
+        var presetId = await host.CreateRidePresetAsync(riderId, "Morning", "07:45", 30);
+
+        var before = await host.GetRidePresetAsync(presetId);
+        Assert.NotNull(before);
+        Assert.Null(before.LastUsedAtUtc);
+
+        var response = await host.Client.PostWithAuthAsync(
+            "/api/rides",
+            new RecordRideRequest(
+                RideDateTimeLocal: DateTime.Now,
+                Miles: 6.4m,
+                RideMinutes: 28,
+                SelectedPresetId: presetId
+            ),
+            riderId
+        );
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var after = await host.GetRidePresetAsync(presetId);
+        Assert.NotNull(after);
+        Assert.NotNull(after.LastUsedAtUtc);
+    }
+
+    [Fact]
+    public async Task RecordRide_WithSelectedPresetOwnedByAnotherRider_ReturnsBadRequest()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var ownerRiderId = await host.SeedUserAsync("PresetOwner");
+        var attackerRiderId = await host.SeedUserAsync("PresetAttacker");
+        var ownerPresetId = await host.CreateRidePresetAsync(
+            ownerRiderId,
+            "OwnerPreset",
+            "07:45",
+            30
+        );
+
+        var beforeRideCount = await host.GetRideCountForRiderAsync(attackerRiderId);
+
+        var response = await host.Client.PostWithAuthAsync(
+            "/api/rides",
+            new RecordRideRequest(
+                RideDateTimeLocal: DateTime.Now,
+                Miles: 7.1m,
+                RideMinutes: 29,
+                SelectedPresetId: ownerPresetId
+            ),
+            attackerRiderId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var afterRideCount = await host.GetRideCountForRiderAsync(attackerRiderId);
+        Assert.Equal(beforeRideCount, afterRideCount);
+    }
+
     private sealed class SqliteRidesApiHost(WebApplication app, string databasePath)
         : IAsyncDisposable
     {
@@ -70,7 +210,7 @@ public sealed class RidesEndpointsSqliteIntegrationTests
 
             builder.Services.AddScoped<RecordRideService>();
             builder.Services.AddScoped<GetRideDefaultsService>();
-            builder.Services.AddScoped<GetQuickRideOptionsService>();
+            builder.Services.AddScoped<IRidePresetService, RidePresetService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
             builder.Services.AddScoped<DeleteRideService>();
@@ -150,6 +290,57 @@ public sealed class RidesEndpointsSqliteIntegrationTests
             dbContext.Rides.Add(ride);
             await dbContext.SaveChangesAsync();
             return ride.Id;
+        }
+
+        public async Task<long> CreateRidePresetAsync(
+            long riderId,
+            string name,
+            string exactStartTime,
+            int durationMinutes
+        )
+        {
+            await using var scope = App.Services.CreateAsyncScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+
+            var preset = new RidePresetEntity
+            {
+                RiderId = riderId,
+                Name = name,
+                PrimaryDirection = "SW",
+                PeriodTag = name == "Afternoon" ? "afternoon" : "morning",
+                ExactStartTimeLocal = TimeOnly.ParseExact(exactStartTime, "HH:mm"),
+                DurationMinutes = durationMinutes,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+                Version = 1,
+            };
+
+            dbContext.RidePresets.Add(preset);
+            await dbContext.SaveChangesAsync();
+            return preset.RidePresetId;
+        }
+
+        public async Task<int> GetPresetCountForRiderAsync(long riderId)
+        {
+            await using var scope = App.Services.CreateAsyncScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+            return await dbContext.RidePresets.CountAsync(x => x.RiderId == riderId);
+        }
+
+        public async Task<int> GetRideCountForRiderAsync(long riderId)
+        {
+            await using var scope = App.Services.CreateAsyncScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+            return await dbContext.Rides.CountAsync(x => x.RiderId == riderId);
+        }
+
+        public async Task<RidePresetEntity?> GetRidePresetAsync(long presetId)
+        {
+            await using var scope = App.Services.CreateAsyncScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+            return await dbContext
+                .RidePresets.AsNoTracking()
+                .SingleOrDefaultAsync(x => x.RidePresetId == presetId);
         }
 
         public async ValueTask DisposeAsync()

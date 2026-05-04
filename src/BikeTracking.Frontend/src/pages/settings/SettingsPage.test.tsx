@@ -3,14 +3,28 @@ import { BrowserRouter } from 'react-router-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { SettingsPage } from './SettingsPage'
 import * as usersApi from '../../services/users-api'
+import * as ridesService from '../../services/ridesService'
 
 vi.mock('../../services/users-api', () => ({
   getUserSettings: vi.fn(),
   saveUserSettings: vi.fn(),
 }))
 
+vi.mock('../../services/ridesService', () => ({
+  COMPASS_DIRECTIONS: ['North', 'NE', 'East', 'SE', 'South', 'SW', 'West', 'NW'],
+  PERIOD_TAG_DEFAULT_DIRECTIONS: { morning: 'SW', afternoon: 'NE' },
+  getRidePresets: vi.fn(),
+  createRidePreset: vi.fn(),
+  updateRidePreset: vi.fn(),
+  deleteRidePreset: vi.fn(),
+}))
+
 const mockGetUserSettings = vi.mocked(usersApi.getUserSettings)
 const mockSaveUserSettings = vi.mocked(usersApi.saveUserSettings)
+const mockGetRidePresets = vi.mocked(ridesService.getRidePresets)
+const mockCreateRidePreset = vi.mocked(ridesService.createRidePreset)
+const mockUpdateRidePreset = vi.mocked(ridesService.updateRidePreset)
+const mockDeleteRidePreset = vi.mocked(ridesService.deleteRidePreset)
 
 function installGeolocationMock(
   implementation: Geolocation['getCurrentPosition']
@@ -26,6 +40,32 @@ function installGeolocationMock(
 describe('SettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetRidePresets.mockResolvedValue({ presets: [], generatedAtUtc: '2026-04-29T00:00:00Z' })
+    mockCreateRidePreset.mockResolvedValue({
+      presetId: 1,
+      name: 'Morning Commute',
+      primaryDirection: 'SW',
+      periodTag: 'morning',
+      exactStartTimeLocal: '07:45',
+      durationMinutes: 34,
+      lastUsedAtUtc: null,
+      updatedAtUtc: '2026-04-29T00:00:00Z',
+    })
+    mockUpdateRidePreset.mockResolvedValue({
+      presetId: 1,
+      name: 'Morning Commute',
+      primaryDirection: 'SW',
+      periodTag: 'morning',
+      exactStartTimeLocal: '07:45',
+      durationMinutes: 34,
+      lastUsedAtUtc: null,
+      updatedAtUtc: '2026-04-29T00:00:00Z',
+    })
+    mockDeleteRidePreset.mockResolvedValue({
+      presetId: 1,
+      deletedAtUtc: '2026-04-29T00:00:00Z',
+      message: 'Preset deleted',
+    })
     installGeolocationMock((success) => {
       success({
         coords: {
@@ -480,6 +520,202 @@ describe('SettingsPage', () => {
           dashboardGallonsAvoidedEnabled: true,
           dashboardGoalProgressEnabled: true,
         })
+      )
+    })
+  })
+
+  it('renders a ride presets management section', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: false,
+        settings: {
+          averageCarMpg: null,
+          yearlyGoalMiles: null,
+          oilChangePrice: null,
+          mileageRateCents: null,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
+          updatedAtUtc: null,
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /ride presets/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add preset/i })).toBeInTheDocument()
+    })
+  })
+
+  it('shows preset fields including exact start time and duration controls', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: false,
+        settings: {
+          averageCarMpg: null,
+          yearlyGoalMiles: null,
+          oilChangePrice: null,
+          mileageRateCents: null,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
+          updatedAtUtc: null,
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/preset name/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/exact start time/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/duration minutes/i)).toBeInTheDocument()
+    })
+  })
+
+  it('suggests SW as primary direction when period tag is morning', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: false,
+        settings: {
+          averageCarMpg: null, yearlyGoalMiles: null, oilChangePrice: null,
+          mileageRateCents: null, locationLabel: null, latitude: null,
+          longitude: null, dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false, updatedAtUtc: null,
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/period tag/i)).toBeInTheDocument()
+    })
+
+    const periodSelect = screen.getByLabelText(/period tag/i) as HTMLSelectElement
+    fireEvent.change(periodSelect, { target: { value: 'morning' } })
+
+    await waitFor(() => {
+      const directionSelect = screen.getByLabelText(/primary direction/i) as HTMLSelectElement
+      expect(directionSelect.value).toBe('SW')
+    })
+  })
+
+  it('suggests NE as primary direction when period tag is afternoon', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: false,
+        settings: {
+          averageCarMpg: null, yearlyGoalMiles: null, oilChangePrice: null,
+          mileageRateCents: null, locationLabel: null, latitude: null,
+          longitude: null, dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false, updatedAtUtc: null,
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/period tag/i)).toBeInTheDocument()
+    })
+
+    const periodSelect = screen.getByLabelText(/period tag/i) as HTMLSelectElement
+    fireEvent.change(periodSelect, { target: { value: 'afternoon' } })
+
+    await waitFor(() => {
+      const directionSelect = screen.getByLabelText(/primary direction/i) as HTMLSelectElement
+      expect(directionSelect.value).toBe('NE')
+    })
+  })
+
+  it('keeps rider-selected direction when manually overriding suggestion', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: false,
+        settings: {
+          averageCarMpg: null, yearlyGoalMiles: null, oilChangePrice: null,
+          mileageRateCents: null, locationLabel: null, latitude: null,
+          longitude: null, dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false, updatedAtUtc: null,
+        },
+      },
+    })
+    mockCreateRidePreset.mockResolvedValue({
+      presetId: 99,
+      name: 'Custom Morning',
+      primaryDirection: 'North',
+      periodTag: 'morning',
+      exactStartTimeLocal: '07:45',
+      durationMinutes: 30,
+      lastUsedAtUtc: null,
+      updatedAtUtc: '2026-04-29T00:00:00Z',
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/preset name/i)).toBeInTheDocument()
+    })
+
+    // Select morning (suggests SW)
+    const periodSelect = screen.getByLabelText(/period tag/i) as HTMLSelectElement
+    fireEvent.change(periodSelect, { target: { value: 'morning' } })
+
+    await waitFor(() => {
+      const directionSelect = screen.getByLabelText(/primary direction/i) as HTMLSelectElement
+      expect(directionSelect.value).toBe('SW')
+    })
+
+    // Override direction to North
+    const directionSelect = screen.getByLabelText(/primary direction/i) as HTMLSelectElement
+    fireEvent.change(directionSelect, { target: { value: 'North' } })
+    expect(directionSelect.value).toBe('North')
+
+    // Fill required fields and submit
+    fireEvent.change(screen.getByLabelText(/preset name/i), { target: { value: 'Custom Morning' } })
+    fireEvent.change(screen.getByLabelText(/duration minutes/i), { target: { value: '30' } })
+    fireEvent.click(screen.getByRole('button', { name: /add preset/i }))
+
+    await waitFor(() => {
+      expect(mockCreateRidePreset).toHaveBeenCalledWith(
+        expect.objectContaining({ primaryDirection: 'North', periodTag: 'morning' })
       )
     })
   })

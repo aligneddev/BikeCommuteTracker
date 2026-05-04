@@ -133,6 +133,67 @@ describe("ridesService", () => {
     expect(result.options[0].miles).toBe(10.5);
   });
 
+  it("should return ride presets from GET /api/rides/presets", async () => {
+    const response = {
+      presets: [
+        {
+          presetId: 1,
+          name: "Morning Commute",
+          primaryDirection: "SW",
+          periodTag: "morning",
+          exactStartTimeLocal: "07:45",
+          durationMinutes: 34,
+          lastUsedAtUtc: null,
+          updatedAtUtc: new Date().toISOString(),
+        },
+      ],
+      generatedAtUtc: new Date().toISOString(),
+    };
+    fetchMock.mockResolvedValueOnce(jsonResponse(response, true));
+
+    const result = await ridesService.getRidePresets();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/rides/presets"),
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(result.presets).toHaveLength(1);
+    expect(result.presets[0].exactStartTimeLocal).toBe("07:45");
+  });
+
+  it("should include selectedPresetId in POST /api/rides payload when provided", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          rideId: 77,
+          riderId: 1,
+          savedAtUtc: new Date().toISOString(),
+          eventStatus: "Queued",
+        },
+        true,
+      ),
+    );
+
+    const request: ridesService.RecordRideRequest = {
+      rideDateTimeLocal: new Date().toISOString(),
+      miles: 9.1,
+      selectedPresetId: 42,
+    };
+
+    await ridesService.recordRide(request);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/rides"),
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    const options = fetchMock.mock.calls[0][1] as RequestInit;
+    const payload = JSON.parse((options.body ?? "{}") as string) as {
+      selectedPresetId?: number;
+    };
+    expect(payload.selectedPresetId).toBe(42);
+  });
+
   it("should fetch ride history and return typed response", async () => {
     const response: ridesService.RideHistoryResponse = {
       summaries: {

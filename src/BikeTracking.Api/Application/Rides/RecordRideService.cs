@@ -43,7 +43,10 @@ public sealed class RecordRideService(
             throw new ArgumentException("Note must be 500 characters or fewer", nameof(request));
         }
 
-        if (request.Difficulty.HasValue && (request.Difficulty.Value < 1 || request.Difficulty.Value > 5))
+        if (
+            request.Difficulty.HasValue
+            && (request.Difficulty.Value < 1 || request.Difficulty.Value > 5)
+        )
         {
             throw new ArgumentException("Difficulty must be between 1 and 5", nameof(request));
         }
@@ -125,6 +128,23 @@ public sealed class RecordRideService(
             }
         }
 
+        // Validate preset ownership before saving ride
+        if (request.SelectedPresetId.HasValue)
+        {
+            var presetExists = await dbContext.RidePresets.AnyAsync(
+                x => x.RidePresetId == request.SelectedPresetId.Value && x.RiderId == riderId,
+                cancellationToken
+            );
+
+            if (!presetExists)
+            {
+                throw new ArgumentException(
+                    "Selected preset does not belong to this rider.",
+                    nameof(request)
+                );
+            }
+        }
+
         var rideEntity = new RideEntity
         {
             RiderId = riderId,
@@ -152,6 +172,21 @@ public sealed class RecordRideService(
 
         dbContext.Rides.Add(rideEntity);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Update preset MRU after successful ride save
+        if (request.SelectedPresetId.HasValue)
+        {
+            var preset = await dbContext.RidePresets.SingleOrDefaultAsync(
+                x => x.RidePresetId == request.SelectedPresetId.Value,
+                cancellationToken
+            );
+
+            if (preset is not null)
+            {
+                preset.LastUsedAtUtc = DateTime.UtcNow;
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
 
         var eventPayload = RideRecordedEventPayload.Create(
             riderId: riderId,

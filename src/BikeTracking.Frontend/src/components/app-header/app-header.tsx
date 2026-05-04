@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../../context/auth-context'
 import './app-header.css'
 
 export function AppHeader() {
   const { user, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState<boolean>(false)
 
   return (
     <header className="app-header">
@@ -63,11 +65,33 @@ export function AppHeader() {
           </NavLink>
         </nav>
 
-        <div className="app-header-user">
-          <span className="app-header-username">{user?.userName}</span>
-          <button type="button" className="header-logout-btn" onClick={logout}>
-            Log out
+        <div
+          className="app-header-user"
+          onMouseEnter={() => setMenuOpen(true)}
+          onMouseLeave={() => setMenuOpen(false)}
+        >
+          <button
+            type="button"
+            className="app-header-user-trigger"
+            onClick={() => setMenuOpen((current) => !current)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            {user?.userName}
           </button>
+
+          <div className={`app-header-user-menu ${menuOpen ? 'app-header-user-menu-open' : ''}`}>
+            <NavLink
+              to="/settings"
+              className="app-header-user-menu-link"
+              onClick={() => setMenuOpen(false)}
+            >
+              Settings
+            </NavLink>
+            <button type="button" className="header-logout-btn" onClick={logout}>
+              Log out
+            </button>
+          </div>
         </div>
       </div>
     </header>

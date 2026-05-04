@@ -53,7 +53,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<RecordRideService>();
 builder.Services.AddScoped<GetRideDefaultsService>();
-builder.Services.AddScoped<GetQuickRideOptionsService>();
+builder.Services.AddScoped<IRidePresetService, RidePresetService>();
 builder.Services.AddScoped<GetRideHistoryService>();
 builder.Services.AddScoped<EditRideService>();
 builder.Services.AddScoped<DeleteRideService>();

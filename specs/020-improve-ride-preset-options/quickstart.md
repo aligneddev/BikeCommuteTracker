@@ -12,6 +12,44 @@ This quickstart enforces the clarified decisions:
 - Ride-entry preset list is MRU ordered.
 - Legacy quick-entry UI is deleted for all riders.
 
+
+## Phase 1: Baseline Results (pre-change)
+
+### Backend build
+Build succeeded with 5 warnings in 20s
+
+### Backend tests
+353 total, 0 failed, 351 succeeded, 2 skipped, duration: 14.9s
+
+### Frontend unit tests
+22 test files passed, 154 tests passed, duration: 96s
+
+### Foundational backend persistence tests (Phase 2)
+- `dotnet test src/BikeTracking.Api.Tests/BikeTracking.Api.Tests.csproj --filter "FullyQualifiedName~RidesEndpointsSqliteIntegrationTests"`
+- Result: 4 total, 0 failed, 4 succeeded, duration: 8.3s
+
+### Ride endpoint regression sweep (Phase 2 safety)
+- `dotnet test src/BikeTracking.Api.Tests/BikeTracking.Api.Tests.csproj --filter "FullyQualifiedName~RidesEndpointsTests|FullyQualifiedName~RidesEndpointsSqliteIntegrationTests"`
+- Result: 41 total, 0 failed, 41 succeeded, duration: 5.7s
+
+### US1 RED gate (expected failures before implementation)
+- Backend command:
+   `dotnet test src/BikeTracking.Api.Tests/BikeTracking.Api.Tests.csproj --filter "FullyQualifiedName~RidePresetCrud_FullRoundTrip_IncludingExactTimeAndDelete|FullyQualifiedName~CreateRidePreset_DuplicateNameForSameRider_Returns400"`
+   Result: 2 failed as expected (endpoint missing), expected `Created` but got `MethodNotAllowed`.
+- Frontend command:
+   `npm run test:unit -- SettingsPage.test.tsx -t "ride presets management section|preset fields including exact start time and duration controls"`
+   Result: 2 failed as expected (preset UI fields/section not rendered yet).
+
+### US1 GREEN gate
+- Backend command:
+   `dotnet test src/BikeTracking.Api.Tests/BikeTracking.Api.Tests.csproj --filter "FullyQualifiedName~RidesEndpointsTests.CreateRidePreset|FullyQualifiedName~RidesEndpointsTests.RidePresetCrud|FullyQualifiedName~RidesEndpointsSqliteIntegrationTests.RidePreset_"`
+   Result: 5 total, 0 failed, 5 succeeded, duration: 5.5s
+- Frontend command:
+   `npm run test:unit -- src/pages/settings/SettingsPage.test.tsx`
+   Result: 10 total, 0 failed, 10 succeeded, duration: 23.7s
+
+---
+
 ## Implementation Order (TDD gates required)
 
 1. Write failing tests first, run, and get user confirmation of meaningful failures before implementation.
@@ -19,7 +57,15 @@ This quickstart enforces the clarified decisions:
 3. Implement frontend slice to pass.
 4. Run full verification matrix.
 
-## Step 1: Backend Preset Persistence + Contracts
+
+## Implementation Notes (checkpoint boundaries, commit points)
+
+- Phase 1: Baseline captured above. No changes yet.
+- Phase 2: After T010 (foundational persistence tests GREEN), commit all new model/contracts/service/migration files.
+- Phase 3: After T021 (US1 GREEN), commit all settings CRUD and test changes.
+- Phase 4: After T036 (US2 GREEN), commit all ride-entry preset/MRU/legacy removal changes.
+- Phase 5: After T044 (US3 GREEN), commit all direction default/override changes.
+- Phase 6: After T049 (final E2E/verification), commit all polish/test artifacts.
 
 1. Add `RidePreset` entity, DbSet, and EF migration.
 2. Add rider-scoped preset contracts and endpoint mappings.

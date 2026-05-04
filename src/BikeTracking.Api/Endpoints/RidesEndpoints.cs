@@ -51,11 +51,39 @@ public static class RidesEndpoints
             .RequireAuthorization();
 
         group
-            .MapGet("/quick-options", GetQuickRideOptions)
-            .WithName("GetQuickRideOptions")
-            .WithSummary("Get quick ride options for the authenticated rider")
-            .Produces<QuickRideOptionsResponse>(StatusCodes.Status200OK)
+            .MapGet("/presets", GetRidePresets)
+            .WithName("GetRidePresets")
+            .WithSummary("Get ride presets for the authenticated rider")
+            .Produces<RidePresetsResponse>(StatusCodes.Status200OK)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization();
+
+        group
+            .MapPost("/presets", PostRidePreset)
+            .WithName("CreateRidePreset")
+            .WithSummary("Create a new ride preset for the authenticated rider")
+            .Produces<RidePresetDto>(StatusCodes.Status201Created)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization();
+
+        group
+            .MapPut("/presets/{presetId:long}", PutRidePreset)
+            .WithName("UpdateRidePreset")
+            .WithSummary("Update a ride preset for the authenticated rider")
+            .Produces<RidePresetDto>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
+            .RequireAuthorization();
+
+        group
+            .MapDelete("/presets/{presetId:long}", DeleteRidePreset)
+            .WithName("DeleteRidePreset")
+            .WithSummary("Delete a ride preset for the authenticated rider")
+            .Produces<DeleteRidePresetResponse>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
             .RequireAuthorization();
 
         group
@@ -99,6 +127,157 @@ public static class RidesEndpoints
             .RequireAuthorization();
 
         return endpoints;
+    }
+
+    private static async Task<IResult> GetRidePresets(
+        HttpContext context,
+        [FromServices] IRidePresetService ridePresetService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        var response = await ridePresetService.ListAsync(riderId, cancellationToken);
+        return Results.Ok(response);
+    }
+
+    private static async Task<IResult> PostRidePreset(
+        HttpContext context,
+        [FromBody] UpsertRidePresetRequest request,
+        [FromServices] IRidePresetService ridePresetService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        var normalizedRequest = NormalizePresetRequest(request);
+        var validation = ValidatePresetRequest(normalizedRequest);
+        if (validation is not null)
+            return Results.BadRequest(validation);
+
+        var result = await ridePresetService.CreateAsync(
+            riderId,
+            normalizedRequest,
+            cancellationToken
+        );
+        if (result.IsSuccess && result.Preset is not null)
+        {
+            return Results.Created($"/api/rides/presets/{result.Preset.PresetId}", result.Preset);
+        }
+
+        return Results.BadRequest(
+            result.Error ?? new ErrorResponse("ERROR", "Failed to create preset.")
+        );
+    }
+
+    private static async Task<IResult> PutRidePreset(
+        [FromRoute] long presetId,
+        HttpContext context,
+        [FromBody] UpsertRidePresetRequest request,
+        [FromServices] IRidePresetService ridePresetService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        var normalizedRequest = NormalizePresetRequest(request);
+        var validation = ValidatePresetRequest(normalizedRequest);
+        if (validation is not null)
+            return Results.BadRequest(validation);
+
+        var result = await ridePresetService.UpdateAsync(
+            riderId,
+            presetId,
+            normalizedRequest,
+            cancellationToken
+        );
+
+        if (result.IsSuccess && result.Preset is not null)
+        {
+            return Results.Ok(result.Preset);
+        }
+
+        var error = result.Error ?? new ErrorResponse("ERROR", "Failed to update preset.");
+        return error.Code == "PRESET_NOT_FOUND"
+            ? Results.NotFound(error)
+            : Results.BadRequest(error);
+    }
+
+    private static async Task<IResult> DeleteRidePreset(
+        [FromRoute] long presetId,
+        HttpContext context,
+        [FromServices] IRidePresetService ridePresetService,
+        CancellationToken cancellationToken
+    )
+    {
+        var userIdString = context.User.FindFirst("sub")?.Value;
+        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            return Results.Unauthorized();
+
+        var result = await ridePresetService.DeleteAsync(riderId, presetId, cancellationToken);
+        if (result.IsSuccess && result.Response is not null)
+        {
+            return Results.Ok(result.Response);
+        }
+
+        var error = result.Error ?? new ErrorResponse("ERROR", "Failed to delete preset.");
+        return error.Code == "PRESET_NOT_FOUND"
+            ? Results.NotFound(error)
+            : Results.BadRequest(error);
+    }
+
+    private static UpsertRidePresetRequest NormalizePresetRequest(UpsertRidePresetRequest request)
+    {
+        return request with
+        {
+            Name = request.Name.Trim(),
+            PrimaryDirection = request.PrimaryDirection.Trim(),
+            PeriodTag = request.PeriodTag.Trim().ToLowerInvariant(),
+            ExactStartTimeLocal = request.ExactStartTimeLocal.Trim(),
+        };
+    }
+
+    private static ErrorResponse? ValidatePresetRequest(UpsertRidePresetRequest request)
+    {
+        if (request.Name.Length is < 1 or > 80)
+        {
+            return new ErrorResponse(
+                "VALIDATION_FAILED",
+                "Preset name must be between 1 and 80 characters."
+            );
+        }
+
+        if (request.PeriodTag is not ("morning" or "afternoon"))
+        {
+            return new ErrorResponse(
+                "VALIDATION_FAILED",
+                "Period tag must be 'morning' or 'afternoon'."
+            );
+        }
+
+        if (!TimeOnly.TryParseExact(request.ExactStartTimeLocal, "HH:mm", out _))
+        {
+            return new ErrorResponse(
+                "VALIDATION_FAILED",
+                "Exact start time must be in HH:mm format."
+            );
+        }
+
+        if (request.DurationMinutes is < 1 or > 1440)
+        {
+            return new ErrorResponse(
+                "VALIDATION_FAILED",
+                "Duration minutes must be between 1 and 1440."
+            );
+        }
+
+        return null;
     }
 
     private static async Task<IResult> PostRecordRide(
@@ -343,29 +522,6 @@ public static class RidesEndpoints
         {
             return Results.BadRequest(
                 new ErrorResponse("ERROR", "An error occurred while retrieving ride history")
-            );
-        }
-    }
-
-    private static async Task<IResult> GetQuickRideOptions(
-        HttpContext context,
-        GetQuickRideOptionsService quickRideOptionsService,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            var userIdString = context.User.FindFirst("sub")?.Value;
-            if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
-                return Results.Unauthorized();
-
-            var response = await quickRideOptionsService.ExecuteAsync(riderId, cancellationToken);
-            return Results.Ok(response);
-        }
-        catch
-        {
-            return Results.BadRequest(
-                new ErrorResponse("ERROR", "An error occurred while retrieving quick ride options")
             );
         }
     }

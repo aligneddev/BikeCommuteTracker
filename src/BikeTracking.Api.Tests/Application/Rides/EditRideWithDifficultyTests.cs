@@ -2,6 +2,7 @@ namespace BikeTracking.Api.Tests.Application.Rides;
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Endpoints;
@@ -13,7 +14,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System.Security.Claims;
 using Xunit;
 
 /// <summary>
@@ -232,11 +232,7 @@ public sealed class EditRideWithDifficultyTests
         var recordReq = new HttpRequestMessage(HttpMethod.Post, "/api/rides")
         {
             Content = JsonContent.Create(
-                new RecordRideRequest(
-                    RideDateTimeLocal: DateTime.Now,
-                    Miles: 5.5m,
-                    RideMinutes: 22
-                )
+                new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: 5.5m, RideMinutes: 22)
             ),
         };
         recordReq.Headers.Add("X-User-Id", userId.ToString());
@@ -288,19 +284,24 @@ public sealed class EditRideWithDifficultyTests
             );
             builder
                 .Services.AddAuthentication("test")
-                .AddScheme<
-                    EditDifficultyTestAuthSchemeOptions,
-                    EditDifficultyTestAuthHandler
-                >("test", _ => { });
+                .AddScheme<EditDifficultyTestAuthSchemeOptions, EditDifficultyTestAuthHandler>(
+                    "test",
+                    _ => { }
+                );
             builder.Services.AddAuthorization();
 
             builder.Services.AddScoped<RecordRideService>();
             builder.Services.AddScoped<GetRideDefaultsService>();
-            builder.Services.AddScoped<GetQuickRideOptionsService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
-            builder.Services.AddScoped<IGasPriceLookupService, EditDifficultyNullGasPriceLookupService>();
-            builder.Services.AddScoped<IWeatherLookupService, EditDifficultyNullWeatherLookupService>();
+            builder.Services.AddScoped<
+                IGasPriceLookupService,
+                EditDifficultyNullGasPriceLookupService
+            >();
+            builder.Services.AddScoped<
+                IWeatherLookupService,
+                EditDifficultyNullWeatherLookupService
+            >();
 
             var app = builder.Build();
             app.UseAuthentication();

@@ -31,8 +31,13 @@ public sealed record RecordRideRequest(
     bool WeatherUserOverridden = false,
     [property: Range(1, 5, ErrorMessage = "Difficulty must be between 1 and 5")]
         int? Difficulty = null,
-    [property: MaxLength(5, ErrorMessage = "Primary travel direction must be 5 characters or fewer")]
-        string? PrimaryTravelDirection = null
+    [property: MaxLength(
+        5,
+        ErrorMessage = "Primary travel direction must be 5 characters or fewer"
+    )]
+        string? PrimaryTravelDirection = null,
+    [property: Range(1, long.MaxValue, ErrorMessage = "Selected preset id must be greater than 0")]
+        long? SelectedPresetId = null
 );
 
 public sealed record RecordRideSuccessResponse(
@@ -74,12 +79,50 @@ public sealed record RideWeatherResponse(
     bool IsAvailable
 );
 
-public sealed record QuickRideOption(decimal Miles, int RideMinutes, DateTime LastUsedAtLocal);
+public sealed record RidePresetDto(
+    long PresetId,
+    string Name,
+    string PrimaryDirection,
+    string PeriodTag,
+    string ExactStartTimeLocal,
+    int DurationMinutes,
+    DateTime? LastUsedAtUtc,
+    DateTime UpdatedAtUtc
+);
 
-public sealed record QuickRideOptionsResponse(
-    IReadOnlyList<QuickRideOption> Options,
+public sealed record RidePresetsResponse(
+    IReadOnlyList<RidePresetDto> Presets,
     DateTime GeneratedAtUtc
 );
+
+public sealed record UpsertRidePresetRequest(
+    [property: Required(ErrorMessage = "Preset name is required")]
+    [property: StringLength(
+        80,
+        MinimumLength = 1,
+        ErrorMessage = "Preset name must be between 1 and 80 characters"
+    )]
+        string Name,
+    [property: Required(ErrorMessage = "Primary direction is required")]
+    [property: MaxLength(5, ErrorMessage = "Primary direction must be 5 characters or fewer")]
+        string PrimaryDirection,
+    [property: Required(ErrorMessage = "Period tag is required")]
+    [property: RegularExpression(
+        "^(morning|afternoon)$",
+        ErrorMessage = "Period tag must be 'morning' or 'afternoon'"
+    )]
+        string PeriodTag,
+    [property: Required(ErrorMessage = "Exact start time is required")]
+    [property: RegularExpression(
+        "^([01]\\d|2[0-3]):[0-5]\\d$",
+        ErrorMessage = "Exact start time must be in HH:mm format"
+    )]
+        string ExactStartTimeLocal,
+    [property: Range(1, 1440, ErrorMessage = "Duration minutes must be between 1 and 1440")]
+        int DurationMinutes
+);
+
+public sealed record DeleteRidePresetResponse(long PresetId, DateTime DeletedAtUtc, string Message);
 
 public sealed record EditRideRequest(
     [property: Required(ErrorMessage = "Ride date/time is required")] DateTime RideDateTimeLocal,
@@ -116,7 +159,10 @@ public sealed record EditRideRequest(
     bool WeatherUserOverridden = false,
     [property: Range(1, 5, ErrorMessage = "Difficulty must be between 1 and 5")]
         int? Difficulty = null,
-    [property: MaxLength(5, ErrorMessage = "Primary travel direction must be 5 characters or fewer")]
+    [property: MaxLength(
+        5,
+        ErrorMessage = "Primary travel direction must be 5 characters or fewer"
+    )]
         string? PrimaryTravelDirection = null
 );
 

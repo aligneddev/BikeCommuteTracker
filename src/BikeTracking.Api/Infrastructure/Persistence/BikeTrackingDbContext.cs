@@ -19,6 +19,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<GasPriceLookupEntity> GasPriceLookups => Set<GasPriceLookupEntity>();
     public DbSet<WeatherLookupEntity> WeatherLookups => Set<WeatherLookupEntity>();
     public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
+    public DbSet<RidePresetEntity> RidePresets => Set<RidePresetEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -466,6 +467,61 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                 .HasOne<UserEntity>()
                 .WithMany()
                 .HasForeignKey(static x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RidePresetEntity>(static entity =>
+        {
+            entity.ToTable(
+                "RidePresets",
+                static tableBuilder =>
+                {
+                    tableBuilder.HasCheckConstraint(
+                        "CK_RidePresets_DurationMinutes_Positive",
+                        "\"DurationMinutes\" > 0"
+                    );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_RidePresets_PeriodTag_Values",
+                        "\"PeriodTag\" IN ('morning', 'afternoon')"
+                    );
+                }
+            );
+
+            entity.HasKey(static x => x.RidePresetId);
+            entity.Property(static x => x.RiderId).IsRequired();
+            entity.Property(static x => x.Name).IsRequired().HasMaxLength(80);
+            entity.Property(static x => x.PrimaryDirection).IsRequired().HasMaxLength(5);
+            entity.Property(static x => x.PeriodTag).IsRequired().HasMaxLength(20);
+            entity.Property(static x => x.ExactStartTimeLocal).IsRequired();
+            entity.Property(static x => x.DurationMinutes).IsRequired();
+            entity.Property(static x => x.LastUsedAtUtc);
+            entity.Property(static x => x.CreatedAtUtc).IsRequired();
+            entity.Property(static x => x.UpdatedAtUtc).IsRequired();
+            entity
+                .Property(static x => x.Version)
+                .IsRequired()
+                .HasDefaultValue(1)
+                .IsConcurrencyToken();
+
+            entity
+                .HasIndex(static x => new { x.RiderId, x.Name })
+                .IsUnique()
+                .HasDatabaseName("IX_RidePresets_RiderId_Name");
+
+            entity
+                .HasIndex(static x => new
+                {
+                    x.RiderId,
+                    x.LastUsedAtUtc,
+                    x.UpdatedAtUtc,
+                })
+                .IsDescending(false, true, true)
+                .HasDatabaseName("IX_RidePresets_RiderId_LastUsedAtUtc_UpdatedAtUtc_Desc");
+
+            entity
+                .HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(static x => x.RiderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

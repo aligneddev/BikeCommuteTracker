@@ -44,6 +44,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: RidesPersistenceTests validates Difficulty, PrimaryTravelDirection, WindResistanceRating columns; RecordRideWithDifficultyTests and EditRideWithDifficultyTests cover end-to-end wind resistance calculation and persistence.",
             ["20260424203433_AddImportRowDifficultyDirection"] =
                 "Added test: CsvImportDifficultyTests validates Difficulty and Direction column parsing, validation rules, and storage in ImportRowEntity after schema migration.",
+            ["20260429180854_AddRidePresets"] =
+                "Added test: RidesEndpointsSqliteIntegrationTests validates RidePresets table including unique rider-scoped names, exact start time parsing, rider isolation, MRU ordering, and preset ownership enforcement.",
         };
 
     [Fact]
