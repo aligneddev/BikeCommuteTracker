@@ -47,20 +47,6 @@ public sealed record RecordRideSuccessResponse(
     string EventStatus
 );
 
-public sealed record RideDefaultsResponse(
-    bool HasPreviousRide,
-    DateTime DefaultRideDateTimeLocal,
-    decimal? DefaultMiles = null,
-    int? DefaultRideMinutes = null,
-    decimal? DefaultTemperature = null,
-    decimal? DefaultGasPricePerGallon = null,
-    decimal? DefaultWindSpeedMph = null,
-    int? DefaultWindDirectionDeg = null,
-    int? DefaultRelativeHumidityPercent = null,
-    int? DefaultCloudCoverPercent = null,
-    string? DefaultPrecipitationType = null
-);
-
 public sealed record GasPriceResponse(
     string Date,
     decimal? PricePerGallon,

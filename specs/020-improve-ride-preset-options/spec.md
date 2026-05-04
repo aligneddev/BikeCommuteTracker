@@ -79,6 +79,7 @@ As a rider, I want morning and afternoon directional defaults so I can quickly m
 - **FR-012**: System MUST keep manual ride entry functional when no presets exist.
 - **FR-013**: Presets MUST be scoped to authenticated rider and never visible to other riders.
 - **FR-014**: System MUST preserve historical rides and analytics behavior independent of preset configuration changes.
+- **FR-015**: System MUST remove record-ride defaults behavior from both API and UI (no ride-defaults endpoint and no previous-ride autofill initialization); ride setup MUST rely on manual entry and rider presets.
 
 ### Key Entities *(include if feature involves data)*
 

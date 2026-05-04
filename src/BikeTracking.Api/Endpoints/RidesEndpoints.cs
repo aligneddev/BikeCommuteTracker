@@ -25,14 +25,6 @@ public static class RidesEndpoints
             .RequireAuthorization();
 
         group
-            .MapGet("/defaults", GetRideDefaults)
-            .WithName("GetRideDefaults")
-            .WithSummary("Get record-ride form defaults")
-            .Produces<RideDefaultsResponse>(StatusCodes.Status200OK)
-            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
-            .RequireAuthorization();
-
-        group
             .MapGet("/gas-price", GetGasPrice)
             .WithName("GetGasPrice")
             .WithSummary("Get gas price lookup for a date")
@@ -317,29 +309,6 @@ public static class RidesEndpoints
         {
             return Results.BadRequest(
                 new ErrorResponse("ERROR", "An error occurred while recording the ride")
-            );
-        }
-    }
-
-    private static async Task<IResult> GetRideDefaults(
-        HttpContext context,
-        GetRideDefaultsService getDefaultsService,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            var userIdString = context.User.FindFirst("sub")?.Value;
-            if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
-                return Results.Unauthorized();
-
-            var defaults = await getDefaultsService.ExecuteAsync(riderId, cancellationToken);
-            return Results.Ok(defaults);
-        }
-        catch
-        {
-            return Results.BadRequest(
-                new ErrorResponse("ERROR", "An error occurred while retrieving defaults")
             );
         }
     }

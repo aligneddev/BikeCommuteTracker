@@ -44,20 +44,6 @@ export interface RecordRideSuccessResponse {
   eventStatus: string;
 }
 
-export interface RideDefaultsResponse {
-  hasPreviousRide: boolean;
-  defaultMiles?: number;
-  defaultRideMinutes?: number;
-  defaultTemperature?: number;
-  defaultGasPricePerGallon?: number;
-  defaultWindSpeedMph?: number;
-  defaultWindDirectionDeg?: number;
-  defaultRelativeHumidityPercent?: number;
-  defaultCloudCoverPercent?: number;
-  defaultPrecipitationType?: string;
-  defaultRideDateTimeLocal: string;
-}
-
 export interface GasPriceResponse {
   date: string;
   pricePerGallon: number | null;
@@ -114,17 +100,6 @@ export interface DeleteRidePresetResponse {
   presetId: number;
   deletedAtUtc: string;
   message: string;
-}
-
-export interface QuickRideOption {
-  miles: number;
-  rideMinutes: number;
-  lastUsedAtLocal: string;
-}
-
-export interface QuickRideOptionsResponse {
-  options: QuickRideOption[];
-  generatedAtUtc: string;
 }
 
 export interface EditRideRequest {
@@ -296,21 +271,6 @@ export async function recordRide(
   return response.json();
 }
 
-export async function getRideDefaults(): Promise<RideDefaultsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/defaults`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      await parseErrorMessage(response, "Failed to fetch ride defaults"),
-    );
-  }
-
-  return response.json();
-}
-
 export async function getGasPrice(date: string): Promise<GasPriceResponse> {
   const response = await fetch(
     `${API_BASE_URL}/api/rides/gas-price?date=${encodeURIComponent(date)}`,
@@ -343,21 +303,6 @@ export async function getRideWeather(
   if (!response.ok) {
     throw new Error(
       await parseErrorMessage(response, "Failed to fetch ride weather"),
-    );
-  }
-
-  return response.json();
-}
-
-export async function getQuickRideOptions(): Promise<QuickRideOptionsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/quick-options`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      await parseErrorMessage(response, "Failed to fetch quick ride options"),
     );
   }
 

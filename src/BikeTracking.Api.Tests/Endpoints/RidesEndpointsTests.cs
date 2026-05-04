@@ -108,90 +108,6 @@ public sealed class RidesEndpointsTests
     }
 
     [Fact]
-    public async Task GetRideDefaults_WithoutPriorRides_ReturnsCurrentDateTime()
-    {
-        await using var host = await RecordRideApiHost.StartAsync();
-        var userId = await host.SeedUserAsync("Eve");
-
-        var response = await host.Client.GetWithAuthAsync("/api/rides/defaults", userId);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payload = await response.Content.ReadFromJsonAsync<RideDefaultsResponse>();
-        Assert.NotNull(payload);
-        Assert.False(payload.HasPreviousRide);
-        Assert.Null(payload.DefaultMiles);
-        Assert.NotEqual(DateTime.MinValue, payload.DefaultRideDateTimeLocal);
-    }
-
-    [Fact]
-    public async Task GetRideDefaults_WithPriorRides_ReturnsLastDefaults()
-    {
-        await using var host = await RecordRideApiHost.StartAsync();
-        var userId = await host.SeedUserAsync("Frank");
-
-        // Record a ride
-        await host.RecordRideAsync(
-            userId,
-            miles: 10.5m,
-            rideMinutes: 45,
-            temperature: 72m,
-            gasPricePerGallon: 3.4999m
-        );
-
-        var response = await host.Client.GetWithAuthAsync("/api/rides/defaults", userId);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payload = await response.Content.ReadFromJsonAsync<RideDefaultsResponse>();
-        Assert.NotNull(payload);
-        Assert.True(payload.HasPreviousRide);
-        Assert.Equal(10.5m, payload.DefaultMiles);
-        Assert.Equal(45, payload.DefaultRideMinutes);
-        Assert.Equal(72m, payload.DefaultTemperature);
-        Assert.Equal(3.4999m, payload.DefaultGasPricePerGallon);
-    }
-
-    [Fact]
-    public async Task GetRideDefaults_WithWeatherOnPreviousRide_ReturnsWeatherDefaults()
-    {
-        await using var host = await RecordRideApiHost.StartAsync();
-        var userId = await host.SeedUserAsync("WeatherDefaults");
-
-        using (var scope = host.App.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
-            dbContext.Rides.Add(
-                new RideEntity
-                {
-                    RiderId = userId,
-                    RideDateTimeLocal = DateTime.Now.AddHours(-3),
-                    Miles = 6.6m,
-                    RideMinutes = 24,
-                    Temperature = 61m,
-                    WindSpeedMph = 10.3m,
-                    WindDirectionDeg = 255,
-                    RelativeHumidityPercent = 71,
-                    CloudCoverPercent = 48,
-                    PrecipitationType = "snow",
-                    WeatherUserOverridden = true,
-                    CreatedAtUtc = DateTime.UtcNow,
-                }
-            );
-            await dbContext.SaveChangesAsync();
-        }
-
-        var response = await host.Client.GetWithAuthAsync("/api/rides/defaults", userId);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payload = await response.Content.ReadFromJsonAsync<RideDefaultsResponse>();
-        Assert.NotNull(payload);
-        Assert.Equal(10.3m, payload.DefaultWindSpeedMph);
-        Assert.Equal(255, payload.DefaultWindDirectionDeg);
-        Assert.Equal(71, payload.DefaultRelativeHumidityPercent);
-        Assert.Equal(48, payload.DefaultCloudCoverPercent);
-        Assert.Equal("snow", payload.DefaultPrecipitationType);
-    }
-
-    [Fact]
     public async Task GetGasPrice_WithValidDate_ReturnsShape()
     {
         await using var host = await RecordRideApiHost.StartAsync();
@@ -377,16 +293,6 @@ public sealed class RidesEndpointsTests
         var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
         var ride = await dbContext.Rides.SingleAsync(r => r.Id == payload.RideId);
         Assert.Null(ride.GasPricePerGallon);
-    }
-
-    [Fact]
-    public async Task GetRideDefaults_WithoutAuth_Returns401()
-    {
-        await using var host = await RecordRideApiHost.StartAsync();
-
-        var response = await host.Client.GetAsync("/api/rides/defaults");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -860,7 +766,6 @@ public sealed class RidesEndpointsTests
 
             // Add Rides services
             builder.Services.AddScoped<RecordRideService>();
-            builder.Services.AddScoped<GetRideDefaultsService>();
             builder.Services.AddScoped<IRidePresetService, RidePresetService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();

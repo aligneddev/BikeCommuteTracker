@@ -5,7 +5,6 @@ import {
   getRideWeather,
   getRidePresets,
   recordRide,
-  getRideDefaults,
   COMPASS_DIRECTIONS,
 } from '../services/ridesService'
 import { suggestDifficulty } from '../utils/windResistance'
@@ -94,51 +93,24 @@ export function RecordRidePage() {
   }
 
   useEffect(() => {
-    const initializeDefaults = async () => {
+    const initializePageData = async () => {
+      // Initialize date/time to current local time only.
+      const now = new Date()
+      const localIso = now.toISOString().slice(0, 16)
+      setRideDateTimeLocal(localIso)
+
       try {
-        const defaults = await getRideDefaults()
-
-        // Set date/time to current local time
-        const now = new Date()
-        const localIso = now.toISOString().slice(0, 16)
-        setRideDateTimeLocal(localIso)
-
-        // Set optional defaults
-        if (defaults.hasPreviousRide) {
-          if (defaults.defaultMiles) setMiles(defaults.defaultMiles.toString())
-          if (defaults.defaultRideMinutes)
-            setRideMinutes(defaults.defaultRideMinutes.toString())
-          if (defaults.defaultTemperature)
-            setTemperature(defaults.defaultTemperature.toString())
-          if (defaults.defaultWindSpeedMph)
-            setWindSpeedMph(defaults.defaultWindSpeedMph.toString())
-          if (defaults.defaultWindDirectionDeg)
-            setWindDirectionDeg(defaults.defaultWindDirectionDeg.toString())
-          if (defaults.defaultRelativeHumidityPercent)
-            setRelativeHumidityPercent(defaults.defaultRelativeHumidityPercent.toString())
-          if (defaults.defaultCloudCoverPercent)
-            setCloudCoverPercent(defaults.defaultCloudCoverPercent.toString())
-          if (defaults.defaultPrecipitationType)
-            setPrecipitationType(defaults.defaultPrecipitationType)
-          if (defaults.defaultGasPricePerGallon)
-            setGasPrice(defaults.defaultGasPricePerGallon.toString())
-        }
-
-        try {
-          const today = localIso.slice(0, 10)
-          const lookup = await getGasPrice(today)
-          if (lookup.isAvailable && lookup.pricePerGallon !== null) {
-            setGasPrice(lookup.pricePerGallon.toString())
-            setGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
-          } else {
-            setGasPriceSource('')
-          }
-        } catch (error) {
+        const today = localIso.slice(0, 10)
+        const lookup = await getGasPrice(today)
+        if (lookup.isAvailable && lookup.pricePerGallon !== null) {
+          setGasPrice(lookup.pricePerGallon.toString())
+          setGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
+        } else {
           setGasPriceSource('')
-          console.error('Failed to load gas price:', error)
         }
       } catch (error) {
-        console.error('Failed to load defaults:', error)
+        setGasPriceSource('')
+        console.error('Failed to load gas price:', error)
       }
 
       try {
@@ -148,7 +120,7 @@ export function RecordRidePage() {
       }
     }
 
-    initializeDefaults()
+    initializePageData()
   }, [])
 
   useEffect(() => {
@@ -192,6 +164,47 @@ export function RecordRidePage() {
       setDifficultyAutoSuggested(true)
     }
   }, [primaryTravelDirection, windSpeedMph, windDirectionDeg])
+
+  useEffect(() => {
+    if (selectedPresetId === null) return
+
+    const handlePresetChange = async () => {
+      const preset = ridePresets.find((p) => p.presetId === selectedPresetId)
+      if (!preset) return
+
+      // Clear weather fields when preset changes (keep gas price)
+      setTemperature('')
+      setWindSpeedMph('')
+      setWindDirectionDeg('')
+      setRelativeHumidityPercent('')
+      setCloudCoverPercent('')
+      setPrecipitationType('')
+      setWeatherEdited(false)
+
+      // Apply the preset
+      setPrimaryTravelDirection(preset.primaryDirection as CompassDirection)
+      setRideMinutes(preset.durationMinutes.toString())
+
+      // Construct new date/time and refetch weather
+      const datePart = rideDateTimeLocal ? rideDateTimeLocal.slice(0, 11) : new Date().toISOString().slice(0, 11)
+      const newDateTime = `${datePart}${preset.exactStartTimeLocal}`
+
+      setRideDateTimeLocal(newDateTime)
+
+      // Refetch weather for the new preset's time
+      setLoadingWeather(true)
+      try {
+        const weather = await getRideWeather(newDateTime)
+        applyLoadedWeather(weather)
+      } catch (error) {
+        console.error('Failed to load weather for new preset:', error)
+      } finally {
+        setLoadingWeather(false)
+      }
+    }
+
+    handlePresetChange()
+  }, [selectedPresetId, ridePresets])
 
   const applyPreset = (preset: RidePreset) => {
     setPrimaryTravelDirection(preset.primaryDirection as CompassDirection)
@@ -302,11 +315,12 @@ export function RecordRidePage() {
     }
   }
 
-  if (loading) return <div>Loading defaults...</div>
+  if (loading) return <div>Loading ride entry...</div>
 
   return (
     <div className="record-ride-page">
       <h1>Record a Ride</h1>
+      <p>Do you repeat rides often? Setup a <a href="/rides/presets">Ride Preset</a>.</p>
       <p>
         Need to add past rides in bulk? <a href="/rides/import">Import rides from CSV</a>.
       </p>

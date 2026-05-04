@@ -291,7 +291,6 @@ public sealed class EditRideWithDifficultyTests
             builder.Services.AddAuthorization();
 
             builder.Services.AddScoped<RecordRideService>();
-            builder.Services.AddScoped<GetRideDefaultsService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();
             builder.Services.AddScoped<

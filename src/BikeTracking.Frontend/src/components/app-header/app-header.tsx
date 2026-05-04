@@ -1,11 +1,54 @@
 import { NavLink } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/auth-context'
 import './app-header.css'
 
 export function AppHeader() {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState<boolean>(false)
+  const closeMenuTimeoutRef = useRef<number | null>(null)
+
+  function clearCloseMenuTimeout(): void {
+    if (closeMenuTimeoutRef.current !== null) {
+      window.clearTimeout(closeMenuTimeoutRef.current)
+      closeMenuTimeoutRef.current = null
+    }
+  }
+
+  function openMenu(): void {
+    clearCloseMenuTimeout()
+    setMenuOpen(true)
+  }
+
+  function scheduleMenuClose(): void {
+    clearCloseMenuTimeout()
+    closeMenuTimeoutRef.current = window.setTimeout(() => {
+      setMenuOpen(false)
+      closeMenuTimeoutRef.current = null
+    }, 180)
+  }
+
+  useEffect(() => {
+    return () => {
+      clearCloseMenuTimeout()
+    }
+  }, [])
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent): void {
+      const headerUser = document.querySelector('.app-header-user')
+      if (headerUser && !headerUser.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    if (menuOpen) {
+      document.addEventListener('click', handleClickOutside)
+      return () => {
+        document.removeEventListener('click', handleClickOutside)
+      }
+    }
+  }, [menuOpen])
 
   return (
     <header className="app-header">
@@ -67,13 +110,22 @@ export function AppHeader() {
 
         <div
           className="app-header-user"
-          onMouseEnter={() => setMenuOpen(true)}
-          onMouseLeave={() => setMenuOpen(false)}
+          onMouseEnter={openMenu}
+          onMouseLeave={scheduleMenuClose}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              clearCloseMenuTimeout()
+              setMenuOpen(false)
+            }
+          }}
         >
           <button
             type="button"
             className="app-header-user-trigger"
-            onClick={() => setMenuOpen((current) => !current)}
+            onClick={() => {
+              clearCloseMenuTimeout()
+              setMenuOpen((current) => !current)
+            }}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
           >
@@ -88,7 +140,15 @@ export function AppHeader() {
             >
               Settings
             </NavLink>
-            <button type="button" className="header-logout-btn" onClick={logout}>
+            <button
+              type="button"
+              className="header-logout-btn"
+              onClick={(e) => {
+                logout()
+                setMenuOpen(false)
+                e.preventDefault()
+              }}
+            >
               Log out
             </button>
           </div>

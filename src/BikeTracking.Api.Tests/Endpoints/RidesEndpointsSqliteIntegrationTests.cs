@@ -301,7 +301,6 @@ public sealed class RidesEndpointsSqliteIntegrationTests
             builder.Services.AddAuthorization();
 
             builder.Services.AddScoped<RecordRideService>();
-            builder.Services.AddScoped<GetRideDefaultsService>();
             builder.Services.AddScoped<IRidePresetService, RidePresetService>();
             builder.Services.AddScoped<GetRideHistoryService>();
             builder.Services.AddScoped<EditRideService>();

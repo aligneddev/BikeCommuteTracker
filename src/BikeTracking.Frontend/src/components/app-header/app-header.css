@@ -83,7 +83,7 @@
 
 .app-header-user-menu {
   position: absolute;
-  top: calc(100% + 0.35rem);
+  top: 100%;
   right: 0;
   min-width: 9.5rem;
   border: 1px solid #d4dbe5;

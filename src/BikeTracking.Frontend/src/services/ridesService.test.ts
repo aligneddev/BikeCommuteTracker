@@ -90,49 +90,6 @@ describe("ridesService", () => {
     await expect(ridesService.recordRide(request)).rejects.toThrow();
   });
 
-  it("should return defaults from GET /api/rides/defaults", async () => {
-    const response = {
-      hasPreviousRide: true,
-      defaultMiles: 10.5,
-      defaultRideMinutes: 45,
-      defaultTemperature: 72,
-      defaultRideDateTimeLocal: new Date().toISOString(),
-    };
-    fetchMock.mockResolvedValueOnce(jsonResponse(response, true));
-
-    const result = await ridesService.getRideDefaults();
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/rides/defaults"),
-      expect.any(Object),
-    );
-    expect(result).toEqual(response);
-    expect(result.defaultMiles).toBe(10.5);
-  });
-
-  it("should return quick ride options from GET /api/rides/quick-options", async () => {
-    const response = {
-      options: [
-        {
-          miles: 10.5,
-          rideMinutes: 45,
-          lastUsedAtLocal: "2026-03-30T07:30:00",
-        },
-      ],
-      generatedAtUtc: new Date().toISOString(),
-    };
-    fetchMock.mockResolvedValueOnce(jsonResponse(response, true));
-
-    const result = await ridesService.getQuickRideOptions();
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/rides/quick-options"),
-      expect.objectContaining({ method: "GET" }),
-    );
-    expect(result.options).toHaveLength(1);
-    expect(result.options[0].miles).toBe(10.5);
-  });
-
   it("should return ride presets from GET /api/rides/presets", async () => {
     const response = {
       presets: [
