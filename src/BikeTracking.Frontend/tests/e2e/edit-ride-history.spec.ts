@@ -37,21 +37,14 @@ test.describe("006-edit-ride-history e2e", () => {
   test("enters edit mode, modifies miles, saves successfully, and refreshes totals", async ({
     page,
   }) => {
-    // Find the Edit button for the ride row and click it
-    const editButton = page.getByRole("button", { name: "Edit" }).first();
-    await editButton.click();
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Edit" }).click();
 
-    // Save and Cancel buttons should appear
-    await expect(page.getByRole("button", { name: /save/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /cancel/i })).toBeVisible();
-
-    // Change miles value
-    const milesInput = page.getByRole("spinbutton", { name: /miles/i }).first();
-    await milesInput.clear();
+    const milesInput = firstRow.locator('input[id^="edit-ride-miles-"]');
+    await expect(milesInput).toBeVisible();
     await milesInput.fill("8.5");
 
-    // Click Save
-    await page.getByRole("button", { name: /save/i }).click();
+    await firstRow.getByRole("button", { name: "Save" }).click();
 
     // Verify the row updates to show new miles value in the grid
     await expect(
@@ -72,17 +65,14 @@ test.describe("006-edit-ride-history e2e", () => {
   test("blocks save and shows validation message for invalid miles", async ({
     page,
   }) => {
-    // Enter edit mode
-    const editButton = page.getByRole("button", { name: "Edit" }).first();
-    await editButton.click();
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Edit" }).click();
 
-    // Try to set miles to 0
-    const milesInput = page.getByRole("spinbutton", { name: /miles/i }).first();
-    await milesInput.clear();
+    const milesInput = firstRow.locator('input[id^="edit-ride-miles-"]');
+    await expect(milesInput).toBeVisible();
     await milesInput.fill("0");
 
-    // Click Save
-    await page.getByRole("button", { name: /save/i }).click();
+    await firstRow.getByRole("button", { name: "Save" }).click();
 
     // Expect validation error message
     await expect(page.getByRole("alert")).toContainText(
@@ -90,7 +80,9 @@ test.describe("006-edit-ride-history e2e", () => {
     );
 
     // Edit mode should remain active
-    await expect(page.getByRole("button", { name: /cancel/i })).toBeVisible();
+    await expect(
+      firstRow.getByRole("button", { name: "Cancel" }),
+    ).toBeVisible();
   });
 
   test("cancels edit and discards in-progress changes", async ({ page }) => {
@@ -103,17 +95,14 @@ test.describe("006-edit-ride-history e2e", () => {
       .textContent();
     expect(originalText).toContain("5.0 mi");
 
-    // Enter edit mode
-    const editButton = page.getByRole("button", { name: "Edit" }).first();
-    await editButton.click();
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Edit" }).click();
 
-    // Modify miles but do NOT save
-    const milesInput = page.getByRole("spinbutton", { name: /miles/i }).first();
-    await milesInput.clear();
+    const milesInput = firstRow.locator('input[id^="edit-ride-miles-"]');
+    await expect(milesInput).toBeVisible();
     await milesInput.fill("99.0");
 
-    // Click Cancel
-    await page.getByRole("button", { name: /cancel/i }).click();
+    await firstRow.getByRole("button", { name: "Cancel" }).click();
 
     // Edit mode should exit and original value should be restored
     await expect(
@@ -153,14 +142,14 @@ test.describe("006-edit-ride-history e2e", () => {
     ).toBeVisible();
 
     // Edit the ride to 10 miles
-    const editButton = page.getByRole("button", { name: "Edit" }).first();
-    await editButton.click();
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Edit" }).click();
 
-    const milesInput = page.getByRole("spinbutton", { name: /miles/i }).first();
-    await milesInput.clear();
+    const milesInput = firstRow.locator('input[id^="edit-ride-miles-"]');
+    await expect(milesInput).toBeVisible();
     await milesInput.fill("10.0");
 
-    await page.getByRole("button", { name: /save/i }).click();
+    await firstRow.getByRole("button", { name: "Save" }).click();
 
     // Totals should update to reflect new 10 mi value
     const summaryCards = page.getByText(/this month/i);
@@ -207,13 +196,22 @@ test.describe("006-edit-ride-history e2e", () => {
       page.getByRole("table", { name: /ride history table/i }),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Edit" }).first().click();
-    await page.getByLabel("Temperature").first().fill("");
-    await page.getByLabel("Wind Speed").first().fill("");
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Edit" }).click();
 
-    await page.getByRole("button", { name: "Load Weather" }).click();
+    const temperatureInput = firstRow.locator(
+      'input[id^="edit-ride-temperature-"]',
+    );
+    const windSpeedInput = firstRow.locator(
+      'input[id^="edit-ride-wind-speed-"]',
+    );
+    await expect(temperatureInput).toBeVisible();
+    await temperatureInput.fill("");
+    await windSpeedInput.fill("");
 
-    await expect(page.getByLabel("Temperature").first()).toHaveValue("51.5");
-    await expect(page.getByLabel("Wind Speed").first()).toHaveValue("8.4");
+    await firstRow.getByRole("button", { name: "Load Weather" }).click();
+
+    await expect(temperatureInput).toHaveValue("51.5");
+    await expect(windSpeedInput).toHaveValue("8.4");
   });
 });

@@ -48,6 +48,34 @@ Build succeeded with 5 warnings in 20s
    `npm run test:unit -- src/pages/settings/SettingsPage.test.tsx`
    Result: 10 total, 0 failed, 10 succeeded, duration: 23.7s
 
+### Phase 6 targeted polish verification
+- Backend command:
+   `dotnet test src/BikeTracking.Api.Tests/BikeTracking.Api.Tests.csproj --filter "FullyQualifiedName~RidesEndpointsSqliteIntegrationTests"`
+   Result: 11 total, 0 failed, 11 succeeded, duration: 10.9s. Added coverage for preset endpoint `401` responses and cross-rider update/delete `404` behavior.
+- Targeted E2E command:
+   `npm run test:e2e -- tests/e2e/record-ride.spec.ts`
+   Result: 4 passed in 32.0s. Evidence: settings preset CRUD succeeded, ride-entry preset apply populated direction/time/duration, MRU reorder placed the used preset first on revisit, and no `Quick Ride Options` UI was visible.
+
+### Phase 6 full verification matrix
+- Backend command:
+   `dotnet test BikeTracking.slnx`
+   Result: 360 total, 0 failed, 358 succeeded, 2 skipped, duration: 19.9s.
+- Frontend commands:
+   `npm run lint && npm run build && npm run test:unit`
+   Result: lint passed, production build passed in 7.14s (existing Vite chunk-size warning only), and unit tests passed with 22 files / 159 tests green.
+- Full E2E command:
+   `npm run test:e2e`
+   Result: 38 passed, 0 failed, duration: 2.3m.
+
+### Final T049 confirmation
+- Full E2E command rerun after selector stabilization:
+   `npm run test:e2e`
+   Result: 38 passed, 0 failed, duration: 2.3m.
+- Key success criteria evidence:
+   - Preset apply behavior validated end-to-end in `tests/e2e/record-ride.spec.ts` (direction/time/duration populated from preset).
+   - MRU behavior validated by revisiting ride-entry selector ordering after successful save with selected preset.
+   - Legacy quick-entry visibility validated by explicit assertions that `Quick Ride Options` is not rendered.
+
 ---
 
 ## Implementation Order (TDD gates required)

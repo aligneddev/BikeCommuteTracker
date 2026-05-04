@@ -87,6 +87,35 @@ public sealed class RidesEndpointsSqliteIntegrationTests
     }
 
     [Fact]
+    public async Task GetRidePresets_WithoutAuth_ReturnsUnauthorized()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var response = await host.Client.GetAsync("/api/rides/presets");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateRidePreset_WithoutAuth_ReturnsUnauthorized()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var response = await host.Client.PostAsJsonAsync(
+            "/api/rides/presets",
+            new UpsertRidePresetRequest(
+                Name: "Unauthorized",
+                PrimaryDirection: "SW",
+                PeriodTag: "morning",
+                ExactStartTimeLocal: "07:45",
+                DurationMinutes: 30
+            )
+        );
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task RidePresets_AreOrderedByMostRecentlyUsedAfterSuccessfulRideSave()
     {
         await using var host = await SqliteRidesApiHost.StartAsync();
@@ -177,6 +206,69 @@ public sealed class RidesEndpointsSqliteIntegrationTests
 
         var afterRideCount = await host.GetRideCountForRiderAsync(attackerRiderId);
         Assert.Equal(beforeRideCount, afterRideCount);
+    }
+
+    [Fact]
+    public async Task UpdateRidePreset_WithPresetOwnedByAnotherRider_ReturnsNotFound()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var ownerRiderId = await host.SeedUserAsync("PresetUpdateOwner");
+        var attackerRiderId = await host.SeedUserAsync("PresetUpdateAttacker");
+        var ownerPresetId = await host.CreateRidePresetAsync(
+            ownerRiderId,
+            "OwnerMorning",
+            "07:45",
+            30
+        );
+
+        var response = await host.Client.PutWithAuthAsync(
+            $"/api/rides/presets/{ownerPresetId}",
+            new UpsertRidePresetRequest(
+                Name: "Hijacked",
+                PrimaryDirection: "NE",
+                PeriodTag: "afternoon",
+                ExactStartTimeLocal: "17:15",
+                DurationMinutes: 33
+            ),
+            attackerRiderId
+        );
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var preset = await host.GetRidePresetAsync(ownerPresetId);
+        Assert.NotNull(preset);
+        Assert.Equal("OwnerMorning", preset.Name);
+        Assert.Equal("SW", preset.PrimaryDirection);
+    }
+
+    [Fact]
+    public async Task DeleteRidePreset_WithPresetOwnedByAnotherRider_ReturnsNotFound()
+    {
+        await using var host = await SqliteRidesApiHost.StartAsync();
+
+        var ownerRiderId = await host.SeedUserAsync("PresetDeleteOwner");
+        var attackerRiderId = await host.SeedUserAsync("PresetDeleteAttacker");
+        var ownerPresetId = await host.CreateRidePresetAsync(
+            ownerRiderId,
+            "OwnerAfternoon",
+            "17:35",
+            32
+        );
+
+        var deleteRequest = new HttpRequestMessage(
+            HttpMethod.Delete,
+            $"/api/rides/presets/{ownerPresetId}"
+        );
+        deleteRequest.Headers.Add("X-User-Id", attackerRiderId.ToString());
+
+        var response = await host.Client.SendAsync(deleteRequest);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var preset = await host.GetRidePresetAsync(ownerPresetId);
+        Assert.NotNull(preset);
+        Assert.Equal(ownerRiderId, preset.RiderId);
     }
 
     private sealed class SqliteRidesApiHost(WebApplication app, string databasePath)

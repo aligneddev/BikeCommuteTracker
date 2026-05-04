@@ -37,6 +37,17 @@ export async function createAndLoginUser(
   await loginUser(page, userName, pin);
 }
 
+export async function logoutUser(page: Page, userName: string): Promise<void> {
+  await page.getByRole("button", { name: userName }).click();
+  await page.evaluate(() => {
+    const logoutButton = document.querySelector(
+      ".header-logout-btn",
+    ) as HTMLButtonElement | null;
+    logoutButton?.click();
+  });
+  await expect(page).toHaveURL("/login");
+}
+
 export async function saveUserLocation(
   page: Page,
   latitude: string,

@@ -51,11 +51,12 @@ test.describe("007-delete-ride-history e2e", () => {
       page.getByLabel("Visible total miles").getByText("15.0 mi"),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Delete" }).first().click();
-    await expect(
-      page.getByRole("dialog", { name: /delete ride confirmation/i }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: /confirm delete/i }).click();
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Delete" }).click();
+
+    const deleteDialog = page.locator('[data-testid="delete-dialog"]');
+    await expect(deleteDialog).toBeVisible();
+    await deleteDialog.getByRole("button", { name: /confirm delete/i }).click();
 
     await expect(page.getByRole("row")).toHaveCount(2); // header + 1 remaining ride
     await expect(
@@ -86,15 +87,14 @@ test.describe("007-delete-ride-history e2e", () => {
       page.getByRole("table", { name: /ride history table/i }),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Delete" }).first().click();
-    await expect(
-      page.getByRole("dialog", { name: /delete ride confirmation/i }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: /cancel/i }).click();
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Delete" }).click();
 
-    await expect(
-      page.getByRole("dialog", { name: /delete ride confirmation/i }),
-    ).not.toBeVisible();
+    const deleteDialog = page.locator('[data-testid="delete-dialog"]');
+    await expect(deleteDialog).toBeVisible();
+    await deleteDialog.getByRole("button", { name: /^Cancel$/i }).click();
+
+    await expect(deleteDialog).not.toBeVisible();
     await expect(
       page.getByLabel("Visible total miles").getByText("7.5 mi"),
     ).toBeVisible();
@@ -135,8 +135,11 @@ test.describe("007-delete-ride-history e2e", () => {
     const rideId = historyPayload.rides[0]?.rideId;
     expect(typeof rideId).toBe("number");
 
-    await page.getByRole("button", { name: "Delete" }).first().click();
-    await page.getByRole("button", { name: /confirm delete/i }).click();
+    const firstRow = page.locator("tbody tr").first();
+    await firstRow.getByRole("button", { name: "Delete" }).click();
+    const deleteDialog = page.locator('[data-testid="delete-dialog"]');
+    await expect(deleteDialog).toBeVisible();
+    await deleteDialog.getByRole("button", { name: /confirm delete/i }).click();
     await expect(page.getByText(/no rides found/i)).toBeVisible();
 
     const secondDeleteResponse = await request.delete(

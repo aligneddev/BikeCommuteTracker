@@ -138,11 +138,11 @@
 
 **Purpose**: End-to-end hardening, regression checks, and verification matrix execution.
 
-- [ ] T045 [P] Add/update E2E flow covering settings preset CRUD, ride-entry preset apply, MRU reorder after save, and no legacy quick-entry UI in `src/BikeTracking.Frontend/tests/e2e/record-ride.spec.ts`
-- [ ] T046 [P] Update backend endpoint integration coverage for unauthorized and cross-rider preset access attempts in `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsSqliteIntegrationTests.cs`
-- [ ] T047 [P] Run backend full test suite and capture results in `specs/020-improve-ride-preset-options/quickstart.md`
-- [ ] T048 [P] Run frontend lint/build/unit suite and capture results in `specs/020-improve-ride-preset-options/quickstart.md`
-- [ ] T049 Run E2E suite and confirm key success criteria evidence (preset apply speed and zero legacy quick-entry visibility) in `specs/020-improve-ride-preset-options/quickstart.md`
+- [X] T045 [P] Add/update E2E flow covering settings preset CRUD, ride-entry preset apply, MRU reorder after save, and no legacy quick-entry UI in `src/BikeTracking.Frontend/tests/e2e/record-ride.spec.ts`
+- [X] T046 [P] Update backend endpoint integration coverage for unauthorized and cross-rider preset access attempts in `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsSqliteIntegrationTests.cs`
+- [X] T047 [P] Run backend full test suite and capture results in `specs/020-improve-ride-preset-options/quickstart.md`
+- [X] T048 [P] Run frontend lint/build/unit suite and capture results in `specs/020-improve-ride-preset-options/quickstart.md`
+- [X] T049 Run E2E suite and confirm key success criteria evidence (preset apply speed and zero legacy quick-entry visibility) in `specs/020-improve-ride-preset-options/quickstart.md`
 
 ---
 

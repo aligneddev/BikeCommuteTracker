@@ -1,5 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { loginUser, signupUser, uniqueUser } from "./support/auth-helpers";
+import {
+  loginUser,
+  logoutUser,
+  signupUser,
+  uniqueUser,
+} from "./support/auth-helpers";
 
 /**
  * T014 - E2E Smoke Test: User Login
@@ -67,8 +72,7 @@ test.describe("003-user-login smoke tests", () => {
     await loginUser(page, userName, TEST_PIN);
 
     // Logout
-    await page.getByRole("button", { name: "Log out" }).click();
-    await expect(page).toHaveURL("/login");
+    await logoutUser(page, userName);
   });
 
   test("signup page has link to /login", async ({ page }) => {

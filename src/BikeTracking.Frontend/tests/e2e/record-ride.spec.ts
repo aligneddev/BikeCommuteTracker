@@ -4,9 +4,18 @@ import {
   saveUserLocation,
   uniqueUser,
 } from "./support/auth-helpers";
-import { recordRide, selectQuickRideOption } from "./support/ride-helpers";
+import { recordRide } from "./support/ride-helpers";
 
 const TEST_PIN = "87654321";
+
+async function openSettingsFromUserMenu(
+  page: import("@playwright/test").Page,
+  userName: string,
+) {
+  await page.getByRole("button", { name: userName }).click();
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL("/settings");
+}
 
 test.describe("004-record-ride e2e", () => {
   test("records a ride from the record page", async ({ page }) => {
@@ -20,46 +29,81 @@ test.describe("004-record-ride e2e", () => {
     });
   });
 
-  test("prefills defaults from the previous ride", async ({ page }) => {
-    const userName = uniqueUser("e2e-ride-defaults");
-    await createAndLoginUser(page, userName, TEST_PIN);
-
-    await recordRide(page, {
-      miles: "9.75",
-      rideMinutes: "35",
-      temperature: "61",
-    });
-
-    await page.goto("/miles");
-    await page.getByRole("link", { name: "Record Ride" }).click();
-    await expect(page).toHaveURL("/rides/record");
-
-    await expect(page.locator("#miles")).toHaveValue("9.75");
-    await expect(page.locator("#rideMinutes")).toHaveValue("35");
-    await expect(page.locator("#temperature")).toHaveValue("61");
-  });
-
-  test("allows editing quick-option copied values before save", async ({
+  test("manages presets in settings and applies MRU preset during ride entry", async ({
     page,
   }) => {
-    const userName = uniqueUser("e2e-quick-option-edit");
+    const userName = uniqueUser("e2e-ride-presets");
     await createAndLoginUser(page, userName, TEST_PIN);
 
-    await recordRide(page, {
-      miles: "8.50",
-      rideMinutes: "30",
-      temperature: "60",
+    await openSettingsFromUserMenu(page, userName);
+
+    await page.getByLabel("Preset Name").fill("Morning Commute");
+    await page.getByLabel("Duration Minutes").fill("34");
+    await page.getByRole("button", { name: "Add Preset" }).click();
+
+    await expect(page.getByText(/preset created\./i)).toBeVisible();
+    await expect(page.locator(".settings-presets-list")).toContainText(
+      "Morning Commute",
+    );
+
+    await page.getByLabel("Preset Name").fill("Afternoon Return");
+    await page.getByLabel("Period Tag").selectOption("afternoon");
+    await expect(page.getByLabel("Primary Direction")).toHaveValue("NE");
+    await page.getByLabel("Exact Start Time").fill("17:35");
+    await page.getByLabel("Duration Minutes").fill("32");
+    await page.getByRole("button", { name: "Add Preset" }).click();
+
+    await expect(page.getByText(/preset created\./i)).toBeVisible();
+    await expect(page.locator(".settings-presets-list")).toContainText(
+      "Afternoon Return",
+    );
+
+    const morningItem = page.locator(".settings-presets-item").filter({
+      hasText: "Morning Commute",
     });
+    await morningItem.getByRole("button", { name: "Edit" }).click();
+    await page.getByLabel("Preset Name").fill("Morning Express");
+    await page.getByRole("button", { name: "Save Preset" }).click();
+
+    await expect(page.getByText(/preset updated\./i)).toBeVisible();
+    await expect(page.locator(".settings-presets-list")).toContainText(
+      "Morning Express",
+    );
 
     await page.goto("/rides/record");
+    await expect(page).toHaveURL("/rides/record");
+    await expect(page.getByText(/quick ride options/i)).toHaveCount(0);
 
-    await selectQuickRideOption(page, /8\.5 mi\s*-\s*30 min/i);
+    await page
+      .getByLabel("Ride Preset")
+      .selectOption("Morning Express (morning, 07:45, 34 min)");
+    await page.getByRole("button", { name: "Apply Preset" }).click();
 
-    await page.locator("#miles").fill("9.25");
-    await page.locator("#rideMinutes").fill("33");
+    await expect(page.getByLabel(/primary direction of travel/i)).toHaveValue(
+      "SW",
+    );
+    await expect(page.locator("#rideMinutes")).toHaveValue("34");
+    await expect(page.locator("#rideDateTimeLocal")).toHaveValue(/T07:45$/);
 
+    await page.locator("#miles").fill("8.40");
     await page.getByRole("button", { name: "Record Ride" }).click();
     await expect(page.getByText(/ride recorded successfully/i)).toBeVisible();
+
+    await page.goto("/rides/record");
+    const firstPresetOption = page.locator("#ridePreset option").nth(1);
+    await expect(firstPresetOption).toContainText("Morning Express");
+    await expect(page.getByText(/quick ride options/i)).toHaveCount(0);
+
+    await page.goto("/settings");
+    const afternoonItem = page.locator(".settings-presets-item").filter({
+      hasText: "Afternoon Return",
+    });
+    await afternoonItem.getByRole("button", { name: "Delete" }).click();
+
+    await expect(page.getByText(/preset deleted\./i)).toBeVisible();
+    await expect(page.locator(".settings-presets-list")).not.toContainText(
+      "Afternoon Return",
+    );
   });
 
   test("shows gas price, prepopulates it, and displays it in history", async ({
