@@ -10,7 +10,49 @@ public sealed record AdvancedDashboardResponse(
     IReadOnlyList<AdvancedDashboardSuggestion> Suggestions,
     AdvancedDashboardReminders Reminders,
     /// <summary>UTC timestamp when the response was generated (useful for caching/staleness checks).</summary>
-    DateTime GeneratedAtUtc
+    DateTime GeneratedAtUtc,
+    /// <summary>Difficulty analytics section. Null when no qualifying ride data exists.</summary>
+    AdvancedDashboardDifficultySection? DifficultySection = null
+);
+
+/// <summary>
+/// Difficulty analytics section of the Advanced Dashboard.
+/// </summary>
+public sealed record AdvancedDashboardDifficultySection(
+    /// <summary>Overall average difficulty across all qualifying rides (1 decimal place). Null when no qualifying rides.</summary>
+    decimal? OverallAverageDifficulty,
+    /// <summary>Average difficulty by calendar month. At most 12 entries; sorted by month number ascending.</summary>
+    IReadOnlyList<DifficultyByMonth> DifficultyByMonth,
+    /// <summary>Same months ranked by average difficulty descending (most difficult first).</summary>
+    IReadOnlyList<DifficultyByMonth> MostDifficultMonths,
+    /// <summary>Distribution of rides across wind resistance bins −4 to +4. Always 9 entries.</summary>
+    IReadOnlyList<WindResistanceBin> WindResistanceDistribution,
+    /// <summary>True when the section is showing an empty state (no qualifying data).</summary>
+    bool IsEmpty
+);
+
+/// <summary>Average difficulty for a calendar month.</summary>
+public sealed record DifficultyByMonth(
+    /// <summary>Month number 1–12.</summary>
+    int MonthNumber,
+    /// <summary>Full month name, e.g. "January".</summary>
+    string MonthName,
+    /// <summary>Average difficulty for this month across all years (1 decimal place).</summary>
+    decimal AverageDifficulty,
+    /// <summary>Number of qualifying rides in this month group.</summary>
+    int RideCount
+);
+
+/// <summary>Count of rides at a given wind resistance level.</summary>
+public sealed record WindResistanceBin(
+    /// <summary>Wind resistance rating (−4 to +4).</summary>
+    int Rating,
+    /// <summary>Number of rides with this stored WindResistanceRating.</summary>
+    int RideCount,
+    /// <summary>Label for display: e.g. "−4 (strong tailwind)" … "+4 (strong headwind)".</summary>
+    string Label,
+    /// <summary>True when rating is negative (tailwind/assisted). Used for visual distinction.</summary>
+    bool IsAssisted
 );
 
 /// <summary>Four calendar time-window breakdown of savings: week, month, year, all-time.</summary>

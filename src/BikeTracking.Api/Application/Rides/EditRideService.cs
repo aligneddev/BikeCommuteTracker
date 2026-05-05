@@ -3,8 +3,10 @@ using BikeTracking.Api.Application.Events;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using BikeTracking.Domain.FSharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.FSharp.Core;
 
 namespace BikeTracking.Api.Application.Rides;
 
@@ -118,6 +120,53 @@ public sealed class EditRideService(
             precipitationType
         ) = MergeWeatherForEdit(ride, request, fetchedWeather, rideDateTimeChanged);
 
+        // Validate and process PrimaryTravelDirection (FR-026)
+        string? newCanonicalDirection;
+        int? newWindResistanceRating;
+
+        if (request.PrimaryTravelDirection is null)
+        {
+            newCanonicalDirection = null;
+            newWindResistanceRating = null;
+        }
+        else
+        {
+            var parsedDirection = WindResistance.tryParseCompassDirection(
+                request.PrimaryTravelDirection
+            );
+            if (!OptionModule.IsSome(parsedDirection))
+            {
+                return EditRideResult.Failure(
+                    "VALIDATION_FAILED",
+                    $"Invalid primary travel direction '{request.PrimaryTravelDirection}'. Accepted values: {string.Join(", ", WindResistance.validDirectionNames)}"
+                );
+            }
+
+            newCanonicalDirection = request.PrimaryTravelDirection;
+
+            bool directionChanged = ride.PrimaryTravelDirection != newCanonicalDirection;
+            if (directionChanged)
+            {
+                var windSpeedOption = windSpeedMph.HasValue
+                    ? FSharpOption<decimal>.Some(windSpeedMph.Value)
+                    : FSharpOption<decimal>.None;
+                var windDirOption = windDirectionDeg.HasValue
+                    ? FSharpOption<int>.Some(windDirectionDeg.Value)
+                    : FSharpOption<int>.None;
+
+                var result = WindResistance.calculateDifficulty(
+                    windSpeedOption,
+                    parsedDirection.Value,
+                    windDirOption
+                );
+                newWindResistanceRating = result.IsOk ? result.ResultValue.Item1 : (int?)null;
+            }
+            else
+            {
+                newWindResistanceRating = ride.WindResistanceRating;
+            }
+        }
+
         ride.RideDateTimeLocal = request.RideDateTimeLocal;
         ride.Miles = request.Miles;
         ride.RideMinutes = request.RideMinutes;
@@ -138,6 +187,9 @@ public sealed class EditRideService(
             ride.Notes = null;
         }
         ride.WeatherUserOverridden = request.WeatherUserOverridden;
+        ride.Difficulty = request.Difficulty;
+        ride.PrimaryTravelDirection = newCanonicalDirection;
+        ride.WindResistanceRating = newWindResistanceRating;
         ride.Version = currentVersion + 1;
 
         var utcNow = DateTime.UtcNow;
@@ -163,7 +215,10 @@ public sealed class EditRideService(
             snapshotMileageRateCents: ride.SnapshotMileageRateCents,
             snapshotYearlyGoalMiles: ride.SnapshotYearlyGoalMiles,
             snapshotOilChangePrice: ride.SnapshotOilChangePrice,
-            occurredAtUtc: utcNow
+            occurredAtUtc: utcNow,
+            difficulty: request.Difficulty,
+            primaryTravelDirection: newCanonicalDirection,
+            windResistanceRating: newWindResistanceRating
         );
 
         dbContext.OutboxEvents.Add(

@@ -400,6 +400,11 @@ export function ImportRidesPage() {
           Upload a CSV to preview row validation, duplicate matches, and import summary before
           processing.
         </p>
+        <p className="import-rides-description">
+          <a href="/api/rides/csv-sample" download="ride-import-sample.csv">
+            Download sample CSV
+          </a>
+        </p>
 
         <form onSubmit={onPreview}>
           <label className="import-rides-file-label" htmlFor="csv-upload-input">

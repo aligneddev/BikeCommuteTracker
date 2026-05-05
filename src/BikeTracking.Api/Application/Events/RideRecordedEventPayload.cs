@@ -21,7 +21,10 @@ public sealed record RideRecordedEventPayload(
     decimal? SnapshotMileageRateCents,
     decimal? SnapshotYearlyGoalMiles,
     decimal? SnapshotOilChangePrice,
-    string Source
+    string Source,
+    int? Difficulty,
+    string? PrimaryTravelDirection,
+    int? WindResistanceRating
 )
 {
     public const string EventTypeName = "RideRecorded";
@@ -45,7 +48,10 @@ public sealed record RideRecordedEventPayload(
         decimal? snapshotMileageRateCents = null,
         decimal? snapshotYearlyGoalMiles = null,
         decimal? snapshotOilChangePrice = null,
-        DateTime? occurredAtUtc = null
+        DateTime? occurredAtUtc = null,
+        int? difficulty = null,
+        string? primaryTravelDirection = null,
+        int? windResistanceRating = null
     )
     {
         return new RideRecordedEventPayload(
@@ -69,7 +75,10 @@ public sealed record RideRecordedEventPayload(
             SnapshotMileageRateCents: snapshotMileageRateCents,
             SnapshotYearlyGoalMiles: snapshotYearlyGoalMiles,
             SnapshotOilChangePrice: snapshotOilChangePrice,
-            Source: SourceName
+            Source: SourceName,
+            Difficulty: difficulty,
+            PrimaryTravelDirection: primaryTravelDirection,
+            WindResistanceRating: windResistanceRating
         );
     }
 }

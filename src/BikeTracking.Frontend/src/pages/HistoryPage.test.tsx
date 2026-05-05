@@ -10,6 +10,11 @@ vi.mock('../services/ridesService', () => ({
   deleteRide: vi.fn(),
   getGasPrice: vi.fn(),
   getRideWeather: vi.fn(),
+  COMPASS_DIRECTIONS: ['North', 'NE', 'East', 'SE', 'South', 'SW', 'West', 'NW'],
+}))
+
+vi.mock('../utils/windResistance', () => ({
+  suggestDifficulty: vi.fn().mockReturnValue(null),
 }))
 
 const mockGetRideHistory = vi.mocked(ridesService.getRideHistory)
