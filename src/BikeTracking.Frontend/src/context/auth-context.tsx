@@ -1,8 +1,15 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
+import {
+  computeExpiryFromActivity,
+  isInactivityExpired,
+  makeActivityTimestamp,
+} from '../services/pwa/session-policy'
 
 export interface AuthSession {
   userId: number
   userName: string
+  lastActivityAtUtc?: string
+  expiresAtUtc?: string
 }
 
 interface AuthContextValue {
@@ -15,11 +22,42 @@ const SESSION_KEY = 'bike_tracking_auth_session'
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function withActivityMetadata(session: AuthSession, now: Date = new Date()): AuthSession {
+  const lastActivityAtUtc = makeActivityTimestamp(now)
+  return {
+    ...session,
+    lastActivityAtUtc,
+    expiresAtUtc: computeExpiryFromActivity(lastActivityAtUtc),
+  }
+}
+
+function isValidSession(session: Partial<AuthSession>): session is AuthSession {
+  return typeof session.userId === 'number' && session.userId > 0 && typeof session.userName === 'string'
+}
+
 function readSession(): AuthSession | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as AuthSession
+
+    const parsed = JSON.parse(raw) as Partial<AuthSession>
+    if (!isValidSession(parsed)) {
+      sessionStorage.removeItem(SESSION_KEY)
+      return null
+    }
+
+    if (parsed.lastActivityAtUtc && isInactivityExpired(parsed.lastActivityAtUtc)) {
+      sessionStorage.removeItem(SESSION_KEY)
+      return null
+    }
+
+    if (!parsed.lastActivityAtUtc || !parsed.expiresAtUtc) {
+      const migrated = withActivityMetadata(parsed)
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(migrated))
+      return migrated
+    }
+
+    return parsed
   } catch {
     return null
   }
@@ -29,8 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthSession | null>(() => readSession())
 
   function login(session: AuthSession): void {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    setUser(session)
+    const storedSession = withActivityMetadata(session)
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(storedSession))
+    setUser(storedSession)
   }
 
   function logout(): void {

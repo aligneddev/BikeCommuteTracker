@@ -4,6 +4,17 @@ const API_BASE_URL =
     "",
   ) ?? "http://localhost:5436";
 const SESSION_KEY = "bike_tracking_auth_session";
+const SESSION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function computeExpiryFromActivity(lastActivityUtcIso: string): string {
+  return new Date(
+    new Date(lastActivityUtcIso).getTime() + SESSION_WINDOW_MS,
+  ).toISOString();
+}
 
 export interface SignupRequest {
   name: string;
@@ -90,8 +101,23 @@ function getAuthHeaders(contentTypeJson: boolean): Record<string, string> {
       return headers;
     }
 
-    const parsed = JSON.parse(raw) as { userId?: number };
+    const parsed = JSON.parse(raw) as {
+      userId?: number;
+      userName?: string;
+      lastActivityAtUtc?: string;
+      expiresAtUtc?: string;
+    };
+
     if (typeof parsed.userId === "number" && parsed.userId > 0) {
+      const lastActivityAtUtc = nowIso();
+      sessionStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({
+          ...parsed,
+          lastActivityAtUtc,
+          expiresAtUtc: computeExpiryFromActivity(lastActivityAtUtc),
+        }),
+      );
       headers["X-User-Id"] = parsed.userId.toString();
     }
   } catch {

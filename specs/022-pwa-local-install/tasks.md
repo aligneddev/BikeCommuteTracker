@@ -76,18 +76,18 @@
 
 ### Tests for User Story 2 (write first, confirm failing)
 
-- [ ] T022 [P] [US2] Add unit tests for inactivity expiration calculation in src/BikeTracking.Frontend/src/services/pwa/session-policy.test.ts
-- [ ] T023 [P] [US2] Add unit tests for update lifecycle state transitions in src/BikeTracking.Frontend/src/services/pwa/update-service.test.ts
-- [ ] T024 [P] [US2] Add E2E scenario for 7-day inactivity re-authentication in src/BikeTracking.Frontend/tests/e2e/pwa-session-timeout.spec.ts
-- [ ] T025 [P] [US2] Add E2E scenario for automatic update on relaunch/refresh in src/BikeTracking.Frontend/tests/e2e/pwa-auto-update.spec.ts
+- [X] T022 [P] [US2] Add unit tests for inactivity expiration calculation in src/BikeTracking.Frontend/src/services/pwa/session-policy.test.ts
+- [X] T023 [P] [US2] Add unit tests for update lifecycle state transitions in src/BikeTracking.Frontend/src/services/pwa/update-service.test.ts
+- [X] T024 [P] [US2] Add E2E scenario for 7-day inactivity re-authentication in src/BikeTracking.Frontend/tests/e2e/pwa-session-timeout.spec.ts
+- [X] T025 [P] [US2] Add E2E scenario for automatic update on relaunch/refresh in src/BikeTracking.Frontend/tests/e2e/pwa-auto-update.spec.ts
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] Persist and refresh activity timestamps in auth state management in src/BikeTracking.Frontend/src/context/auth-context.tsx
-- [ ] T027 [US2] Enforce inactivity expiration gate before protected routes render in src/BikeTracking.Frontend/src/components/protected-route.tsx
-- [ ] T028 [US2] Update authenticated API usage to refresh activity timestamp in src/BikeTracking.Frontend/src/services/users-api.ts
-- [ ] T029 [P] [US2] Update ride API usage to refresh activity timestamp in src/BikeTracking.Frontend/src/services/ridesService.ts
-- [ ] T030 [US2] Add update status banner messaging (checking/downloading/failed) in src/BikeTracking.Frontend/src/components/app-header/app-header.tsx
+- [X] T026 [US2] Persist and refresh activity timestamps in auth state management in src/BikeTracking.Frontend/src/context/auth-context.tsx
+- [X] T027 [US2] Enforce inactivity expiration gate before protected routes render in src/BikeTracking.Frontend/src/components/protected-route.tsx
+- [X] T028 [US2] Update authenticated API usage to refresh activity timestamp in src/BikeTracking.Frontend/src/services/users-api.ts
+- [X] T029 [P] [US2] Update ride API usage to refresh activity timestamp in src/BikeTracking.Frontend/src/services/ridesService.ts
+- [X] T030 [US2] Add update status banner messaging (checking/downloading/failed) in src/BikeTracking.Frontend/src/components/app-header/app-header.tsx
 
 **Checkpoint**: US2 is independently functional with session timeout and update messaging.
 

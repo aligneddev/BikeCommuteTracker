@@ -16,8 +16,10 @@ function jsonResponse(
 
 describe("ridesService", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
+    sessionStorage.clear();
   });
 
   afterEach(() => {
@@ -302,5 +304,42 @@ describe("ridesService", () => {
       expect(result.error.code).toBe("NOT_RIDE_OWNER");
       expect(result.error.message).toMatch(/permission/i);
     }
+  });
+
+  it("refreshes activity timestamp when authenticated ride calls are made", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-20T10:00:00.000Z"));
+
+    sessionStorage.setItem(
+      "bike_tracking_auth_session",
+      JSON.stringify({
+        userId: 12,
+        userName: "Alice",
+        lastActivityAtUtc: "2026-05-01T08:00:00.000Z",
+        expiresAtUtc: "2026-05-08T08:00:00.000Z",
+      }),
+    );
+
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          presets: [],
+          generatedAtUtc: "2026-05-20T10:00:00.000Z",
+        },
+        true,
+      ),
+    );
+
+    await ridesService.getRidePresets();
+
+    const stored = JSON.parse(
+      sessionStorage.getItem("bike_tracking_auth_session") ?? "{}",
+    ) as {
+      lastActivityAtUtc?: string;
+      expiresAtUtc?: string;
+    };
+
+    expect(stored.lastActivityAtUtc).toBe("2026-05-20T10:00:00.000Z");
+    expect(stored.expiresAtUtc).toBe("2026-05-27T10:00:00.000Z");
   });
 });

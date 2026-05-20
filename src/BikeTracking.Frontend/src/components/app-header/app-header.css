@@ -71,6 +71,16 @@
   text-transform: uppercase;
 }
 
+.app-header-update-banner {
+  margin: 0;
+  padding: 0.45rem 1.25rem;
+  border-top: 1px solid #d4dbe5;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
 .app-header-user {
   position: relative;
   display: grid;

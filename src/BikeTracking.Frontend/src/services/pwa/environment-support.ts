@@ -13,9 +13,9 @@ function nowIso(): string {
 }
 
 export function detectPlatform(): PlatformType {
-  const userAgentDataPlatform =
-    (navigator as Navigator & { userAgentData?: { platform?: string } })
-      .userAgentData?.platform?.toLowerCase();
+  const userAgentDataPlatform = (
+    navigator as Navigator & { userAgentData?: { platform?: string } }
+  ).userAgentData?.platform?.toLowerCase();
   const platform = (
     userAgentDataPlatform ??
     navigator.platform ??
