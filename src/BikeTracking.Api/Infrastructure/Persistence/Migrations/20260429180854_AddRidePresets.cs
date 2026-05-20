@@ -28,12 +28,6 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     PeriodTag = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     ExactStartTimeLocal = table.Column<TimeOnly>(type: "TEXT", nullable: false),
                     DurationMinutes = table.Column<int>(type: "INTEGER", nullable: false),
-                    Miles = table.Column<decimal>(
-                        type: "TEXT",
-                        precision: 10,
-                        scale: 2,
-                        nullable: false
-                    ),
                     LastUsedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -45,10 +39,6 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     table.CheckConstraint(
                         "CK_RidePresets_DurationMinutes_Positive",
                         "\"DurationMinutes\" > 0"
-                    );
-                    table.CheckConstraint(
-                        "CK_RidePresets_Miles_Positive",
-                        "CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200"
                     );
                     table.CheckConstraint(
                         "CK_RidePresets_PeriodTag_Values",
