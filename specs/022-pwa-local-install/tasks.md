@@ -101,15 +101,15 @@
 
 ### Tests for User Story 3 (write first, confirm failing)
 
-- [ ] T031 [P] [US3] Add unit test coverage for unsupported-environment guidance rendering in src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx
-- [ ] T032 [P] [US3] Add E2E scenario for unsupported OS/browser guidance and fallback in src/BikeTracking.Frontend/tests/e2e/pwa-unsupported-environment.spec.ts
-- [ ] T033 [P] [US3] Add E2E scenario for installed-mode offline connectivity-required behavior in src/BikeTracking.Frontend/tests/e2e/pwa-offline-guard.spec.ts
+- [X] T031 [P] [US3] Add unit test coverage for unsupported-environment guidance rendering in src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx
+- [X] T032 [P] [US3] Add E2E scenario for unsupported OS/browser guidance and fallback in src/BikeTracking.Frontend/tests/e2e/pwa-unsupported-environment.spec.ts
+- [X] T033 [P] [US3] Add E2E scenario for installed-mode offline connectivity-required behavior in src/BikeTracking.Frontend/tests/e2e/pwa-offline-guard.spec.ts
 
 ### Implementation for User Story 3
 
-- [ ] T034 [US3] Render unsupported OS/browser guidance and browser-mode fallback text in src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx
-- [ ] T035 [US3] Add connectivity-required guard and retry action for ride operations in src/BikeTracking.Frontend/src/pages/RecordRidePage.tsx
-- [ ] T036 [US3] Add online/offline status wiring for guard presentation in src/BikeTracking.Frontend/src/services/pwa/launch-context.ts
+- [X] T034 [US3] Render unsupported OS/browser guidance and browser-mode fallback text in src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx
+- [X] T035 [US3] Add connectivity-required guard and retry action for ride operations in src/BikeTracking.Frontend/src/pages/RecordRidePage.tsx
+- [X] T036 [US3] Add online/offline status wiring for guard presentation in src/BikeTracking.Frontend/src/services/pwa/launch-context.ts
 
 **Checkpoint**: US3 is independently functional with graceful fallback behavior.
 

@@ -8,10 +8,13 @@ import {
   COMPASS_DIRECTIONS,
 } from '../services/ridesService'
 import { suggestDifficulty } from '../utils/windResistance'
+import { getPwaSnapshot, subscribePwaSnapshot } from '../services/pwa/bootstrap'
+import { getConnectivityStatus, readOnlineState } from '../services/pwa/launch-context'
 
 const EIA_GAS_PRICE_SOURCE = 'Source: U.S. Energy Information Administration (EIA)'
 
 export function RecordRidePage() {
+  const [pwaSnapshot, setPwaSnapshot] = useState(() => getPwaSnapshot())
   const [rideDateTimeLocal, setRideDateTimeLocal] = useState<string>('')
   const [miles, setMiles] = useState<string>('')
   const [rideMinutes, setRideMinutes] = useState<string>('')
@@ -38,6 +41,7 @@ export function RecordRidePage() {
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const rideDateTimeLocalRef = useRef<string>('')
+  const connectivityStatus = getConnectivityStatus(pwaSnapshot.launchContext)
 
   const applyLoadedWeather = (weather: {
     temperature?: number
@@ -65,6 +69,11 @@ export function RecordRidePage() {
   }
 
   const handleLoadWeather = async () => {
+    if (connectivityStatus.isBlocked) {
+      setErrorMessage('Connectivity required: reconnect to the internet to load weather in installed mode.')
+      return
+    }
+
     if (!rideDateTimeLocal) {
       setErrorMessage('Ride date/time is required to load weather')
       return
@@ -92,6 +101,12 @@ export function RecordRidePage() {
       console.error('Failed to load ride presets:', error)
     }
   }
+
+  useEffect(() => {
+    return subscribePwaSnapshot((next) => {
+      setPwaSnapshot(next)
+    })
+  }, [])
 
   useEffect(() => {
     const initializePageData = async () => {
@@ -232,6 +247,11 @@ export function RecordRidePage() {
     setErrorMessage('')
     setSuccessMessage('')
 
+    if (connectivityStatus.isBlocked) {
+      setErrorMessage('Connectivity required: reconnect to the internet to record rides in installed mode.')
+      return
+    }
+
     // Client-side validation
     const milesNum = parseFloat(miles)
     if (!miles || milesNum <= 0) {
@@ -338,6 +358,26 @@ export function RecordRidePage() {
         Need to add past rides in bulk? <a href="/rides/import">Import rides from CSV</a>.
       </p>
 
+      {connectivityStatus.isBlocked ? (
+        <div className="error-message" role="alert">
+          <p>
+            Connectivity required: this installed app needs an internet connection for ride operations.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (readOnlineState()) {
+                setErrorMessage('Connection restored. Retry your action.')
+              } else {
+                setErrorMessage('Still offline. Reconnect and try again.')
+              }
+            }}
+          >
+            Retry connection
+          </button>
+        </div>
+      ) : null}
+
       {successMessage && <div className="success-message">{successMessage}</div>}
       {errorMessage && <div className="error-message">{errorMessage}</div>}
 
@@ -363,7 +403,7 @@ export function RecordRidePage() {
                 const preset = ridePresets.find((p) => p.presetId === selectedPresetId)
                 if (preset) applyPreset(preset)
               }}
-              disabled={selectedPresetId === null}
+              disabled={selectedPresetId === null || connectivityStatus.isBlocked}
             >
               Apply Preset
             </button>
@@ -554,7 +594,13 @@ export function RecordRidePage() {
         </div>
 
         <div className="form-group">
-          <button type="button" onClick={() => void handleLoadWeather()} disabled={loadingWeather}>
+          <button
+            type="button"
+            onClick={() => {
+              void handleLoadWeather()
+            }}
+            disabled={loadingWeather || connectivityStatus.isBlocked}
+          >
             {loadingWeather ? 'Loading Weather...' : 'Load Weather'}
           </button>
         </div>
@@ -582,7 +628,7 @@ export function RecordRidePage() {
           {gasPriceSource ? <p>{gasPriceSource}</p> : null}
         </div>
 
-        <button type="submit" disabled={submitting}>
+        <button type="submit" disabled={submitting || connectivityStatus.isBlocked}>
           {submitting ? 'Saving...' : 'Record Ride'}
         </button>
       </form>

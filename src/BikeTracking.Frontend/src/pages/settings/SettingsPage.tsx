@@ -51,6 +51,18 @@ function normalizeLocationLabel(value: string): string | null {
   return normalized === '' ? null : normalized
 }
 
+function getUnsupportedEnvironmentMessage(reasonCode?: string): string {
+  if (reasonCode === 'unsupported_os') {
+    return 'Installation is not available on this operating system in v1. Continue using browser mode.'
+  }
+
+  if (reasonCode === 'unsupported_browser') {
+    return 'Installation is not available in this browser in v1. Use current Chrome or Edge on Windows, or continue using browser mode.'
+  }
+
+  return 'Installation is not available in this environment. Continue using browser mode.'
+}
+
 export function SettingsPage() {
   const [pwaSnapshot, setPwaSnapshot] = useState(() => getPwaSnapshot())
   const [averageCarMpg, setAverageCarMpg] = useState<number | ''>('')
@@ -380,7 +392,7 @@ export function SettingsPage() {
             </button>
           ) : (
             <p className="settings-hint" role="status">
-              Installation is not available in this environment ({pwaSnapshot.installationState.reasonCode ?? 'unsupported'}). Continue using browser mode.
+              {getUnsupportedEnvironmentMessage(pwaSnapshot.installationState.reasonCode)}
             </p>
           )}
         </section>

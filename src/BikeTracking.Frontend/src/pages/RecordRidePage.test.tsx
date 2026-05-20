@@ -15,12 +15,37 @@ vi.mock('../utils/windResistance', () => ({
   suggestDifficulty: vi.fn().mockReturnValue(null),
 }))
 
+vi.mock('../services/pwa/bootstrap', () => ({
+  getPwaSnapshot: vi.fn(() => ({
+    launchContext: {
+      mode: 'browser_tab',
+      isOnline: true,
+      platform: 'windows',
+      browserFamily: 'chrome',
+      appVersion: 'test',
+    },
+    installationState: {
+      isInstallSupported: true,
+      installPromptAvailable: false,
+      status: 'available',
+      lastTransitionAtUtc: '2026-05-20T00:00:00.000Z',
+    },
+    updateState: {
+      status: 'idle',
+      lastCheckedAtUtc: '2026-05-20T00:00:00.000Z',
+    },
+  })),
+  subscribePwaSnapshot: vi.fn(() => () => undefined),
+}))
+
 import * as ridesService from '../services/ridesService'
+import * as pwaBootstrap from '../services/pwa/bootstrap'
 
 const mockGetGasPrice = vi.mocked(ridesService.getGasPrice)
 const mockGetRideWeather = vi.mocked(ridesService.getRideWeather)
 const mockGetRidePresets = vi.mocked(ridesService.getRidePresets)
 const mockRecordRide = vi.mocked(ridesService.recordRide)
+const mockGetPwaSnapshot = vi.mocked(pwaBootstrap.getPwaSnapshot)
 
 describe('RecordRidePage', () => {
   beforeEach(() => {
@@ -44,6 +69,61 @@ describe('RecordRidePage', () => {
       cloudCoverPercent: undefined,
       precipitationType: undefined,
       isAvailable: false,
+    })
+
+    mockGetPwaSnapshot.mockReturnValue({
+      launchContext: {
+        mode: 'browser_tab',
+        isOnline: true,
+        platform: 'windows',
+        browserFamily: 'chrome',
+        appVersion: 'test',
+      },
+      installationState: {
+        isInstallSupported: true,
+        installPromptAvailable: false,
+        status: 'available',
+        lastTransitionAtUtc: '2026-05-20T00:00:00.000Z',
+      },
+      updateState: {
+        status: 'idle',
+        lastCheckedAtUtc: '2026-05-20T00:00:00.000Z',
+      },
+    })
+  })
+
+  it('shows offline installed-mode guard and blocks ride submission', async () => {
+    mockGetPwaSnapshot.mockReturnValue({
+      launchContext: {
+        mode: 'installed_window',
+        isOnline: false,
+        platform: 'windows',
+        browserFamily: 'chrome',
+        appVersion: 'test',
+      },
+      installationState: {
+        isInstallSupported: true,
+        installPromptAvailable: false,
+        status: 'installed',
+        lastTransitionAtUtc: '2026-05-20T00:00:00.000Z',
+      },
+      updateState: {
+        status: 'idle',
+        lastCheckedAtUtc: '2026-05-20T00:00:00.000Z',
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    expect(await screen.findByText(/connectivity required/i)).toBeVisible()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /record ride/i })).toBeDisabled()
+      expect(screen.getByRole('button', { name: /load weather/i })).toBeDisabled()
     })
   })
 

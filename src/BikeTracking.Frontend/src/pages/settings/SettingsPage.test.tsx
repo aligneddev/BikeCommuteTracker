@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { SettingsPage } from './SettingsPage'
 import * as usersApi from '../../services/users-api'
 import * as ridesService from '../../services/ridesService'
+import { disposePwaBootstrap } from '../../services/pwa/bootstrap'
 
 vi.mock('../../services/users-api', () => ({
   getUserSettings: vi.fn(),
@@ -39,6 +40,7 @@ function installGeolocationMock(
 
 describe('SettingsPage', () => {
   beforeEach(() => {
+    disposePwaBootstrap()
     vi.clearAllMocks()
     mockGetRidePresets.mockResolvedValue({ presets: [], generatedAtUtc: '2026-04-29T00:00:00Z' })
     mockCreateRidePreset.mockResolvedValue({
@@ -84,6 +86,47 @@ describe('SettingsPage', () => {
         toJSON: () => ({}),
       })
     })
+  })
+
+  it('shows unsupported environment guidance with browser-mode fallback text', async () => {
+    Object.defineProperty(window.navigator, 'platform', {
+      configurable: true,
+      value: 'Linux x86_64',
+    })
+    Object.defineProperty(window.navigator, 'userAgent', {
+      configurable: true,
+      value:
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36',
+    })
+
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: false,
+        settings: {
+          averageCarMpg: null,
+          yearlyGoalMiles: null,
+          oilChangePrice: null,
+          mileageRateCents: null,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
+          updatedAtUtc: null,
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    expect(await screen.findByText(/installation is not available on this operating system/i)).toBeVisible()
+    expect(screen.getByText(/continue using browser mode/i)).toBeVisible()
   })
 
   it('renders an Import Rides from CSV link', async () => {
