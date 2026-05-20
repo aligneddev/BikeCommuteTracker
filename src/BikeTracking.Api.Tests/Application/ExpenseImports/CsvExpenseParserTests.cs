@@ -30,15 +30,28 @@ public sealed class CsvExpenseParserTests
         Assert.Contains("Amount", exception.Message);
     }
 
-    [Theory]
-    [InlineData("$1,250.00 USD", "1250.00")]
-    [InlineData("£12.50 GBP", "12.50")]
-    [InlineData(" 25.00 EUR ", "25.00")]
-    public void NormalizeAmount_StripsCurrencyFormatting(string raw, string expected)
+    [Fact]
+    public void NormalizeAmount_StripsCurrencyFormatting_WithUsdAmount()
     {
-        var normalized = parser.NormalizeAmount(raw);
+        var normalized = parser.NormalizeAmount("$1,250.00 USD");
 
-        Assert.Equal(expected, normalized);
+        Assert.Equal("1250.00", normalized);
+    }
+
+    [Fact]
+    public void NormalizeAmount_StripsCurrencyFormatting_WithGbpAmount()
+    {
+        var normalized = parser.NormalizeAmount("£12.50 GBP");
+
+        Assert.Equal("12.50", normalized);
+    }
+
+    [Fact]
+    public void NormalizeAmount_StripsCurrencyFormatting_WithTrimmedEurAmount()
+    {
+        var normalized = parser.NormalizeAmount(" 25.00 EUR ");
+
+        Assert.Equal("25.00", normalized);
     }
 
     [Fact]

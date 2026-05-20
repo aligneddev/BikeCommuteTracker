@@ -46,6 +46,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: CsvImportDifficultyTests validates Difficulty and Direction column parsing, validation rules, and storage in ImportRowEntity after schema migration.",
             ["20260429180854_AddRidePresets"] =
                 "Added test: RidesEndpointsSqliteIntegrationTests validates RidePresets table including unique rider-scoped names, exact start time parsing, rider isolation, MRU ordering, and preset ownership enforcement.",
+            ["20260520150127_AddRidePresetMiles"] =
+                "Updated test: RidePreset CRUD endpoint coverage validates Miles round-trip and persistence on create and update after schema migration.",
         };
 
     [Fact]
