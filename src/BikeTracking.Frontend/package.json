@@ -36,6 +36,7 @@
     "typescript": "^6.0.1",
     "typescript-eslint": "^8.58.0",
     "vite": "^8.0.5",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.0"
   },
   "scripts": {
@@ -44,8 +45,10 @@
     "lint": "npm run lint:js && npm run lint:css",
     "pretest": "npm run lint",
     "dev": "vite",
+    "dev:pwa": "vite --host",
     "start": "vite",
     "build": "vite build",
+    "build:pwa": "vite build",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",

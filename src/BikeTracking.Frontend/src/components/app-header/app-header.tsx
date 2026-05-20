@@ -1,10 +1,12 @@
 import { NavLink } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/auth-context'
+import { getPwaSnapshot, subscribePwaSnapshot } from '../../services/pwa/bootstrap'
 import './app-header.css'
 
 export function AppHeader() {
   const { user, logout } = useAuth()
+  const [pwaSnapshot, setPwaSnapshot] = useState(() => getPwaSnapshot())
   const [menuOpen, setMenuOpen] = useState<boolean>(false)
   const closeMenuTimeoutRef = useRef<number | null>(null)
 
@@ -32,6 +34,12 @@ export function AppHeader() {
     return () => {
       clearCloseMenuTimeout()
     }
+  }, [])
+
+  useEffect(() => {
+    return subscribePwaSnapshot((next) => {
+      setPwaSnapshot(next)
+    })
   }, [])
 
   useEffect(() => {
@@ -106,6 +114,14 @@ export function AppHeader() {
           >
             Expense History
           </NavLink>
+
+          <span className="app-header-install-indicator" role="status" aria-live="polite">
+            {pwaSnapshot.launchContext.mode === 'installed_window'
+              ? 'Installed'
+              : pwaSnapshot.installationState.installPromptAvailable
+                ? 'Install Ready'
+                : 'Browser Mode'}
+          </span>
         </nav>
 
         <div

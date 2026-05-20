@@ -34,6 +34,27 @@
   color: #163869;
 }
 
+.settings-install-card {
+  border: 1px solid #d4dbe5;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.settings-install-card h2 {
+  margin: 0;
+  color: #1b3352;
+  font-size: 1rem;
+}
+
+.settings-install-status {
+  margin: 0;
+  color: #304a6b;
+  font-size: 0.9rem;
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

@@ -17,6 +17,7 @@ import {
   type UpsertRidePresetRequest,
 } from '../../services/ridesService'
 import { PERIOD_TAG_DEFAULT_DIRECTIONS } from '../../services/ridesService'
+import { getPwaSnapshot, promptPwaInstall, subscribePwaSnapshot } from '../../services/pwa/bootstrap'
 import './SettingsPage.css'
 
 interface SettingsFormSnapshot {
@@ -51,6 +52,7 @@ function normalizeLocationLabel(value: string): string | null {
 }
 
 export function SettingsPage() {
+  const [pwaSnapshot, setPwaSnapshot] = useState(() => getPwaSnapshot())
   const [averageCarMpg, setAverageCarMpg] = useState<number | ''>('')
   const [yearlyGoalMiles, setYearlyGoalMiles] = useState<number | ''>('')
   const [oilChangePrice, setOilChangePrice] = useState<number | ''>('')
@@ -85,6 +87,12 @@ export function SettingsPage() {
   const [presetExactStartTimeLocal, setPresetExactStartTimeLocal] = useState<string>('07:45')
   const [presetDurationMinutes, setPresetDurationMinutes] = useState<number | ''>('')
   const [presetMiles, setPresetMiles] = useState<number | ''>('')
+
+  useEffect(() => {
+    return subscribePwaSnapshot((next) => {
+      setPwaSnapshot(next)
+    })
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -327,6 +335,19 @@ export function SettingsPage() {
     }
   }
 
+  async function onInstallApp(): Promise<void> {
+    setError('')
+    setSuccess('')
+
+    const installed = await promptPwaInstall()
+    if (installed) {
+      setSuccess('App installed successfully. You can now launch it from your system app launcher.')
+      return
+    }
+
+    setError('Install was not completed. You can continue in browser mode and retry later.')
+  }
+
   if (loading) {
     return <div>Loading settings...</div>
   }
@@ -340,6 +361,29 @@ export function SettingsPage() {
             Import Rides from CSV
           </Link>
         </p>
+
+        <section className="settings-install-card" aria-label="App installation">
+          <h2>Install App</h2>
+          <p className="settings-install-status">
+            Current mode: {pwaSnapshot.launchContext.mode === 'installed_window' ? 'Installed app window' : 'Browser tab'}
+          </p>
+          {pwaSnapshot.installationState.isInstallSupported ? (
+            <button
+              type="button"
+              className="settings-secondary-action"
+              onClick={() => {
+                void onInstallApp()
+              }}
+              disabled={!pwaSnapshot.installationState.installPromptAvailable}
+            >
+              Install on this computer
+            </button>
+          ) : (
+            <p className="settings-hint" role="status">
+              Installation is not available in this environment ({pwaSnapshot.installationState.reasonCode ?? 'unsupported'}). Continue using browser mode.
+            </p>
+          )}
+        </section>
 
         {error ? (
           <p className="settings-error" role="alert">
