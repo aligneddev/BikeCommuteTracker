@@ -39,6 +39,7 @@ test.describe("004-record-ride e2e", () => {
 
     await page.getByLabel("Preset Name").fill("Morning Commute");
     await page.getByLabel("Duration Minutes").fill("34");
+    await page.getByLabel("Miles").fill("8.4");
     await page.getByRole("button", { name: "Add Preset" }).click();
 
     await expect(page.getByText(/preset created\./i)).toBeVisible();
@@ -51,6 +52,7 @@ test.describe("004-record-ride e2e", () => {
     await expect(page.getByLabel("Primary Direction")).toHaveValue("NE");
     await page.getByLabel("Exact Start Time").fill("17:35");
     await page.getByLabel("Duration Minutes").fill("32");
+    await page.getByLabel("Miles").fill("9.1");
     await page.getByRole("button", { name: "Add Preset" }).click();
 
     await expect(page.getByText(/preset created\./i)).toBeVisible();
@@ -74,9 +76,16 @@ test.describe("004-record-ride e2e", () => {
     await expect(page).toHaveURL("/rides/record");
     await expect(page.getByText(/quick ride options/i)).toHaveCount(0);
 
-    await page
-      .getByLabel("Ride Preset")
-      .selectOption("Morning Express (morning, 07:45, 34 min)");
+    const morningPresetOption = page.locator("#ridePreset option", {
+      hasText: "Morning Express",
+    });
+    await expect(morningPresetOption).toHaveCount(1);
+    const morningPresetValue = await morningPresetOption
+      .first()
+      .getAttribute("value");
+    expect(morningPresetValue).not.toBeNull();
+
+    await page.getByLabel("Ride Preset").selectOption(morningPresetValue!);
     await page.getByRole("button", { name: "Apply Preset" }).click();
 
     await expect(page.getByLabel(/primary direction of travel/i)).toHaveValue(
@@ -109,6 +118,19 @@ test.describe("004-record-ride e2e", () => {
   test("shows gas price, prepopulates it, and displays it in history", async ({
     page,
   }) => {
+    await page.route("**/api/rides/gas-price?date=*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          date: "2026-04-03",
+          pricePerGallon: 3.4567,
+          dataSource: "Source: U.S. Energy Information Administration (EIA)",
+          isAvailable: true,
+        }),
+      });
+    });
+
     const userName = uniqueUser("e2e-gas-price");
     await createAndLoginUser(page, userName, TEST_PIN);
 
