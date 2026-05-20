@@ -102,3 +102,20 @@ npm run test:e2e
 - Keep feature scope constrained to Windows install support in v1.
 - Do not add offline ride create/edit in this feature.
 - Preserve existing backend contracts unless a strictly necessary auth compatibility issue emerges.
+
+## Validation Results (2026-05-20)
+
+### Frontend Checklist (T039)
+
+- `npm run lint` (from `src/BikeTracking.Frontend`): passed
+- `npm run build` (from `src/BikeTracking.Frontend`): passed
+	- Note: Vite reported a large chunk size warning for `dist/assets/index-*.js`, no build failure.
+- `npm run test:unit` (from `src/BikeTracking.Frontend`): passed
+	- Result: 27 files passed, 163 tests passed, 0 failed.
+- `npm run test:e2e` (from `src/BikeTracking.Frontend`): passed
+	- Result: 38 passed, 0 failed.
+
+### Full Solution Regression (T040)
+
+- `dotnet test BikeTracking.slnx` (from repo root): passed
+	- Result: total 353, failed 0, succeeded 351, skipped 2.

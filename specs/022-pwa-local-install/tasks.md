@@ -119,10 +119,10 @@
 
 **Purpose**: Final validation, docs, and cross-story cleanup.
 
-- [ ] T037 [P] Update frontend feature documentation for install/update/session behavior in src/BikeTracking.Frontend/README.md
-- [ ] T038 [P] Add shared E2E helper utilities for PWA scenarios in src/BikeTracking.Frontend/tests/e2e/support/auth-helpers.ts
-- [ ] T039 Run full frontend validation checklist from specs/022-pwa-local-install/quickstart.md
-- [ ] T040 Run full solution regression validation via BikeTracking.slnx and capture results in specs/022-pwa-local-install/quickstart.md
+- [X] T037 [P] Update frontend feature documentation for install/update/session behavior in src/BikeTracking.Frontend/README.md
+- [X] T038 [P] Add shared E2E helper utilities for PWA scenarios in src/BikeTracking.Frontend/tests/e2e/support/auth-helpers.ts
+- [X] T039 Run full frontend validation checklist from specs/022-pwa-local-install/quickstart.md
+- [X] T040 Run full solution regression validation via BikeTracking.slnx and capture results in specs/022-pwa-local-install/quickstart.md
 
 ---
 
