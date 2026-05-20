@@ -3,6 +3,7 @@ using System;
 using BikeTracking.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(BikeTrackingDbContext))]
-    partial class BikeTrackingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260429180854_AddRidePresets")]
+    partial class AddRidePresets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -562,12 +565,6 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("LastUsedAtUtc")
                         .HasColumnType("TEXT");
 
-// Because this is SQLite, not SQL Server or PostgreSQL. EF Core’s SQLite provider commonly maps decimal columns to TEXT in migrations so it can preserve the exact decimal value instead of relying on SQLite’s loose numeric affinity. The model snapshot mirrors that same provider-generated mapping, so 20260429180854_AddRidePresets.cs and BikeTrackingDbContextModelSnapshot.cs both show TEXT.
-// The important part is that the column is still modeled as decimal in C#; the storage type is just SQLite’s representation. We also added a check constraint with CAST("Miles" AS REAL) to enforce the range, so validation is not relying on the type name alone.
-                    b.Property<decimal>("Miles")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -608,8 +605,6 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("RidePresets", null, t =>
                         {
                             t.HasCheckConstraint("CK_RidePresets_DurationMinutes_Positive", "\"DurationMinutes\" > 0");
-
-                            t.HasCheckConstraint("CK_RidePresets_Miles_Positive", "CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200");
 
                             t.HasCheckConstraint("CK_RidePresets_PeriodTag_Values", "\"PeriodTag\" IN ('morning', 'afternoon')");
                         });

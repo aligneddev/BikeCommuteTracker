@@ -42,10 +42,3 @@ export async function recordRide(
   await page.getByRole("button", { name: "Record Ride" }).click();
   await expect(page.getByText(/ride recorded successfully/i)).toBeVisible();
 }
-
-export async function selectQuickRideOption(
-  page: Page,
-  labelPattern: RegExp,
-): Promise<void> {
-  await page.getByRole("button", { name: labelPattern }).click();
-}

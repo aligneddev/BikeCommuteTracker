@@ -34,6 +34,7 @@ export interface RecordRideRequest {
   weatherUserOverridden?: boolean;
   difficulty?: number;
   primaryTravelDirection?: CompassDirection;
+  selectedPresetId?: number;
 }
 
 export interface RecordRideSuccessResponse {
@@ -41,20 +42,6 @@ export interface RecordRideSuccessResponse {
   riderId: number;
   savedAtUtc: string;
   eventStatus: string;
-}
-
-export interface RideDefaultsResponse {
-  hasPreviousRide: boolean;
-  defaultMiles?: number;
-  defaultRideMinutes?: number;
-  defaultTemperature?: number;
-  defaultGasPricePerGallon?: number;
-  defaultWindSpeedMph?: number;
-  defaultWindDirectionDeg?: number;
-  defaultRelativeHumidityPercent?: number;
-  defaultCloudCoverPercent?: number;
-  defaultPrecipitationType?: string;
-  defaultRideDateTimeLocal: string;
 }
 
 export interface GasPriceResponse {
@@ -75,15 +62,46 @@ export interface RideWeatherResponse {
   isAvailable: boolean;
 }
 
-export interface QuickRideOption {
+export type RidePresetPeriodTag = "morning" | "afternoon";
+
+export const PERIOD_TAG_DEFAULT_DIRECTIONS: Record<
+  RidePresetPeriodTag,
+  CompassDirection
+> = {
+  morning: "SW",
+  afternoon: "NE",
+};
+
+export interface RidePreset {
+  presetId: number;
+  name: string;
+  primaryDirection: CompassDirection;
+  periodTag: RidePresetPeriodTag;
+  exactStartTimeLocal: string;
+  durationMinutes: number;
   miles: number;
-  rideMinutes: number;
-  lastUsedAtLocal: string;
+  lastUsedAtUtc: string | null;
+  updatedAtUtc: string;
 }
 
-export interface QuickRideOptionsResponse {
-  options: QuickRideOption[];
+export interface RidePresetsResponse {
+  presets: RidePreset[];
   generatedAtUtc: string;
+}
+
+export interface UpsertRidePresetRequest {
+  name: string;
+  primaryDirection: CompassDirection;
+  periodTag: RidePresetPeriodTag;
+  exactStartTimeLocal: string;
+  durationMinutes: number;
+  miles: number;
+}
+
+export interface DeleteRidePresetResponse {
+  presetId: number;
+  deletedAtUtc: string;
+  message: string;
 }
 
 export interface EditRideRequest {
@@ -255,21 +273,6 @@ export async function recordRide(
   return response.json();
 }
 
-export async function getRideDefaults(): Promise<RideDefaultsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/defaults`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      await parseErrorMessage(response, "Failed to fetch ride defaults"),
-    );
-  }
-
-  return response.json();
-}
-
 export async function getGasPrice(date: string): Promise<GasPriceResponse> {
   const response = await fetch(
     `${API_BASE_URL}/api/rides/gas-price?date=${encodeURIComponent(date)}`,
@@ -308,15 +311,75 @@ export async function getRideWeather(
   return response.json();
 }
 
-export async function getQuickRideOptions(): Promise<QuickRideOptionsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/quick-options`, {
+export async function getRidePresets(): Promise<RidePresetsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/rides/presets`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
     throw new Error(
-      await parseErrorMessage(response, "Failed to fetch quick ride options"),
+      await parseErrorMessage(response, "Failed to fetch ride presets"),
+    );
+  }
+
+  return response.json();
+}
+
+export async function createRidePreset(
+  request: UpsertRidePresetRequest,
+): Promise<RidePreset> {
+  const response = await fetch(`${API_BASE_URL}/api/rides/presets`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await parseErrorMessage(response, "Failed to create ride preset"),
+    );
+  }
+
+  return response.json();
+}
+
+export async function updateRidePreset(
+  presetId: number,
+  request: UpsertRidePresetRequest,
+): Promise<RidePreset> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/rides/presets/${presetId}`,
+    {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await parseErrorMessage(response, "Failed to update ride preset"),
+    );
+  }
+
+  return response.json();
+}
+
+export async function deleteRidePreset(
+  presetId: number,
+): Promise<DeleteRidePresetResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/rides/presets/${presetId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await parseErrorMessage(response, "Failed to delete ride preset"),
     );
   }
 

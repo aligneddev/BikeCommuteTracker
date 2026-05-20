@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createAndLoginUser, uniqueUser } from "./support/auth-helpers";
+import {
+  createAndLoginUser,
+  logoutUser,
+  uniqueUser,
+} from "./support/auth-helpers";
 
 const TEST_PIN = "87654321";
 
@@ -18,8 +22,7 @@ test.describe("009-settings e2e", () => {
     await page.getByRole("button", { name: "Save Settings" }).click();
     await expect(page.getByText(/settings saved successfully/i)).toBeVisible();
 
-    await page.getByRole("button", { name: "Log out" }).click();
-    await expect(page).toHaveURL("/login");
+    await logoutUser(page, riderOne);
 
     await createAndLoginUser(page, riderTwo, TEST_PIN);
 

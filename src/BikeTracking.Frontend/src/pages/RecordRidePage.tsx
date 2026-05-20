@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
-import type { CompassDirection, QuickRideOption, RecordRideRequest } from '../services/ridesService'
+import { useEffect, useRef, useState } from 'react'
+import type { CompassDirection, RidePreset, RecordRideRequest } from '../services/ridesService'
 import {
   getGasPrice,
   getRideWeather,
-  getQuickRideOptions,
+  getRidePresets,
   recordRide,
-  getRideDefaults,
   COMPASS_DIRECTIONS,
 } from '../services/ridesService'
 import { suggestDifficulty } from '../utils/windResistance'
@@ -26,7 +25,8 @@ export function RecordRidePage() {
   const [weatherEdited, setWeatherEdited] = useState<boolean>(false)
   const [gasPrice, setGasPrice] = useState<string>('')
   const [gasPriceSource, setGasPriceSource] = useState<string>('')
-  const [quickRideOptions, setQuickRideOptions] = useState<QuickRideOption[]>([])
+  const [ridePresets, setRidePresets] = useState<RidePreset[]>([])
+  const [selectedPresetId, setSelectedPresetId] = useState<number | null>(null)
 
   const [primaryTravelDirection, setPrimaryTravelDirection] = useState<CompassDirection | ''>('')
   const [difficulty, setDifficulty] = useState<string>('')
@@ -37,6 +37,7 @@ export function RecordRidePage() {
   const [loadingWeather, setLoadingWeather] = useState<boolean>(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const rideDateTimeLocalRef = useRef<string>('')
 
   const applyLoadedWeather = (weather: {
     temperature?: number
@@ -82,73 +83,50 @@ export function RecordRidePage() {
     }
   }
 
-  const loadQuickRideOptions = async () => {
+  const loadRidePresets = async () => {
     try {
-      const quickOptionsResponse = await getQuickRideOptions()
-      setQuickRideOptions(quickOptionsResponse.options)
+      const presetsResponse = await getRidePresets()
+      setRidePresets(presetsResponse.presets)
     } catch (error) {
-      setQuickRideOptions([])
-      console.error('Failed to load quick ride options:', error)
+      setRidePresets([])
+      console.error('Failed to load ride presets:', error)
     }
   }
 
   useEffect(() => {
-    const initializeDefaults = async () => {
+    const initializePageData = async () => {
+      // Initialize date/time to current local time only.
+      const now = new Date()
+      const localIso = now.toISOString().slice(0, 16)
+      setRideDateTimeLocal(localIso)
+
       try {
-        const defaults = await getRideDefaults()
-
-        // Set date/time to current local time
-        const now = new Date()
-        const localIso = now.toISOString().slice(0, 16)
-        setRideDateTimeLocal(localIso)
-
-        // Set optional defaults
-        if (defaults.hasPreviousRide) {
-          if (defaults.defaultMiles) setMiles(defaults.defaultMiles.toString())
-          if (defaults.defaultRideMinutes)
-            setRideMinutes(defaults.defaultRideMinutes.toString())
-          if (defaults.defaultTemperature)
-            setTemperature(defaults.defaultTemperature.toString())
-          if (defaults.defaultWindSpeedMph)
-            setWindSpeedMph(defaults.defaultWindSpeedMph.toString())
-          if (defaults.defaultWindDirectionDeg)
-            setWindDirectionDeg(defaults.defaultWindDirectionDeg.toString())
-          if (defaults.defaultRelativeHumidityPercent)
-            setRelativeHumidityPercent(defaults.defaultRelativeHumidityPercent.toString())
-          if (defaults.defaultCloudCoverPercent)
-            setCloudCoverPercent(defaults.defaultCloudCoverPercent.toString())
-          if (defaults.defaultPrecipitationType)
-            setPrecipitationType(defaults.defaultPrecipitationType)
-          if (defaults.defaultGasPricePerGallon)
-            setGasPrice(defaults.defaultGasPricePerGallon.toString())
-        }
-
-        try {
-          const today = localIso.slice(0, 10)
-          const lookup = await getGasPrice(today)
-          if (lookup.isAvailable && lookup.pricePerGallon !== null) {
-            setGasPrice(lookup.pricePerGallon.toString())
-            setGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
-          } else {
-            setGasPriceSource('')
-          }
-        } catch (error) {
+        const today = localIso.slice(0, 10)
+        const lookup = await getGasPrice(today)
+        if (lookup.isAvailable && lookup.pricePerGallon !== null) {
+          setGasPrice(lookup.pricePerGallon.toString())
+          setGasPriceSource(lookup.dataSource ?? EIA_GAS_PRICE_SOURCE)
+        } else {
           setGasPriceSource('')
-          console.error('Failed to load gas price:', error)
         }
       } catch (error) {
-        console.error('Failed to load defaults:', error)
+        setGasPriceSource('')
+        console.error('Failed to load gas price:', error)
       }
 
       try {
-        await loadQuickRideOptions()
+        await loadRidePresets()
       } finally {
         setLoading(false)
       }
     }
 
-    initializeDefaults()
+    initializePageData()
   }, [])
+
+  useEffect(() => {
+    rideDateTimeLocalRef.current = rideDateTimeLocal
+  }, [rideDateTimeLocal])
 
   useEffect(() => {
     if (!rideDateTimeLocal) {
@@ -192,9 +170,61 @@ export function RecordRidePage() {
     }
   }, [primaryTravelDirection, windSpeedMph, windDirectionDeg])
 
-  const applyQuickRideOption = (option: QuickRideOption) => {
-    setMiles(option.miles.toString())
-    setRideMinutes(option.rideMinutes.toString())
+  useEffect(() => {
+    if (selectedPresetId === null) return
+
+    const handlePresetChange = async () => {
+      const preset = ridePresets.find((p) => p.presetId === selectedPresetId)
+      if (!preset) return
+
+      // Clear weather fields when preset changes (keep gas price)
+      setTemperature('')
+      setWindSpeedMph('')
+      setWindDirectionDeg('')
+      setRelativeHumidityPercent('')
+      setCloudCoverPercent('')
+      setPrecipitationType('')
+      setWeatherEdited(false)
+
+      // Apply the preset
+      setPrimaryTravelDirection(preset.primaryDirection as CompassDirection)
+      setRideMinutes(preset.durationMinutes.toString())
+      setMiles(preset.miles.toString())
+
+      // Construct new date/time and refetch weather
+      const currentRideDateTimeLocal = rideDateTimeLocalRef.current
+      const datePart = currentRideDateTimeLocal
+        ? currentRideDateTimeLocal.slice(0, 11)
+        : new Date().toISOString().slice(0, 11)
+      const newDateTime = `${datePart}${preset.exactStartTimeLocal}`
+
+      setRideDateTimeLocal(newDateTime)
+
+      // Refetch weather for the new preset's time
+      setLoadingWeather(true)
+      try {
+        const weather = await getRideWeather(newDateTime)
+        applyLoadedWeather(weather)
+      } catch (error) {
+        console.error('Failed to load weather for new preset:', error)
+      } finally {
+        setLoadingWeather(false)
+      }
+    }
+
+    handlePresetChange()
+  }, [selectedPresetId, ridePresets])
+
+  const applyPreset = (preset: RidePreset) => {
+    setPrimaryTravelDirection(preset.primaryDirection as CompassDirection)
+    setRideMinutes(preset.durationMinutes.toString())
+    setMiles(preset.miles.toString())
+    // Keep current date, replace time with preset's exact start time
+    const currentRideDateTimeLocal = rideDateTimeLocalRef.current
+    const datePart = currentRideDateTimeLocal
+      ? currentRideDateTimeLocal.slice(0, 11)
+      : new Date().toISOString().slice(0, 11)
+    setRideDateTimeLocal(`${datePart}${preset.exactStartTimeLocal}`)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,11 +289,13 @@ export function RecordRidePage() {
         gasPricePerGallon: gasPrice ? parseFloat(gasPrice) : undefined,
         difficulty: difficulty ? parseInt(difficulty) : undefined,
         primaryTravelDirection: primaryTravelDirection || undefined,
+        selectedPresetId: selectedPresetId ?? undefined,
       }
 
       const response = await recordRide(request)
       setSuccessMessage(`Ride recorded successfully (ID: ${response.rideId})`)
-      await loadQuickRideOptions()
+      await loadRidePresets()
+      setSelectedPresetId(null)
 
       // Keep form values but clear after delay
       setTimeout(() => {
@@ -283,6 +315,7 @@ export function RecordRidePage() {
         setPrimaryTravelDirection('')
         setDifficulty('')
         setDifficultyAutoSuggested(false)
+        setSelectedPresetId(null)
         setSuccessMessage('')
       }, 3000)
     } catch (error) {
@@ -295,11 +328,12 @@ export function RecordRidePage() {
     }
   }
 
-  if (loading) return <div>Loading defaults...</div>
+  if (loading) return <div>Loading ride entry...</div>
 
   return (
     <div className="record-ride-page">
       <h1>Record a Ride</h1>
+      <p>Do you repeat rides often? Setup a <a href="/rides/presets">Ride Preset</a>.</p>
       <p>
         Need to add past rides in bulk? <a href="/rides/import">Import rides from CSV</a>.
       </p>
@@ -307,19 +341,32 @@ export function RecordRidePage() {
       {successMessage && <div className="success-message">{successMessage}</div>}
       {errorMessage && <div className="error-message">{errorMessage}</div>}
 
-      {quickRideOptions.length > 0 && (
-        <section aria-label="Quick ride options" className="quick-ride-options">
-          <h2>Quick Ride Options</h2>
-          <div className="quick-ride-options-list">
-            {quickRideOptions.map((option, index) => (
-              <button
-                key={`${option.miles}-${option.rideMinutes}-${option.lastUsedAtLocal}-${index}`}
-                type="button"
-                onClick={() => applyQuickRideOption(option)}
-              >
-                {`${option.miles} mi - ${option.rideMinutes} min`}
-              </button>
-            ))}
+      {ridePresets.length > 0 && (
+        <section className="ride-presets">
+          <div className="form-group">
+            <label htmlFor="ridePreset">Ride Preset</label>
+            <select
+              id="ridePreset"
+              value={selectedPresetId ?? ''}
+              onChange={(e) => setSelectedPresetId(e.target.value ? parseInt(e.target.value) : null)}
+            >
+              <option value="">-- Select a preset --</option>
+              {ridePresets.map((preset) => (
+                <option key={preset.presetId} value={preset.presetId}>
+                  {preset.name} ({preset.periodTag}, {preset.exactStartTimeLocal}, {preset.durationMinutes} min, {preset.miles} mi)
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                const preset = ridePresets.find((p) => p.presetId === selectedPresetId)
+                if (preset) applyPreset(preset)
+              }}
+              disabled={selectedPresetId === null}
+            >
+              Apply Preset
+            </button>
           </div>
         </section>
       )}

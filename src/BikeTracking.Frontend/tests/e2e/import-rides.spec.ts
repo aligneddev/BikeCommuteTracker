@@ -398,7 +398,7 @@ test.describe("013-csv-import e2e", () => {
     });
 
     // Cancel the import
-    await page.getByRole("button", { name: /cancel/i }).click();
+    await page.getByRole("button", { name: /cancel import/i }).click();
 
     // Verify cancellation dialog or confirmation
     // Then confirm the cancellation

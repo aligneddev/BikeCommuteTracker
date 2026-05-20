@@ -36,18 +36,8 @@ X-User-Id: {{RiderId}}
   "weatherUserOverridden": true
 }
 
-### Get ride defaults
-GET {{ApiService_HostAddress}}/api/rides/defaults
-Accept: application/json
-X-User-Id: {{RiderId}}
-
 ### Load weather for create/edit form
 GET {{ApiService_HostAddress}}/api/rides/weather?rideDateTimeLocal=2026-03-26T07:30:00
-Accept: application/json
-X-User-Id: {{RiderId}}
-
-### Get quick ride options
-GET {{ApiService_HostAddress}}/api/rides/quick-options
 Accept: application/json
 X-User-Id: {{RiderId}}
 
