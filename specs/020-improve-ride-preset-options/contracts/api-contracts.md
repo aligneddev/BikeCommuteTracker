@@ -31,6 +31,7 @@ Response `200`:
       "periodTag": "morning",
       "exactStartTimeLocal": "07:45",
       "durationMinutes": 34,
+      "miles": 7.2,
       "lastUsedAtUtc": "2026-04-29T13:02:31Z",
       "updatedAtUtc": "2026-04-29T12:50:00Z"
     }
@@ -51,7 +52,8 @@ Request:
   "primaryDirection": "NE",
   "periodTag": "afternoon",
   "exactStartTimeLocal": "17:35",
-  "durationMinutes": 32
+  "durationMinutes": 32,
+  "miles": 7.2
 }
 ```
 
@@ -65,6 +67,7 @@ Response `201`:
   "periodTag": "afternoon",
   "exactStartTimeLocal": "17:35",
   "durationMinutes": 32,
+  "miles": 7.2,
   "lastUsedAtUtc": null,
   "updatedAtUtc": "2026-04-29T13:10:00Z"
 }
@@ -132,9 +135,9 @@ This removal applies to all riders without a feature-flag fallback.
 ## Frontend Type Notes
 
 Planned TypeScript additions in ride service layer:
-- `RidePreset`
+- `RidePreset` (now includes required `miles: number`)
 - `RidePresetsResponse`
-- `UpsertRidePresetRequest`
+- `UpsertRidePresetRequest` (now includes required `miles: number`)
 
 Planned request extension:
 - `RecordRideRequest.selectedPresetId?: number`

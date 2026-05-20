@@ -79,6 +79,7 @@ export interface RidePreset {
   periodTag: RidePresetPeriodTag;
   exactStartTimeLocal: string;
   durationMinutes: number;
+  miles: number;
   lastUsedAtUtc: string | null;
   updatedAtUtc: string;
 }
@@ -94,6 +95,7 @@ export interface UpsertRidePresetRequest {
   periodTag: RidePresetPeriodTag;
   exactStartTimeLocal: string;
   durationMinutes: number;
+  miles: number;
 }
 
 export interface DeleteRidePresetResponse {

@@ -48,6 +48,7 @@ describe('SettingsPage', () => {
       periodTag: 'morning',
       exactStartTimeLocal: '07:45',
       durationMinutes: 34,
+      miles: 7.2,
       lastUsedAtUtc: null,
       updatedAtUtc: '2026-04-29T00:00:00Z',
     })
@@ -58,6 +59,7 @@ describe('SettingsPage', () => {
       periodTag: 'morning',
       exactStartTimeLocal: '07:45',
       durationMinutes: 34,
+      miles: 7.2,
       lastUsedAtUtc: null,
       updatedAtUtc: '2026-04-29T00:00:00Z',
     })
@@ -588,6 +590,7 @@ describe('SettingsPage', () => {
       expect(screen.getByLabelText(/preset name/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/exact start time/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/duration minutes/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/miles/i)).toBeInTheDocument()
     })
   })
 
@@ -680,6 +683,7 @@ describe('SettingsPage', () => {
       periodTag: 'morning',
       exactStartTimeLocal: '07:45',
       durationMinutes: 30,
+      miles: 9.5,
       lastUsedAtUtc: null,
       updatedAtUtc: '2026-04-29T00:00:00Z',
     })
@@ -711,11 +715,12 @@ describe('SettingsPage', () => {
     // Fill required fields and submit
     fireEvent.change(screen.getByLabelText(/preset name/i), { target: { value: 'Custom Morning' } })
     fireEvent.change(screen.getByLabelText(/duration minutes/i), { target: { value: '30' } })
+    fireEvent.change(screen.getByLabelText(/miles/i), { target: { value: '9.5' } })
     fireEvent.click(screen.getByRole('button', { name: /add preset/i }))
 
     await waitFor(() => {
       expect(mockCreateRidePreset).toHaveBeenCalledWith(
-        expect.objectContaining({ primaryDirection: 'North', periodTag: 'morning' })
+        expect.objectContaining({ primaryDirection: 'North', periodTag: 'morning', miles: 9.5 })
       )
     })
   })

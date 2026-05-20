@@ -108,7 +108,8 @@ public sealed class RidesEndpointsSqliteIntegrationTests
                 PrimaryDirection: "SW",
                 PeriodTag: "morning",
                 ExactStartTimeLocal: "07:45",
-                DurationMinutes: 30
+                DurationMinutes: 30,
+                Miles: 6.5m
             )
         );
 
@@ -229,7 +230,8 @@ public sealed class RidesEndpointsSqliteIntegrationTests
                 PrimaryDirection: "NE",
                 PeriodTag: "afternoon",
                 ExactStartTimeLocal: "17:15",
-                DurationMinutes: 33
+                DurationMinutes: 33,
+                Miles: 5.9m
             ),
             attackerRiderId
         );
@@ -387,7 +389,8 @@ public sealed class RidesEndpointsSqliteIntegrationTests
             long riderId,
             string name,
             string exactStartTime,
-            int durationMinutes
+            int durationMinutes,
+            decimal miles = 7.5m
         )
         {
             await using var scope = App.Services.CreateAsyncScope();
@@ -401,6 +404,7 @@ public sealed class RidesEndpointsSqliteIntegrationTests
                 PeriodTag = name == "Afternoon" ? "afternoon" : "morning",
                 ExactStartTimeLocal = TimeOnly.ParseExact(exactStartTime, "HH:mm"),
                 DurationMinutes = durationMinutes,
+                Miles = miles,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow,
                 Version = 1,

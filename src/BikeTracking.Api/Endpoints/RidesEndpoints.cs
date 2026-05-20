@@ -269,6 +269,14 @@ public static class RidesEndpoints
             );
         }
 
+        if (request.Miles is < 0.01m or > 200m)
+        {
+            return new ErrorResponse(
+                "VALIDATION_FAILED",
+                "Miles must be greater than 0 and less than or equal to 200."
+            );
+        }
+
         return null;
     }
 

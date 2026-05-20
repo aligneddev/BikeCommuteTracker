@@ -100,6 +100,7 @@ describe("ridesService", () => {
           periodTag: "morning",
           exactStartTimeLocal: "07:45",
           durationMinutes: 34,
+          miles: 7.2,
           lastUsedAtUtc: null,
           updatedAtUtc: new Date().toISOString(),
         },

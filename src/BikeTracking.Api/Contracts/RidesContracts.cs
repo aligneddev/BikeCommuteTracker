@@ -72,6 +72,7 @@ public sealed record RidePresetDto(
     string PeriodTag,
     string ExactStartTimeLocal,
     int DurationMinutes,
+    decimal Miles,
     DateTime? LastUsedAtUtc,
     DateTime UpdatedAtUtc
 );
@@ -105,7 +106,14 @@ public sealed record UpsertRidePresetRequest(
     )]
         string ExactStartTimeLocal,
     [property: Range(1, 1440, ErrorMessage = "Duration minutes must be between 1 and 1440")]
-        int DurationMinutes
+        int DurationMinutes,
+    [property: Required(ErrorMessage = "Miles is required")]
+    [property: Range(
+        0.01,
+        200,
+        ErrorMessage = "Miles must be greater than 0 and less than or equal to 200"
+    )]
+        decimal Miles
 );
 
 public sealed record DeleteRidePresetResponse(long PresetId, DateTime DeletedAtUtc, string Message);

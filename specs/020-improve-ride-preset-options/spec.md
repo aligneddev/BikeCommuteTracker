@@ -3,29 +3,31 @@
 **Feature Branch**: `020-improve-ride-preset-options`  
 **Created**: 2026-04-29  
 **Status**: Draft  
-**Input**: User description: "improve ride entry - pre setup options (new UI under user settings, navigatable from clicking/hovering on user name, then a new settings option) with primary direction, morning is SW, afternoon is NE, time, duration, user chooses name; remove auto fill from previous, replace with pre-setup options; this changes a previous spec"
+**Input**: User description: "improve ride entry - pre setup options (new UI under user settings, navigatable from clicking/hovering on user name, then a new settings option) with primary direction, morning is SW, afternoon is NE, time, duration, miles, user chooses name; remove auto fill from previous, replace with pre-setup options; this changes a previous spec"
+
+**Update 2026-05-20**: Each ride preset now includes a 'miles' field (required, positive number). When a preset is chosen, the ride entry's miles field is pre-filled from the preset.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Configure Ride Presets in Settings (Priority: P1)
 
-As a rider, I want to pre-configure named ride presets in my user settings so I can reuse my most common ride setup without re-entering the same values each time.
+As a rider, I want to pre-configure named ride presets in my user settings so I can reuse my most common ride setup (including miles ridden) without re-entering the same values each time.
 
 **Why this priority**: This is the core behavior shift requested and replaces the current ride-entry autofill behavior.
 
-**Independent Test**: Open profile menu from username, navigate to settings, create a named preset with direction, exact start time, and duration, save, then reopen settings and verify preset persists.
+**Independent Test**: Open profile menu from username, navigate to settings, create a named preset with direction, exact start time, duration, and miles, save, then reopen settings and verify preset persists.
 
 **Acceptance Scenarios**:
 
 1. **Given** rider is authenticated, **When** rider opens username menu by click or hover and selects settings, **Then** rider can access a new ride-preset setup section.
-2. **Given** rider is in ride-preset setup, **When** rider adds a preset name, direction, period (morning or afternoon), exact start time, and duration then saves, **Then** preset is stored for that rider.
+2. **Given** rider is in ride-preset setup, **When** rider adds a preset name, direction, period (morning or afternoon), exact start time, duration, and miles then saves, **Then** preset is stored for that rider.
 3. **Given** rider has existing presets, **When** rider revisits settings, **Then** rider sees previously saved presets and can identify each by custom name.
 
 ---
 
 ### User Story 2 - Apply Presets During Ride Entry (Priority: P1)
 
-As a rider, I want ride entry to use my pre-setup options instead of previous-ride autofill so entry is predictable and aligned with my routine.
+As a rider, I want ride entry to use my pre-setup options (including miles) instead of previous-ride autofill so entry is predictable and aligned with my routine.
 
 **Why this priority**: Requested behavior explicitly replaces legacy autofill from past entries.
 
@@ -34,7 +36,7 @@ As a rider, I want ride entry to use my pre-setup options instead of previous-ri
 **Acceptance Scenarios**:
 
 1. **Given** rider has one or more saved presets, **When** rider opens ride entry, **Then** rider can choose from saved preset names.
-2. **Given** rider selects a preset in ride entry, **When** preset is applied, **Then** direction, exact start time, and duration fields are populated from that preset.
+2. **Given** rider selects a preset in ride entry, **When** preset is applied, **Then** direction, exact start time, duration, and miles fields are populated from that preset.
 3. **Given** rider opens ride entry after feature release, **When** no presets are configured, **Then** system does not show legacy quick-entry UI and keeps manual entry available.
 
 ---
@@ -54,6 +56,8 @@ As a rider, I want morning and afternoon directional defaults so I can quickly m
 3. **Given** directional defaults are suggested, **When** rider edits direction or preset name, **Then** system accepts rider-selected values.
 
 ### Edge Cases
+  
+- Rider creates a preset with invalid or missing miles: system blocks save and requests a valid positive number for miles.
 
 - Rider has no presets configured: ride entry remains fully manual with no prior-ride autofill.
 - Rider creates two presets with same name: system blocks save and requests unique name per rider.
@@ -68,13 +72,13 @@ As a rider, I want morning and afternoon directional defaults so I can quickly m
 - **FR-001**: System MUST provide access to user settings from the username menu, reachable by click and hover interactions.
 - **FR-002**: System MUST include a ride-preset setup section within user settings.
 - **FR-003**: System MUST allow riders to create, view, update, and remove ride presets.
-- **FR-004**: Each ride preset MUST include rider-defined name, primary direction, period tag (morning or afternoon), exact start time, and duration.
+- **FR-004**: Each ride preset MUST include rider-defined name, primary direction, period tag (morning or afternoon), exact start time, duration, and miles (required, positive number).
 - **FR-005**: System MUST require preset names to be unique per rider.
 - **FR-006**: System MUST suggest SW as default direction for morning time-window presets.
 - **FR-007**: System MUST suggest NE as default direction for afternoon time-window presets.
 - **FR-008**: System MUST allow riders to override suggested directions before saving presets.
 - **FR-009**: Ride entry MUST display rider’s saved preset names as selectable setup options ordered by most recently used preset first.
-- **FR-010**: When preset selected in ride entry, system MUST populate direction, exact start time, and duration from preset values.
+- **FR-010**: When preset selected in ride entry, system MUST populate direction, exact start time, duration, and miles from preset values.
 - **FR-011**: System MUST delete legacy previous-ride quick-entry UI introduced by earlier quick-entry specification and replace it with preset-based setup options for all riders.
 - **FR-012**: System MUST keep manual ride entry functional when no presets exist.
 - **FR-013**: Presets MUST be scoped to authenticated rider and never visible to other riders.
@@ -83,7 +87,7 @@ As a rider, I want morning and afternoon directional defaults so I can quickly m
 
 ### Key Entities *(include if feature involves data)*
 
-- **Ride Preset**: Rider-owned reusable entry profile containing custom name, primary direction, period classification (morning or afternoon), exact start time, and default duration.
+- **Ride Preset**: Rider-owned reusable entry profile containing custom name, primary direction, period classification (morning or afternoon), exact start time, default duration, and miles.
 - **Rider Preset Collection**: Ordered set of ride presets owned by one rider and surfaced in settings and ride-entry selection.
 - **Ride Entry Session**: Single ride-creation interaction that may apply a preset and optionally override values before save.
 
@@ -92,7 +96,7 @@ As a rider, I want morning and afternoon directional defaults so I can quickly m
 ### Measurable Outcomes
 
 - **SC-001**: 95% of riders can create first named preset from settings in under 60 seconds.
-- **SC-002**: 95% of ride entries that use a preset populate direction, exact start time, and duration fields within 1 second of selection.
+- **SC-002**: 95% of ride entries that use a preset populate direction, exact start time, duration, and miles fields within 1 second of selection.
 - **SC-003**: 0 ride-entry sessions use legacy previous-ride autofill after release.
 - **SC-004**: At least 80% of riders who record rides on both morning and afternoon windows configure at least two presets within first 14 days.
 

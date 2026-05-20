@@ -72,6 +72,7 @@ describe('RecordRidePage', () => {
           periodTag: 'morning',
           exactStartTimeLocal: '07:45',
           durationMinutes: 34,
+          miles: 7.2,
           lastUsedAtUtc: null,
           updatedAtUtc: new Date().toISOString(),
         },
@@ -109,6 +110,7 @@ describe('RecordRidePage', () => {
           periodTag: 'afternoon',
           exactStartTimeLocal: '17:35',
           durationMinutes: 32,
+          miles: 8.6,
           lastUsedAtUtc: null,
           updatedAtUtc: new Date().toISOString(),
         },
@@ -139,6 +141,7 @@ describe('RecordRidePage', () => {
       expect(mockGetRideWeather).toHaveBeenCalled()
       expect((screen.getByLabelText(/primary direction of travel/i) as HTMLSelectElement).value).toBe('NE')
       expect((screen.getByLabelText(/duration/i) as HTMLInputElement).value).toBe('32')
+      expect((screen.getByLabelText(/miles/i) as HTMLInputElement).value).toBe('8.6')
       expect((screen.getByLabelText(/date & time/i) as HTMLInputElement).value).toContain('T17:35')
       expect((screen.getByLabelText(/gas price/i) as HTMLInputElement).value).toBe('3.55')
     })

@@ -481,6 +481,10 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                         "\"DurationMinutes\" > 0"
                     );
                     tableBuilder.HasCheckConstraint(
+                        "CK_RidePresets_Miles_Positive",
+                        "CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200"
+                    );
+                    tableBuilder.HasCheckConstraint(
                         "CK_RidePresets_PeriodTag_Values",
                         "\"PeriodTag\" IN ('morning', 'afternoon')"
                     );
@@ -494,6 +498,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.PeriodTag).IsRequired().HasMaxLength(20);
             entity.Property(static x => x.ExactStartTimeLocal).IsRequired();
             entity.Property(static x => x.DurationMinutes).IsRequired();
+            entity.Property(static x => x.Miles).IsRequired().HasPrecision(10, 2);
             entity.Property(static x => x.LastUsedAtUtc);
             entity.Property(static x => x.CreatedAtUtc).IsRequired();
             entity.Property(static x => x.UpdatedAtUtc).IsRequired();

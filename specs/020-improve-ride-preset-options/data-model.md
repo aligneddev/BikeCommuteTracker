@@ -30,6 +30,7 @@ Planned file area: `src/BikeTracking.Api/Infrastructure/Persistence/Entities/`
 | `PeriodTag` | `string` | Yes | `Morning` or `Afternoon` | Drives default direction suggestion only |
 | `ExactStartTimeLocal` | `TimeOnly` | Yes | valid local time | Exact time persisted in preset |
 | `DurationMinutes` | `int` | Yes | `> 0` and within existing ride-minute constraints | Default duration |
+| `Miles` | `decimal` | Yes | `> 0`, max 999.99 | Default miles to apply; required |
 | `LastUsedAtUtc` | `DateTime?` | No | UTC | MRU sort key; updated only on successful ride save using preset |
 | `CreatedAtUtc` | `DateTime` | Yes | UTC | Audit |
 | `UpdatedAtUtc` | `DateTime` | Yes | UTC | Audit |
@@ -55,6 +56,7 @@ Planned file area: `src/BikeTracking.Api/Infrastructure/Persistence/Entities/`
 | `periodTag` | `morning` \| `afternoon` | Yes | lowercase in JSON |
 | `exactStartTimeLocal` | string (`HH:mm`) | Yes | exact preset time |
 | `durationMinutes` | number | Yes | integer minutes |
+| `miles` | number | Yes | positive decimal, required |
 | `lastUsedAtUtc` | string \| null | No | MRU sort metadata |
 | `updatedAtUtc` | string | Yes | secondary sort/tie-breaker metadata |
 
@@ -67,6 +69,7 @@ Planned file area: `src/BikeTracking.Api/Infrastructure/Persistence/Entities/`
 | `periodTag` | `morning` \| `afternoon` | Yes | required |
 | `exactStartTimeLocal` | string (`HH:mm`) | Yes | parseable exact time |
 | `durationMinutes` | number | Yes | positive integer |
+| `miles` | number | Yes | positive decimal, required |
 
 ### RecordRideRequest (extension)
 
@@ -107,6 +110,7 @@ Planned file area: `src/BikeTracking.Api/Infrastructure/Persistence/Entities/`
 - Preset name must be unique per rider.
 - `durationMinutes` must remain within existing ride validation limits.
 - `exactStartTimeLocal` is mandatory and must be exact (`HH:mm`) not free-text.
+- `miles` is required, must be a positive decimal (e.g., >0, max 999.99).
 - Default direction suggestions:
   - morning -> SW
   - afternoon -> NE

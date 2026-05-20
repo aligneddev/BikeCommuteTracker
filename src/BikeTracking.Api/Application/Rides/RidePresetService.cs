@@ -88,6 +88,7 @@ public sealed class RidePresetService(BikeTrackingDbContext dbContext) : IRidePr
             PeriodTag = request.PeriodTag,
             ExactStartTimeLocal = exactTime,
             DurationMinutes = request.DurationMinutes,
+            Miles = request.Miles,
             LastUsedAtUtc = null,
             CreatedAtUtc = now,
             UpdatedAtUtc = now,
@@ -143,6 +144,7 @@ public sealed class RidePresetService(BikeTrackingDbContext dbContext) : IRidePr
         existing.PeriodTag = request.PeriodTag;
         existing.ExactStartTimeLocal = exactTime;
         existing.DurationMinutes = request.DurationMinutes;
+        existing.Miles = request.Miles;
         existing.UpdatedAtUtc = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -183,6 +185,7 @@ public sealed class RidePresetService(BikeTrackingDbContext dbContext) : IRidePr
             PeriodTag: entity.PeriodTag,
             ExactStartTimeLocal: entity.ExactStartTimeLocal.ToString("HH:mm"),
             DurationMinutes: entity.DurationMinutes,
+            Miles: entity.Miles,
             LastUsedAtUtc: entity.LastUsedAtUtc,
             UpdatedAtUtc: entity.UpdatedAtUtc
         );

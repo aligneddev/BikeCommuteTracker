@@ -559,6 +559,10 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal>("Miles")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("TEXT");
+
                     b.Property<TimeOnly>("ExactStartTimeLocal")
                         .HasColumnType("TEXT");
 
@@ -605,6 +609,8 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("RidePresets", null, t =>
                         {
                             t.HasCheckConstraint("CK_RidePresets_DurationMinutes_Positive", "\"DurationMinutes\" > 0");
+
+                            t.HasCheckConstraint("CK_RidePresets_Miles_Positive", "CAST(\"Miles\" AS REAL) > 0 AND CAST(\"Miles\" AS REAL) <= 200");
 
                             t.HasCheckConstraint("CK_RidePresets_PeriodTag_Values", "\"PeriodTag\" IN ('morning', 'afternoon')");
                         });

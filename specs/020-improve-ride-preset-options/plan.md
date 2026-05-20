@@ -11,7 +11,7 @@ Replace legacy history-based quick-entry behavior with rider-managed presets con
 
 **Language/Version**: C# (.NET 10 Minimal API), TypeScript (React 19 + Vite), F# domain project present but not primary for this slice  
 **Primary Dependencies**: ASP.NET Core Minimal APIs, EF Core (SQLite), existing rider auth/session flow, React Router v7, existing settings and rides services  
-**Storage**: SQLite local file via EF Core; new `RidePresets` table and additive ride request field for preset usage tracking  
+**Storage**: SQLite local file via EF Core; new `RidePresets` table (now includes required `Miles` field) and additive ride request field for preset usage tracking  
 **Testing**: xUnit (`BikeTracking.Api.Tests`), Vitest (`src/BikeTracking.Frontend`), Playwright E2E  
 **Target Platform**: Local-first Aspire web app in DevContainer (Linux/macOS/Windows user-machine deployment profile)  
 **Project Type**: Web application (React frontend + .NET Minimal API backend + SQLite)  
@@ -102,6 +102,8 @@ src/
     └── services/
         ├── ridesService.ts
         └── ridesService.test.ts
+
+    **Update 2026-05-20:** All backend, frontend, and contract flows for ride presets now include a required `miles` field. All CRUD, validation, and UI logic must support this field. Tests must cover creation, update, and application of presets with miles.
 ```
 
 **Structure Decision**: Existing web-app split is retained. Backend introduces rider-scoped preset persistence and endpoint changes. Frontend updates settings and ride-entry pages to replace legacy quick-entry with explicit preset flows.
@@ -123,12 +125,12 @@ src/
 
 ### Phase 2 - Implementation Planning (ready)
 
-1. Backend migration + preset services + endpoint mapping.
+1. Backend migration + preset services + endpoint mapping (add `Miles` field to entity, DTOs, and validation).
 2. Record-ride MRU update on successful save.
 3. Remove legacy quick-options endpoint/service/contract usage.
-4. Frontend settings preset CRUD UX.
-5. Frontend ride-entry preset apply + legacy quick-entry UI deletion.
-6. Cross-layer test hardening (unit/integration/E2E) and regression verification.
+4. Frontend settings preset CRUD UX (add `miles` field to forms, validation, and display).
+5. Frontend ride-entry preset apply + legacy quick-entry UI deletion (apply `miles` from preset to ride entry form).
+6. Cross-layer test hardening (unit/integration/E2E) and regression verification for all flows involving `miles`.
 
 ## Complexity Tracking
 

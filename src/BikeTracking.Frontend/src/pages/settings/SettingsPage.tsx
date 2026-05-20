@@ -84,6 +84,7 @@ export function SettingsPage() {
   const [presetPeriodTag, setPresetPeriodTag] = useState<RidePresetPeriodTag>('morning')
   const [presetExactStartTimeLocal, setPresetExactStartTimeLocal] = useState<string>('07:45')
   const [presetDurationMinutes, setPresetDurationMinutes] = useState<number | ''>('')
+  const [presetMiles, setPresetMiles] = useState<number | ''>('')
 
   useEffect(() => {
     let isMounted = true
@@ -167,6 +168,7 @@ export function SettingsPage() {
     setPresetPeriodTag('morning')
     setPresetExactStartTimeLocal('07:45')
     setPresetDurationMinutes('')
+    setPresetMiles('')
   }
 
   function onPeriodTagChange(tag: RidePresetPeriodTag): void {
@@ -189,12 +191,18 @@ export function SettingsPage() {
       return
     }
 
+    if (presetMiles === '' || presetMiles <= 0) {
+      setError('Miles must be greater than 0.')
+      return
+    }
+
     const request: UpsertRidePresetRequest = {
       name: presetName.trim(),
       primaryDirection: presetPrimaryDirection as UpsertRidePresetRequest['primaryDirection'],
       periodTag: presetPeriodTag,
       exactStartTimeLocal: presetExactStartTimeLocal,
       durationMinutes: presetDurationMinutes,
+      miles: presetMiles,
     }
 
     try {
@@ -223,6 +231,7 @@ export function SettingsPage() {
     setPresetPeriodTag(preset.periodTag)
     setPresetExactStartTimeLocal(preset.exactStartTimeLocal)
     setPresetDurationMinutes(preset.durationMinutes)
+    setPresetMiles(preset.miles)
   }
 
   async function onDeletePreset(presetId: number): Promise<void> {
@@ -542,6 +551,20 @@ export function SettingsPage() {
                   }
                 />
               </div>
+
+              <div className="settings-field">
+                <label htmlFor="presetMiles">Miles</label>
+                <input
+                  id="presetMiles"
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  value={presetMiles}
+                  onChange={(event) =>
+                    setPresetMiles(event.target.value === '' ? '' : Number(event.target.value))
+                  }
+                />
+              </div>
             </div>
 
             <div className="settings-actions">
@@ -565,7 +588,7 @@ export function SettingsPage() {
               <li key={preset.presetId} className="settings-presets-item">
                 <span>
                   {preset.name} ({preset.primaryDirection}, {preset.periodTag}, {preset.exactStartTimeLocal},{' '}
-                  {preset.durationMinutes} min)
+                  {preset.durationMinutes} min, {preset.miles} mi)
                 </span>
                 <div className="settings-inline-actions">
                   <button

@@ -16,6 +16,8 @@ public sealed class RidePresetEntity
 
     public int DurationMinutes { get; set; }
 
+    public decimal Miles { get; set; }
+
     public DateTime? LastUsedAtUtc { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }

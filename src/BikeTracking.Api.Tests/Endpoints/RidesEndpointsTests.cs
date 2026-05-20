@@ -306,7 +306,8 @@ public sealed class RidesEndpointsTests
             PrimaryDirection: "SW",
             PeriodTag: "morning",
             ExactStartTimeLocal: "07:45",
-            DurationMinutes: 34
+            DurationMinutes: 34,
+            Miles: 7.2m
         );
 
         var createResponse = await host.Client.PostWithAuthAsync(
@@ -320,6 +321,7 @@ public sealed class RidesEndpointsTests
         var created = await createResponse.Content.ReadFromJsonAsync<RidePresetDto>();
         Assert.NotNull(created);
         Assert.Equal("07:45", created.ExactStartTimeLocal);
+        Assert.Equal(7.2m, created.Miles);
 
         var listResponse = await host.Client.GetWithAuthAsync("/api/rides/presets", userId);
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
@@ -334,7 +336,8 @@ public sealed class RidesEndpointsTests
             PrimaryDirection: "NE",
             PeriodTag: "morning",
             ExactStartTimeLocal: "08:05",
-            DurationMinutes: 40
+            DurationMinutes: 40,
+            Miles: 8.1m
         );
 
         var updateResponse = await host.Client.PutWithAuthAsync(
@@ -348,6 +351,7 @@ public sealed class RidesEndpointsTests
         Assert.NotNull(updated);
         Assert.Equal("08:05", updated.ExactStartTimeLocal);
         Assert.Equal("NE", updated.PrimaryDirection);
+        Assert.Equal(8.1m, updated.Miles);
 
         var deleteRequest = new HttpRequestMessage(
             HttpMethod.Delete,
@@ -370,7 +374,8 @@ public sealed class RidesEndpointsTests
             PrimaryDirection: "NE",
             PeriodTag: "afternoon",
             ExactStartTimeLocal: "17:35",
-            DurationMinutes: 32
+            DurationMinutes: 32,
+            Miles: 6.8m
         );
 
         var first = await host.Client.PostWithAuthAsync("/api/rides/presets", request, userId);
@@ -392,7 +397,8 @@ public sealed class RidesEndpointsTests
             PrimaryDirection: "North",
             PeriodTag: "morning",
             ExactStartTimeLocal: "07:30",
-            DurationMinutes: 35
+            DurationMinutes: 35,
+            Miles: 9.3m
         );
 
         var response = await host.Client.PostWithAuthAsync("/api/rides/presets", request, userId);
@@ -402,6 +408,7 @@ public sealed class RidesEndpointsTests
         Assert.NotNull(created);
         Assert.Equal("North", created.PrimaryDirection);
         Assert.Equal("morning", created.PeriodTag);
+        Assert.Equal(9.3m, created.Miles);
     }
 
     [Fact]
@@ -416,7 +423,8 @@ public sealed class RidesEndpointsTests
             PrimaryDirection: "South",
             PeriodTag: "afternoon",
             ExactStartTimeLocal: "17:15",
-            DurationMinutes: 30
+            DurationMinutes: 30,
+            Miles: 8.7m
         );
 
         var response = await host.Client.PostWithAuthAsync("/api/rides/presets", request, userId);
@@ -426,6 +434,7 @@ public sealed class RidesEndpointsTests
         Assert.NotNull(created);
         Assert.Equal("South", created.PrimaryDirection);
         Assert.Equal("afternoon", created.PeriodTag);
+        Assert.Equal(8.7m, created.Miles);
     }
 
     // History endpoint tests

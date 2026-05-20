@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CompassDirection, RidePreset, RecordRideRequest } from '../services/ridesService'
 import {
   getGasPrice,
@@ -37,6 +37,7 @@ export function RecordRidePage() {
   const [loadingWeather, setLoadingWeather] = useState<boolean>(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const rideDateTimeLocalRef = useRef<string>('')
 
   const applyLoadedWeather = (weather: {
     temperature?: number
@@ -124,6 +125,10 @@ export function RecordRidePage() {
   }, [])
 
   useEffect(() => {
+    rideDateTimeLocalRef.current = rideDateTimeLocal
+  }, [rideDateTimeLocal])
+
+  useEffect(() => {
     if (!rideDateTimeLocal) {
       return
     }
@@ -184,9 +189,13 @@ export function RecordRidePage() {
       // Apply the preset
       setPrimaryTravelDirection(preset.primaryDirection as CompassDirection)
       setRideMinutes(preset.durationMinutes.toString())
+      setMiles(preset.miles.toString())
 
       // Construct new date/time and refetch weather
-      const datePart = rideDateTimeLocal ? rideDateTimeLocal.slice(0, 11) : new Date().toISOString().slice(0, 11)
+      const currentRideDateTimeLocal = rideDateTimeLocalRef.current
+      const datePart = currentRideDateTimeLocal
+        ? currentRideDateTimeLocal.slice(0, 11)
+        : new Date().toISOString().slice(0, 11)
       const newDateTime = `${datePart}${preset.exactStartTimeLocal}`
 
       setRideDateTimeLocal(newDateTime)
@@ -209,8 +218,12 @@ export function RecordRidePage() {
   const applyPreset = (preset: RidePreset) => {
     setPrimaryTravelDirection(preset.primaryDirection as CompassDirection)
     setRideMinutes(preset.durationMinutes.toString())
+    setMiles(preset.miles.toString())
     // Keep current date, replace time with preset's exact start time
-    const datePart = rideDateTimeLocal ? rideDateTimeLocal.slice(0, 11) : new Date().toISOString().slice(0, 11)
+    const currentRideDateTimeLocal = rideDateTimeLocalRef.current
+    const datePart = currentRideDateTimeLocal
+      ? currentRideDateTimeLocal.slice(0, 11)
+      : new Date().toISOString().slice(0, 11)
     setRideDateTimeLocal(`${datePart}${preset.exactStartTimeLocal}`)
   }
 
@@ -340,7 +353,7 @@ export function RecordRidePage() {
               <option value="">-- Select a preset --</option>
               {ridePresets.map((preset) => (
                 <option key={preset.presetId} value={preset.presetId}>
-                  {preset.name} ({preset.periodTag}, {preset.exactStartTimeLocal}, {preset.durationMinutes} min)
+                  {preset.name} ({preset.periodTag}, {preset.exactStartTimeLocal}, {preset.durationMinutes} min, {preset.miles} mi)
                 </option>
               ))}
             </select>
