@@ -168,6 +168,26 @@ test.describe("006-edit-ride-history e2e", () => {
     const now = new Date();
     const rideDateTimeLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-02T10:30`;
 
+    let weatherRouteHits = 0;
+
+    await page.context().route("**/api/rides/weather?*", async (route) => {
+      weatherRouteHits += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          rideDateTimeLocal,
+          temperature: 51.5,
+          windSpeedMph: 8.4,
+          windDirectionDeg: 195,
+          relativeHumidityPercent: 77,
+          cloudCoverPercent: 66,
+          precipitationType: "rain",
+          isAvailable: true,
+        }),
+      });
+    });
+
     await recordRide(page, {
       rideDateTimeLocal,
       miles: "5.0",
@@ -194,7 +214,8 @@ test.describe("006-edit-ride-history e2e", () => {
 
     await firstRow.getByRole("button", { name: "Load Weather" }).click();
 
-    await expect(temperatureInput).not.toHaveValue("");
-    await expect(windSpeedInput).not.toHaveValue("");
+    await expect.poll(() => weatherRouteHits).toBeGreaterThan(0);
+    await expect(temperatureInput).toHaveValue("51.5");
+    await expect(windSpeedInput).toHaveValue("8.4");
   });
 });
