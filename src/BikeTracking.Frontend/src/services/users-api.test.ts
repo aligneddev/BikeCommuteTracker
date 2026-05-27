@@ -26,6 +26,7 @@ function jsonResponse(
 
 describe("users-api transport", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
     sessionStorage.clear();
@@ -280,5 +281,53 @@ describe("users-api transport", () => {
         },
       }),
     );
+  });
+
+  it("refreshes last activity timestamp on authenticated settings calls", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-20T10:00:00.000Z"));
+
+    sessionStorage.setItem(
+      "bike_tracking_auth_session",
+      JSON.stringify({
+        userId: 42,
+        userName: "Alice",
+        lastActivityAtUtc: "2026-05-01T08:00:00.000Z",
+        expiresAtUtc: "2026-05-08T08:00:00.000Z",
+      }),
+    );
+
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          hasSettings: false,
+          settings: {
+            averageCarMpg: null,
+            yearlyGoalMiles: null,
+            oilChangePrice: null,
+            mileageRateCents: null,
+            locationLabel: null,
+            latitude: null,
+            longitude: null,
+            dashboardGallonsAvoidedEnabled: true,
+            dashboardGoalProgressEnabled: true,
+            updatedAtUtc: null,
+          },
+        },
+        200,
+      ),
+    );
+
+    await getUserSettings();
+
+    const stored = JSON.parse(
+      sessionStorage.getItem("bike_tracking_auth_session") ?? "{}",
+    ) as {
+      lastActivityAtUtc?: string;
+      expiresAtUtc?: string;
+    };
+
+    expect(stored.lastActivityAtUtc).toBe("2026-05-20T10:00:00.000Z");
+    expect(stored.expiresAtUtc).toBe("2026-05-27T10:00:00.000Z");
   });
 });

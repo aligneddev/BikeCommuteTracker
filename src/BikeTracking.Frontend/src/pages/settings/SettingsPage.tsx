@@ -17,6 +17,7 @@ import {
   type UpsertRidePresetRequest,
 } from '../../services/ridesService'
 import { PERIOD_TAG_DEFAULT_DIRECTIONS } from '../../services/ridesService'
+import { getPwaSnapshot, promptPwaInstall, subscribePwaSnapshot } from '../../services/pwa/bootstrap'
 import './SettingsPage.css'
 
 interface SettingsFormSnapshot {
@@ -50,7 +51,20 @@ function normalizeLocationLabel(value: string): string | null {
   return normalized === '' ? null : normalized
 }
 
+function getUnsupportedEnvironmentMessage(reasonCode?: string): string {
+  if (reasonCode === 'unsupported_os') {
+    return 'Installation is not available on this operating system in v1. Continue using browser mode.'
+  }
+
+  if (reasonCode === 'unsupported_browser') {
+    return 'Installation is not available in this browser in v1. Use current Chrome or Edge on Windows, or continue using browser mode.'
+  }
+
+  return 'Installation is not available in this environment. Continue using browser mode.'
+}
+
 export function SettingsPage() {
+  const [pwaSnapshot, setPwaSnapshot] = useState(() => getPwaSnapshot())
   const [averageCarMpg, setAverageCarMpg] = useState<number | ''>('')
   const [yearlyGoalMiles, setYearlyGoalMiles] = useState<number | ''>('')
   const [oilChangePrice, setOilChangePrice] = useState<number | ''>('')
@@ -85,6 +99,12 @@ export function SettingsPage() {
   const [presetExactStartTimeLocal, setPresetExactStartTimeLocal] = useState<string>('07:45')
   const [presetDurationMinutes, setPresetDurationMinutes] = useState<number | ''>('')
   const [presetMiles, setPresetMiles] = useState<number | ''>('')
+
+  useEffect(() => {
+    return subscribePwaSnapshot((next) => {
+      setPwaSnapshot(next)
+    })
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -327,6 +347,19 @@ export function SettingsPage() {
     }
   }
 
+  async function onInstallApp(): Promise<void> {
+    setError('')
+    setSuccess('')
+
+    const installed = await promptPwaInstall()
+    if (installed) {
+      setSuccess('App installed successfully. You can now launch it from your system app launcher.')
+      return
+    }
+
+    setError('Install was not completed. You can continue in browser mode and retry later.')
+  }
+
   if (loading) {
     return <div>Loading settings...</div>
   }
@@ -340,6 +373,29 @@ export function SettingsPage() {
             Import Rides from CSV
           </Link>
         </p>
+
+        <section className="settings-install-card" aria-label="App installation">
+          <h2>Install App</h2>
+          <p className="settings-install-status">
+            Current mode: {pwaSnapshot.launchContext.mode === 'installed_window' ? 'Installed app window' : 'Browser tab'}
+          </p>
+          {pwaSnapshot.installationState.isInstallSupported ? (
+            <button
+              type="button"
+              className="settings-secondary-action"
+              onClick={() => {
+                void onInstallApp()
+              }}
+              disabled={!pwaSnapshot.installationState.installPromptAvailable}
+            >
+              Install on this computer
+            </button>
+          ) : (
+            <p className="settings-hint" role="status">
+              {getUnsupportedEnvironmentMessage(pwaSnapshot.installationState.reasonCode)}
+            </p>
+          )}
+        </section>
 
         {error ? (
           <p className="settings-error" role="alert">

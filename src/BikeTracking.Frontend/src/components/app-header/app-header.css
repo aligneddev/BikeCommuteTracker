@@ -59,6 +59,28 @@
   color: #1d4ed8;
 }
 
+.app-header-install-indicator {
+  margin-left: auto;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #fff4e8;
+  color: #7a3b00;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.app-header-update-banner {
+  margin: 0;
+  padding: 0.45rem 1.25rem;
+  border-top: 1px solid #d4dbe5;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
 .app-header-user {
   position: relative;
   display: grid;

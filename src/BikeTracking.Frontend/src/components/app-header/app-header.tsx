@@ -1,12 +1,31 @@
 import { NavLink } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/auth-context'
+import { getPwaSnapshot, subscribePwaSnapshot } from '../../services/pwa/bootstrap'
 import './app-header.css'
+
+function getUpdateStatusMessage(status: string): string | null {
+  if (status === 'checking') {
+    return 'Checking for updates...'
+  }
+
+  if (status === 'downloading') {
+    return 'Downloading update...'
+  }
+
+  if (status === 'failed') {
+    return 'Update failed. Refresh to retry.'
+  }
+
+  return null
+}
 
 export function AppHeader() {
   const { user, logout } = useAuth()
+  const [pwaSnapshot, setPwaSnapshot] = useState(() => getPwaSnapshot())
   const [menuOpen, setMenuOpen] = useState<boolean>(false)
   const closeMenuTimeoutRef = useRef<number | null>(null)
+  const updateStatusMessage = getUpdateStatusMessage(pwaSnapshot.updateState.status)
 
   function clearCloseMenuTimeout(): void {
     if (closeMenuTimeoutRef.current !== null) {
@@ -32,6 +51,12 @@ export function AppHeader() {
     return () => {
       clearCloseMenuTimeout()
     }
+  }, [])
+
+  useEffect(() => {
+    return subscribePwaSnapshot((next) => {
+      setPwaSnapshot(next)
+    })
   }, [])
 
   useEffect(() => {
@@ -106,6 +131,14 @@ export function AppHeader() {
           >
             Expense History
           </NavLink>
+
+          <span className="app-header-install-indicator" role="status" aria-live="polite">
+            {pwaSnapshot.launchContext.mode === 'installed_window'
+              ? 'Installed'
+              : pwaSnapshot.installationState.installPromptAvailable
+                ? 'Install Ready'
+                : 'Browser Mode'}
+          </span>
         </nav>
 
         <div
@@ -154,6 +187,12 @@ export function AppHeader() {
           </div>
         </div>
       </div>
+
+      {updateStatusMessage ? (
+        <p className="app-header-update-banner" role="status" aria-live="polite">
+          {updateStatusMessage}
+        </p>
+      ) : null}
     </header>
   )
 }

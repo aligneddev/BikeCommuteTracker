@@ -26,6 +26,7 @@ function AuthProbe() {
 
 describe('auth-context', () => {
   beforeEach(() => {
+    vi.useRealTimers()
     sessionStorage.clear()
   })
 
@@ -65,9 +66,41 @@ describe('auth-context', () => {
     await user.click(screen.getByRole('button', { name: 'Login' }))
 
     expect(screen.getByTestId('auth-user')).toHaveTextContent('42:Alice')
-    expect(sessionStorage.getItem('bike_tracking_auth_session')).toBe(
-      JSON.stringify({ userId: 42, userName: 'Alice' })
+    const stored = JSON.parse(sessionStorage.getItem('bike_tracking_auth_session') ?? '{}') as {
+      userId?: number
+      userName?: string
+      lastActivityAtUtc?: string
+      expiresAtUtc?: string
+    }
+
+    expect(stored.userId).toBe(42)
+    expect(stored.userName).toBe('Alice')
+    expect(stored.lastActivityAtUtc).toBeTypeOf('string')
+    expect(stored.expiresAtUtc).toBeTypeOf('string')
+  })
+
+  it('clears an expired stored session before rendering protected state', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-05-20T10:00:00.000Z'))
+
+    sessionStorage.setItem(
+      'bike_tracking_auth_session',
+      JSON.stringify({
+        userId: 99,
+        userName: 'ExpiredUser',
+        lastActivityAtUtc: '2026-05-10T09:59:59.000Z',
+        expiresAtUtc: '2026-05-17T09:59:59.000Z',
+      })
     )
+
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>
+    )
+
+    expect(screen.getByTestId('auth-user')).toHaveTextContent('none')
+    expect(sessionStorage.getItem('bike_tracking_auth_session')).toBeNull()
   })
 
   it('logout clears state and sessionStorage', async () => {
