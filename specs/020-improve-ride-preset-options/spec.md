@@ -2,7 +2,7 @@
 
 **Feature Branch**: `020-improve-ride-preset-options`  
 **Created**: 2026-04-29  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "improve ride entry - pre setup options (new UI under user settings, navigatable from clicking/hovering on user name, then a new settings option) with primary direction, morning is SW, afternoon is NE, time, duration, miles, user chooses name; remove auto fill from previous, replace with pre-setup options; this changes a previous spec"
 
 **Update 2026-05-20**: Each ride preset now includes a 'miles' field (required, positive number). When a preset is chosen, the ride entry's miles field is pre-filled from the preset.
@@ -64,6 +64,14 @@ As a rider, I want morning and afternoon directional defaults so I can quickly m
 - Rider selects a preset then manually edits values: edited values are used for that entry only unless rider explicitly updates preset in settings.
 - Rider has legacy quick-entry history data: data remains stored historically but is not used to auto-populate new ride entry.
 - Rider toggles between click and hover interaction patterns on username menu: settings option remains reachable in both flows.
+
+## Migration and Compatibility
+
+- This feature intentionally supersedes quick-entry behavior from `008-quick-ride-entry`.
+- Existing ride records and analytics remain unchanged; only ride-entry setup behavior changes.
+- Existing riders without presets continue with manual entry until they create presets in settings.
+- Legacy quick-entry history data is retained for historical integrity and is not used for new ride-entry autofill.
+- Rollout expectation for this repository is hard cutover to preset-based entry once feature 020 is enabled.
 
 ## Requirements *(mandatory)*
 

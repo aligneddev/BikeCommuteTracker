@@ -2,7 +2,7 @@
 
 **Feature Branch**: `010-gas-price-lookup`  
 **Created**: 2026-03-31  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Find and call a free API to get the average gas per gallon price at the time of the entry. Store that in the ride created/updated events for future calculations. Store the API calls for those dates so we can reuse those prices in the future."
 
 ## User Scenarios & Testing *(mandatory)*

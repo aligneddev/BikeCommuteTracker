@@ -13,7 +13,7 @@ Add optional ride difficulty rating (1–5) and primary travel direction (8-poin
 **Primary Dependencies**: ASP.NET Core Minimal API, Entity Framework Core (SQLite), Recharts 3.x, React Router v7, .NET Aspire  
 **Storage**: SQLite via EF Core Code-First migrations (auto-applied on startup via `MigrateAsync()`)  
 **Testing**: xUnit 2.9.3; EF Core In-Memory for unit tests; SQLite integration tests for endpoints  
-**Target Platform**: .NET Aspire local-first; containerised deployment via Azure Container Apps (optional)  
+**Target Platform**: .NET Aspire local-first development and local user-machine deployment targets  
 **Project Type**: Web service + SPA frontend  
 **Performance Goals**: API response <500ms p95; difficulty suggestion pre-fill <1 second (SC-002); dashboard section loads within existing dashboard budget (SC-005)  
 **Constraints**: No inline CSS; no TypeScript `any` types; three-layer validation (client / server / DB); outbox pattern for all ride mutations; Railway Oriented Programming in F# domain  

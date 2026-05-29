@@ -2,7 +2,7 @@
 
 **Feature Branch**: `009-create-a-per-user`  
 **Created**: 2026-03-30  
-**Status**: Draft  
+**Status**: Complete (Canonical)  
 **Input**: User description: "Create a per user settings page. Allow entry of average car mpg, a yearly goal, location picker for lat and long, oil change price, and mileage rate (in cents)."
 
 ## User Scenarios & Testing *(mandatory)*

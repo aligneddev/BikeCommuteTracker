@@ -47,7 +47,7 @@
 - "simple hello screen" is clearly understood via acceptance scenarios
 - "callable endpoint" defined as health check or sample data
 - "build with dotnet build" is unambiguous
-- Frontend framework (TypeScript/Vue) is reasonable default based on existing project
+- Frontend framework (TypeScript/React) is aligned with existing project
 
 **Requirements are testable**: ✓ Examples:
 - FR-005: "buildable with `dotnet build`" → clear pass/fail
@@ -60,7 +60,7 @@
 - SC-007: "90% of developers successfully" → quantified percentage
 
 **Success criteria are technology-agnostic**: ✓ Criteria focus on user-facing outcomes:
-- "displays hello screen within 5 seconds" (not "Vue component renders in 100ms")
+- "displays hello screen within 5 seconds" (not "specific framework render timing")
 - "responds within 2 seconds" (not "ASP.NET Core response time")
 - No framework or language specifics in criteria
 

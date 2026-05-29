@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-user-signup-pin`  
 **Created**: 2026-03-13  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Create and identify the user. Create a minimal signup screen (name and pin) with the validation, api, events and database structure to store that. Each user will get a new database id. We are focusing on the local flow now, in the future we will add Azure hosting and OAuth authentication. The pin will be the authorization approach and needs to be encrypted."
 
 ## Clarifications

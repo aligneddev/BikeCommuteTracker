@@ -2,7 +2,7 @@
 
 **Feature Branch**: `006-edit-ride-history`  
 **Created**: 2026-03-27  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Enable editing of rides in the history table"
 
 ## User Scenarios & Testing *(mandatory)*

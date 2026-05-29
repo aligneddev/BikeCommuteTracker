@@ -2,7 +2,7 @@
 
 **Feature Branch**: `014-ride-notes`  
 **Created**: 2026-04-14  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Add Notes to the ride record, ride history (in an info icon with hover to save space in the grid row) and import."
 
 ## Clarifications

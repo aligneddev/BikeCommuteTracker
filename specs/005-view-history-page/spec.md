@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-view-history-page`  
 **Created**: 2026-03-26  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Create the view history page to see all past miles. Add summaries at the top for miles this month, this year, and overall total with visuals. Show all rides in a TanstackUI grid with filters for date ranges. Show total miles for the date range. Make components so the total overall and year can be shown on the dashboard as well"
 
 ## User Scenarios & Testing *(mandatory)*
