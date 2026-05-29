@@ -2,7 +2,7 @@
 
 **Feature Branch**: `012-dashboard-stats`  
 **Created**: 2026-04-06  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Use the user settings to calculate statistics to show the user in a dashboard with nice charts and graphs. Include miles for the current month, total miles for the year, total miles, money saved (mileage and mpg), average temp, average, and suggest other options, but ask me first. Make the Dashboard is the main page, currently called miles. User settings that can change should be added to the events so we keep the accurate. Use graphs from ShadCn."
 
 ## User Scenarios & Testing *(mandatory)*

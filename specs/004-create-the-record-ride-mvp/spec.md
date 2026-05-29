@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-create-the-record-ride-mvp`  
 **Created**: 2026-03-20  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Create the record ride page. The user needs to enter the day and time (default to now), how many miles they rode (default to last inserted). Optional time to ride in minutes (default to last inserted) and temp (default to last inserted). This needs to be persisted to the database as an event"
 
 ## User Scenarios & Testing *(mandatory)*

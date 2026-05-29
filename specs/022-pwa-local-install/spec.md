@@ -2,7 +2,7 @@
 
 **Feature Branch**: `022-pwa-local-install`  
 **Created**: 2026-05-20  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Make this a locally installable app on a computer using PWA technology."
 
 ## Clarifications

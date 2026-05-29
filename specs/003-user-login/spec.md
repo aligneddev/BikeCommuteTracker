@@ -2,7 +2,7 @@
 
 **Feature Branch**: `003-user-login`  
 **Created**: 2026-03-17  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Add User login. The user can login with their pin. They cannot add miles or view their data until they login. Split the existing Create user and identify user page into separate pages. Change Identify to login. After login, the user will be moved to a shell page for viewing their miles (which will be created later)"
 
 ## User Scenarios & Testing *(mandatory)*
@@ -51,7 +51,7 @@ As a logged-in rider, I want to land on a miles shell page after login so I have
 
 1. **Given** a successful login, **When** the user is redirected to the miles shell page, **Then** the page displays a welcome message with the user's name and a placeholder for future miles content.
 2. **Given** the user is on the miles shell page, **When** they are not authenticated, **Then** the system redirects them to the Login page.
-3. **Given** the user has previously added miles, **When** the miles entry form is shown, **Then** the miles input field is pre-filled with the value from their last entry to reduce repetitive input.
+3. **Given** the user has completed login, **When** they view the miles shell page, **Then** they can see placeholder content indicating that miles tracking functionality will be added in a future feature.
 
 ---
 
@@ -77,7 +77,6 @@ As a logged-in rider, I want to land on a miles shell page after login so I have
 - **FR-009**: System MUST display a miles shell page as the post-login destination, showing the logged-in user's name and a placeholder for future miles content.
 - **FR-010**: System MUST validate that name and PIN fields are non-empty before submitting the Login form and display inline field-level validation messages.
 - **FR-011**: System MUST maintain the authenticated session so the user remains logged in when navigating between protected pages within the same session.
-- **FR-012**: System MUST pre-fill the miles entry input with the value from the user's last miles entry when the miles entry form is presented, so that returning riders do not need to re-enter their typical commute distance.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -103,5 +102,4 @@ As a logged-in rider, I want to land on a miles shell page after login so I have
 - **SC-004**: At least 95% of users can complete login in under 30 seconds without assistance.
 - **SC-005**: The Login page and Create User page are independently navigable with no shared page combining both flows.
 - **SC-006**: 100% of successful logins result in the miles shell page displaying the correct authenticated user's name.
-- **SC-007**: 100% of miles entry form presentations pre-fill the miles input with the user's last recorded miles value when a previous entry exists.
 

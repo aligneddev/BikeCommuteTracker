@@ -10,7 +10,7 @@ Implement an authenticated Record Ride vertical slice that lets riders submit re
 ## Technical Context
 
 **Language/Version**: C# (.NET 10), F# (domain project present), TypeScript (React 19 + Vite)  
-**Primary Dependencies**: ASP.NET Core Minimal API, EF Core, React, MSAL auth flow, existing outbox publisher services  
+**Primary Dependencies**: ASP.NET Core Minimal API, EF Core, React, existing PIN/session auth flow, existing outbox publisher services  
 **Storage**: SQLite local-file profile via EF Core (with existing SQL-compatible patterns) and outbox events table  
 **Testing**: `dotnet test`, `npm run lint`, `npm run build`, `npm run test:unit`, and `npm run test:e2e` for auth/cross-layer changes  
 **Target Platform**: Linux DevContainer local development, browser frontend, containerized local orchestration via Aspire

@@ -13,7 +13,7 @@ Create a well-structured, multi-project .NET solution that demonstrates modern d
 **Primary Dependencies**:
   - .NET Aspire (service orchestration)
   - ASP.NET Core (API framework)
-  - Vue + TypeScript + Vite (frontend framework)
+    - React 19 + TypeScript + Vite (frontend framework)
   - F# (domain logic layer)
 
 **Storage**: N/A (no database in this phase - out of scope)  
@@ -52,12 +52,11 @@ src/
 │   └── Properties/
 │       └── launchSettings.json       # Launch profiles
 │
-├── BikeTracking.Frontend/           # Vue + TypeScript + Vite SPA
+├── BikeTracking.Frontend/           # React + TypeScript + Vite SPA
 │   ├── src/
 │   │   ├── index.html               # Hello screen entry point
-│   │   ├── main.ts                  # App initialization
-│   │   ├── my-app.ts                # Main component
-│   │   └── my-app.html              # Template
+│   │   ├── main.tsx                 # App initialization
+│   │   └── App.tsx                  # Main component
 │   ├── package.json                 # Dependencies
 │   ├── vite.config.ts               # Vite configuration
 │   └── tsconfig.json                # TypeScript configuration
@@ -115,10 +114,10 @@ This structure provides:
 - Better for small services and verification endpoints
 - Aligns with Aspire best practices
 
-### 3. Vue + Vite for Frontend
-**Decision**: Continue with existing Vue + Vite + TypeScript setup
+### 3. React + Vite for Frontend
+**Decision**: Use React + Vite + TypeScript setup
 **Rationale**:
-- Already configured in existing project
+- Aligned with current repository frontend standards
 - Modern development experience with hot reload
 - Type safety with TypeScript
 - Good ecosystem and community support
@@ -215,7 +214,7 @@ All items from spec.md Success Criteria must be met:
 | 5 Projects | Clear separation: API, Frontend, Domain, Defaults, Orchestration. Simpler structure (3 projects) inadequate for demonstrating multi-tier architecture |
 | F# Project | Type-driven domain modeling. Direct C# insufficient for showcasing functional patterns |
 | Aspire Usage | Enterprise-grade orchestration. Manual configuration inadequate for complex multi-service setup |
-| Vue Frontend | Modern SPA framework required. Plain HTML insufficient for demonstrating hot reload and component patterns |
+| React Frontend | Modern SPA framework required. Plain HTML insufficient for demonstrating hot reload and component patterns |
 
 ## File Locations & Artifacts
 
@@ -225,7 +224,7 @@ All items from spec.md Success Criteria must be met:
 | Global Config | `global.json` | Enforce .NET 10+ |
 | README | `README.md` | Setup, running, structure documentation |
 | API Program | `src/BikeTracking.Api/Program.cs` | Minimal API endpoints |
-| Frontend Entry | `src/BikeTracking.Frontend/src/main.ts` | App initialization |
-| Hello Screen | `src/BikeTracking.Frontend/src/my-app.html` | Hello screen template |
+| Frontend Entry | `src/BikeTracking.Frontend/src/main.tsx` | App initialization |
+| Hello Screen | `src/BikeTracking.Frontend/src/App.tsx` | Hello screen component |
 | AppHost | `src/BikeTracking.AppHost/AppHost.cs` | Service orchestration |
 | Service Defaults | `src/BikeTracking.ServiceDefaults/Extensions.cs` | Shared configuration |

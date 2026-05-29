@@ -2,7 +2,7 @@
 
 **Feature Branch**: `011-ride-weather-data`  
 **Created**: 2026-04-03  
-**Status**: Draft  
+**Status**: Complete  
 **Input**: User description: "Find and call a free API to get the weather (temp, wind speed, wind direction, humidity, cloud cover, precip type if any) at the time of the entry. Store that in the ride created/updated events for future calculations. Store the API calls for those dates so we can reuse the weather in the future to avoid calls. Show the weather fields on the ride creation/edit page. If there is an error or it is not available leave it empty. The user can overwrite the value."
 
 ## User Scenarios & Testing *(mandatory)*

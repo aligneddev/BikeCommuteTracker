@@ -2,8 +2,10 @@
 
 **Feature Branch**: `001-create-a-per-user`  
 **Created**: 2026-03-30  
-**Status**: Draft  
+**Status**: Superseded by `009-create-a-per-user`  
 **Input**: User description: "Create a per user settings page. Allow entry of average car mpg, a yearly goal, location picker for lat and long, oil change price, and mileage rate (in cents)."
+
+> This folder is retained for historical traceability. Use `specs/009-create-a-per-user/` as the canonical implementation-ready spec set for this feature.
 
 ## User Scenarios & Testing *(mandatory)*
 

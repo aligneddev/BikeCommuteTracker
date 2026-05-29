@@ -110,20 +110,20 @@ description: "Tasks for Project Structure and Scaffolding"
 
 ### Implementation for US2
 
-- [ ] T028 [US2] Create hello screen markup in `src/BikeTracking.Frontend/src/my-app.html` with:
+- [ ] T028 [US2] Create hello screen component in `src/BikeTracking.Frontend/src/App.tsx` with:
   - Basic HTML structure
   - "Hello, Bike Tracking!" heading
   - Description paragraph
   - Basic styling (inline or minimal CSS)
 
-- [ ] T029 [US2] Verify `src/BikeTracking.Frontend/vite.config.ts` enables hot reload with `@vitejs/plugin-vue`
+- [ ] T029 [US2] Verify `src/BikeTracking.Frontend/vite.config.ts` enables hot reload with `@vitejs/plugin-react`
 
 - [ ] T030 [US2] Update `src/BikeTracking.Frontend/package.json` to include:
   - Script: `dev` → `vite` (dev server)
   - Script: `build` → `vite build` (production build)
   - Script: `preview` → `vite preview` (preview production build)
 
-- [ ] T031 [US2] Verify `src/BikeTracking.Frontend/src/main.ts` correctly initializes Vue app and loads `my-app.html`
+- [ ] T031 [US2] Verify `src/BikeTracking.Frontend/src/main.tsx` correctly initializes the React app and loads `App.tsx`
 
 - [ ] T032 [US2] Setup environment configuration for frontend:
   - Create `.env.local` template with API endpoint
@@ -143,7 +143,7 @@ description: "Tasks for Project Structure and Scaffolding"
   - Readable font and spacing
   - Simple color scheme
 
-- [ ] T035 [P] [US2] Test hot reload: start dev server, modify `my-app.html`, verify page updates without manual refresh
+- [ ] T035 [P] [US2] Test hot reload: start dev server, modify `App.tsx`, verify page updates without manual refresh
 
 - [ ] T036 [US2] Update `README.md` Troubleshooting section with Frontend-specific issues:
   - "npm install fails" → check Node version
@@ -249,7 +249,7 @@ description: "Tasks for Project Structure and Scaffolding"
   - How to add new features
   - How to add new services
 
-- [ ] T052 [P] [US4] Document TypeScript/Vue patterns in Frontend:
+- [ ] T052 [P] [US4] Document TypeScript/React patterns in Frontend:
   - Component structure
   - Type safety approach
   - Hot reload during development
@@ -377,7 +377,7 @@ This delivers:
 | `README.md` | Setup documentation | Create → Build throughout |
 | `src/BikeTracking.Api/Program.cs` | API endpoints | Scaffold (T037) |
 | `src/BikeTracking.Api/appsettings.json` | API config | Configure (T038) |
-| `src/BikeTracking.Frontend/src/my-app.html` | Hello screen | Create (T028) |
+| `src/BikeTracking.Frontend/src/App.tsx` | Hello screen | Create (T028) |
 | `src/BikeTracking.Frontend/vite.config.ts` | Frontend build | Verify (T029) |
 | `src/BikeTracking.AppHost/AppHost.cs` | Service orchestration | Configure (T009-T012) |
 | `src/BikeTracking.ServiceDefaults/Extensions.cs` | Shared config | Setup (T006-T008) |

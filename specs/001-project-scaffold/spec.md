@@ -87,7 +87,7 @@ As a DevOps engineer reviewing the project, I want to confirm that the project u
 
 - **FR-001**: Solution MUST use multi-project structure with separate concerns: API, Frontend, Domain, AppHost, and Service Defaults
 - **FR-002**: API project MUST be a runnable .NET service that can start independently 
-- **FR-003**: Frontend project MUST be a TypeScript/Vue-based application with development server capability
+- **FR-003**: Frontend project MUST be a TypeScript/React-based application with development server capability
 - **FR-004**: AppHost project MUST orchestrate and configure all services for local development using .NET Aspire
 - **FR-005**: Solution MUST be buildable with `dotnet build` command without errors
 - **FR-006**: Solution MUST have a solution file (.slnx) that includes all projects
@@ -128,7 +128,7 @@ As a DevOps engineer reviewing the project, I want to confirm that the project u
 - **API endpoint**: API includes at least one working endpoint (e.g., health check, sample data endpoint) for verification
 - **No database**: Specification explicitly excludes database schema or ORM setup; data layer is out of scope
 - **Monorepo structure**: Project uses a single git repository with multiple projects organized in `/src/` folder
-- **Frontend framework**: Frontend uses modern JavaScript/TypeScript tooling (Vue with Vite based on existing package.json)
+- **Frontend framework**: Frontend uses modern JavaScript/TypeScript tooling (React with Vite)
 - **Service orchestration**: .NET Aspire is used for local development orchestration (not production deployment)
 
 ## Scope Boundaries
