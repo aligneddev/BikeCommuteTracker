@@ -245,3 +245,11 @@ frontend lint: `cd src/BikeTracking.Frontend && npm run lint`
 These are ran in the .github\workflows\ci.yml pipeline on every PR
 
 
+## Update SpecKit
+
+https://github.com/github/spec-kit/blob/main/docs/upgrade.md
+
+`specify update --self`
+
+Force .specify/ instructions files update
+`specify init --here --force --integration copilot`

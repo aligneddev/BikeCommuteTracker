@@ -131,3 +131,8 @@ From `src/BikeTracking.Frontend`:
 - **Pre-install safety**: Before schema upgrades, users should back up the SQLite file
 - **No separate services needed**: No Docker, no separate database server, no cloud provider required
 - **Multi-user setup**: For multi-user requirements on a single machine, consider SQL Server LocalDB or SQL Server Express (future phase)
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
