@@ -1,7 +1,15 @@
 {
+  "version": "0.9.5",
+  "integration_state_schema": 1,
+  "installed_integrations": [
+    "copilot"
+  ],
+  "integration_settings": {
+    "copilot": {
+      "script": "ps",
+      "invoke_separator": "."
+    }
+  },
   "integration": "copilot",
-  "version": "0.6.2",
-  "scripts": {
-    "update-context": ".specify/integrations/copilot/scripts/update-context.ps1"
-  }
+  "default_integration": "copilot"
 }
