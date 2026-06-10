@@ -1,0 +1,256 @@
+# Data Model: PWA Desktop Packaging & Automated Release Pipeline
+
+**Feature**: 023-pwa-desktop-packaging  
+**Phase**: 1 — Design  
+**Date**: 2026-06-10
+
+---
+
+## Overview
+
+This feature introduces no new application domain entities (no new database tables, API routes, or React state changes). The "data model" covers:
+
+1. **Tauri application configuration schema** — the structured config that drives packaging behaviour
+2. **Version entity** — the semantic version computed, stored, and propagated across artifacts
+3. **Release entity** — the GitHub Release structure with its associated artifacts and metadata
+4. **App runtime configuration** — the user-editable config file for backend URL
+
+---
+
+## Entity 1: Tauri Application Configuration (`tauri.conf.json`)
+
+**Location**: `src/BikeTracking.Frontend/src-tauri/tauri.conf.json`  
+**Consumed by**: `tauri build`, `tauri dev` CLI  
+**Schema (relevant fields)**:
+
+```json
+{
+  "productName": "BikeTracking",
+  "version": "<injected by release-please via package.json>",
+  "identifier": "com.biketracking.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "BikeTracking",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:5079 tauri://localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.icns", "icons/icon.ico"],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"]
+      }
+    }
+  }
+}
+```
+
+**Field Rules**:
+
+| Field | Rule | Notes |
+|-------|------|-------|
+| `productName` | Fixed: `"BikeTracking"` | Controls installer display name and Start Menu entry |
+| `version` | Synced from `package.json` by release-please | Must match GitHub Release tag (SC-005) |
+| `identifier` | Fixed: `"com.biketracking.app"` | Reverse-DNS format; used for app data directory naming |
+| `build.frontendDist` | `"../dist"` | Points to Vite output directory |
+| `app.windows[0].title` | `"BikeTracking"` | Window title bar text |
+| `bundle.targets` | `"all"` in CI; specific targets for local dev | CI overrides: `--bundles nsis` (Windows), `--bundles appimage,deb` (Linux) |
+| `bundle.windows.webviewInstallMode` | `downloadBootstrapper` | Ensures WebView2 is installed on machines without Edge |
+
+---
+
+## Entity 2: Version
+
+**Definition**: A semantic version string conforming to [SemVer 2.0.0](https://semver.org/), computed by release-please from conventional commit history.
+
+**Fields**:
+
+| Field | Type | Example | Rule |
+|-------|------|---------|------|
+| `major` | integer | `1` | Incremented on `BREAKING CHANGE:` commit footer |
+| `minor` | integer | `2` | Incremented on `feat:` commit prefix |
+| `patch` | integer | `3` | Incremented on `fix:` or `chore:` commit prefix |
+| `preRelease` | string \| null | `"beta.1"` | Present for pre-release versions; triggers FR-012 pre-release flag |
+| `full` | string | `"1.2.3"` or `"1.2.3-beta.1"` | The computed version string |
+| `tag` | string | `"v1.2.3"` | Git tag format (prefixed with `v`) |
+
+**Version Propagation** (SC-005 — all must agree):
+
+```
+release-please updates:
+  src/BikeTracking.Frontend/package.json  → "version": "1.2.3"
+  src/BikeTracking.Frontend/src-tauri/Cargo.toml → version = "1.2.3"
+
+tauri build reads:
+  Cargo.toml version → embeds in installer metadata (Add/Remove Programs, .deb package version)
+
+Artifact filenames (via tauri.conf.json productName + Cargo.toml version):
+  Windows: BikeTracking_1.2.3_x64-setup.exe
+  Linux:   BikeTracking_1.2.3_amd64.AppImage
+           biketracking_1.2.3_amd64.deb
+
+GitHub Release:
+  title: "BikeTracking v1.2.3"
+  tag:   "v1.2.3"
+```
+
+**Validation Rules**:
+- Version in `package.json` MUST match version in `src-tauri/Cargo.toml` at build time (enforced by a pre-build check step in `release.yml`).
+- Pre-release versions (containing `-`) MUST set `prerelease: true` on the GitHub Release (FR-012).
+- Duplicate tags MUST cause the pipeline to fail (not overwrite an existing release). Detected by checking if a release with that tag already exists via `gh release view`.
+
+---
+
+## Entity 3: GitHub Release
+
+**Definition**: The published release record on GitHub Releases, containing metadata, release notes, and downloadable artifact assets.
+
+**Fields**:
+
+| Field | Source | Example |
+|-------|--------|---------|
+| `tag_name` | Git tag pushed by release-please | `"v1.2.3"` |
+| `name` | Release title | `"BikeTracking v1.2.3"` |
+| `body` | Auto-generated by release-please from CHANGELOG.md | See Release Notes format below |
+| `draft` | `false` (published immediately on pipeline success) | |
+| `prerelease` | `true` if version contains `-` (e.g., `-beta.1`) | FR-012 |
+| `assets` | Array of uploaded artifact files | See Artifact entity below |
+| `created_at` | GitHub-managed timestamp | |
+
+**Release Notes Format** (generated by release-please):
+```markdown
+## What's Changed
+
+### Features
+* feat: add desktop packaging support (#123) by @contributor
+
+### Bug Fixes
+* fix: correct backend URL default (#124) by @contributor
+
+### Chores
+* chore: bump dependencies (#125)
+
+**Full Changelog**: https://github.com/owner/repo/compare/v1.1.0...v1.2.3
+```
+
+**Edge Case Rules**:
+- Empty changelog (no meaningful commits since last release): release-please skips creating a release PR. If pipeline is triggered manually, a release with "No changes since previous release" is published.
+- Duplicate tag: `gh release view v1.2.3` exits 0 → pipeline fails with `Release v1.2.3 already exists. Delete the tag and release to re-publish.`
+
+---
+
+## Entity 4: Artifact
+
+**Definition**: A platform-specific distributable file attached to a GitHub Release.
+
+**Fields**:
+
+| Field | Rule | Example |
+|-------|------|---------|
+| `filename` | `{ProductName}_{version}_{platform-suffix}.{ext}` (Tauri convention) | `BikeTracking_1.2.3_x64-setup.exe` |
+| `platform` | `windows` or `linux` | `linux` |
+| `format` | `nsis`, `appimage`, or `deb` | `appimage` |
+| `size_bytes` | Informational; not validated | ~8 MB (AppImage), ~15 MB (exe) |
+| `sha256` | Computed in pipeline and posted to release body | `abc123...` |
+
+**Artifact Matrix** (per release):
+
+| Artifact | Runner | Target Flag | Filename Pattern |
+|----------|--------|-------------|-----------------|
+| Windows NSIS installer | `windows-latest` | `--bundles nsis` | `BikeTracking_{ver}_x64-setup.exe` |
+| Linux AppImage | `ubuntu-latest` | `--bundles appimage` | `BikeTracking_{ver}_amd64.AppImage` |
+| Linux .deb package | `ubuntu-latest` | `--bundles deb` | `biketracking_{ver}_amd64.deb` |
+
+**Naming Constraint** (FR-010): Version MUST be embedded in the filename. Tauri satisfies this automatically using the `version` field from `Cargo.toml`.
+
+---
+
+## Entity 5: App Runtime Configuration (`app.conf.json`)
+
+**Definition**: A user-editable JSON file in the OS app data directory that overrides compile-time defaults.
+
+**Location**:
+- Windows: `%APPDATA%\BikeTracking\app.conf.json` (i.e., `C:\Users\<user>\AppData\Roaming\BikeTracking\app.conf.json`)
+- Linux: `~/.config/BikeTracking/app.conf.json`
+
+**Schema**:
+
+```json
+{
+  "apiBaseUrl": "http://localhost:5079",
+  "schemaVersion": 1
+}
+```
+
+| Field | Type | Default | Rule |
+|-------|------|---------|------|
+| `apiBaseUrl` | string (URL) | `"http://localhost:5079"` | MUST be a valid HTTP/HTTPS URL; injected as `window.__BIKE_API_URL__` on app start |
+| `schemaVersion` | integer | `1` | For future migration support; current valid value is `1` |
+
+**Lifecycle**:
+1. On first launch: if file does not exist, Tauri shell writes the default config to the app data directory.
+2. On subsequent launches: Tauri reads the file and injects `apiBaseUrl` into the WebView before the React app initialises.
+3. Invalid config (malformed JSON, invalid URL): Tauri falls back to the compile-time default and logs a warning to the Tauri log file.
+
+---
+
+## State Transition: Pipeline Run
+
+The release pipeline follows a linear state machine with one fan-out/fan-in stage:
+
+```
+IDLE
+  │  (tag push v*.*.* OR workflow_dispatch)
+  ▼
+TRIGGERED
+  │
+  ▼
+BUILD_FRONTEND ──────────────────── (fails → ABORTED, no release published)
+  │
+  ├──────────────────┐
+  ▼                  ▼
+PACKAGE_WINDOWS   PACKAGE_LINUX     (both parallel; either fails → ABORTED)
+  │                  │
+  └────────┬─────────┘
+           ▼
+    CONSOLIDATE_ARTIFACTS
+           │
+           ▼
+    PUBLISH_RELEASE ─────────────── (fails → ABORTED, draft release cleaned up)
+           │
+           ▼
+        COMPLETE
+```
+
+**State Rules**:
+- `ABORTED` state: no GitHub Release is published or promoted from draft (FR-009).
+- `COMPLETE` state: GitHub Release is marked as published (not draft), assets are attached, pre-release flag set if applicable (FR-012).
+- `TRIGGERED` → `BUILD_FRONTEND` runs on `ubuntu-latest` (shared across both platform jobs via `actions/upload-artifact`).
+
+> **Note**: The frontend build runs once on `ubuntu-latest` and the `dist/` output is shared as a GitHub Actions artifact to both packaging jobs, avoiding redundant npm installs and Vite builds.
