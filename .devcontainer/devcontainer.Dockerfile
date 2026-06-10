@@ -49,6 +49,23 @@ COPY src/BikeTracking.ServiceDefaults/BikeTracking.ServiceDefaults.csproj src/Bi
 # Warm NuGet cache and install CLI tools in a single layer.
 RUN dotnet tool restore && dotnet restore BikeTracking.slnx
 
+# Install Rust toolchain (stable) and Tauri system libraries.
+# rustup is installed to /usr/local/rustup with cargo/rustc on the PATH via CARGO_HOME.
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo
+ENV PATH="${CARGO_HOME}/bin:${PATH}"
+RUN curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | \
+      sh -s -- --default-toolchain stable --no-modify-path -y \
+    && rustc --version && cargo --version \
+    # Tauri system libraries: WebKit, GTK3, AppIndicator, librsvg (required for deb packaging)
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+         libwebkit2gtk-4.1-dev \
+         libgtk-3-dev \
+         libayatana-appindicator3-dev \
+         librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy npm manifests and warm the npm package cache.
 # ~/.npm is outside the workspace bind mount, so the cache persists at runtime,
 # making postCreateCommand "npm ci" fast without re-downloading packages.

@@ -65,3 +65,6 @@ packages/
 .fake
 src/BikeTracking.Frontend/test-results/
 src/BikeTracking.Frontend/playwright-report/
+
+# Tauri: Rust build artifacts (Cargo.lock IS committed — app crate convention)
+src/BikeTracking.Frontend/src-tauri/target/
