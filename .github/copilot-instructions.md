@@ -133,17 +133,6 @@ From `src/BikeTracking.Frontend`:
 - **Multi-user setup**: For multi-user requirements on a single machine, consider SQL Server LocalDB or SQL Server Express (future phase)
 
 <!-- SPECKIT START -->
-## Active Feature Plan
-
-Feature **023-pwa-desktop-packaging** — PWA Desktop Packaging & Automated Release Pipeline.
-
-For architecture decisions, implementation approach, source layout, and CI/CD design for this feature, read the plan:
-[specs/023-pwa-desktop-packaging/plan.md](../specs/023-pwa-desktop-packaging/plan.md)
-
-Supporting design artifacts:
-- [research.md](../specs/023-pwa-desktop-packaging/research.md) — Tauri 2 vs Electron, release-please vs semantic-release, platform/format decisions
-- [data-model.md](../specs/023-pwa-desktop-packaging/data-model.md) — Tauri config schema, Version and Release entities, app runtime config
-- [contracts/release-artifacts.md](../specs/023-pwa-desktop-packaging/contracts/release-artifacts.md) — artifact naming, formats, SHA-256 checksums
-- [contracts/workflow-dispatch.md](../specs/023-pwa-desktop-packaging/contracts/workflow-dispatch.md) — workflow triggers, inputs, job graph, failure behaviour
-- [quickstart.md](../specs/023-pwa-desktop-packaging/quickstart.md) — validation scenarios (local dev, installer build, pipeline trigger)
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
 <!-- SPECKIT END -->

@@ -141,10 +141,10 @@ src/BikeTracking.Frontend/
 11. **Create `release-please.yml`**: Configure `release-please-action@v4` with `release-type: node` (reads `package.json`); add `extra-files` to also bump `src-tauri/Cargo.toml` version.
 12. **Create `release.yml`**: Implement four-job pipeline:
     - `build-frontend`: `npm ci` + `npm run build` + upload `dist/` as artifact
-    - `package-linux`: Download `dist/`, `npm ci`, `tauri build --bundles appimage,deb`, upload artifacts
+    - `package-linux`: Download `dist/`, `npm ci`, `tauri build --bundles deb`, upload artifact
     - `package-windows`: Same on `windows-latest` with `--bundles nsis`
     - `publish-release`: Download all artifacts, compute SHA-256 checksums, create/update GitHub Release
-13. **Implement duplicate-tag guard**: Pre-check in `publish-release`: `gh release view $TAG` exit code 0 → fail with clear message.
+13. **Implement duplicate-tag guard**: Pre-check in `publish-release`: `gh release view $TAG --json isDraft -q '.isDraft'` → if output is `false` (published release already exists), fail with clear message; if `true` (draft from release-please), proceed.
 14. **Implement pre-release detection**: If `$TAG` contains `-`, set `prerelease: true` and `make_latest: false` on the release action.
 15. **Wire Rust caching**: Add `actions/cache@v4` for `~/.cargo` and `src-tauri/target/` in both packaging jobs.
 
@@ -152,7 +152,7 @@ src/BikeTracking.Frontend/
 
 16. **End-to-end pipeline run**: Push a conventional commit, merge a release-please PR, verify the full artifact set appears on the GitHub Releases page.
 17. **Version consistency check**: Verify `package.json` version = `Cargo.toml` version = artifact filename version = GitHub Release title version (SC-005).
-18. **Install validation**: Download Windows installer + Linux AppImage from GitHub Releases, install, launch — verify BikeTracking UI appears (User Story 1 acceptance scenarios).
+18. **Install validation**: Download Windows installer + Linux `.deb` from GitHub Releases, install, launch — verify BikeTracking UI appears (User Story 1 acceptance scenarios).
 
 ---
 

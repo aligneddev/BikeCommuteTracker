@@ -84,8 +84,6 @@ npm run tauri:build
 src/BikeTracking.Frontend/src-tauri/target/release/bundle/
 ├── nsis/
 │   └── BikeTracking_<version>_x64-setup.exe    (on Windows)
-├── appimage/
-│   └── BikeTracking_<version>_amd64.AppImage   (on Linux)
 └── deb/
     └── biketracking_<version>_amd64.deb         (on Linux)
 ```
@@ -111,13 +109,6 @@ node -e "console.log(require('./package.json').version)"
 4. Locate "BikeTracking" in the Windows Start Menu
 5. Launch the app
 6. **Expected**: Native app window opens with the BikeTracking UI
-
-### Linux (AppImage)
-```bash
-chmod +x BikeTracking_{version}_amd64.AppImage
-./BikeTracking_{version}_amd64.AppImage
-```
-**Expected**: App window opens. No installation required; runs in place.
 
 ### Linux (.deb)
 ```bash
@@ -215,11 +206,10 @@ gh release view v1.2.3 --json name -q .name
 # 2. Artifact filenames: download and check name
 gh release download v1.2.3 --dir /tmp/release-check
 ls /tmp/release-check/
-# expect: BikeTracking_1.2.3_x64-setup.exe, BikeTracking_1.2.3_amd64.AppImage, biketracking_1.2.3_amd64.deb
+# expect: BikeTracking_1.2.3_x64-setup.exe, biketracking_1.2.3_amd64.deb
 
-# 3. Installed app version (Linux AppImage example)
-./BikeTracking_1.2.3_amd64.AppImage --version 2>/dev/null || \
-  strings BikeTracking_1.2.3_amd64.AppImage | grep -E '^[0-9]+\.[0-9]+\.[0-9]'
+# 3. Installed app version (Linux .deb example)
+dpkg -s biketracking 2>/dev/null | grep Version
 ```
 
 ---
@@ -248,6 +238,5 @@ gh release list --limit 5
 | `tauri dev` fails: "WebKitGTK not found" | Missing Linux system libraries | Rebuild DevContainer (Tauri libs added to devcontainer setup) |
 | `tauri build` fails: "Rust not found" | Rust toolchain not installed | Run `rustup toolchain install stable` inside DevContainer |
 | NSIS installer triggers SmartScreen warning | No code signing (expected in v1) | Click "More info" → "Run anyway"; add code signing in v2 |
-| `.AppImage` won't run: "FUSE not available" | Some container/sandbox environments | Run with `--appimage-extract-and-run` flag or `--no-sandbox` |
 | Pipeline: "Release already exists" | Tag pushed twice | Delete tag and release: `gh release delete v1.2.3 --cleanup-tag -y` then re-push |
 | release-please PR not created | No conventional commits since last release | Ensure commits use `feat:`, `fix:`, `chore:` prefixes |

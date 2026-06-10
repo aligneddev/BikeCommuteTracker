@@ -28,7 +28,7 @@
 
 **Risk Mitigations**:
 - WebView2 availability on Windows: Tauri's NSIS installer bundles a WebView2 bootstrapper that silently installs it if absent (configurable in `tauri.conf.json` → `bundle.windows.webviewInstallMode`).
-- WebKit on Linux: Any Ubuntu 20.04+ or Debian 11+ installation includes `libwebkit2gtk-4.1`. The `.deb` package declares this as a dependency; AppImage bundles the required libs.
+- WebKit on Linux: Any Ubuntu 20.04+ or Debian 11+ installation includes `libwebkit2gtk-4.1`. The `.deb` package declares this as a dependency, auto-installed by `apt`.
 
 ---
 
@@ -83,18 +83,18 @@ The team must use conventional commit prefixes from this feature forward. Pre-re
 
 ---
 
-## Decision 4: Linux Artifacts — AppImage + .deb
+## Decision 4: Linux Artifacts — .deb only
 
-**Decision**: Produce both **AppImage** and **`.deb`** from the same Linux build job.
+**Decision**: Produce a **`.deb`** Debian package from the Linux build job.
 
 **Rationale**:
-- AppImage is distribution-agnostic and runs without installation on any Linux with FUSE support — broadest compatibility.
-- `.deb` covers Ubuntu, Debian, Linux Mint, Pop!_OS (majority of desktop Linux users in the commuter/productivity space).
-- Tauri generates both from a single `tauri build --bundles appimage,deb` invocation; no extra pipeline complexity.
-- Satisfies FR-003 ("at least one Linux distributable"); producing two exceeds the requirement at zero extra cost.
+- `.deb` covers Ubuntu, Debian, Linux Mint, Pop!_OS — the majority of desktop Linux users in the commuter/productivity space.
+- Tauri generates `.deb` via `tauri build --bundles deb`; simple and well-supported.
+- Satisfies FR-003; no AppImage needed for the initial release scope.
 
 **Alternatives Considered**:
-- **RPM only**: Covers Fedora/CentOS; lower desktop Linux marketshare. Can be added later with one line change to Tauri config.
+- **AppImage**: Distribution-agnostic and portable, but adds a second artifact with no requirement to produce it. Deferred to a future release if demand arises.
+- **RPM**: Covers Fedora/CentOS; lower desktop Linux marketshare. Can be added later with one line change to Tauri config.
 - **Flatpak**: Requires a Flatpak repository to serve updates; overkill for a local-first app distributed via GitHub Releases.
 - **Snap**: Desktop snaps have known WebKit/GTK confinement issues; Canonical's store requirement adds friction.
 
@@ -166,10 +166,10 @@ The team must use conventional commit prefixes from this feature forward. Pre-re
 
 | Unknown | Resolution |
 |---------|-----------|
-| Desktop shell | Tauri 2 (NSIS + AppImage + .deb) |
+| Desktop shell | Tauri 2 (NSIS + .deb) |
 | Versioning tool | release-please v4 (conventional commits) |
 | Windows artifact format | NSIS .exe installer |
-| Linux artifact formats | AppImage + .deb (both from single job) |
+| Linux artifact formats | .deb only (ubuntu-latest build job) |
 | Backend URL config | Compile-time default + runtime app.conf.json |
 | CI runners | Native: ubuntu-latest + windows-latest |
 | Artifact consolidation | upload-artifact → publish-release job |

@@ -94,14 +94,14 @@ As a project maintainer, I want the release pipeline to run automatically on tag
 
 - **FR-001**: The pipeline MUST build the React/Vite frontend from `src/BikeTracking.Frontend` as a production-optimised static bundle.
 - **FR-002**: The pipeline MUST package the built frontend as a Windows desktop installer (`.exe` or `.msi`).
-- **FR-003**: The pipeline MUST package the built frontend as at least one Linux distributable format (`.deb`, `.AppImage`, or `.tar.gz`).
+- **FR-003**: The pipeline MUST package the built frontend as a Linux Debian package (`.deb`).
 - **FR-004**: The pipeline MUST automatically determine a semantic version number for each release, derived from git tags or conventional commit history, without manual input.
 - **FR-005**: The pipeline MUST create a GitHub Release and attach all platform artefacts as downloadable assets.
 - **FR-006**: Each GitHub Release MUST include automatically generated release notes derived from commit messages or merged PR descriptions since the previous release.
 - **FR-007**: The pipeline MUST be triggered automatically when a version tag (e.g., `v*.*.*`) is pushed to the repository.
 - **FR-008**: The pipeline MUST support manual trigger via the GitHub Actions workflow dispatch interface.
 - **FR-009**: The pipeline MUST NOT publish a release if any build or packaging stage fails.
-- **FR-010**: Release artefact filenames MUST embed the version number (e.g., `BikeTracking-1.2.3-setup.exe`).
+- **FR-010**: Release artefact filenames MUST embed the version number (e.g., `BikeTracking_1.2.3_x64-setup.exe`, `biketracking_1.2.3_amd64.deb`).
 - **FR-011**: Windows and Linux packaging jobs MAY run in parallel; all artefacts MUST be consolidated into a single GitHub Release.
 - **FR-012**: Pre-release versions (versions containing a pre-release identifier such as `-beta` or `-rc`) MUST be marked as pre-releases on GitHub and must not be designated as the latest stable release.
 
@@ -120,8 +120,8 @@ As a project maintainer, I want the release pipeline to run automatically on tag
 ### Measurable Outcomes
 
 - **SC-001**: A maintainer can produce a fully packaged, versioned GitHub Release for both Windows and Linux from a single git tag push, with zero manual steps after the push.
-- **SC-002**: The complete pipeline (build → package → release) completes in under 15 minutes from trigger to published release under normal conditions.
-- **SC-003**: Every GitHub Release contains at least one Windows artefact and at least one Linux artefact, each with the version embedded in the filename.
+- **SC-002**: The complete pipeline (build → package → release) completes in under 15 minutes from trigger to published release with warm Rust cache. Cold-cache runs (no prior cache) may take up to 20 minutes.
+- **SC-003**: Every GitHub Release contains exactly one Windows artefact (`BikeTracking_{version}_x64-setup.exe`) and exactly one Linux artefact (`biketracking_{version}_amd64.deb`), each with the version embedded in the filename.
 - **SC-004**: 100% of releases include auto-generated release notes; no release is published with an empty or missing change description (unless explicitly designated "no changes").
 - **SC-005**: Version numbers across artefact filenames, installer metadata, and the GitHub Release title agree with each other on every release.
 - **SC-006**: A first-time user on Windows or Linux can install and launch the app in under 5 minutes from downloading the artefact.
