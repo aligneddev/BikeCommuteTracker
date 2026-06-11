@@ -63,11 +63,7 @@ jobs:
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: src/BikeTracking.Frontend
-        run: npx playwright install chromium
-
-      - name: Install Playwright system dependencies
-        working-directory: src/BikeTracking.Frontend
-        run: npx playwright install-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Frontend lint
         working-directory: src/BikeTracking.Frontend
