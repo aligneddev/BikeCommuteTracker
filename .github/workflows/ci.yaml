@@ -60,11 +60,15 @@ jobs:
           key: playwright-chromium-${{ hashFiles('src/BikeTracking.Frontend/package-lock.json') }}
           restore-keys: playwright-chromium-
 
+      - name: Install Playwright system dependencies
+        working-directory: src/BikeTracking.Frontend
+        run: npx playwright install-deps chromium
+
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        timeout-minutes: 5
+        timeout-minutes: 15
         working-directory: src/BikeTracking.Frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Frontend lint
         working-directory: src/BikeTracking.Frontend
