@@ -4,10 +4,6 @@
   "description": "Default capability for BikeTracking desktop app",
   "windows": ["main"],
   "permissions": [
-    "core:default",
-    {
-      "identifier": "fs:read-all",
-      "allow": [{ "path": "$APPCONFIG/**" }]
-    }
+    "core:default"
   ]
 }
