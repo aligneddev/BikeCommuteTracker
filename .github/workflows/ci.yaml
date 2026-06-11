@@ -62,6 +62,7 @@ jobs:
 
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 5
         working-directory: src/BikeTracking.Frontend
         run: npx playwright install --with-deps chromium
 
