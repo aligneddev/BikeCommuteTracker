@@ -183,7 +183,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-deb
-          path: src/BikeTracking.Frontend/src-tauri/target/release/bundle/deb/biketracking_*_amd64.deb
+          path: src/BikeTracking.Frontend/src-tauri/target/release/bundle/deb/BikeTracking_*_amd64.deb
           retention-days: 1
 
   # ---------------------------------------------------------------------------
