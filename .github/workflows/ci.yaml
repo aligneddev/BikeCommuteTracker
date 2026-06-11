@@ -57,18 +57,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ hashFiles('src/BikeTracking.Frontend/package-lock.json') }}
-          restore-keys: playwright-chromium-
+          key: ${{ runner.os }}-playwright-${{ hashFiles('src/BikeTracking.Frontend/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-playwright-
 
-      - name: Install Playwright system dependencies
-        working-directory: src/BikeTracking.Frontend
-        run: npx playwright install-deps chromium
-
-      - name: Install Playwright browser
+      - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        timeout-minutes: 15
         working-directory: src/BikeTracking.Frontend
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Frontend lint
         working-directory: src/BikeTracking.Frontend
