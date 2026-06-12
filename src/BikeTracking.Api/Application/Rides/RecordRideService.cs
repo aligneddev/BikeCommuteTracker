@@ -67,6 +67,7 @@ public sealed class RecordRideService(
                     latitude,
                     longitude,
                     request.RideDateTimeLocal.ToUniversalTime(),
+                    userSettings?.WeatherApiKey,
                     cancellationToken
                 );
             }

@@ -4,7 +4,6 @@
     "src/BikeTracking.Frontend": {
       "release-type": "node",
       "changelog-path": "src/BikeTracking.Frontend/CHANGELOG.md",
-      "versioning": "semver",
       "extra-files": [
         {
           "type": "toml",

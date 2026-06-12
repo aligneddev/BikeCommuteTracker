@@ -195,6 +195,7 @@ internal sealed class StubWeatherLookupService : IWeatherLookupService
         decimal latitude,
         decimal longitude,
         DateTime dateTimeUtc,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<WeatherData?>(null);
 }

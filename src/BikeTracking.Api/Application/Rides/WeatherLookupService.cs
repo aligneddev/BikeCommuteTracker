@@ -29,6 +29,7 @@ public interface IWeatherLookupService
         decimal latitude,
         decimal longitude,
         DateTime dateTimeUtc,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     );
 }
@@ -46,6 +47,7 @@ public sealed class OpenMeteoWeatherLookupService(
         decimal latitude,
         decimal longitude,
         DateTime dateTimeUtc,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -104,10 +106,12 @@ public sealed class OpenMeteoWeatherLookupService(
         var clientName = isHistorical ? "OpenMeteoArchive" : "OpenMeteoForecast";
         var requestPath = isHistorical ? "/v1/archive" : "/v1/forecast";
 
-        var apiKey = configuration["WeatherLookup:ApiKey"];
-        var apiKeyParam = string.IsNullOrWhiteSpace(apiKey)
+        var resolvedApiKey = string.IsNullOrWhiteSpace(apiKey)
+            ? configuration["WeatherLookup:ApiKey"]
+            : apiKey;
+        var apiKeyParam = string.IsNullOrWhiteSpace(resolvedApiKey)
             ? string.Empty
-            : $"&apikey={Uri.EscapeDataString(apiKey)}";
+            : $"&apikey={Uri.EscapeDataString(resolvedApiKey)}";
 
         // Build query parameters
         // Note: past_days is mutually exclusive with start_date/end_date on the Open-Meteo API.

@@ -30,6 +30,8 @@ interface SettingsFormSnapshot {
   longitude: number | null
   dashboardGallonsAvoidedEnabled: boolean
   dashboardGoalProgressEnabled: boolean
+  weatherApiKey: string | null
+  eiaGasApiKey: string | null
 }
 
 function toSnapshot(response: UserSettingsResponse): SettingsFormSnapshot {
@@ -43,6 +45,8 @@ function toSnapshot(response: UserSettingsResponse): SettingsFormSnapshot {
     longitude: response.settings.longitude,
     dashboardGallonsAvoidedEnabled: response.settings.dashboardGallonsAvoidedEnabled,
     dashboardGoalProgressEnabled: response.settings.dashboardGoalProgressEnabled,
+    weatherApiKey: response.settings.weatherApiKey ?? null,
+    eiaGasApiKey: response.settings.eiaGasApiKey ?? null,
   }
 }
 
@@ -74,6 +78,8 @@ export function SettingsPage() {
   const [longitude, setLongitude] = useState<number | ''>('')
   const [dashboardGallonsAvoidedEnabled, setDashboardGallonsAvoidedEnabled] = useState<boolean>(false)
   const [dashboardGoalProgressEnabled, setDashboardGoalProgressEnabled] = useState<boolean>(false)
+  const [weatherApiKey, setWeatherApiKey] = useState<string>('')
+  const [eiaGasApiKey, setEiaGasApiKey] = useState<string>('')
   const [locating, setLocating] = useState<boolean>(false)
   const [initialSnapshot, setInitialSnapshot] = useState<SettingsFormSnapshot>({
     averageCarMpg: null,
@@ -85,6 +91,8 @@ export function SettingsPage() {
     longitude: null,
     dashboardGallonsAvoidedEnabled: false,
     dashboardGoalProgressEnabled: false,
+    weatherApiKey: null,
+    eiaGasApiKey: null,
   })
 
   const [loading, setLoading] = useState<boolean>(true)
@@ -129,6 +137,8 @@ export function SettingsPage() {
           setLongitude(settings.longitude ?? '')
           setDashboardGallonsAvoidedEnabled(settings.dashboardGallonsAvoidedEnabled)
           setDashboardGoalProgressEnabled(settings.dashboardGoalProgressEnabled)
+          setWeatherApiKey(settings.weatherApiKey ?? '')
+          setEiaGasApiKey(settings.eiaGasApiKey ?? '')
           setInitialSnapshot(toSnapshot(settingsResponse.data))
           setRidePresets(presetsResponse.presets)
         } else {
@@ -286,6 +296,8 @@ export function SettingsPage() {
       longitude: longitude === '' ? null : longitude,
       dashboardGallonsAvoidedEnabled,
       dashboardGoalProgressEnabled,
+      weatherApiKey: weatherApiKey === '' ? null : weatherApiKey,
+      eiaGasApiKey: eiaGasApiKey === '' ? null : eiaGasApiKey,
     }
 
     const payload: UserSettingsUpsertRequest = {}
@@ -315,6 +327,10 @@ export function SettingsPage() {
     ) {
       payload.dashboardGoalProgressEnabled = currentSnapshot.dashboardGoalProgressEnabled
     }
+    if (currentSnapshot.weatherApiKey !== initialSnapshot.weatherApiKey)
+      payload.weatherApiKey = currentSnapshot.weatherApiKey
+    if (currentSnapshot.eiaGasApiKey !== initialSnapshot.eiaGasApiKey)
+      payload.eiaGasApiKey = currentSnapshot.eiaGasApiKey
 
     if (Object.keys(payload).length === 0) {
       setSaving(false)
@@ -335,6 +351,8 @@ export function SettingsPage() {
         setLongitude(settings.longitude ?? '')
         setDashboardGallonsAvoidedEnabled(settings.dashboardGallonsAvoidedEnabled)
         setDashboardGoalProgressEnabled(settings.dashboardGoalProgressEnabled)
+        setWeatherApiKey(settings.weatherApiKey ?? '')
+        setEiaGasApiKey(settings.eiaGasApiKey ?? '')
         setInitialSnapshot(toSnapshot(response.data))
         setSuccess('Settings saved successfully.')
       } else {
@@ -529,6 +547,40 @@ export function SettingsPage() {
                 />
                 Show goal progress metric
               </label>
+            </fieldset>
+
+            <fieldset className="settings-field settings-api-keys-group">
+              <legend>API Keys</legend>
+
+              <div className="settings-field">
+                <label htmlFor="eiaGasApiKey">EIA Gas Price API Key</label>
+                <input
+                  id="eiaGasApiKey"
+                  type="password"
+                  autoComplete="off"
+                  value={eiaGasApiKey}
+                  onChange={(e) => setEiaGasApiKey(e.target.value)}
+                  placeholder="Enter EIA API key to enable gas price lookup"
+                />
+                <span className="settings-hint">
+                  Free key from <a href="https://www.eia.gov/opendata/register.php" target="_blank" rel="noopener noreferrer">eia.gov/opendata</a>. Required for automatic gas price tracking.
+                </span>
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="weatherApiKey">Open-Meteo API Key (optional)</label>
+                <input
+                  id="weatherApiKey"
+                  type="password"
+                  autoComplete="off"
+                  value={weatherApiKey}
+                  onChange={(e) => setWeatherApiKey(e.target.value)}
+                  placeholder="Optional — leave blank to use free tier"
+                />
+                <span className="settings-hint">
+                  Optional paid key from <a href="https://open-meteo.com/en/pricing" target="_blank" rel="noopener noreferrer">open-meteo.com</a>. Weather works without it using the free tier.
+                </span>
+              </div>
             </fieldset>
           </div>
 

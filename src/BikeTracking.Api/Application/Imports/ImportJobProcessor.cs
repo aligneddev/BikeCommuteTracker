@@ -241,6 +241,10 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
 
         try
         {
+            var userSettings = await dbContext
+                .UserSettings.AsNoTracking()
+                .SingleOrDefaultAsync(x => x.UserId == riderId, cancellationToken);
+
             var validRows = rowsToProcess
                 .Where(static row => row.RideDateLocal is not null && row.Miles is not null)
                 .ToArray();
@@ -261,6 +265,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
                 distinctWeeks,
                 dbContext,
                 gasLookupService,
+                userSettings?.EiaGasApiKey,
                 cancellationToken
             );
 
@@ -290,6 +295,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
         IReadOnlyList<DateOnly> distinctWeeks,
         BikeTrackingDbContext dbContext,
         IGasPriceLookupService gasLookupService,
+        string? eiaGasApiKey,
         CancellationToken cancellationToken
     )
     {
@@ -324,7 +330,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
             var value = await RetryWithThrottleAsync(
                 throttle,
                 async ct =>
-                    await gasLookupService.GetOrFetchAsync(representativeDate, weekStart, ct),
+                    await gasLookupService.GetOrFetchAsync(representativeDate, weekStart, eiaGasApiKey, ct),
                 cancellationToken
             );
             gasByWeek[weekStart] = value;
@@ -401,7 +407,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
             var weather = await RetryWithThrottleAsync(
                 throttle,
                 async ct =>
-                    await weatherLookupService.GetOrFetchAsync(latitude, longitude, noonUtc, ct),
+                    await weatherLookupService.GetOrFetchAsync(latitude, longitude, noonUtc, userSettings?.WeatherApiKey, ct),
                 cancellationToken
             );
             weatherByDate[date] = weather;

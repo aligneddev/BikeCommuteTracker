@@ -48,6 +48,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: RidesEndpointsSqliteIntegrationTests validates RidePresets table including unique rider-scoped names, exact start time parsing, rider isolation, MRU ordering, and preset ownership enforcement.",
             ["20260520150127_AddRidePresetMiles"] =
                 "Updated test: RidePreset CRUD endpoint coverage validates Miles round-trip and persistence on create and update after schema migration.",
+            ["20260612151600_AddApiKeysToUserSettings"] =
+                "Updated test: user settings endpoint integration tests validate WeatherApiKey and EiaGasApiKey persistence and round-trip after schema migration.",
         };
 
     [Fact]

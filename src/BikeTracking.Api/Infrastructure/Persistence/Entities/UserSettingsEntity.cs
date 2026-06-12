@@ -22,5 +22,9 @@ public sealed class UserSettingsEntity
 
     public bool DashboardGoalProgressEnabled { get; set; }
 
+    public string? WeatherApiKey { get; set; }
+
+    public string? EiaGasApiKey { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; }
 }
