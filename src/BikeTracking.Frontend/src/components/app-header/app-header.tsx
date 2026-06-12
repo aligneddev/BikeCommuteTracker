@@ -79,7 +79,13 @@ export function AppHeader() {
     <header className="app-header">
       <div className="app-header-inner">
         <NavLink to="/dashboard" className="app-header-brand">
-          Commute Bike Tracker
+          <img
+            className="app-header-brand-logo"
+            src="/logo-wordmark.svg"
+            alt="BikeTracking"
+            width="240"
+            height="60"
+          />
         </NavLink>
 
         <nav className="app-header-nav" aria-label="Main navigation">

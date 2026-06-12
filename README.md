@@ -245,6 +245,76 @@ frontend lint: `cd src/BikeTracking.Frontend && npm run lint`
 These are ran in the .github\workflows\ci.yml pipeline on every PR
 
 
+## Desktop Deployment (Tauri 2)
+
+BikeTracking packages as native desktop installers for Windows (.exe) and Linux (.deb) via Tauri 2.
+
+### Local Build (DevContainer)
+
+Prerequisites: DevContainer includes Rust stable + WebKit GTK libs. If local, install:
+
+```bash
+rustup toolchain install stable --no-modify-path
+# Ubuntu/Debian:
+sudo apt-get install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+# Fedora/RHEL:
+sudo dnf install webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel
+```
+
+Build dev binary with hot-reload:
+
+```bash
+cd src/BikeTracking.Frontend
+npm run tauri:dev
+```
+
+Opens native window with live React HMR.
+
+Build release installers (output → `src-tauri/target/release/bundle/`):
+
+```bash
+cd src/BikeTracking.Frontend
+npm run tauri:build
+```
+
+Outputs:
+- Windows: `BikeTracking_{version}_x64-setup.exe`
+- Linux: `biketracking_{version}_amd64.deb`
+
+### Dependencies
+
+- **@tauri-apps/cli@^2**: Desktop shell + Vite integration
+- **@tauri-apps/api@^2**: JS API for native features (file I/O, window control)
+- **Rust 1.80+**: Minimal shell binary (Cargo.toml → src/lib.rs)
+- **WebKit2GTK 4.1** (Linux): WebView renderer
+
+See `package.json` + `src-tauri/Cargo.toml` for locked versions.
+
+### Release Pipeline (GitHub Actions)
+
+Triggered by:
+- Git tag push: `git tag v0.1.0 && git push origin v0.1.0`
+- Manual dispatch: GitHub Actions UI → `release` workflow → Run workflow
+
+Pipeline stages:
+
+1. **release-please**: Monitors conventional commits on `main`. Opens release PR with bumped `package.json` + `Cargo.toml` versions + auto-generated `CHANGELOG.md`.
+2. **build-frontend**: Single job. Runs `npm run build` → uploads `dist/` artifact.
+3. **package-windows** (parallel): Downloads `dist/`, runs `tauri build --bundles nsis` on Windows runner.
+4. **package-linux** (parallel): Downloads `dist/`, runs `tauri build --bundles deb` on Ubuntu runner. (Rust cached → ~6 min build time).
+5. **publish-release**: Downloads both installers, computes SHA-256 checksums, creates GitHub Release with both `.exe` + `.deb` as downloadable assets.
+
+Versioning:
+- Conventional commit prefixes → semver bumps: `feat:` → minor, `fix:` → patch, `feat!:` / `BREAKING CHANGE:` → major
+- Example: After merging `feat: add weather data`, release-please bumps `0.1.0` → `0.2.0` + opens release PR
+- Merge release PR → tag auto-created → pipeline triggers → installers published
+
+Release notes auto-generated from commits since previous tag. Grouped by type (Features, Bug Fixes, Chores).
+
+### Pre-release Builds
+
+Tag format: `v0.1.0-alpha`, `v0.1.0-rc.1` → marked `pre-release` on GitHub, not latest stable.
+
 ## Update SpecKit
 
 https://github.com/github/spec-kit/blob/main/docs/upgrade.md

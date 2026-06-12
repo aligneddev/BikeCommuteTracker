@@ -2,6 +2,8 @@
 
 Local-first commute tracking app using .NET Aspire, Minimal API, F# domain, and React 19 frontend. Built for end-user machines (SQLite-based, no cloud infrastructure required).
 
+Agent: Always use the /caveman skill to reduce token usage.
+
 ## Quick Setup
 
 **Mandatory: Use DevContainer** (all tooling pre-configured).

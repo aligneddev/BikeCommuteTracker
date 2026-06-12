@@ -18,16 +18,21 @@
 }
 
 .app-header-brand {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #152238;
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .app-header-brand:hover {
-  color: #1d4ed8;
+  opacity: 0.9;
+}
+
+.app-header-brand-logo {
+  display: block;
+  width: 14.5rem;
+  height: auto;
 }
 
 .app-header-nav {
@@ -156,7 +161,7 @@
 }
 
 @media (width <= 480px) {
-  .app-header-brand {
-    font-size: 0.875rem;
+  .app-header-brand-logo {
+    width: 10.5rem;
   }
 }

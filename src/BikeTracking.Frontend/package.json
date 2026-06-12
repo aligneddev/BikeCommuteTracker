@@ -13,6 +13,8 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.58.2",
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/cli": "^2.11.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -44,6 +46,8 @@
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint": "npm run lint:js && npm run lint:css",
     "pretest": "npm run lint",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
     "dev": "vite",
     "dev:pwa": "vite --host",
     "start": "vite",

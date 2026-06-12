@@ -1,0 +1,295 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: false
+        description: "Version to release — defaults to version in package.json"
+      pre_release:
+        type: boolean
+        default: false
+        description: "Mark as pre-release?"
+      dry_run:
+        type: boolean
+        default: false
+        description: "Build and package without publishing a GitHub Release"
+
+permissions:
+  contents: write
+
+env:
+  CI: "true"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+# ---------------------------------------------------------------------------
+# Job 1: Build the Vite frontend once; downstream packaging jobs reuse dist/
+# ---------------------------------------------------------------------------
+jobs:
+  build-frontend:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/BikeTracking.Frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: src/BikeTracking.Frontend
+        run: npm ci --ignore-scripts
+
+      # T026: Version consistency — package.json version must match Cargo.toml version
+      - name: Verify version consistency (package.json vs Cargo.toml)
+        working-directory: src/BikeTracking.Frontend
+        run: |
+          PKG_VER=$(node -p "require('./package.json').version")
+          CARGO_VER=$(grep -m1 '^version' src-tauri/Cargo.toml | sed 's/.*= "//' | tr -d '"')
+          if [ "$PKG_VER" != "$CARGO_VER" ]; then
+            echo "Version mismatch: package.json=${PKG_VER} but Cargo.toml=${CARGO_VER}"
+            echo "Run release-please or manually sync versions before pushing a tag."
+            exit 1
+          fi
+          echo "Version OK: ${PKG_VER}"
+
+      - name: Build frontend
+        working-directory: src/BikeTracking.Frontend
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: src/BikeTracking.Frontend/dist/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Package for Windows (NSIS .exe)  [parallel with package-linux]
+  # ---------------------------------------------------------------------------
+  package-windows:
+    name: Package Windows (NSIS)
+    runs-on: windows-latest
+    needs: [build-frontend]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Cache Rust build artefacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src/BikeTracking.Frontend/src-tauri/target/
+          key: windows-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: windows-cargo-
+
+      - name: Install Rust stable
+        run: rustup toolchain install stable
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: src/BikeTracking.Frontend/dist/
+
+      - name: Install frontend dependencies
+        working-directory: src/BikeTracking.Frontend
+        run: npm ci --ignore-scripts
+
+      - name: Build Windows installer
+        working-directory: src/BikeTracking.Frontend
+        run: npx tauri build --bundles nsis --ci
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: src/BikeTracking.Frontend/src-tauri/target/release/bundle/nsis/BikeTracking_*_x64-setup.exe
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Package for Linux (.deb)  [parallel with package-windows]
+  # ---------------------------------------------------------------------------
+  package-linux:
+    name: Package Linux (.deb)
+    runs-on: ubuntu-latest
+    needs: [build-frontend]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Cache Rust build artefacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src/BikeTracking.Frontend/src-tauri/target/
+          key: linux-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: linux-cargo-
+
+      - name: Install Rust stable
+        run: rustup toolchain install stable
+
+      - name: Install Tauri system libraries
+        run: sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: src/BikeTracking.Frontend/dist/
+
+      - name: Install frontend dependencies
+        working-directory: src/BikeTracking.Frontend
+        run: npm ci --ignore-scripts
+
+      - name: Build Linux .deb package
+        working-directory: src/BikeTracking.Frontend
+        run: npx tauri build --bundles deb --ci
+
+      - name: Upload Linux .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb
+          path: src/BikeTracking.Frontend/src-tauri/target/release/bundle/deb/BikeTracking_*_amd64.deb
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Publish GitHub Release (skipped when dry_run: true)
+  # ---------------------------------------------------------------------------
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: [package-linux, package-windows]
+    if: ${{ !inputs.dry_run }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # T017: Resolve tag from push event or workflow_dispatch input
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${{ github.ref_name }}"
+          elif [ -n "${{ inputs.version }}" ]; then
+            TAG="v${{ inputs.version }}"
+          else
+            PKG_VER=$(node -p "require('./src/BikeTracking.Frontend/package.json').version")
+            TAG="v${PKG_VER}"
+          fi
+          echo "TAG=${TAG}" >> "$GITHUB_ENV"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release tag: ${TAG}"
+
+      # T018: isDraft-aware duplicate-tag guard
+      - name: Duplicate-tag guard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          IS_DRAFT=$(gh release view "$TAG" --json isDraft -q '.isDraft' 2>/dev/null || echo "not_found")
+          if [ "$IS_DRAFT" = "false" ]; then
+            echo "ERROR: Release ${TAG} already published."
+            echo "Delete the tag and release first: gh release delete ${TAG} --cleanup-tag -y"
+            exit 1
+          elif [ "$IS_DRAFT" = "true" ]; then
+            echo "Updating existing draft release ${TAG} with artefacts."
+          else
+            echo "Creating new release ${TAG}."
+          fi
+
+      # T027: Pre-release detection from tag name
+      - name: Detect pre-release
+        id: prerelease
+        run: |
+          if [[ "$TAG" == *-* ]]; then
+            echo "IS_PRERELEASE=true"  >> "$GITHUB_ENV"
+            echo "MAKE_LATEST=false"   >> "$GITHUB_ENV"
+            echo "IS_PRERELEASE=true"  >> "$GITHUB_OUTPUT"
+            echo "MAKE_LATEST=false"   >> "$GITHUB_OUTPUT"
+          else
+            echo "IS_PRERELEASE=false" >> "$GITHUB_ENV"
+            echo "MAKE_LATEST=true"    >> "$GITHUB_ENV"
+            echo "IS_PRERELEASE=false" >> "$GITHUB_OUTPUT"
+            echo "MAKE_LATEST=true"    >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: release-artifacts/
+
+      - name: Download Linux .deb artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-deb
+          path: release-artifacts/
+
+      # T019: SHA-256 checksums formatted as Markdown table
+      - name: Generate SHA-256 checksums
+        id: checksums
+        run: |
+          cd release-artifacts
+          echo "## Checksums" > checksums.md
+          echo "" >> checksums.md
+          echo "| Artifact | SHA-256 |" >> checksums.md
+          echo "|----------|---------|" >> checksums.md
+          for f in *; do
+            HASH=$(sha256sum "$f" | awk '{print $1}')
+            echo "| $f | \`${HASH}\` |" >> checksums.md
+          done
+          cat checksums.md
+          # Export as multiline env var for the release body
+          {
+            echo "CHECKSUM_TABLE<<EOF"
+            cat checksums.md
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+      # T020: Create / update the GitHub Release with artifacts
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: "BikeTracking ${{ env.TAG }}"
+          body: ${{ env.CHECKSUM_TABLE }}
+          files: release-artifacts/*
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
+          make_latest: ${{ steps.prerelease.outputs.MAKE_LATEST }}
