@@ -249,6 +249,8 @@ These are ran in the .github\workflows\ci.yml pipeline on every PR
 
 BikeTracking packages as native desktop installers for Windows (.exe) and Linux (.deb) via Tauri 2.
 
+ Flow: commit to main â release-please bumps version & tags â release.yml builds installers & publishes.
+
 ### Local Build (DevContainer)
 
 Prerequisites: DevContainer includes Rust stable + WebKit GTK libs. If local, install:
