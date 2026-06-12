@@ -106,6 +106,7 @@ public sealed class OpenMeteoWeatherLookupService(
         var clientName = isHistorical ? "OpenMeteoArchive" : "OpenMeteoForecast";
         var requestPath = isHistorical ? "/v1/archive" : "/v1/forecast";
 
+        // not required for the free tier
         var resolvedApiKey = string.IsNullOrWhiteSpace(apiKey)
             ? configuration["WeatherLookup:ApiKey"]
             : apiKey;

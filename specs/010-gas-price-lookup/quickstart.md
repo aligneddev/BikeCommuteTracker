@@ -36,11 +36,7 @@ When a user creates or edits a ride, the form now shows a **Gas Price ($/gal)** 
 ## EIA API Key Setup (Development)
 
 The EIA API key is required for the lookup to succeed. In development (on your local machine), set it via .NET User Secrets:
-
-```bash
-cd src/BikeTracking.Api
-dotnet user-secrets set "GasPriceLookup:EiaApiKey" "YOUR_EIA_KEY_HERE"
-```
+put it in the settings app
 
 If you run the API in a dev container, bind-mount your host User Secrets directory so secrets persist across container rebuilds:
 
