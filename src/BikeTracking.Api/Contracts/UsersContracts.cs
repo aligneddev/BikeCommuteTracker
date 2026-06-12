@@ -22,7 +22,9 @@ public sealed record UserSettingsUpsertRequest(
     decimal? Latitude,
     decimal? Longitude,
     bool? DashboardGallonsAvoidedEnabled = null,
-    bool? DashboardGoalProgressEnabled = null
+    bool? DashboardGoalProgressEnabled = null,
+    string? WeatherApiKey = null,
+    string? EiaGasApiKey = null
 );
 
 public sealed record UserSettingsView(
@@ -35,7 +37,9 @@ public sealed record UserSettingsView(
     decimal? Longitude,
     bool DashboardGallonsAvoidedEnabled = false,
     bool DashboardGoalProgressEnabled = false,
-    DateTime? UpdatedAtUtc = null
+    DateTime? UpdatedAtUtc = null,
+    string? WeatherApiKey = null,
+    string? EiaGasApiKey = null
 );
 
 public sealed record UserSettingsResponse(bool HasSettings, UserSettingsView Settings);

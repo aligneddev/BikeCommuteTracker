@@ -9,7 +9,7 @@ namespace BikeTracking.Api.Application.Rides;
 
 public interface IGasPriceLookupService
 {
-    Task<decimal?> GetOrFetchAsync(DateOnly date, CancellationToken cancellationToken = default);
+    Task<decimal?> GetOrFetchAsync(DateOnly date, string? apiKey = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get or fetch gas price using the ISO week start date as the cache key.
@@ -18,6 +18,7 @@ public interface IGasPriceLookupService
     Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     );
 }
@@ -33,16 +34,18 @@ public sealed class EiaGasPriceLookupService(
 
     public async Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
         var weekStartDate = GasPriceWeekKeyHelper.GetWeekStartDate(date);
-        return await GetOrFetchAsync(date, weekStartDate, cancellationToken);
+        return await GetOrFetchAsync(date, weekStartDate, apiKey, cancellationToken);
     }
 
     public async Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -56,8 +59,10 @@ public sealed class EiaGasPriceLookupService(
             return cached.PricePerGallon;
         }
 
-        var apiKey = configuration["GasPriceLookup:EiaApiKey"];
-        if (string.IsNullOrWhiteSpace(apiKey))
+        var resolvedApiKey = string.IsNullOrWhiteSpace(apiKey)
+            ? configuration["GasPriceLookup:EiaApiKey"]
+            : apiKey;
+        if (string.IsNullOrWhiteSpace(resolvedApiKey))
         {
             logger.LogWarning(
                 "EIA API key missing; skipping gas price lookup for {Date}",
@@ -68,7 +73,7 @@ public sealed class EiaGasPriceLookupService(
 
         var client = httpClientFactory.CreateClient("EiaGasPrice");
         var requestUri =
-            $"/v2/petroleum/pri/gnd/data?api_key={Uri.EscapeDataString(apiKey)}&data[]=value"
+            $"/v2/petroleum/pri/gnd/data?api_key={Uri.EscapeDataString(resolvedApiKey)}&data[]=value"
             + "&facets[duoarea][]=NUS"
             + "&facets[product][]=EPM0"
             + "&frequency=weekly"

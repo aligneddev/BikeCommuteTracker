@@ -18,6 +18,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
         "longitude",
         "dashboardgallonsavoidedenabled",
         "dashboardgoalprogressenabled",
+        "weatherapikey",
+        "eiagasapikey",
     ];
 
     private readonly BikeTrackingDbContext _dbContext = dbContext;
@@ -112,6 +114,16 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
             request.DashboardGoalProgressEnabled,
             normalizedFields.Contains("dashboardgoalprogressenabled")
         );
+        var weatherApiKey = ResolveNullableString(
+            existing?.WeatherApiKey,
+            request.WeatherApiKey,
+            normalizedFields.Contains("weatherapikey")
+        );
+        var eiaGasApiKey = ResolveNullableString(
+            existing?.EiaGasApiKey,
+            request.EiaGasApiKey,
+            normalizedFields.Contains("eiagasapikey")
+        );
 
         if (averageCarMpg is <= 0)
             return UserSettingsResult.Failure(
@@ -172,6 +184,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                 Longitude = mergedLongitude,
                 DashboardGallonsAvoidedEnabled = dashboardGallonsAvoidedEnabled,
                 DashboardGoalProgressEnabled = dashboardGoalProgressEnabled,
+                WeatherApiKey = weatherApiKey,
+                EiaGasApiKey = eiaGasApiKey,
                 UpdatedAtUtc = DateTime.UtcNow,
             };
 
@@ -188,6 +202,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
             existing.Longitude = mergedLongitude;
             existing.DashboardGallonsAvoidedEnabled = dashboardGallonsAvoidedEnabled;
             existing.DashboardGoalProgressEnabled = dashboardGoalProgressEnabled;
+            existing.WeatherApiKey = weatherApiKey;
+            existing.EiaGasApiKey = eiaGasApiKey;
             existing.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -209,7 +225,9 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                 Longitude: entity.Longitude,
                 DashboardGallonsAvoidedEnabled: entity.DashboardGallonsAvoidedEnabled,
                 DashboardGoalProgressEnabled: entity.DashboardGoalProgressEnabled,
-                UpdatedAtUtc: entity.UpdatedAtUtc
+                UpdatedAtUtc: entity.UpdatedAtUtc,
+                WeatherApiKey: entity.WeatherApiKey,
+                EiaGasApiKey: entity.EiaGasApiKey
             )
         );
     }

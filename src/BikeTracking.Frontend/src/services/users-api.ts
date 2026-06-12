@@ -49,6 +49,8 @@ export interface UserSettingsUpsertRequest {
   longitude?: number | null;
   dashboardGallonsAvoidedEnabled?: boolean | null;
   dashboardGoalProgressEnabled?: boolean | null;
+  weatherApiKey?: string | null;
+  eiaGasApiKey?: string | null;
 }
 
 export interface UserSettingsView {
@@ -62,6 +64,8 @@ export interface UserSettingsView {
   dashboardGallonsAvoidedEnabled: boolean;
   dashboardGoalProgressEnabled: boolean;
   updatedAtUtc: string | null;
+  weatherApiKey: string | null;
+  eiaGasApiKey: string | null;
 }
 
 export interface UserSettingsResponse {

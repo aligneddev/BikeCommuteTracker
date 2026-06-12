@@ -369,12 +369,14 @@ file sealed class EditDifficultyNullGasPriceLookupService : IGasPriceLookupServi
 {
     public Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<decimal?>(null);
 
     public Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<decimal?>(null);
 }
@@ -385,6 +387,7 @@ file sealed class EditDifficultyNullWeatherLookupService : IWeatherLookupService
         decimal latitude,
         decimal longitude,
         DateTime dateTimeUtc,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<WeatherData?>(null);
 }

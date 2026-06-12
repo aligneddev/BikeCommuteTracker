@@ -325,6 +325,7 @@ public static class RidesEndpoints
         HttpContext context,
         [FromQuery] string? date,
         [FromServices] IGasPriceLookupService gasPriceLookupService,
+        [FromServices] BikeTrackingDbContext dbContext,
         CancellationToken cancellationToken
     )
     {
@@ -342,9 +343,13 @@ public static class RidesEndpoints
             );
         }
 
+        var userSettings = await dbContext
+            .UserSettings.AsNoTracking()
+            .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
+
         try
         {
-            var price = await gasPriceLookupService.GetOrFetchAsync(parsedDate, cancellationToken);
+            var price = await gasPriceLookupService.GetOrFetchAsync(parsedDate, userSettings?.EiaGasApiKey, cancellationToken);
             return Results.Ok(
                 new GasPriceResponse(
                     Date: parsedDate.ToString("yyyy-MM-dd"),
@@ -421,6 +426,7 @@ public static class RidesEndpoints
                 latitude,
                 longitude,
                 parsedRideDateTimeLocal.ToUniversalTime(),
+                userSettings?.WeatherApiKey,
                 cancellationToken
             );
 

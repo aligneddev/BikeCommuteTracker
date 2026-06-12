@@ -106,6 +106,7 @@ public sealed class EditRideService(
                     latitude,
                     longitude,
                     request.RideDateTimeLocal.ToUniversalTime(),
+                    userSettings?.WeatherApiKey,
                     cancellationToken
                 );
             }

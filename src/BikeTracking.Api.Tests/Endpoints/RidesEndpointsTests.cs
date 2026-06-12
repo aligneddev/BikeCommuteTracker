@@ -944,6 +944,7 @@ internal sealed class StubGasPriceLookupService : IGasPriceLookupService
 {
     public Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -958,11 +959,12 @@ internal sealed class StubGasPriceLookupService : IGasPriceLookupService
     public Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
         // Delegate to the single-date overload for stub behavior
-        return GetOrFetchAsync(priceDate, cancellationToken);
+        return GetOrFetchAsync(priceDate, apiKey, cancellationToken);
     }
 }
 
@@ -972,6 +974,7 @@ internal sealed class StubWeatherLookupService : IWeatherLookupService
         decimal latitude,
         decimal longitude,
         DateTime dateTimeUtc,
+        string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
