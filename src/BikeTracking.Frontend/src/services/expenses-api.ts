@@ -1,10 +1,7 @@
 import type { ApiResult, ErrorResponse } from "./users-api";
+import { getApiBaseUrl } from "./api-config";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+
 const SESSION_KEY = "bike_tracking_auth_session";
 
 export interface RecordExpenseResponse {
@@ -117,14 +114,14 @@ function getAuthenticatedReceiptQuery(): string {
 }
 
 export function getExpenseReceiptUrl(expenseId: number): string {
-  return `${API_BASE_URL}/api/expenses/${expenseId}/receipt${getAuthenticatedReceiptQuery()}`;
+  return `${getApiBaseUrl()}/api/expenses/${expenseId}/receipt${getAuthenticatedReceiptQuery()}`;
 }
 
 export async function downloadExpenseReceipt(
   expenseId: number,
 ): Promise<ApiResult<{ fileName: string }, ErrorResponse>> {
   const response = await fetch(
-    `${API_BASE_URL}/api/expenses/${expenseId}/receipt`,
+    `${getApiBaseUrl()}/api/expenses/${expenseId}/receipt`,
     {
       headers: getAuthHeaders(),
     },
@@ -173,7 +170,7 @@ export async function getExpenseHistory(
   if (endDate) params.set("endDate", endDate);
   const qs = params.size > 0 ? `?${params.toString()}` : "";
 
-  const response = await fetch(`${API_BASE_URL}/api/expenses${qs}`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/expenses${qs}`, {
     headers: getAuthHeaders(),
   });
 
@@ -195,7 +192,7 @@ export async function editExpense(
   expenseId: number,
   request: EditExpenseRequest,
 ): Promise<ApiResult<EditExpenseResponse, ErrorResponse>> {
-  const response = await fetch(`${API_BASE_URL}/api/expenses/${expenseId}`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/expenses/${expenseId}`, {
     method: "PUT",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(request),
@@ -218,7 +215,7 @@ export async function editExpense(
 export async function deleteExpense(
   expenseId: number,
 ): Promise<ApiResult<DeleteExpenseResponse, ErrorResponse>> {
-  const response = await fetch(`${API_BASE_URL}/api/expenses/${expenseId}`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/expenses/${expenseId}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
@@ -244,7 +241,7 @@ export async function uploadReceipt(
   formData.append("receipt", file);
 
   const response = await fetch(
-    `${API_BASE_URL}/api/expenses/${expenseId}/receipt`,
+    `${getApiBaseUrl()}/api/expenses/${expenseId}/receipt`,
     {
       method: "PUT",
       headers: getAuthHeaders(),
@@ -269,7 +266,7 @@ export async function deleteReceipt(
   expenseId: number,
 ): Promise<ApiResult<undefined, ErrorResponse>> {
   const response = await fetch(
-    `${API_BASE_URL}/api/expenses/${expenseId}/receipt`,
+    `${getApiBaseUrl()}/api/expenses/${expenseId}/receipt`,
     {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -292,7 +289,7 @@ export async function deleteReceipt(
 export async function recordExpense(
   formData: FormData,
 ): Promise<ApiResult<RecordExpenseResponse, ErrorResponse>> {
-  const response = await fetch(`${API_BASE_URL}/api/expenses`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/expenses`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: formData,

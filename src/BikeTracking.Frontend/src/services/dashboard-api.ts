@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from "./api-config";
 export interface DashboardMileageMetric {
   miles: number;
   rideCount: number;
@@ -68,11 +69,7 @@ export interface DashboardResponse {
   generatedAtUtc: string;
 }
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+
 const SESSION_KEY = "bike_tracking_auth_session";
 
 function getAuthHeaders(): Record<string, string> {
@@ -98,7 +95,7 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 export async function getDashboard(): Promise<DashboardResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/dashboard`, {
     method: "GET",
     headers: getAuthHeaders(),
   });

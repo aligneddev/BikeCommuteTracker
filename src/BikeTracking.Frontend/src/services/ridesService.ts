@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from "./api-config";
 export type CompassDirection =
   | "North"
   | "NE"
@@ -212,11 +213,7 @@ export interface RideHistoryResponse {
   totalRows: number;
 }
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+
 const SESSION_KEY = "bike_tracking_auth_session";
 const SESSION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -285,7 +282,7 @@ async function parseErrorMessage(
 export async function recordRide(
   request: RecordRideRequest,
 ): Promise<RecordRideSuccessResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/rides`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/rides`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(request),
@@ -300,7 +297,7 @@ export async function recordRide(
 
 export async function getGasPrice(date: string): Promise<GasPriceResponse> {
   const response = await fetch(
-    `${API_BASE_URL}/api/rides/gas-price?date=${encodeURIComponent(date)}`,
+    `${getApiBaseUrl()}/api/rides/gas-price?date=${encodeURIComponent(date)}`,
     {
       method: "GET",
       headers: getAuthHeaders(),
@@ -320,7 +317,7 @@ export async function getRideWeather(
   rideDateTimeLocal: string,
 ): Promise<RideWeatherResponse> {
   const response = await fetch(
-    `${API_BASE_URL}/api/rides/weather?rideDateTimeLocal=${encodeURIComponent(rideDateTimeLocal)}`,
+    `${getApiBaseUrl()}/api/rides/weather?rideDateTimeLocal=${encodeURIComponent(rideDateTimeLocal)}`,
     {
       method: "GET",
       headers: getAuthHeaders(),
@@ -337,7 +334,7 @@ export async function getRideWeather(
 }
 
 export async function getRidePresets(): Promise<RidePresetsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/presets`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/rides/presets`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -354,7 +351,7 @@ export async function getRidePresets(): Promise<RidePresetsResponse> {
 export async function createRidePreset(
   request: UpsertRidePresetRequest,
 ): Promise<RidePreset> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/presets`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/rides/presets`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(request),
@@ -374,7 +371,7 @@ export async function updateRidePreset(
   request: UpsertRidePresetRequest,
 ): Promise<RidePreset> {
   const response = await fetch(
-    `${API_BASE_URL}/api/rides/presets/${presetId}`,
+    `${getApiBaseUrl()}/api/rides/presets/${presetId}`,
     {
       method: "PUT",
       headers: getAuthHeaders(),
@@ -395,7 +392,7 @@ export async function deleteRidePreset(
   presetId: number,
 ): Promise<DeleteRidePresetResponse> {
   const response = await fetch(
-    `${API_BASE_URL}/api/rides/presets/${presetId}`,
+    `${getApiBaseUrl()}/api/rides/presets/${presetId}`,
     {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -415,7 +412,7 @@ export async function editRide(
   rideId: number,
   request: EditRideRequest,
 ): Promise<EditRideResult> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/${rideId}`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/rides/${rideId}`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify(request),
@@ -464,7 +461,7 @@ export async function editRide(
 }
 
 export async function deleteRide(rideId: number): Promise<DeleteRideResult> {
-  const response = await fetch(`${API_BASE_URL}/api/rides/${rideId}`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/rides/${rideId}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
@@ -543,8 +540,8 @@ export async function getRideHistory(
 ): Promise<RideHistoryResponse> {
   const queryString = serializeRideHistoryParams(params);
   const url = queryString
-    ? `${API_BASE_URL}/api/rides/history?${queryString}`
-    : `${API_BASE_URL}/api/rides/history`;
+    ? `${getApiBaseUrl()}/api/rides/history?${queryString}`
+    : `${getApiBaseUrl()}/api/rides/history`;
 
   const response = await fetch(url, {
     method: "GET",
