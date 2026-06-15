@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' http://localhost:5079 tauri://localhost"
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:* ws://localhost:* tauri://localhost"
     }
   },
   "bundle": {

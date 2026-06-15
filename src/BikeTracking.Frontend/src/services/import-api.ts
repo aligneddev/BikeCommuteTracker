@@ -1,10 +1,7 @@
 import { type ApiResult, type ErrorResponse } from "./users-api";
+import { getApiBaseUrl } from "./api-config";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+
 
 const SESSION_KEY = "bike_tracking_auth_session";
 
@@ -119,7 +116,7 @@ async function postJson<TSuccess>(
   path: string,
   payload: unknown,
 ): Promise<ApiResult<TSuccess>> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method: "POST",
     headers: getAuthHeaders(true),
     body: JSON.stringify(payload),
@@ -148,7 +145,7 @@ async function postJson<TSuccess>(
 }
 
 async function getJson<TSuccess>(path: string): Promise<ApiResult<TSuccess>> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     headers: getAuthHeaders(false),
   });
 

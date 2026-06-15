@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from "./api-config";
 /** Savings metrics for a single calendar window (weekly, monthly, yearly, or all-time). */
 export interface AdvancedSavingsWindow {
   /** Window identifier matching the backend period key. */
@@ -88,11 +89,7 @@ export interface AdvancedDashboardResponse {
   difficultySection: AdvancedDashboardDifficultySection | null;
 }
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+
 
 const SESSION_KEY = "bike_tracking_auth_session";
 
@@ -119,7 +116,7 @@ function getAuthHeaders(): Record<string, string> {
 
 /** Fetches the advanced statistics dashboard for the authenticated user. */
 export async function getAdvancedDashboard(): Promise<AdvancedDashboardResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/dashboard/advanced`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/dashboard/advanced`, {
     method: "GET",
     headers: getAuthHeaders(),
   });

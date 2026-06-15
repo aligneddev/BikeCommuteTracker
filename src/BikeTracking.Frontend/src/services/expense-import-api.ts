@@ -1,10 +1,7 @@
 import type { ApiResult, ErrorResponse } from "./users-api";
+import { getApiBaseUrl } from "./api-config";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+
 
 const SESSION_KEY = "bike_tracking_auth_session";
 
@@ -110,7 +107,7 @@ export async function previewExpenseImport(
   const formData = new FormData();
   formData.append("file", request.file);
 
-  const response = await fetch(`${API_BASE_URL}/api/expense-imports/preview`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/expense-imports/preview`, {
     method: "POST",
     headers: getAuthHeaders(false),
     body: formData,
@@ -136,7 +133,7 @@ export async function confirmExpenseImport(
   request: ConfirmExpenseImportRequest,
 ): Promise<ApiResult<ExpenseImportSummaryResponse, ErrorResponse>> {
   const response = await fetch(
-    `${API_BASE_URL}/api/expense-imports/${jobId}/confirm`,
+    `${getApiBaseUrl()}/api/expense-imports/${jobId}/confirm`,
     {
       method: "POST",
       headers: getAuthHeaders(true),
@@ -163,7 +160,7 @@ export async function getExpenseImportStatus(
   jobId: number,
 ): Promise<ApiResult<ExpenseImportStatusResponse, ErrorResponse>> {
   const response = await fetch(
-    `${API_BASE_URL}/api/expense-imports/${jobId}/status`,
+    `${getApiBaseUrl()}/api/expense-imports/${jobId}/status`,
     {
       headers: getAuthHeaders(false),
     },
@@ -187,7 +184,7 @@ export async function getExpenseImportStatus(
 export async function deleteExpenseImport(
   jobId: number,
 ): Promise<ApiResult<void, ErrorResponse>> {
-  const response = await fetch(`${API_BASE_URL}/api/expense-imports/${jobId}`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/expense-imports/${jobId}`, {
     method: "DELETE",
     headers: getAuthHeaders(false),
   });

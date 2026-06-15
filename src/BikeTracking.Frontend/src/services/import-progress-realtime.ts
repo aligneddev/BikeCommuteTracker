@@ -3,12 +3,9 @@ import {
   HubConnectionState,
   LogLevel,
 } from "@microsoft/signalr";
+import { getApiBaseUrl } from "./api-config";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+
 
 const SESSION_KEY = "bike_tracking_auth_session";
 
@@ -67,7 +64,7 @@ export async function subscribeToImportProgress(
 
   const connection = new HubConnectionBuilder()
     .withUrl(
-      `${API_BASE_URL}/hubs/import-progress?access_token=${tokenQuery}`,
+      `${getApiBaseUrl()}/hubs/import-progress?access_token=${tokenQuery}`,
       {
         headers: userId ? { "X-User-Id": userId } : {},
         accessTokenFactory: () => userId ?? "",

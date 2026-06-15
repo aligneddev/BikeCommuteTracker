@@ -1,8 +1,4 @@
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-    /\/$/,
-    "",
-  ) ?? "http://localhost:5436";
+import { getApiBaseUrl } from "./api-config";
 const SESSION_KEY = "bike_tracking_auth_session";
 const SESSION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -135,7 +131,7 @@ async function postJson<TSuccess, TError = ErrorResponse>(
   path: string,
   payload: unknown,
 ): Promise<ApiResult<TSuccess, TError>> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -176,7 +172,7 @@ async function postJson<TSuccess, TError = ErrorResponse>(
 async function getJson<TSuccess, TError = ErrorResponse>(
   path: string,
 ): Promise<ApiResult<TSuccess, TError>> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     headers: getAuthHeaders(false),
   });
 
@@ -207,7 +203,7 @@ async function putJson<TSuccess, TError = ErrorResponse>(
   path: string,
   payload: unknown,
 ): Promise<ApiResult<TSuccess, TError>> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method: "PUT",
     headers: getAuthHeaders(true),
     body: JSON.stringify(payload),
