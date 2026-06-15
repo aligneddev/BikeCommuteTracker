@@ -255,18 +255,47 @@ jobs:
       # T017: Resolve tag from push event or workflow_dispatch input
       - name: Resolve release tag
         id: tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             TAG="${{ github.ref_name }}"
+            AUTO_BUMP=false
           elif [ -n "${{ inputs.version }}" ]; then
             TAG="v${{ inputs.version }}"
+            AUTO_BUMP=false
           else
-            PKG_VER=$(node -p "require('./src/BikeTracking.Frontend/package.json').version")
-            TAG="v${PKG_VER}"
+            # Auto-increment minor version from latest published release
+            LATEST=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)
+            [ -z "$LATEST" ] && LATEST="v0.0.0"
+            MAJOR=$(echo "$LATEST" | sed 's/v\([0-9]*\)\..*/\1/')
+            MINOR=$(echo "$LATEST" | sed 's/v[0-9]*\.\([0-9]*\)\..*/\1/')
+            MINOR=$((MINOR + 1))
+            TAG="v${MAJOR}.${MINOR}.0"
+            AUTO_BUMP=true
           fi
           echo "TAG=${TAG}" >> "$GITHUB_ENV"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "AUTO_BUMP=${AUTO_BUMP}" >> "$GITHUB_OUTPUT"
           echo "Resolved release tag: ${TAG}"
+
+      # T017a: Bump package.json + Cargo.toml when version was auto-incremented
+      - name: Bump version files
+        if: steps.tag.outputs.AUTO_BUMP == 'true'
+        run: |
+          NEW_VER="${TAG#v}"
+          jq --arg ver "$NEW_VER" '.version = $ver' \
+            src/BikeTracking.Frontend/package.json > /tmp/pkg.json \
+            && mv /tmp/pkg.json src/BikeTracking.Frontend/package.json
+          sed -i "0,/^version = /s/^version = .*/version = \"${NEW_VER}\"/" \
+            src/BikeTracking.Frontend/src-tauri/Cargo.toml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/BikeTracking.Frontend/package.json \
+                  src/BikeTracking.Frontend/src-tauri/Cargo.toml
+          git diff --cached --quiet || \
+            git commit -m "chore: bump version to ${NEW_VER} [skip ci]"
+          git push origin HEAD:main
 
       # T018: isDraft-aware duplicate-tag guard
       - name: Duplicate-tag guard
