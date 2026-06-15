@@ -28,7 +28,7 @@ describe('DashboardPage', () => {
       </BrowserRouter>
     )
 
-    expect(screen.getByText(/total expenses/i)).toBeInTheDocument()
+    expect(screen.getByText(/total expenses/i, { selector: 'span' })).toBeInTheDocument()
   })
 
   it('renders oil change savings label when available', async () => {
@@ -41,6 +41,6 @@ describe('DashboardPage', () => {
       </BrowserRouter>
     )
 
-    expect(screen.getByText(/oil change savings/i)).toBeInTheDocument()
+    expect(screen.getByText(/oil change savings/i, { selector: 'span' })).toBeInTheDocument()
   })
 })
