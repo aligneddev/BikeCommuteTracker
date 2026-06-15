@@ -215,7 +215,7 @@ jobs:
             --output /tmp/api-publish \
             --no-restore
 
-      - name: Start API and verify /health
+      - name: Start API and verify it responds
         run: |
           ASPNETCORE_URLS="http://localhost:5436" \
           ASPNETCORE_ENVIRONMENT="Production" \
@@ -223,18 +223,19 @@ jobs:
           API_PID=$!
           echo "API PID: $API_PID"
 
-          # Wait up to 30s for /health to respond 200
+          # Wait up to 30s for / to respond 200
+          # /health is only mapped in Development; / is always available.
           for i in $(seq 1 30); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5436/health || true)
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5436/ || true)
             if [ "$STATUS" = "200" ]; then
-              echo "API healthy after ${i}s"
+              echo "API responding after ${i}s"
               kill $API_PID
               exit 0
             fi
             sleep 1
           done
 
-          echo "ERROR: API did not become healthy within 30s"
+          echo "ERROR: API did not respond within 30s"
           kill $API_PID 2>/dev/null || true
           exit 1
 
