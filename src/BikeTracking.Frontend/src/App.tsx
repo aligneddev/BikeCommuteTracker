@@ -15,6 +15,7 @@ import { ExpenseImportPage } from './pages/expenses/ExpenseImportPage'
 import { ExpenseHistoryPage } from './pages/expenses/ExpenseHistoryPage'
 import { AdvancedDashboardPage } from './pages/advanced-dashboard/advanced-dashboard-page'
 import { getPwaSnapshot, subscribePwaSnapshot } from './services/pwa/bootstrap'
+import { ApiStartupGuard } from './components/api-startup-guard/ApiStartupGuard'
 
 function PwaStatusOutlet() {
   const [snapshot, setSnapshot] = useState(() => getPwaSnapshot())
@@ -58,28 +59,30 @@ function PwaStatusOutlet() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <PwaStatusOutlet />
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/dashboard/advanced" element={<AdvancedDashboardPage />} />
-            <Route path="/miles" element={<MilesShellPage />} />
-            <Route path="/rides/history" element={<HistoryPage />} />
-            <Route path="/rides/record" element={<RecordRidePage />} />
-            <Route path="/rides/import" element={<ImportRidesPage />} />
-            <Route path="/expenses/entry" element={<ExpenseEntryPage />} />
-            <Route path="/expenses/import" element={<ExpenseImportPage />} />
-            <Route path="/expenses/history" element={<ExpenseHistoryPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    <ApiStartupGuard>
+      <BrowserRouter>
+        <AuthProvider>
+          <PwaStatusOutlet />
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard/advanced" element={<AdvancedDashboardPage />} />
+              <Route path="/miles" element={<MilesShellPage />} />
+              <Route path="/rides/history" element={<HistoryPage />} />
+              <Route path="/rides/record" element={<RecordRidePage />} />
+              <Route path="/rides/import" element={<ImportRidesPage />} />
+              <Route path="/expenses/entry" element={<ExpenseEntryPage />} />
+              <Route path="/expenses/import" element={<ExpenseImportPage />} />
+              <Route path="/expenses/history" element={<ExpenseHistoryPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ApiStartupGuard>
   )
 }
 

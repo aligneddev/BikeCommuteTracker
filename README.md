@@ -249,7 +249,23 @@ These are ran in the .github\workflows\ci.yml pipeline on every PR
 
 BikeTracking packages as native desktop installers for Windows (.exe) and Linux (.deb) via Tauri 2.
 
- Flow: commit to main â release-please bumps version & tags â release.yml builds installers & publishes.
+Flow: commit to main → release-please bumps version & tags → release.yml builds installers (including bundled API) & publishes.
+
+**The installer is fully self-contained.** The .NET API is bundled as a Tauri sidecar binary — no separate installation or manual startup required. On launch, the Tauri shell spawns the API automatically; on close, it terminates it cleanly.
+
+### Architecture: Tauri Sidecar
+
+```
+BikeTracking (Tauri shell)
+├── React frontend (embedded in binary)
+└── BikeTracking.Api sidecar (self-contained .NET binary)
+    └── SQLite DB  (~/.local/share/BikeTracking/ or %APPDATA%\BikeTracking\)
+```
+
+- Sidecar spawned in `lib.rs setup()` via `tauri-plugin-shell`
+- Sidecar killed on `WindowEvent::Destroyed` (no orphaned processes)
+- API port: `5079` (fixed; configurable via `app.conf.json`)
+- Frontend polls `GET /health` on startup; shows spinner until API ready, error if >10s
 
 ### Local Build (DevContainer)
 
@@ -263,6 +279,25 @@ sudo apt-get install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3
 sudo dnf install webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel
 ```
 
+For local Tauri dev, publish the API sidecar binary first:
+
+```bash
+# Linux
+dotnet publish src/BikeTracking.Api/BikeTracking.Api.csproj \
+  --configuration Release --self-contained true --runtime linux-x64 \
+  -p:PublishSingleFile=true --output src/BikeTracking.Frontend/src-tauri/binaries/
+mv src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api \
+   src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
+chmod +x src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
+
+# Windows (PowerShell)
+dotnet publish src/BikeTracking.Api/BikeTracking.Api.csproj `
+  --configuration Release --self-contained true --runtime win-x64 `
+  -p:PublishSingleFile=true --output src/BikeTracking.Frontend/src-tauri/binaries/
+Rename-Item src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api.exe `
+            BikeTracking.Api-x86_64-pc-windows-msvc.exe
+```
+
 Build dev binary with hot-reload:
 
 ```bash
@@ -270,7 +305,7 @@ cd src/BikeTracking.Frontend
 npm run tauri:dev
 ```
 
-Opens native window with live React HMR.
+Opens native window. API sidecar starts automatically.
 
 Build release installers (output → `src-tauri/target/release/bundle/`):
 
@@ -286,9 +321,11 @@ Outputs:
 ### Dependencies
 
 - **@tauri-apps/cli@^2**: Desktop shell + Vite integration
-- **@tauri-apps/api@^2**: JS API for native features (file I/O, window control)
-- **Rust 1.80+**: Minimal shell binary (Cargo.toml → src/lib.rs)
+- **@tauri-apps/api@^2**: JS API for native features
+- **tauri-plugin-shell ^2**: Sidecar spawn/kill lifecycle
+- **Rust 1.80+**: Minimal shell binary (`src-tauri/src/lib.rs`)
 - **WebKit2GTK 4.1** (Linux): WebView renderer
+- **.NET 10**: Compiled into sidecar binary (self-contained — not required on user machine)
 
 See `package.json` + `src-tauri/Cargo.toml` for locked versions.
 
@@ -301,22 +338,22 @@ Triggered by:
 Pipeline stages:
 
 1. **release-please**: Monitors conventional commits on `main`. Opens release PR with bumped `package.json` + `Cargo.toml` versions + auto-generated `CHANGELOG.md`.
-2. **build-frontend**: Single job. Runs `npm run build` → uploads `dist/` artifact.
-3. **package-windows** (parallel): Downloads `dist/`, runs `tauri build --bundles nsis` on Windows runner.
-4. **package-linux** (parallel): Downloads `dist/`, runs `tauri build --bundles deb` on Ubuntu runner. (Rust cached → ~6 min build time).
-5. **publish-release**: Downloads both installers, computes SHA-256 checksums, creates GitHub Release with both `.exe` + `.deb` as downloadable assets.
+2. **build-frontend** + **publish-api-windows** + **publish-api-linux** (parallel): Frontend builds `dist/`; API published as self-contained binary per platform.
+3. **package-windows**: Downloads `dist/` + Windows API binary → places in `src-tauri/binaries/` → `tauri build --bundles nsis`.
+4. **package-linux**: Downloads `dist/` + Linux API binary → places in `src-tauri/binaries/` → `tauri build --bundles deb`.
+5. **smoke-test-api**: Validates `GET /health` returns 200 on published API binary.
+6. **publish-release**: Downloads both installers, computes SHA-256 checksums, creates GitHub Release.
 
 Versioning:
 - Conventional commit prefixes → semver bumps: `feat:` → minor, `fix:` → patch, `feat!:` / `BREAKING CHANGE:` → major
-- Example: After merging `feat: add weather data`, release-please bumps `0.1.0` → `0.2.0` + opens release PR
 - Merge release PR → tag auto-created → pipeline triggers → installers published
+- On manual dispatch without version input: version patched in CI workspace only (no commit to `main`); `release-please` owns version files in the repo
 
 Release notes auto-generated from commits since previous tag. Grouped by type (Features, Bug Fixes, Chores).
 
 ### Pre-release Builds
 
 Tag format: `v0.1.0-alpha`, `v0.1.0-rc.1` → marked `pre-release` on GitHub, not latest stable.
-
 ## Update SpecKit
 
 https://github.com/github/spec-kit/blob/main/docs/upgrade.md

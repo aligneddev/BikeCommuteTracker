@@ -48,6 +48,10 @@ appsettings.Development.json
 *.bak
 *.cache
 node_modules/
+
+# Sidecar binaries — populated by CI; do not commit
+src/BikeTracking.Frontend/src-tauri/binaries/*.exe
+src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-*
 dist/
 build/
 coverage/

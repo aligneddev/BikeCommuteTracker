@@ -1,5 +1,12 @@
 use serde::Deserialize;
+use std::sync::Mutex;
 use tauri::Manager;
+use tauri_plugin_shell::process::CommandChild;
+use tauri_plugin_shell::ShellExt;
+
+/// Holds the running sidecar child process handle.
+/// Wrapped in Mutex so the setup() closure and the window event handler can both access it.
+struct SidecarState(Mutex<Option<CommandChild>>);
 
 /// Runtime configuration read from `app.conf.json` in the OS app-config directory.
 /// - Windows: `%APPDATA%\BikeTracking\app.conf.json`
@@ -57,6 +64,8 @@ fn read_api_base_url(app: &tauri::AppHandle) -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .manage(SidecarState(Mutex::new(None)))
         .setup(|app| {
             let api_base_url = read_api_base_url(app.handle());
 
@@ -66,12 +75,35 @@ pub fn run() {
                 .get_webview_window("main")
                 .expect("main window not found");
 
-            window.eval(&format!(
+            window.eval(format!(
                 "window.__BIKE_API_URL__ = \"{}\";",
                 api_base_url
             ))?;
 
+            // Spawn the API sidecar. On any error, log and continue — the frontend
+            // will hit the 10 s health-check timeout and show the error state.
+            match app.shell().sidecar("binaries/BikeTracking.Api") {
+                Ok(cmd) => match cmd.spawn() {
+                    Ok((_rx, child)) => {
+                        *app.state::<SidecarState>().0.lock().unwrap() = Some(child);
+                    }
+                    Err(e) => eprintln!("[BikeTracking] Sidecar spawn failed: {e}"),
+                },
+                Err(e) => eprintln!("[BikeTracking] Sidecar resolve failed: {e}"),
+            }
+
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                let state = window.state::<SidecarState>();
+                let child = state.0.lock().unwrap().take();
+                if let Some(child) = child {
+                    if let Err(e) = child.kill() {
+                        eprintln!("[BikeTracking] Sidecar kill failed: {e}");
+                    }
+                }
+            }
         })
         .run(tauri::generate_context!())
         .expect("error running Tauri app")

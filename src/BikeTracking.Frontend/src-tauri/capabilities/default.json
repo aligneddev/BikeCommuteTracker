@@ -4,6 +4,13 @@
   "description": "Default capability for BikeTracking desktop app",
   "windows": ["main"],
   "permissions": [
-    "core:default"
+    "core:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "binaries/BikeTracking.Api", "sidecar": true }
+      ]
+    },
+    "shell:allow-kill"
   ]
 }
