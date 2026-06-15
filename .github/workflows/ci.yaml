@@ -87,8 +87,7 @@ jobs:
             --self-contained true \
             --runtime linux-x64 \
             -p:PublishSingleFile=true \
-            --output src/BikeTracking.Frontend/src-tauri/binaries/ \
-            --no-restore
+            --output src/BikeTracking.Frontend/src-tauri/binaries/
           mv src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api \
              src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
           chmod +x src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
