@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import React from 'react'
 import { render, screen } from '@testing-library/react'
 import App from './App'
 
@@ -31,6 +32,9 @@ vi.mock('./pages/expenses/ExpenseImportPage', () => ({
 }))
 vi.mock('./components/app-header/app-header', () => ({
   AppHeader: () => <div>App Header</div>,
+}))
+vi.mock('./components/api-startup-guard/ApiStartupGuard', () => ({
+  ApiStartupGuard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 describe('App routing', () => {
