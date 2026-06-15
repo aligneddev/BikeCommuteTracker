@@ -219,7 +219,7 @@ jobs:
           global-json-file: global.json
 
       - name: Restore .NET dependencies
-        run: dotnet restore BikeTracking.slnx
+        run: dotnet restore src/BikeTracking.Api/BikeTracking.Api.csproj --runtime win-x64
 
       - name: Publish API self-contained (Windows x64)
         run: |
@@ -259,7 +259,7 @@ jobs:
           global-json-file: global.json
 
       - name: Restore .NET dependencies
-        run: dotnet restore BikeTracking.slnx
+        run: dotnet restore src/BikeTracking.Api/BikeTracking.Api.csproj --runtime linux-x64
 
       - name: Publish API self-contained (Linux x64)
         run: |
