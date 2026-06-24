@@ -504,7 +504,7 @@ public sealed class RidesApplicationServiceTests
     }
 
     [Fact]
-    public async Task EditRideService_WithValidRequest_UpdatesRideVersionAndQueuesOutboxEvent()
+    public async Task EditRideService_WithValidRequest_UpdatesRideVersion()
     {
         using var context = CreateDbContext();
         var user = new UserEntity
