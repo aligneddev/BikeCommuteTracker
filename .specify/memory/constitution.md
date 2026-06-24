@@ -13,7 +13,7 @@ Bike Tracking is a local-first commuter application that records rides and compu
 4. E2E tests are required for every PR.
 5. Architecture follows ports-and-adapters with strict boundary protection and anti-corruption layers.
 6. Domain expected-flow outcomes are represented as explicit Result-style values; exceptions are for unexpected failures.
-7. Event-sourced write model and projection-based read model remain the data consistency model.
+7. Write model is transactional relational with explicit audit logs; read-side projections allowed where helpful. Event sourcing not required.
 8. Local-first runtime and observability posture is the default; cloud deployment remains a supported profile.
 
 ## Operational Instruction Packs

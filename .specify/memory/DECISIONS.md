@@ -14,17 +14,17 @@ The Bike Tracking project uses SpecKit to enforce Specification-Driven Developme
 - **Traceability**: Each commit references a spec; easy to understand why code exists
 - **Quality gates**: Code review verifies architecture alignment with constitution
 
-### Why Event Sourcing + CQRS?
+### Why Transactional Write Model + Audit Trail?
 
-Bike Tracking tracks rides, expenses, and savings over time. Event Sourcing enables:
+Bike Tracking tracks rides, expenses, and savings over time. Transactional relational model with explicit audit logs provides:
 
-- **Complete audit trail**: Every change (record ride, edit distance, recalculate savings) stored as immutable event
-- **Temporal queries**: "Show me rides in March 2024" via event filters  
-- **Replay & debugging**: Event replay reconstructs state at any point in time
-- **CQRS separation**: Write path (append events) faster than read path (query projections)
-- **Future analytics**: Events preserve data for future analyses (e.g., weather correlations, motivation patterns)
+- **Simplicity**: Fewer moving parts; single transactional boundary for writes
+- **Auditability**: Audit logs capture who/when/what for changes
+- **Deterministic queries**: Read models derive directly from normalized tables without replay
+- **Lower operational cost**: No separate projection pipeline or event versioning workload
+- **Optional event-driven integrations**: Emit integration events via outbox when needed
 
-Trade-offs: Added complexity (separate event/projection tables, eventual consistency, schema versioning). Justified for a financial/historical application.
+Trade-offs: Less flexible for instant replay-based debugging; acceptable given reduced complexity and maintenance burden.
 
 ### Why F# for Domain Layer?
 

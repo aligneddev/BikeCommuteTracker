@@ -51,8 +51,8 @@ From `src/BikeTracking.Frontend`:
 ### Data Model
 - **SQLite** (local user-machine deployment; no database service needed)
 - EF Core Code-First migrations auto-applied on startup
-- **Outbox pattern**: All domain events written to outbox table; background worker retries with progressive delay (up to 30s) until published
-- **Event sourcing**: User registration, login, ride records are immutable events; current state derived from event history
+- **Outbox/integration events (optional)**: Use outbox pattern only when integrating with external systems; otherwise prefer transactional writes with audit logs.
+- **Write model**: Default is transactional relational model with audit trail; event sourcing not required.
 
 ### Layering
 
