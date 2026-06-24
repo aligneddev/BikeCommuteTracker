@@ -420,7 +420,13 @@ export function HistoryPage() {
   }
 
   useEffect(() => {
-    void loadHistory({ page: 1, pageSize: 25 })
+    const timeoutId = window.setTimeout(() => {
+      void loadHistory({ page: 1, pageSize: 25 })
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
   }, [])
 
   const summaries = useMemo(() => {
@@ -531,20 +537,6 @@ export function HistoryPage() {
 
     return () => clearTimeout(timerId)
   }, [editingRideId, editedRideDateTimeLocal])
-
-  useEffect(() => {
-    if (editingRideId === null || !editedPrimaryTravelDirection) return
-    const suggestion = suggestDifficulty(
-      editedWindSpeedMph ? parseFloat(editedWindSpeedMph) : undefined,
-      editedPrimaryTravelDirection,
-      editedWindDirectionDeg ? parseInt(editedWindDirectionDeg) : undefined
-    )
-    if (suggestion !== null && !difficultyAutoSuggested) {
-      setEditedDifficulty(suggestion.toString())
-      setDifficultyAutoSuggested(true)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editedPrimaryTravelDirection]) // Only trigger on direction change, not every wind change
 
   async function handleSaveEdit(ride: RideHistoryRow): Promise<void> {
     const milesValue = Number(editedMiles)
@@ -821,6 +813,19 @@ export function HistoryPage() {
           }}
           onEditedPrimaryTravelDirectionChange={(value) => {
             setEditedPrimaryTravelDirection(value)
+            if (!value) {
+              return
+            }
+
+            const suggestion = suggestDifficulty(
+              editedWindSpeedMph ? parseFloat(editedWindSpeedMph) : undefined,
+              value,
+              editedWindDirectionDeg ? parseInt(editedWindDirectionDeg) : undefined
+            )
+            if (suggestion !== null && !difficultyAutoSuggested) {
+              setEditedDifficulty(suggestion.toString())
+              setDifficultyAutoSuggested(true)
+            }
           }}
           onLoadWeather={() => void handleLoadWeather()}
           onSaveEdit={(ride) => void handleSaveEdit(ride)}

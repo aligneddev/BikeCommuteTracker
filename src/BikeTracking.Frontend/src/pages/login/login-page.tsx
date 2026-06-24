@@ -26,7 +26,14 @@ export function LoginPage() {
 
   useEffect(() => {
     if (state?.prefillName) {
-      setName(state.prefillName)
+      const prefillName = state.prefillName
+      const timeoutId = window.setTimeout(() => {
+        setName(prefillName)
+      }, 0)
+
+      return () => {
+        window.clearTimeout(timeoutId)
+      }
     }
   }, [state?.prefillName])
 
