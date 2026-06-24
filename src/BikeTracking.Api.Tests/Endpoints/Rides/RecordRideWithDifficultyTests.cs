@@ -192,10 +192,17 @@ public sealed class RecordRideWithDifficultyTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    private sealed class DifficultyRecordApiHost(WebApplication app) : IAsyncDisposable
+    private sealed class DifficultyRecordApiHost : IAsyncDisposable
     {
-        public WebApplication App { get; } = app;
-        public HttpClient Client { get; } = app.GetTestClient();
+        private readonly WebApplication app;
+        public WebApplication App => app;
+        public HttpClient Client { get; }
+
+        public DifficultyRecordApiHost(WebApplication app)
+        {
+            this.app = app;
+            Client = app.GetTestClient();
+        }
 
         public static async Task<DifficultyRecordApiHost> StartAsync()
         {

@@ -268,10 +268,17 @@ public sealed class EditRideWithDifficultyTests
         Assert.Equal(2, editedRide.Difficulty);
     }
 
-    private sealed class EditDifficultyApiHost(WebApplication app) : IAsyncDisposable
+    private sealed class EditDifficultyApiHost : IAsyncDisposable
     {
-        public WebApplication App { get; } = app;
-        public HttpClient Client { get; } = app.GetTestClient();
+        private readonly WebApplication app;
+        public WebApplication App => app;
+        public HttpClient Client { get; }
+
+        public EditDifficultyApiHost(WebApplication app)
+        {
+            this.app = app;
+            Client = app.GetTestClient();
+        }
 
         public static async Task<EditDifficultyApiHost> StartAsync()
         {
