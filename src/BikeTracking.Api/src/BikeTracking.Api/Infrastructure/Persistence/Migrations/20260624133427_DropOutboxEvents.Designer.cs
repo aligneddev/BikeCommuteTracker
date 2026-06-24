@@ -3,16 +3,19 @@ using System;
 using BikeTracking.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
+namespace BikeTracking.Api.src.BikeTracking.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(BikeTrackingDbContext))]
-    partial class BikeTrackingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624133427_DropOutboxEvents")]
+    partial class DropOutboxEvents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");

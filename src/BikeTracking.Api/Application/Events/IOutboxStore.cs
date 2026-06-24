@@ -1,24 +1,5 @@
-﻿using BikeTracking.Api.Infrastructure.Persistence;
-
-namespace BikeTracking.Api.Application.Events;
-
-public interface IOutboxStore
+// Outbox store interface removed. Kept stub for migration.
+namespace BikeTracking.Api.Application.Events
 {
-    Task<IReadOnlyList<OutboxEventEntity>> LoadPendingAsync(
-        int maxBatchSize,
-        DateTime utcNow,
-        CancellationToken cancellationToken
-    );
-    Task MarkPublishedAsync(
-        long outboxEventId,
-        DateTime publishedAtUtc,
-        CancellationToken cancellationToken
-    );
-    Task ScheduleRetryAsync(
-        long outboxEventId,
-        int retryCount,
-        DateTime nextAttemptUtc,
-        string? lastError,
-        CancellationToken cancellationToken
-    );
+    // Outbox removed. No-op.
 }
