@@ -51,13 +51,7 @@ public sealed class DeleteRideService(
 
         if (ride is null)
         {
-            // Idempotent delete: treat missing ride as already-deleted.
-            var idempotentResponse = new DeleteRideResponse(
-                RideId: rideId,
-                DeletedAtUtc: DateTime.UtcNow,
-                IsIdempotent: true
-            );
-            return DeleteRideResult.SuccessIdempotent(idempotentResponse);
+            return DeleteRideResult.Failure("RIDE_NOT_FOUND", $"Ride {rideId} was not found.");
         }
 
         if (ride.RiderId != riderId)
