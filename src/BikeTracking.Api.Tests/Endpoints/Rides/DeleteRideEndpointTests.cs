@@ -88,10 +88,7 @@ public sealed class DeleteRideEndpointTests
         Assert.Equal(HttpStatusCode.OK, response1.StatusCode);
 
         var response2 = await host.Client.DeleteWithAuthAsync($"/api/rides/{rideId}", userId);
-        Assert.Equal(HttpStatusCode.OK, response2.StatusCode);
-        var payload = await response2.Content.ReadFromJsonAsync<DeleteRideSuccessResponse>();
-        Assert.NotNull(payload);
-        Assert.True(payload.IsIdempotent);
+        Assert.Equal(HttpStatusCode.NotFound, response2.StatusCode);
     }
 
     private sealed class DeleteRideApiHost(WebApplication app) : IAsyncDisposable

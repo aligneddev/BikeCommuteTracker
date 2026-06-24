@@ -71,48 +71,8 @@ public sealed class DeleteRideHandler(
 
         var utcNow = DateTime.UtcNow;
 
-        // Check if ride was already deleted (idempotency)
-        var existingDeleteEvent = await dbContext
-            .OutboxEvents.Where(e =>
-                e.AggregateType == "Ride"
-                && e.AggregateId == rideId
-                && e.EventType == RideDeletedEventPayload.EventTypeName
-            )
-            .FirstOrDefaultAsync();
-
-        if (existingDeleteEvent is not null)
-        {
-            logger.LogInformation(
-                "Delete event already exists for ride {RideId}. Returning idempotent success.",
-                rideId
-            );
-            return DeleteRideResult.SuccessIdempotent(
-                rideId,
-                userId,
-                existingDeleteEvent.OccurredAtUtc
-            );
-        }
-
-        var eventPayload = RideDeletedEventPayload.Create(
-            riderId: userId,
-            rideId: ride.Id,
-            deletedAtUtc: utcNow
-        );
-
-        dbContext.OutboxEvents.Add(
-            new OutboxEventEntity
-            {
-                AggregateType = "Ride",
-                AggregateId = ride.Id,
-                EventType = RideDeletedEventPayload.EventTypeName,
-                EventPayloadJson = JsonSerializer.Serialize(eventPayload),
-                OccurredAtUtc = utcNow,
-                RetryCount = 0,
-                NextAttemptUtc = utcNow,
-                PublishedAtUtc = null,
-                LastError = null,
-            }
-        );
+        // Remove from current read model so history and totals update immediately.
+        dbContext.Rides.Remove(ride);
 
         try
         {
@@ -120,7 +80,7 @@ public sealed class DeleteRideHandler(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to save delete event for ride {RideId}", rideId);
+            logger.LogError(ex, "Failed to delete ride {RideId}", rideId);
             throw;
         }
 

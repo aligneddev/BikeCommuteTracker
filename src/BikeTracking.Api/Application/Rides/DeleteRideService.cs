@@ -46,29 +46,6 @@ public sealed class DeleteRideService(
 
     public async Task<DeleteRideResult> ExecuteAsync(long riderId, long rideId)
     {
-        // Check if ride was already deleted (idempotency) before querying live rides.
-        // This allows repeat requests to succeed even after the row is removed.
-        var existingDeleteEvent = await dbContext
-            .OutboxEvents.Where(e =>
-                e.AggregateType == "Ride"
-                && e.AggregateId == rideId
-                && e.EventType == RideDeletedEventPayload.EventTypeName
-            )
-            .FirstOrDefaultAsync();
-
-        if (existingDeleteEvent is not null)
-        {
-            logger.LogInformation(
-                "Delete event already exists for ride {RideId}. Returning idempotent success.",
-                rideId
-            );
-            var idempotentResponse = new DeleteRideResponse(
-                RideId: rideId,
-                DeletedAtUtc: existingDeleteEvent.OccurredAtUtc,
-                IsIdempotent: true
-            );
-            return DeleteRideResult.SuccessIdempotent(idempotentResponse);
-        }
 
         var ride = await dbContext.Rides.Where(r => r.Id == rideId).SingleOrDefaultAsync();
 
@@ -93,20 +70,6 @@ public sealed class DeleteRideService(
             deletedAtUtc: utcNow
         );
 
-        dbContext.OutboxEvents.Add(
-            new OutboxEventEntity
-            {
-                AggregateType = "Ride",
-                AggregateId = ride.Id,
-                EventType = RideDeletedEventPayload.EventTypeName,
-                EventPayloadJson = JsonSerializer.Serialize(eventPayload),
-                OccurredAtUtc = utcNow,
-                RetryCount = 0,
-                NextAttemptUtc = utcNow,
-                PublishedAtUtc = null,
-                LastError = null,
-            }
-        );
 
         // Remove from current read model so history and totals update immediately.
         dbContext.Rides.Remove(ride);

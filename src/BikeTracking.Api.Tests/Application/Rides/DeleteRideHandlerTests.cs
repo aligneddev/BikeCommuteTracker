@@ -140,10 +140,10 @@ public class DeleteRideHandlerTests
         // Act - try to delete again
         var secondResult = await handler.DeleteRideAsync(userId, rideId);
 
-        // Assert - should succeed (idempotent)
+        // Assert - should return not found now that CRUD deletes are canonical
         Assert.NotNull(secondResult);
-        Assert.True(secondResult.IsSuccess);
-        Assert.True(secondResult.IsIdempotent);
+        Assert.False(secondResult.IsSuccess);
+        Assert.Equal("RIDE_NOT_FOUND", secondResult.ErrorCode);
     }
 
     [Fact]
@@ -172,10 +172,8 @@ public class DeleteRideHandlerTests
 
         // Assert
         Assert.True(result.IsSuccess);
-        // Verify outbox entry was created
-        var outboxEntries = await dbContext
-            .OutboxEvents.Where(x => x.EventType == "RideDeleted" && x.AggregateId == rideId)
-            .ToListAsync();
-        Assert.NotEmpty(outboxEntries);
+        // Verify ride removed from read model
+        var removed = await dbContext.Rides.FindAsync((int)rideId);
+        Assert.Null(removed);
     }
 }
