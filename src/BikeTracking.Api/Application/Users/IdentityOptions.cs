@@ -5,7 +5,6 @@ public sealed class IdentityOptions
     public PinPolicyOptions PinPolicy { get; set; } = new();
     public HashingOptions Hashing { get; set; } = new();
     public ThrottleOptions Throttle { get; set; } = new();
-    public OutboxOptions Outbox { get; set; } = new();
 }
 
 public sealed class PinPolicyOptions
@@ -30,11 +29,3 @@ public sealed class ThrottleOptions
     public int MaxSeconds { get; set; } = 30;
 }
 
-public sealed class OutboxOptions
-{
-    public int PollIntervalSeconds { get; set; } = 10;
-    public int MaxBatchSize { get; set; } = 50;
-    public int InitialBackoffSeconds { get; set; } = 1;
-    public int MaxBackoffSeconds { get; set; } = 30;
-    public int FailFirstPublishAttempts { get; set; } = 0;
-}
