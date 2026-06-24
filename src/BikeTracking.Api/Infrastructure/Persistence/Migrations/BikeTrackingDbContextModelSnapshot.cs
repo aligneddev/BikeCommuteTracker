@@ -736,56 +736,6 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("WeatherLookups", (string)null);
                 });
 
-            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.OutboxEventEntity", b =>
-                {
-                    b.Property<long>("OutboxEventId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("AggregateId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("AggregateType")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EventPayloadJson")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastError")
-                        .HasMaxLength(2048)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("NextAttemptUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("OccurredAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("PublishedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("RetryCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(0);
-
-                    b.HasKey("OutboxEventId");
-
-                    b.HasIndex("AggregateType", "AggregateId");
-
-                    b.HasIndex("PublishedAtUtc", "NextAttemptUtc");
-
-                    b.ToTable("OutboxEvents", (string)null);
-                });
-
             modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.UserCredentialEntity", b =>
                 {
                     b.Property<long>("UserCredentialId")

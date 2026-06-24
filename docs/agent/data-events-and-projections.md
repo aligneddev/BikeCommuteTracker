@@ -1,13 +1,12 @@
 # Data Events And Projections
 
 ## Scope
-Event sourcing, CQRS, persistence, and migration-test coupling rules.
+Data events, projections, persistence, and migration-test coupling rules. Event sourcing no longer mandated; default write model = transactional relational with audit logs.
 
 ## Required
-- Persist domain actions as immutable append-only events.
-- Separate write behavior (commands/events) from read behavior (projections).
-- Keep event and API contracts explicit and versioned.
-- Maintain projection builders independently from command handlers.
+- Default: persist domain writes transactionally in relational tables; maintain explicit audit logs for traceability.
+- Read-side projections allowed for performance or UX; keep projections independent and tested.
+- If event-driven model used, ensure immutable event contracts and versioning.
 - For each migration, add or update automated tests that cover the change.
 - Prevent schema and contract drift through compatibility checks.
 

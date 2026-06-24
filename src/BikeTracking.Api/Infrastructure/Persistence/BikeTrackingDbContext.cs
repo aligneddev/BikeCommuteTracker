@@ -9,7 +9,6 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<UserCredentialEntity> UserCredentials => Set<UserCredentialEntity>();
     public DbSet<AuthAttemptStateEntity> AuthAttemptStates => Set<AuthAttemptStateEntity>();
-    public DbSet<OutboxEventEntity> OutboxEvents => Set<OutboxEventEntity>();
     public DbSet<RideEntity> Rides => Set<RideEntity>();
     public DbSet<ExpenseEntity> Expenses => Set<ExpenseEntity>();
     public DbSet<ExpenseImportJobEntity> ExpenseImportJobs => Set<ExpenseImportJobEntity>();
@@ -69,23 +68,6 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.LastSuccessfulAuthUtc);
         });
 
-        modelBuilder.Entity<OutboxEventEntity>(static entity =>
-        {
-            entity.ToTable("OutboxEvents");
-            entity.HasKey(static x => x.OutboxEventId);
-            entity.Property(static x => x.AggregateType).IsRequired().HasMaxLength(64);
-            entity.Property(static x => x.AggregateId).IsRequired();
-            entity.Property(static x => x.EventType).IsRequired().HasMaxLength(128);
-            entity.Property(static x => x.EventPayloadJson).IsRequired();
-            entity.Property(static x => x.OccurredAtUtc).IsRequired();
-            entity.Property(static x => x.RetryCount).HasDefaultValue(0);
-            entity.Property(static x => x.NextAttemptUtc).IsRequired();
-            entity.Property(static x => x.PublishedAtUtc);
-            entity.Property(static x => x.LastError).HasMaxLength(2048);
-
-            entity.HasIndex(static x => new { x.PublishedAtUtc, x.NextAttemptUtc });
-            entity.HasIndex(static x => new { x.AggregateType, x.AggregateId });
-        });
 
         modelBuilder.Entity<RideEntity>(static entity =>
         {
@@ -569,16 +551,3 @@ public sealed class AuthAttemptStateEntity
     public UserEntity User { get; set; } = null!;
 }
 
-public sealed class OutboxEventEntity
-{
-    public long OutboxEventId { get; set; }
-    public required string AggregateType { get; set; }
-    public long AggregateId { get; set; }
-    public required string EventType { get; set; }
-    public required string EventPayloadJson { get; set; }
-    public DateTime OccurredAtUtc { get; set; }
-    public int RetryCount { get; set; }
-    public DateTime NextAttemptUtc { get; set; }
-    public DateTime? PublishedAtUtc { get; set; }
-    public string? LastError { get; set; }
-}

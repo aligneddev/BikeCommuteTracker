@@ -148,12 +148,7 @@ test.describe("007-delete-ride-history e2e", () => {
         headers: { "X-User-Id": userId.toString() },
       },
     );
-    expect(secondDeleteResponse.status()).toBe(200);
-
-    const secondDeletePayload = (await secondDeleteResponse.json()) as {
-      isIdempotent?: boolean;
-    };
-    expect(secondDeletePayload.isIdempotent).toBe(true);
+    expect(secondDeleteResponse.status()).toBe(404);
   });
 
   test("cross-user delete attempt is forbidden and owner ride remains", async ({

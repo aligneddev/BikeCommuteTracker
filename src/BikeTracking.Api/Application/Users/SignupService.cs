@@ -81,25 +81,6 @@ public sealed class SignupService(
                 }
             );
 
-            var eventPayload = UserRegisteredEventPayload.Create(
-                user.UserId,
-                user.DisplayName,
-                utcNow
-            );
-            dbContext.OutboxEvents.Add(
-                new OutboxEventEntity
-                {
-                    AggregateType = "User",
-                    AggregateId = user.UserId,
-                    EventType = UserRegisteredEventPayload.EventTypeName,
-                    EventPayloadJson = JsonSerializer.Serialize(eventPayload),
-                    OccurredAtUtc = utcNow,
-                    RetryCount = 0,
-                    NextAttemptUtc = utcNow,
-                    PublishedAtUtc = null,
-                    LastError = null,
-                }
-            );
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -108,7 +89,7 @@ public sealed class SignupService(
                 user.UserId,
                 user.DisplayName,
                 user.CreatedAtUtc,
-                "queued"
+                "created"
             );
 
             return SignupResult.Success(response);

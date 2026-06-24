@@ -751,10 +751,17 @@ public sealed class RidesEndpointsTests
         Assert.Equal(3.4444m, ride.GasPricePerGallon);
     }
 
-    private sealed class RecordRideApiHost(WebApplication app) : IAsyncDisposable
+    private sealed class RecordRideApiHost : IAsyncDisposable
     {
-        public WebApplication App { get; } = app;
-        public HttpClient Client { get; } = app.GetTestClient();
+        private readonly WebApplication app;
+        public WebApplication App => app;
+        public HttpClient Client { get; }
+
+        public RecordRideApiHost(WebApplication app)
+        {
+            this.app = app;
+            Client = app.GetTestClient();
+        }
 
         public static async Task<RecordRideApiHost> StartAsync()
         {

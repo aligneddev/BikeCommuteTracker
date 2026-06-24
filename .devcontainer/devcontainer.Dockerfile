@@ -18,6 +18,8 @@ RUN curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/s
   && apt-get install -y --no-install-recommends podman nodejs \
   && rm -rf /var/lib/apt/lists/* \
   && npm --version \
+  # Install skills before hardening gates package publish age.
+  && npm install -g skills@latest \
   # Security hardening: delay installing very new publishes and block lifecycle scripts by default.
   && npm config set --global min-release-age 1440 \
   && npm config set --global ignore-scripts true

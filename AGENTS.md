@@ -19,3 +19,17 @@ Bike Tracking is a local-first commuter app that records rides and computes savi
 - [Runtime And Observability](docs/agent/runtime-and-observability.md)
 - [Stack And Environment](docs/agent/stack-and-environment.md)
 - [Flagged For Deletion](docs/agent/flagged-for-deletion.md)
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`aligneddev/BikeCommuteTracker`); external PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

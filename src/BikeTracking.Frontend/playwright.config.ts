@@ -36,7 +36,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `rm -f "${e2eDbPath}" && dotnet run --no-launch-profile --project ../BikeTracking.Api`,
+      command: `node -e "const fs=require('fs');const p='${e2eDbPath}';try{fs.unlinkSync(p)}catch(e){};const cp=require('child_process');cp.spawn('dotnet',['run','--no-launch-profile','--project','../BikeTracking.Api'],{stdio:'inherit'});"`,
+
       url: `${e2eApiUrl}/`,
       reuseExistingServer: false,
       stdout: "pipe",
@@ -55,13 +56,15 @@ export default defineConfig({
       },
     },
     {
-      command: `VITE_API_BASE_URL=${e2eApiUrl} npm run dev -- --host localhost --port 9000`,
+      command: `npm run dev -- --host localhost --port 9000`,
       url: "http://localhost:9000/login",
       reuseExistingServer: false,
       stdout: "pipe",
       stderr: "pipe",
       timeout: 120000,
+      env: { VITE_API_BASE_URL: e2eApiUrl },
     },
+
   ],
   projects: [
     {

@@ -362,3 +362,17 @@ https://github.com/github/spec-kit/blob/main/docs/upgrade.md
 
 Force .specify/ instructions files update
 `specify init --here --force --integration copilot`
+
+
+
+## Using Matt Pocock's AI Hero Skills 
+I'm using Matt Pocock's skills to compare to the speckit approach and augment.
+
+first time setup:
+`npm list -g skills`
+`npx skills@latest add mattpocock/skills`
+
+### Update
+`npx skills@latest update`
+
+It interacts with skills-lock.json

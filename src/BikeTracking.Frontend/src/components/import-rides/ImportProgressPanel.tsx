@@ -31,8 +31,14 @@ export function ImportProgressPanel({
   const [etaTotalSeconds, setEtaTotalSeconds] = useState<number | null>(etaSeconds)
 
   useEffect(() => {
-    setDisplayedEtaSeconds(etaSeconds)
-    setEtaTotalSeconds(etaSeconds)
+    const timeoutId = window.setTimeout(() => {
+      setDisplayedEtaSeconds(etaSeconds)
+      setEtaTotalSeconds(etaSeconds)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
   }, [etaSeconds])
 
   useEffect(() => {

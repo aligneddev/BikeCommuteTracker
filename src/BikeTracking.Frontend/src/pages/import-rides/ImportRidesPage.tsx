@@ -63,6 +63,7 @@ export function ImportRidesPage() {
     preview?.rows.filter((row) => row.duplicateMatches.length > 0) ?? []
   const hasStartedImport = isStarting || status !== null
   const isImportCompleted = status?.status === 'completed'
+  const hasRealtimeConnection = status?.status === 'processing' && isRealtimeConnected
 
   useEffect(() => {
     const importJobId = readActiveImportJobId()
@@ -74,7 +75,7 @@ export function ImportRidesPage() {
   }, [])
 
   useEffect(() => {
-    if (status?.status !== 'processing' || isRealtimeConnected) {
+    if (status?.status !== 'processing' || hasRealtimeConnection) {
       return
     }
 
@@ -85,11 +86,10 @@ export function ImportRidesPage() {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [isRealtimeConnected, status?.importJobId, status?.status])
+  }, [hasRealtimeConnection, status?.importJobId, status?.status])
 
   useEffect(() => {
     if (status?.status !== 'processing') {
-      setIsRealtimeConnected(false)
       return
     }
 

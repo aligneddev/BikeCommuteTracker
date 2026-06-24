@@ -173,19 +173,6 @@ export function RecordRidePage() {
   }, [rideDateTimeLocal])
 
   useEffect(() => {
-    if (!primaryTravelDirection) return
-    const suggestion = suggestDifficulty(
-      windSpeedMph ? parseFloat(windSpeedMph) : undefined,
-      primaryTravelDirection,
-      windDirectionDeg ? parseInt(windDirectionDeg) : undefined
-    )
-    if (suggestion !== null) {
-      setDifficulty(suggestion.toString())
-      setDifficultyAutoSuggested(true)
-    }
-  }, [primaryTravelDirection, windSpeedMph, windDirectionDeg])
-
-  useEffect(() => {
     if (selectedPresetId === null) return
 
     const handlePresetChange = async () => {
@@ -560,8 +547,22 @@ export function RecordRidePage() {
             id="primaryTravelDirection"
             value={primaryTravelDirection}
             onChange={(e) => {
-              setPrimaryTravelDirection(e.target.value as CompassDirection | '')
+              const nextDirection = e.target.value as CompassDirection | ''
+              setPrimaryTravelDirection(nextDirection)
               setDifficultyAutoSuggested(false)
+              if (!nextDirection) {
+                return
+              }
+
+              const suggestion = suggestDifficulty(
+                windSpeedMph ? parseFloat(windSpeedMph) : undefined,
+                nextDirection,
+                windDirectionDeg ? parseInt(windDirectionDeg) : undefined
+              )
+              if (suggestion !== null) {
+                setDifficulty(suggestion.toString())
+                setDifficultyAutoSuggested(true)
+              }
             }}
           >
             <option value="">-- Select direction --</option>

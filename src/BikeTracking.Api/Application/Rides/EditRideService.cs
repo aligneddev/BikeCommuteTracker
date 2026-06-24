@@ -222,20 +222,6 @@ public sealed class EditRideService(
             windResistanceRating: newWindResistanceRating
         );
 
-        dbContext.OutboxEvents.Add(
-            new OutboxEventEntity
-            {
-                AggregateType = "Ride",
-                AggregateId = ride.Id,
-                EventType = RideEditedEventPayload.EventTypeName,
-                EventPayloadJson = JsonSerializer.Serialize(eventPayload),
-                OccurredAtUtc = utcNow,
-                RetryCount = 0,
-                NextAttemptUtc = utcNow,
-                PublishedAtUtc = null,
-                LastError = null,
-            }
-        );
 
         try
         {

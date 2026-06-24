@@ -96,9 +96,6 @@ builder.Services.AddHttpClient(
     }
 );
 
-builder.Services.AddSingleton<IOutboxStore, EfOutboxStore>();
-builder.Services.AddSingleton<IUserRegisteredPublisher, UserRegisteredPublisher>();
-builder.Services.AddHostedService<OutboxPublisherService>();
 
 builder.Services.AddHttpLogging(options =>
 {

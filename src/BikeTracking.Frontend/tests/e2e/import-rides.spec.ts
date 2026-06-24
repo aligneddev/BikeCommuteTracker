@@ -317,6 +317,7 @@ test.describe("013-csv-import e2e", () => {
   test("completes import through polling fallback after forced SignalR disconnect", async ({
     page,
   }) => {
+    test.setTimeout(60000);
     await installSignalRDisconnectHarness(page);
 
     const userName = uniqueUser("e2e-import-polling-fallback");

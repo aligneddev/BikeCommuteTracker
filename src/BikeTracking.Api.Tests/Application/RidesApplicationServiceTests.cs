@@ -504,7 +504,7 @@ public sealed class RidesApplicationServiceTests
     }
 
     [Fact]
-    public async Task EditRideService_WithValidRequest_UpdatesRideVersionAndQueuesOutboxEvent()
+    public async Task EditRideService_WithValidRequest_UpdatesRideVersion()
     {
         using var context = CreateDbContext();
         var user = new UserEntity
@@ -554,9 +554,6 @@ public sealed class RidesApplicationServiceTests
         Assert.Equal(66m, updatedRide.Temperature);
         Assert.Equal(2, updatedRide.Version);
 
-        var outboxEvents = await context.OutboxEvents.ToListAsync();
-        Assert.Single(outboxEvents);
-        Assert.Equal("RideEdited", outboxEvents[0].EventType);
     }
 
     [Fact]

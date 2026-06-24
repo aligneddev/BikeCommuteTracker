@@ -18,7 +18,17 @@ import { test, expect } from '@playwright/test'
 test.describe('ApiStartupGuard', () => {
   test('shows connecting indicator within 1 second of page load, then transitions to app', async ({
     page,
+    context,
   }) => {
+    let delayedHealthCheck = false
+    await context.route('**/health', async (route) => {
+      if (!delayedHealthCheck) {
+        delayedHealthCheck = true
+        await new Promise((resolve) => setTimeout(resolve, 1200))
+      }
+      await route.continue()
+    })
+
     // Navigate to the app root
     await page.goto('/')
 
