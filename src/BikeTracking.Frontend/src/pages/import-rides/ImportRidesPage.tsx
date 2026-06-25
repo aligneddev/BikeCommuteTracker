@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   cancelImport,
+  downloadSampleCsv,
   getImportStatus,
   type ImportDuplicateResolution,
   previewImportCsv,
@@ -401,9 +402,13 @@ export function ImportRidesPage() {
           processing.
         </p>
         <p className="import-rides-description">
-          <a href="/api/rides/csv-sample" download="ride-import-sample.csv">
+          <button
+            type="button"
+            className="import-rides-sample-download"
+            onClick={() => void downloadSampleCsv()}
+          >
             Download sample CSV
-          </a>
+          </button>
         </p>
 
         <form onSubmit={onPreview}>

@@ -197,3 +197,21 @@ export function cancelImport(
     {},
   );
 }
+
+export async function downloadSampleCsv(): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/api/rides/csv-sample`, {
+    headers: getAuthHeaders(false),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to download sample CSV: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "ride-import-sample.csv";
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

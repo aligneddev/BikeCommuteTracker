@@ -22,6 +22,7 @@ vi.mock('../../services/import-api', () => ({
   startImportCsv: vi.fn(),
   getImportStatus: vi.fn(),
   cancelImport: vi.fn(),
+  downloadSampleCsv: vi.fn(),
 }))
 
 vi.mock('../../services/import-progress-realtime', () => ({
@@ -37,6 +38,7 @@ const mockPreviewImportCsv = vi.mocked(importApi.previewImportCsv)
 const mockStartImportCsv = vi.mocked(importApi.startImportCsv)
 const mockGetImportStatus = vi.mocked(importApi.getImportStatus)
 const mockCancelImport = vi.mocked(importApi.cancelImport)
+const mockDownloadSampleCsv = vi.mocked(importApi.downloadSampleCsv)
 const mockSubscribeToImportProgress = vi.mocked(realtimeApi.subscribeToImportProgress)
 
 describe('ImportRidesPage', () => {
@@ -913,5 +915,21 @@ describe('ImportRidesPage', () => {
       expect(screen.getByText(/status: cancelled/i)).toBeInTheDocument()
       expect(screen.getByText(/imported: 4/i)).toBeInTheDocument()
     })
+  })
+
+  it('calls downloadSampleCsv when Download sample CSV button is clicked', async () => {
+    const user = userEvent.setup()
+    mockDownloadSampleCsv.mockResolvedValue(undefined)
+
+    render(
+      <BrowserRouter>
+        <ImportRidesPage />
+      </BrowserRouter>,
+    )
+
+    const downloadButton = screen.getByRole('button', { name: /download sample csv/i })
+    await user.click(downloadButton)
+
+    expect(mockDownloadSampleCsv).toHaveBeenCalledOnce()
   })
 })
