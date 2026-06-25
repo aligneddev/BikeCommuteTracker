@@ -553,7 +553,6 @@ public sealed class RidesApplicationServiceTests
         Assert.Equal(48, updatedRide.RideMinutes);
         Assert.Equal(66m, updatedRide.Temperature);
         Assert.Equal(2, updatedRide.Version);
-
     }
 
     [Fact]

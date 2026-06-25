@@ -349,7 +349,11 @@ public static class RidesEndpoints
 
         try
         {
-            var price = await gasPriceLookupService.GetOrFetchAsync(parsedDate, userSettings?.EiaGasApiKey, cancellationToken);
+            var price = await gasPriceLookupService.GetOrFetchAsync(
+                parsedDate,
+                userSettings?.EiaGasApiKey,
+                cancellationToken
+            );
             return Results.Ok(
                 new GasPriceResponse(
                     Date: parsedDate.ToString("yyyy-MM-dd"),

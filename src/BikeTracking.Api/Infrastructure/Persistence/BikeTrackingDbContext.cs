@@ -15,6 +15,8 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
     public DbSet<ExpenseImportRowEntity> ExpenseImportRows => Set<ExpenseImportRowEntity>();
     public DbSet<ImportJobEntity> ImportJobs => Set<ImportJobEntity>();
     public DbSet<ImportRowEntity> ImportRows => Set<ImportRowEntity>();
+    public DbSet<MonthlySummaryAuditLogEntity> MonthlySummaryAuditLogs =>
+        Set<MonthlySummaryAuditLogEntity>();
     public DbSet<GasPriceLookupEntity> GasPriceLookups => Set<GasPriceLookupEntity>();
     public DbSet<WeatherLookupEntity> WeatherLookups => Set<WeatherLookupEntity>();
     public DbSet<UserSettingsEntity> UserSettings => Set<UserSettingsEntity>();
@@ -67,7 +69,6 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.DelayUntilUtc);
             entity.Property(static x => x.LastSuccessfulAuthUtc);
         });
-
 
         modelBuilder.Entity<RideEntity>(static entity =>
         {
@@ -125,6 +126,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.PrecipitationType).HasMaxLength(50);
             entity.Property(static x => x.Notes).HasMaxLength(500);
             entity.Property(static x => x.PrimaryTravelDirection).HasMaxLength(5);
+            entity.Property(static x => x.ImportSource).HasMaxLength(64);
             entity.Property(static x => x.WeatherUserOverridden).HasDefaultValue(false);
             entity
                 .Property(static x => x.Version)
@@ -281,6 +283,11 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.HasKey(static x => x.Id);
             entity.Property(static x => x.RiderId).IsRequired();
             entity.Property(static x => x.FileName).IsRequired().HasMaxLength(255);
+            entity
+                .Property(static x => x.ImportType)
+                .IsRequired()
+                .HasMaxLength(32)
+                .HasDefaultValue("csv");
             entity.Property(static x => x.TotalRows).HasDefaultValue(0);
             entity.Property(static x => x.ProcessedRows).HasDefaultValue(0);
             entity.Property(static x => x.ImportedRows).HasDefaultValue(0);
@@ -333,6 +340,7 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
             entity.Property(static x => x.Temperature).HasPrecision(10, 4);
             entity.Property(static x => x.TagsRaw).HasMaxLength(512);
             entity.Property(static x => x.Notes).HasMaxLength(2000);
+            entity.Property(static x => x.ImportSource).HasMaxLength(64);
             entity.Property(static x => x.ValidationStatus).IsRequired().HasMaxLength(30);
             entity.Property(static x => x.ValidationErrorsJson);
             entity.Property(static x => x.DuplicateStatus).IsRequired().HasMaxLength(30);
@@ -364,6 +372,25 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
 
             entity.HasIndex(static x => x.PriceDate).IsUnique();
             entity.HasIndex(static x => x.WeekStartDate).IsUnique();
+        });
+
+        modelBuilder.Entity<MonthlySummaryAuditLogEntity>(static entity =>
+        {
+            entity.ToTable("MonthlySummaryAuditLogs");
+            entity.HasKey(static x => x.Id);
+            entity.Property(static x => x.RiderId).IsRequired();
+            entity.Property(static x => x.ImportJobId).IsRequired();
+            entity.Property(static x => x.TimestampUtc).IsRequired();
+            entity.Property(static x => x.StartYear).IsRequired();
+            entity.Property(static x => x.EndYear).IsRequired();
+            entity.Property(static x => x.MonthsParsed).IsRequired();
+            entity.Property(static x => x.RidesCreated).IsRequired();
+            entity.Property(static x => x.RidesReplaced).IsRequired();
+            entity.Property(static x => x.RidesSkipped).IsRequired();
+            entity.Property(static x => x.RowsRejected).IsRequired();
+            entity.Property(static x => x.ValidationErrorsSummaryJson);
+
+            entity.HasIndex(static x => x.ImportJobId).IsUnique();
         });
 
         modelBuilder.Entity<WeatherLookupEntity>(static entity =>
@@ -550,4 +577,3 @@ public sealed class AuthAttemptStateEntity
 
     public UserEntity User { get; set; } = null!;
 }
-

@@ -37,7 +37,9 @@ public sealed record RecordRideRequest(
     )]
         string? PrimaryTravelDirection = null,
     [property: Range(1, long.MaxValue, ErrorMessage = "Selected preset id must be greater than 0")]
-        long? SelectedPresetId = null
+        long? SelectedPresetId = null,
+    [property: MaxLength(64, ErrorMessage = "Import source must be 64 characters or fewer")]
+        string? ImportSource = null
 );
 
 public sealed record RecordRideSuccessResponse(

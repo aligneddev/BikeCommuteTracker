@@ -5,6 +5,7 @@ public sealed class ImportJobEntity
     public long Id { get; set; }
     public long RiderId { get; set; }
     public required string FileName { get; set; }
+    public string ImportType { get; set; } = "csv";
     public int TotalRows { get; set; }
     public int ProcessedRows { get; set; }
     public int ImportedRows { get; set; }

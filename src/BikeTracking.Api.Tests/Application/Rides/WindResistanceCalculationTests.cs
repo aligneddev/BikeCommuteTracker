@@ -188,7 +188,10 @@ public sealed class WindResistanceCalculationTests
     [InlineData(2, 4)]
     [InlineData(3, 5)]
     [InlineData(4, 5)]
-    public void ResistanceToDifficulty_AllRatings_MapsCorrectly(int resistance, int expectedDifficulty)
+    public void ResistanceToDifficulty_AllRatings_MapsCorrectly(
+        int resistance,
+        int expectedDifficulty
+    )
     {
         var difficulty = resistanceToDifficulty(resistance);
 

@@ -64,6 +64,7 @@ builder.Services.AddScoped<ExpenseDuplicateDetector>();
 builder.Services.AddScoped<CsvExpenseImportService>();
 builder.Services.AddScoped<IReceiptStorage, FileSystemReceiptStorage>();
 builder.Services.AddScoped<ICsvRideImportService, CsvRideImportService>();
+builder.Services.AddScoped<IMonthlySummaryImportService, MonthlySummaryImportService>();
 builder.Services.AddScoped<IDuplicateResolutionService, DuplicateResolutionService>();
 builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
 builder.Services.AddScoped<IImportJobRepository, EfImportJobRepository>();
@@ -95,7 +96,6 @@ builder.Services.AddHttpClient(
         client.Timeout = TimeSpan.FromSeconds(5);
     }
 );
-
 
 builder.Services.AddHttpLogging(options =>
 {
@@ -167,6 +167,7 @@ app.MapRidesEndpoints();
 app.MapExpensesEndpoints();
 app.MapExpenseImportEndpoints();
 app.MapImportEndpoints();
+app.MapMonthlyImportEndpoints();
 app.MapHub<ImportProgressHub>("/hubs/import-progress").RequireAuthorization();
 app.MapDefaultEndpoints();
 

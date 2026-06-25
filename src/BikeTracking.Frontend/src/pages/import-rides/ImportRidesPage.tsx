@@ -410,6 +410,9 @@ export function ImportRidesPage() {
             Download sample CSV
           </button>
         </p>
+        <p className="import-rides-description">
+          <Link to="/import/monthly">Monthly Summary Import</Link>
+        </p>
 
         <form onSubmit={onPreview}>
           <label className="import-rides-file-label" htmlFor="csv-upload-input">

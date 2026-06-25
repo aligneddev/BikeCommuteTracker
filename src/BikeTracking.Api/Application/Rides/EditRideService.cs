@@ -222,7 +222,6 @@ public sealed class EditRideService(
             windResistanceRating: newWindResistanceRating
         );
 
-
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);

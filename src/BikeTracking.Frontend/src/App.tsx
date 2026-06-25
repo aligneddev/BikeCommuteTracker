@@ -10,6 +10,7 @@ import { RecordRidePage } from './pages/RecordRidePage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
 import { ImportRidesPage } from './pages/import-rides/ImportRidesPage'
+import { MonthlyImportPage } from './pages/monthly-import/MonthlyImportPage'
 import { ExpenseEntryPage } from './pages/expenses/ExpenseEntryPage'
 import { ExpenseImportPage } from './pages/expenses/ExpenseImportPage'
 import { ExpenseHistoryPage } from './pages/expenses/ExpenseHistoryPage'
@@ -74,6 +75,7 @@ function App() {
               <Route path="/rides/history" element={<HistoryPage />} />
               <Route path="/rides/record" element={<RecordRidePage />} />
               <Route path="/rides/import" element={<ImportRidesPage />} />
+              <Route path="/import/monthly" element={<MonthlyImportPage />} />
               <Route path="/expenses/entry" element={<ExpenseEntryPage />} />
               <Route path="/expenses/import" element={<ExpenseImportPage />} />
               <Route path="/expenses/history" element={<ExpenseHistoryPage />} />

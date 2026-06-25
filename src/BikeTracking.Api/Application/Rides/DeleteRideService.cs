@@ -46,7 +46,6 @@ public sealed class DeleteRideService(
 
     public async Task<DeleteRideResult> ExecuteAsync(long riderId, long rideId)
     {
-
         var ride = await dbContext.Rides.Where(r => r.Id == rideId).SingleOrDefaultAsync();
 
         if (ride is null)
@@ -69,7 +68,6 @@ public sealed class DeleteRideService(
             rideId: ride.Id,
             deletedAtUtc: utcNow
         );
-
 
         // Remove from current read model so history and totals update immediately.
         dbContext.Rides.Remove(ride);

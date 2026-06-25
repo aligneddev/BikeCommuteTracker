@@ -51,6 +51,8 @@ public sealed class RideEntity
     /// </summary>
     public string? PrimaryTravelDirection { get; set; }
 
+    public string? ImportSource { get; set; }
+
     /// <summary>
     /// Computed wind resistance rating (−4 strong tailwind … +4 strong headwind).
     /// Calculated from WindSpeedMph × cos(angle) / 5, clamped and rounded to integer.

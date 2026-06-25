@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BikeTracking.Api.Application.Notifications;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Contracts;
@@ -139,6 +140,44 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
                 job.Status = "completed";
                 job.CompletedAtUtc = DateTime.UtcNow;
                 job.EtaMinutesRounded = 0;
+                if (job.ImportType == "monthly-summary" && dbContext is not null)
+                {
+                    var allRows = await repository.GetJobRowsAsync(job.Id, cancellationToken);
+                    dbContext.MonthlySummaryAuditLogs.Add(
+                        new MonthlySummaryAuditLogEntity
+                        {
+                            RiderId = riderId,
+                            ImportJobId = job.Id,
+                            TimestampUtc = DateTime.UtcNow,
+                            StartYear =
+                                allRows.Count == 0
+                                    ? DateTime.UtcNow.Year
+                                    : allRows.Min(row => row.RideDateLocal!.Value.Year),
+                            EndYear =
+                                allRows.Count == 0
+                                    ? DateTime.UtcNow.Year
+                                    : allRows.Max(row => row.RideDateLocal!.Value.Year),
+                            MonthsParsed = allRows
+                                .Select(row => row.RideDateLocal!.Value.Month)
+                                .Distinct()
+                                .Count(),
+                            RidesCreated =
+                                job.ImportedRows
+                                - allRows.Count(row => row.DuplicateResolution == "keep-existing"),
+                            RidesReplaced = allRows.Count(row =>
+                                row.DuplicateResolution == "replace-with-import"
+                            ),
+                            RidesSkipped = job.SkippedRows,
+                            RowsRejected = job.FailedRows,
+                            ValidationErrorsSummaryJson = JsonSerializer.Serialize(
+                                allRows
+                                    .Where(row => row.ValidationErrorsJson is not null)
+                                    .Select(row => new { row.RowNumber, row.ValidationErrorsJson })
+                                    .ToArray()
+                            ),
+                        }
+                    );
+                }
                 await repository.SaveChangesAsync(cancellationToken);
             }
 
@@ -218,7 +257,8 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
             Note: row.Notes,
             WeatherUserOverridden: csvTemperature.HasValue,
             Difficulty: row.Difficulty,
-            PrimaryTravelDirection: row.PrimaryTravelDirection
+            PrimaryTravelDirection: row.PrimaryTravelDirection,
+            ImportSource: row.ImportSource
         );
     }
 
@@ -330,7 +370,12 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
             var value = await RetryWithThrottleAsync(
                 throttle,
                 async ct =>
-                    await gasLookupService.GetOrFetchAsync(representativeDate, weekStart, eiaGasApiKey, ct),
+                    await gasLookupService.GetOrFetchAsync(
+                        representativeDate,
+                        weekStart,
+                        eiaGasApiKey,
+                        ct
+                    ),
                 cancellationToken
             );
             gasByWeek[weekStart] = value;
@@ -407,7 +452,13 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
             var weather = await RetryWithThrottleAsync(
                 throttle,
                 async ct =>
-                    await weatherLookupService.GetOrFetchAsync(latitude, longitude, noonUtc, userSettings?.WeatherApiKey, ct),
+                    await weatherLookupService.GetOrFetchAsync(
+                        latitude,
+                        longitude,
+                        noonUtc,
+                        userSettings?.WeatherApiKey,
+                        ct
+                    ),
                 cancellationToken
             );
             weatherByDate[date] = weather;

@@ -45,6 +45,7 @@ public sealed class CsvRideImportService(
             request.FileName,
             totalRows,
             invalidRows,
+            "csv",
             cancellationToken
         );
 
