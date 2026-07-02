@@ -11,7 +11,7 @@ public sealed record ParsedCsvRow(
     string? Tags,
     string? Notes,
     string? Difficulty = null,
-    string PrimaryTravelDirection = ""
+    string? PrimaryTravelDirection = null
 );
 
 public sealed record ParsedCsvDocument(IReadOnlyList<ParsedCsvRow> Rows);
@@ -71,6 +71,18 @@ public static class CsvParser
                 return string.IsNullOrWhiteSpace(value) ? null : value;
             }
 
+            // Direction column distinguishes "column absent" (null) from
+            // "column present but blank" (empty string) per FR contract.
+            string? GetDirectionValue(string header)
+            {
+                if (!columnIndex.TryGetValue(header, out var index))
+                {
+                    return null;
+                }
+
+                return index >= values.Length ? string.Empty : values[index].Trim();
+            }
+
             var date = GetValue("DATE");
             var miles = GetValue("MILES");
             var time = GetValue("TIME");
@@ -78,7 +90,7 @@ public static class CsvParser
             var tags = GetValue("TAGS");
             var notes = GetValue("NOTES");
             var difficulty = GetValue("DIFFICULTY");
-            var primaryTravelDirection = GetValue("PRIMARYTRAVELDIRECTION");
+            var primaryTravelDirection = GetDirectionValue("PRIMARYTRAVELDIRECTION");
 
             if (
                 date is null
@@ -93,7 +105,6 @@ public static class CsvParser
             {
                 continue;
             }
-            var p = primaryTravelDirection ?? string.Empty;
             rows.Add(
                 new ParsedCsvRow(
                     RowNumber: lineIndex,
@@ -104,7 +115,7 @@ public static class CsvParser
                     Tags: tags,
                     Notes: notes,
                     Difficulty: difficulty,
-                    PrimaryTravelDirection: p
+                    PrimaryTravelDirection: primaryTravelDirection
                 )
             );
         }
