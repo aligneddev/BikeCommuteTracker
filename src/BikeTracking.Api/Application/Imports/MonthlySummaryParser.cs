@@ -35,9 +35,12 @@ public static class MonthlySummaryParser
         ["DEC"] = 12,
     };
 
-    public static ParsedMonthlySummaryDocument Parse(string text)
+    public static ParsedMonthlySummaryDocument Parse(string? text)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return new ParsedMonthlySummaryDocument(false, []);
+        }
 
         var lines = text.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n')

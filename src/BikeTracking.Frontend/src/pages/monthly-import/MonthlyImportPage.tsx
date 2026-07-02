@@ -44,6 +44,7 @@ export function MonthlyImportPage() {
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false)
   const [duplicateResolutions, setDuplicateResolutions] = useState<ImportDuplicateResolution[]>([])
   const [overrideAllDuplicates, setOverrideAllDuplicates] = useState(false)
+  const [headerWarningAcknowledged, setHeaderWarningAcknowledged] = useState(false)
 
   const duplicateRows: ImportPreviewRow[] = useMemo(() => {
     return (
@@ -135,6 +136,7 @@ export function MonthlyImportPage() {
 
       if (response.ok && response.data) {
         setPreview(response.data)
+        setHeaderWarningAcknowledged(false)
         return
       }
 
@@ -232,9 +234,35 @@ export function MonthlyImportPage() {
               <p>Total generated rides: {preview.totalGeneratedRides}</p>
               <p>Duplicate rides: {preview.duplicateRides}</p>
             </div>
+            {preview.headerDetectionWarning && !headerWarningAcknowledged ? (
+              <div role="alert">
+                <p>
+                  Column mapping was detected automatically (Month, Miles, Days). Please confirm
+                  the columns are correct before importing.
+                </p>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={headerWarningAcknowledged}
+                    onChange={(event) => setHeaderWarningAcknowledged(event.target.checked)}
+                  />
+                  Confirm column mapping
+                </label>
+              </div>
+            ) : null}
+            {preview.invalidMonthRows > 0 ? (
+              <p role="alert">
+                {preview.invalidMonthRows} row(s) have validation errors. Fix the source data and
+                re-preview before confirming import.
+              </p>
+            ) : null}
             {!status || isTerminalStatus(status.status) ? (
               <button
                 type="button"
+                disabled={
+                  preview.invalidMonthRows > 0 ||
+                  (preview.headerDetectionWarning && !headerWarningAcknowledged)
+                }
                 onClick={() => {
                   if (preview.requiresDuplicateResolution && duplicateRows.length > 0) {
                     setIsDuplicateDialogOpen(true)

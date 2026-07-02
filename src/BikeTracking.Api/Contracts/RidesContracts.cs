@@ -194,7 +194,8 @@ public sealed record RideHistoryRow(
     bool WeatherUserOverridden = false,
     int? Difficulty = null,
     string? PrimaryTravelDirection = null,
-    int? WindResistanceRating = null
+    int? WindResistanceRating = null,
+    string? ImportSource = null
 );
 
 /// <summary>

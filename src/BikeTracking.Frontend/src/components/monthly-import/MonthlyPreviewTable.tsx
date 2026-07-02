@@ -10,11 +10,17 @@ export function MonthlyPreviewTable({ rows, headerDetectionWarning }: MonthlyPre
     return <p>No month rows found.</p>
   }
 
+  const validRowCount = rows.filter((row) => row.isValid).length
+  const invalidRowCount = rows.length - validRowCount
+
   return (
     <section>
       {headerDetectionWarning ? (
         <p role="alert">Column mapping was detected automatically. Please confirm the columns.</p>
       ) : null}
+      <p>
+        Valid rows: {validRowCount} / Invalid rows: {invalidRowCount}
+      </p>
       <table>
         <thead>
           <tr>
@@ -33,7 +39,21 @@ export function MonthlyPreviewTable({ rows, headerDetectionWarning }: MonthlyPre
               <td>{row.year ?? '—'}</td>
               <td>{row.totalMiles ?? '—'}</td>
               <td>{row.days ?? '—'}</td>
-              <td>{row.generatedRides.length}</td>
+              <td>
+                {row.generatedRides.length}
+                {row.generatedRides.length > 0 ? (
+                  <ul>
+                    {row.generatedRides.map((ride) => (
+                      <li key={ride.rideIndex}>
+                        {ride.date}: {ride.miles} mi
+                        {ride.isDuplicate ? (
+                          <span role="status"> (duplicate)</span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </td>
               <td>{row.errors.map((error) => error.message).join('; ')}</td>
             </tr>
           ))}
