@@ -18,14 +18,25 @@ public sealed class DifficultyAnalyticsTests
         decimal? windSpeedMph = null,
         string? travelDirection = null,
         int? windDirectionDeg = null
-    ) => new AdvancedDashboardCalculations.RideDifficultySnapshot(
-        RideDate: date ?? new DateTime(2026, 1, 15),
-        Difficulty: difficulty.HasValue ? FSharpOption<int>.Some(difficulty.Value) : FSharpOption<int>.None,
-        WindResistanceRating: windResistanceRating.HasValue ? FSharpOption<int>.Some(windResistanceRating.Value) : FSharpOption<int>.None,
-        WindSpeedMph: windSpeedMph.HasValue ? FSharpOption<decimal>.Some(windSpeedMph.Value) : FSharpOption<decimal>.None,
-        PrimaryTravelDirection: travelDirection != null ? FSharpOption<string>.Some(travelDirection) : FSharpOption<string>.None,
-        WindDirectionDeg: windDirectionDeg.HasValue ? FSharpOption<int>.Some(windDirectionDeg.Value) : FSharpOption<int>.None
-    );
+    ) =>
+        new AdvancedDashboardCalculations.RideDifficultySnapshot(
+            RideDate: date ?? new DateTime(2026, 1, 15),
+            Difficulty: difficulty.HasValue
+                ? FSharpOption<int>.Some(difficulty.Value)
+                : FSharpOption<int>.None,
+            WindResistanceRating: windResistanceRating.HasValue
+                ? FSharpOption<int>.Some(windResistanceRating.Value)
+                : FSharpOption<int>.None,
+            WindSpeedMph: windSpeedMph.HasValue
+                ? FSharpOption<decimal>.Some(windSpeedMph.Value)
+                : FSharpOption<decimal>.None,
+            PrimaryTravelDirection: travelDirection != null
+                ? FSharpOption<string>.Some(travelDirection)
+                : FSharpOption<string>.None,
+            WindDirectionDeg: windDirectionDeg.HasValue
+                ? FSharpOption<int>.Some(windDirectionDeg.Value)
+                : FSharpOption<int>.None
+        );
 
     private static FSharpList<AdvancedDashboardCalculations.RideDifficultySnapshot> ToFSharpList(
         params AdvancedDashboardCalculations.RideDifficultySnapshot[] snapshots
@@ -66,7 +77,11 @@ public sealed class DifficultyAnalyticsTests
     public void ResolveDifficulty_WithWindDataOnly_ComputesDifficulty()
     {
         // 20 mph headwind (travel North, wind from North = 0°) → resistance +4 → difficulty 5
-        var snapshot = MakeSnapshot(windSpeedMph: 20m, travelDirection: "North", windDirectionDeg: 0);
+        var snapshot = MakeSnapshot(
+            windSpeedMph: 20m,
+            travelDirection: "North",
+            windDirectionDeg: 0
+        );
         var result = AdvancedDashboardCalculations.resolveDifficulty(snapshot);
         Assert.True(OptionModule.IsSome(result));
         Assert.Equal(5, result.Value);
@@ -117,10 +132,7 @@ public sealed class DifficultyAnalyticsTests
     [Fact]
     public void CalculateOverallAverageDifficulty_ReturnsOneDecimalPlace()
     {
-        var snapshots = ToFSharpList(
-            MakeSnapshot(difficulty: 1),
-            MakeSnapshot(difficulty: 2)
-        );
+        var snapshots = ToFSharpList(MakeSnapshot(difficulty: 1), MakeSnapshot(difficulty: 2));
         var result = AdvancedDashboardCalculations.calculateOverallAverageDifficulty(snapshots);
         Assert.True(OptionModule.IsSome(result));
         Assert.Equal(1.5m, result.Value);
@@ -200,9 +212,11 @@ public sealed class DifficultyAnalyticsTests
     [Fact]
     public void CalculateWindResistanceDistribution_EmptyList_ReturnsAllNineBinsWithZeroCount()
     {
-        var result = AdvancedDashboardCalculations.calculateWindResistanceDistribution(
-            FSharpList<AdvancedDashboardCalculations.RideDifficultySnapshot>.Empty
-        ).ToList();
+        var result = AdvancedDashboardCalculations
+            .calculateWindResistanceDistribution(
+                FSharpList<AdvancedDashboardCalculations.RideDifficultySnapshot>.Empty
+            )
+            .ToList();
         Assert.Equal(9, result.Count);
         for (var rating = -4; rating <= 4; rating++)
         {
@@ -219,7 +233,9 @@ public sealed class DifficultyAnalyticsTests
             MakeSnapshot(windResistanceRating: 2),
             MakeSnapshot(windResistanceRating: -1)
         );
-        var result = AdvancedDashboardCalculations.calculateWindResistanceDistribution(snapshots).ToList();
+        var result = AdvancedDashboardCalculations
+            .calculateWindResistanceDistribution(snapshots)
+            .ToList();
         Assert.Equal(9, result.Count);
         Assert.Equal(2, result.First(b => b.Rating == 2).RideCount);
         Assert.Equal(1, result.First(b => b.Rating == -1).RideCount);

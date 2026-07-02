@@ -52,6 +52,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Updated test: user settings endpoint integration tests validate WeatherApiKey and EiaGasApiKey persistence and round-trip after schema migration.",
             ["20260624133427_DropOutboxEvents"] =
                 "Added test: migration removes OutboxEvents table; tests updated to reflect CRUD-only behavior (no outbox rows).",
+            ["20260625155629_AddMonthlySummaryImport"] =
+                "Added test: monthly summary import coverage validates ImportSource, ImportType, and MonthlySummaryAuditLogs schema after migration.",
         };
 
     [Fact]

@@ -28,4 +28,3 @@ public sealed class ThrottleOptions
     public int[] StepsSeconds { get; set; } = [1, 2, 3, 5, 8, 15, 30];
     public int MaxSeconds { get; set; } = 30;
 }
-

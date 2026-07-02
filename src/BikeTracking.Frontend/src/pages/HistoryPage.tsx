@@ -134,7 +134,15 @@ function HistoryTable({
                   />
                 </div>
               ) : (
-                formatRideDate(ride.rideDateTimeLocal)
+                <>
+                  {formatRideDate(ride.rideDateTimeLocal)}
+                  {ride.importSource ? (
+                    <span className="history-page-import-tag" data-testid="ride-import-tag">
+                      {' '}
+                      ({ride.importSource})
+                    </span>
+                  ) : null}
+                </>
               )}
             </td>
             <td>

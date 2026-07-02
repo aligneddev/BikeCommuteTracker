@@ -80,6 +80,34 @@ public sealed class CsvParserTests
     }
 
     [Fact]
+    public void Parse_WithQuotedNotesContainingCommas_KeepsNotesAsSingleField()
+    {
+        var csv =
+            "Date,Miles,Time,Temp,Notes,Difficulty,PrimaryTravelDirection\r\n"
+            + "2012-08-01,3.8,07:45,,\"W-1, min13.5, avg16.8\",-1,\r\n";
+
+        var result = CsvParser.Parse(csv);
+
+        var row = Assert.Single(result.Rows);
+        Assert.Equal("W-1, min13.5, avg16.8", row.Notes);
+        Assert.Equal("-1", row.Difficulty);
+        Assert.Equal("", row.PrimaryTravelDirection);
+    }
+
+    [Fact]
+    public void Parse_WithEscapedDoubleQuotesInQuotedField_UnescapesQuotes()
+    {
+        var csv =
+            "Date,Miles,Time,Temp,Tags,Notes\r\n"
+            + "2026-04-01,12.5,45,60,commute,\"He said \"\"hello, there\"\" to me\"\r\n";
+
+        var result = CsvParser.Parse(csv);
+
+        var row = Assert.Single(result.Rows);
+        Assert.Equal("He said \"hello, there\" to me", row.Notes);
+    }
+
+    [Fact]
     public void ValidateRow_WithValidFields_ReturnsNoErrors()
     {
         var row = new ParsedCsvRow(1, "2026-04-01", "12.5", "1:30", "62", "commute", "note");

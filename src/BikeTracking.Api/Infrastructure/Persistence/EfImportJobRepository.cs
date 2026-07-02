@@ -11,6 +11,7 @@ public sealed class EfImportJobRepository(BikeTrackingDbContext dbContext) : IIm
         string fileName,
         int totalRows,
         int invalidRows,
+        string importType,
         CancellationToken cancellationToken
     )
     {
@@ -18,6 +19,7 @@ public sealed class EfImportJobRepository(BikeTrackingDbContext dbContext) : IIm
         {
             RiderId = riderId,
             FileName = fileName,
+            ImportType = importType,
             Status = "awaiting-confirmation",
             TotalRows = totalRows,
             ProcessedRows = 0,

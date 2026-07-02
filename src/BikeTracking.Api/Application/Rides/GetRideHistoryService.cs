@@ -127,7 +127,8 @@ public sealed class GetRideHistoryService(BikeTrackingDbContext dbContext)
                 WeatherUserOverridden: r.WeatherUserOverridden,
                 Difficulty: r.Difficulty,
                 PrimaryTravelDirection: r.PrimaryTravelDirection,
-                WindResistanceRating: r.WindResistanceRating
+                WindResistanceRating: r.WindResistanceRating,
+                ImportSource: r.ImportSource
             ))
             .ToList();
 

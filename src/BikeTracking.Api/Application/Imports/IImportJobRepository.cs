@@ -9,6 +9,7 @@ public interface IImportJobRepository
         string fileName,
         int totalRows,
         int invalidRows,
+        string importType,
         CancellationToken cancellationToken
     );
 

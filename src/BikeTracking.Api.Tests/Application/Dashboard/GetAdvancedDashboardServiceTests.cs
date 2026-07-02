@@ -374,13 +374,24 @@ public sealed class GetAdvancedDashboardServiceTests
 
         var now = DateTime.Now;
         var monthStart = new DateTime(now.Year, now.Month, 1);
+        var monthEnd = monthStart.AddMonths(1);
+        var weekStart = now.Date.AddDays(-(((int)now.DayOfWeek - 1 + 7) % 7));
+        var weekEnd = weekStart.AddDays(7);
 
-        // Expense in current month
+        // Expense in current month, but deliberately outside the current week
+        // window (the service treats the week as Mon–Sun local time), so the
+        // test's window differentiation holds regardless of what day "now" is.
+        var monthOnlyExpenseDate = monthStart.AddDays(1);
+        if (monthOnlyExpenseDate >= weekStart && monthOnlyExpenseDate < weekEnd)
+        {
+            monthOnlyExpenseDate = weekEnd < monthEnd ? weekEnd : monthStart;
+        }
+
         dbContext.Expenses.Add(
             new ExpenseEntity
             {
                 RiderId = rider.UserId,
-                ExpenseDate = monthStart.AddDays(1),
+                ExpenseDate = monthOnlyExpenseDate,
                 Amount = 50m,
                 IsDeleted = false,
                 CreatedAtUtc = DateTime.UtcNow,

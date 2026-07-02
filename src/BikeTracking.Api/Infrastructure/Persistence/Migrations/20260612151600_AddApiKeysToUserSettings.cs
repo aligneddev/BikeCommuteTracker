@@ -14,25 +14,23 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                 name: "EiaGasApiKey",
                 table: "UserSettings",
                 type: "TEXT",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "WeatherApiKey",
                 table: "UserSettings",
                 type: "TEXT",
-                nullable: true);
+                nullable: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "EiaGasApiKey",
-                table: "UserSettings");
+            migrationBuilder.DropColumn(name: "EiaGasApiKey", table: "UserSettings");
 
-            migrationBuilder.DropColumn(
-                name: "WeatherApiKey",
-                table: "UserSettings");
+            migrationBuilder.DropColumn(name: "WeatherApiKey", table: "UserSettings");
         }
     }
 }

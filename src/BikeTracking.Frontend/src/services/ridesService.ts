@@ -190,6 +190,7 @@ export interface RideHistoryRow {
   difficulty?: number;
   primaryTravelDirection?: CompassDirection;
   windResistanceRating?: number;
+  importSource?: string;
 }
 
 /**
@@ -212,7 +213,6 @@ export interface RideHistoryResponse {
   pageSize: number;
   totalRows: number;
 }
-
 
 const SESSION_KEY = "bike_tracking_auth_session";
 const SESSION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;

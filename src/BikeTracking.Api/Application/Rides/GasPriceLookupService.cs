@@ -9,7 +9,11 @@ namespace BikeTracking.Api.Application.Rides;
 
 public interface IGasPriceLookupService
 {
-    Task<decimal?> GetOrFetchAsync(DateOnly date, string? apiKey = null, CancellationToken cancellationToken = default);
+    Task<decimal?> GetOrFetchAsync(
+        DateOnly date,
+        string? apiKey = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Get or fetch gas price using the ISO week start date as the cache key.

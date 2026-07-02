@@ -85,6 +85,7 @@ public sealed class CsvRideImportServicePreviewTests
             string fileName,
             int totalRows,
             int invalidRows,
+            string importType,
             CancellationToken cancellationToken
         )
         {
@@ -93,6 +94,7 @@ public sealed class CsvRideImportServicePreviewTests
                 Id = _nextJobId++,
                 RiderId = riderId,
                 FileName = fileName,
+                ImportType = importType,
                 TotalRows = totalRows,
                 ProcessedRows = 0,
                 ImportedRows = 0,

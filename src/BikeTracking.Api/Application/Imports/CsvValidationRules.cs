@@ -114,7 +114,7 @@ public static class CsvValidationRules
             }
         }
 
-        if (row.PrimaryTravelDirection is not null)
+        if (row.PrimaryTravelDirection is not null && row.PrimaryTravelDirection != string.Empty)
         {
             var validDirections = WindResistance.validDirectionNames.ToList();
             var isValid = validDirections.Any(d =>

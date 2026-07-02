@@ -15,7 +15,7 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
             modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.AuthAttemptStateEntity", b =>
                 {
@@ -289,6 +289,13 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ImportType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("csv");
+
                     b.Property<int>("ImportedRows")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
@@ -376,6 +383,10 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                     b.Property<long>("ImportJobId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ImportSource")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal?>("Miles")
                         .HasPrecision(10, 4)
                         .HasColumnType("TEXT");
@@ -432,6 +443,53 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.MonthlySummaryAuditLogEntity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("EndYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ImportJobId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MonthsParsed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("RiderId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RidesCreated")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RidesReplaced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RidesSkipped")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RowsRejected")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StartYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("TimestampUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ValidationErrorsSummaryJson")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImportJobId")
+                        .IsUnique();
+
+                    b.ToTable("MonthlySummaryAuditLogs", (string)null);
+                });
+
             modelBuilder.Entity("BikeTracking.Api.Infrastructure.Persistence.Entities.RideEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -449,6 +507,10 @@ namespace BikeTracking.Api.Infrastructure.Persistence.Migrations
 
                     b.Property<decimal?>("GasPricePerGallon")
                         .HasPrecision(10, 4)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImportSource")
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Miles")

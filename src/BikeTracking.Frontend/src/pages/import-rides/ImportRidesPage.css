@@ -204,3 +204,17 @@
     opacity: 1;
   }
 }
+
+.import-rides-sample-download {
+  background: none;
+  border: none;
+  color: var(--color-link, #4a9eff);
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.import-rides-sample-download:hover {
+  text-decoration: none;
+}

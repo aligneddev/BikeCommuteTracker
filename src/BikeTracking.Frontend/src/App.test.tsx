@@ -27,6 +27,9 @@ vi.mock('./pages/settings/SettingsPage', () => ({
 vi.mock('./pages/import-rides/ImportRidesPage', () => ({
   ImportRidesPage: () => <div>Import Rides Page</div>,
 }))
+vi.mock('./pages/monthly-import/MonthlyImportPage', () => ({
+  MonthlyImportPage: () => <div>Monthly Import Page</div>,
+}))
 vi.mock('./pages/expenses/ExpenseImportPage', () => ({
   ExpenseImportPage: () => <div>Expense Import Page</div>,
 }))
@@ -61,5 +64,17 @@ describe('App routing', () => {
     render(<App />)
 
     expect(await screen.findByText('Import Rides Page')).toBeInTheDocument()
+  })
+
+  it('allows authenticated users to access /import/monthly', async () => {
+    sessionStorage.setItem(
+      'bike_tracking_auth_session',
+      JSON.stringify({ userId: 1, userName: 'Test Rider' })
+    )
+    window.history.replaceState({}, '', '/import/monthly')
+
+    render(<App />)
+
+    expect(await screen.findByText('Monthly Import Page')).toBeInTheDocument()
   })
 })

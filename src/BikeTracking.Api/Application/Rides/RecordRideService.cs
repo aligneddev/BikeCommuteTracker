@@ -167,6 +167,7 @@ public sealed class RecordRideService(
             WeatherUserOverridden = request.WeatherUserOverridden,
             Difficulty = request.Difficulty,
             PrimaryTravelDirection = canonicalDirection,
+            ImportSource = request.ImportSource,
             WindResistanceRating = computedWindResistanceRating,
             CreatedAtUtc = DateTime.UtcNow,
         };

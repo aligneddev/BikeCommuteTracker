@@ -1,0 +1,8 @@
+.monthly-import-page {
+  padding: 1rem;
+}
+
+.monthly-import-card {
+  display: grid;
+  gap: 1rem;
+}
