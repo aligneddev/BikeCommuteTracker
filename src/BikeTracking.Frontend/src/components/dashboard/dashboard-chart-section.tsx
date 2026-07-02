@@ -20,6 +20,8 @@ import type { DashboardMileagePoint, DashboardSavingsPoint } from '../../service
 interface DashboardChartSectionProps {
   mileageByMonth: DashboardMileagePoint[]
   savingsByMonth: DashboardSavingsPoint[]
+  /** Optional label rendered instead of the default "Rolling 12 months" copy (e.g. "Calendar year 2025"). */
+  seriesLabel?: string
 }
 
 const mileageConfig: ChartConfig = {
@@ -55,6 +57,7 @@ function formatCurrency(value: number | string | null | undefined): string {
 export function DashboardChartSection({
   mileageByMonth,
   savingsByMonth,
+  seriesLabel = 'Rolling 12 months',
 }: DashboardChartSectionProps) {
   return (
     <section className="dashboard-chart-grid" aria-label="Dashboard charts">
@@ -64,7 +67,7 @@ export function DashboardChartSection({
             <p className="dashboard-chart-overline">Trend</p>
             <h2>Miles by Month</h2>
           </div>
-          <p>Rolling 12 months</p>
+          <p>{seriesLabel}</p>
         </div>
 
         <ChartContainer config={mileageConfig} height={260} ariaLabel="Mileage by month chart">
@@ -96,7 +99,7 @@ export function DashboardChartSection({
             <p className="dashboard-chart-overline">Savings</p>
             <h2>Savings by Month</h2>
           </div>
-          <p>Rolling 12 months</p>
+          <p>{seriesLabel}</p>
         </div>
 
         <ChartContainer config={savingsConfig} height={260} ariaLabel="Savings by month chart">

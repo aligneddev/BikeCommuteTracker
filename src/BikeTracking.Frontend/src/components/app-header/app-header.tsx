@@ -106,6 +106,14 @@ export function AppHeader() {
             Advanced Stats
           </NavLink>
           <NavLink
+            to="/dashboard/year-stats"
+            className={({ isActive }) =>
+              isActive ? 'nav-link nav-link-active' : 'nav-link'
+            }
+          >
+            Year Stats
+          </NavLink>
+          <NavLink
             to="/rides/record"
             className={({ isActive }) =>
               isActive ? 'nav-link nav-link-active' : 'nav-link'

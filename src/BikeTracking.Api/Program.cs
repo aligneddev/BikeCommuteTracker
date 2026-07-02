@@ -42,6 +42,7 @@ builder.Services.AddScoped<IdentifyService>();
 builder.Services.AddScoped<UserSettingsService>();
 builder.Services.AddScoped<GetDashboardService>();
 builder.Services.AddScoped<GetAdvancedDashboardService>();
+builder.Services.AddScoped<GetYearStatsDashboardService>();
 
 builder
     .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)

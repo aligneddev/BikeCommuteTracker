@@ -31,6 +31,104 @@ public sealed class DashboardEndpointsTests
         Assert.Equal(0m, payload.Totals.CurrentMonthMiles.Miles);
     }
 
+    [Fact]
+    public async Task GetYearStats_Returns200AndYearStatsPayload_ForAuthenticatedRider()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Year Stats Rider", "1234");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/dashboard/year-stats?year=2025",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<YearStatsDashboardResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(2025, payload.Year);
+    }
+
+    [Fact]
+    public async Task GetYearStats_Returns400_ForYearBelowMinimumBound()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Year Stats Rider Low", "1234");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/dashboard/year-stats?year=1899",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetYearStats_Returns400_ForYearAboveMaximumBound()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Year Stats Rider High", "1234");
+
+        var response = await host.Client.GetWithAuthAsync(
+            $"/api/dashboard/year-stats?year={DateTime.Now.Year + 2}",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetYearStats_Returns400_ForNonNumericYear()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Year Stats Rider NaN", "1234");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/dashboard/year-stats?year=abcd",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetYearStats_Returns401_WhenUnauthenticated()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+
+        var response = await host.Client.GetAsync("/api/dashboard/year-stats?year=2025");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetAvailableYears_Returns200AndDescendingDistinctYears_ForSeededRider()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Available Years Rider", "1234");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/dashboard/year-stats/years",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<AvailableYearsResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal([DateTime.Now.Year], payload.Years);
+    }
+
+    [Fact]
+    public async Task GetAvailableYears_Returns401_WhenUnauthenticated()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+
+        var response = await host.Client.GetAsync("/api/dashboard/year-stats/years");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private sealed class DashboardApiHost(WebApplication app) : IAsyncDisposable
     {
         public HttpClient Client { get; } = app.GetTestClient();
@@ -48,6 +146,7 @@ public sealed class DashboardEndpointsTests
             builder.Services.AddSingleton<IPinHasher, PinHasher>();
             builder.Services.AddScoped<UserSettingsService>();
             builder.Services.AddScoped<GetDashboardService>();
+            builder.Services.AddScoped<GetYearStatsDashboardService>();
             builder
                 .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)
                 .AddScheme<

@@ -15,6 +15,7 @@ import { ExpenseEntryPage } from './pages/expenses/ExpenseEntryPage'
 import { ExpenseImportPage } from './pages/expenses/ExpenseImportPage'
 import { ExpenseHistoryPage } from './pages/expenses/ExpenseHistoryPage'
 import { AdvancedDashboardPage } from './pages/advanced-dashboard/advanced-dashboard-page'
+import { YearStatsDashboardPage } from './pages/year-stats-dashboard/year-stats-dashboard-page'
 // import { getPwaSnapshot, subscribePwaSnapshot } from './services/pwa/bootstrap'
 import { ApiStartupGuard } from './components/api-startup-guard/ApiStartupGuard'
 
@@ -71,6 +72,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/advanced" element={<AdvancedDashboardPage />} />
+              <Route path="/dashboard/year-stats" element={<YearStatsDashboardPage />} />
               <Route path="/miles" element={<MilesShellPage />} />
               <Route path="/rides/history" element={<HistoryPage />} />
               <Route path="/rides/record" element={<RecordRidePage />} />

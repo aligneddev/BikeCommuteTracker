@@ -106,3 +106,89 @@ export async function getDashboard(): Promise<DashboardResponse> {
 
   return response.json() as Promise<DashboardResponse>;
 }
+
+/** A single month's mileage total, scoped to a specific calendar year (Jan..Dec of `year`). */
+export interface YearStatsMileagePoint {
+  monthKey: string;
+  label: string;
+  miles: number;
+}
+
+/** A single month's savings breakdown, scoped to a specific calendar year. */
+export interface YearStatsSavingsPoint {
+  monthKey: string;
+  label: string;
+  mileageRateSavings: number | null;
+  fuelCostAvoided: number | null;
+  combinedSavings: number | null;
+}
+
+/** Average difficulty for a single month within a specific calendar year. */
+export interface YearStatsDifficultyByMonthPoint {
+  monthKey: string;
+  label: string;
+  averageDifficulty: number;
+}
+
+/** Difficulty analytics scoped to a single calendar year. */
+export interface YearStatsDifficultySection {
+  hasData: boolean;
+  overallAverageDifficulty: number | null;
+  byMonth: YearStatsDifficultyByMonthPoint[];
+  mostDifficultMonths: YearStatsDifficultyByMonthPoint[];
+}
+
+/** Count of rides at a given wind resistance level, scoped to a single calendar year. */
+export interface YearStatsWindResistanceBin {
+  label: string;
+  count: number;
+}
+
+/** Wind resistance distribution scoped to a single calendar year. */
+export interface YearStatsWindResistanceSection {
+  hasData: boolean;
+  bins: YearStatsWindResistanceBin[];
+}
+
+/** Full response shape from GET /api/dashboard/year-stats?year={yyyy}. */
+export interface YearStatsDashboardResponse {
+  year: number;
+  hasDataForYear: boolean;
+  mileageByMonth: YearStatsMileagePoint[];
+  savingsByMonth: YearStatsSavingsPoint[];
+  difficulty: YearStatsDifficultySection;
+  windResistance: YearStatsWindResistanceSection;
+}
+
+/** Response shape from GET /api/dashboard/year-stats/years. */
+export interface AvailableYearsResponse {
+  years: number[];
+}
+
+/** Fetches the year-scoped stats dashboard (mileage/savings/difficulty/wind) for `year`. */
+export async function getYearStatsDashboard(year: number): Promise<YearStatsDashboardResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/api/dashboard/year-stats?year=${year}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load year stats dashboard");
+  }
+
+  return response.json() as Promise<YearStatsDashboardResponse>;
+}
+
+/** Fetches the distinct calendar years selectable in the year stats dashboard's year selector. */
+export async function getAvailableYears(): Promise<AvailableYearsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/api/dashboard/year-stats/years`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load available years");
+  }
+
+  return response.json() as Promise<AvailableYearsResponse>;
+}
