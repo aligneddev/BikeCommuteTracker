@@ -69,3 +69,59 @@ public sealed record DashboardMissingData(
     int RidesMissingTemperature,
     int RidesMissingDuration
 );
+
+/// <summary>
+/// Response for the year-scoped stats dashboard: mileage/savings/difficulty/wind data
+/// limited to a single calendar year (Jan-Dec), rather than a rolling or all-time window.
+/// </summary>
+public sealed record YearStatsDashboardResponse(
+    int Year,
+    bool HasDataForYear,
+    YearStatsTotals Totals,
+    IReadOnlyList<YearStatsMileagePoint> MileageByMonth,
+    IReadOnlyList<YearStatsSavingsPoint> SavingsByMonth,
+    YearStatsDifficultySection Difficulty,
+    YearStatsWindResistanceSection WindResistance
+);
+
+/// <summary>Year-scoped totals shown as a text summary above the year-stats charts.</summary>
+public sealed record YearStatsTotals(
+    decimal TotalMiles,
+    decimal? TotalCombinedSavings,
+    DashboardExpenseSummary ExpenseSummary
+);
+
+public sealed record YearStatsMileagePoint(string MonthKey, string Label, decimal Miles);
+
+public sealed record YearStatsSavingsPoint(
+    string MonthKey,
+    string Label,
+    decimal? MileageRateSavings,
+    decimal? FuelCostAvoided,
+    decimal? CombinedSavings
+);
+
+/// <summary>Difficulty analytics for a single calendar year.</summary>
+public sealed record YearStatsDifficultySection(
+    bool HasData,
+    decimal? OverallAverageDifficulty,
+    IReadOnlyList<YearStatsDifficultyByMonthPoint> ByMonth,
+    IReadOnlyList<YearStatsDifficultyByMonthPoint> MostDifficultMonths
+);
+
+public sealed record YearStatsDifficultyByMonthPoint(
+    string MonthKey,
+    string Label,
+    decimal AverageDifficulty
+);
+
+/// <summary>Wind resistance distribution for a single calendar year.</summary>
+public sealed record YearStatsWindResistanceSection(
+    bool HasData,
+    IReadOnlyList<YearStatsWindResistanceBin> Bins
+);
+
+public sealed record YearStatsWindResistanceBin(string Label, int Count);
+
+/// <summary>List of distinct years selectable in the year stats dashboard's year selector.</summary>
+public sealed record AvailableYearsResponse(IReadOnlyList<int> Years);
