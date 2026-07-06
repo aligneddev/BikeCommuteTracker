@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text;
 using BikeTracking.Api.Application.Rides;
@@ -165,15 +166,25 @@ public sealed class WeatherLookupServiceTests
             NullLogger<OpenMeteoWeatherLookupService>.Instance
         );
 
-        var lookupTime = new DateTime(2026, 4, 2, 9, 34, 0, DateTimeKind.Utc);
+        var lookupDate = DateTime.UtcNow.AddDays(-5).Date;
+        var lookupTime = new DateTime(
+            lookupDate.Year,
+            lookupDate.Month,
+            lookupDate.Day,
+            9,
+            34,
+            0,
+            DateTimeKind.Utc
+        );
 
         var result = await service.GetOrFetchAsync(40.7128m, -74.0060m, lookupTime);
+        var expectedDate = lookupTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
         Assert.NotNull(result);
         Assert.NotNull(capturedRequestUri);
         Assert.Equal("/v1/forecast", capturedRequestUri!.AbsolutePath);
-        Assert.Contains("start_date=2026-04-02", capturedRequestUri.Query);
-        Assert.Contains("end_date=2026-04-02", capturedRequestUri.Query);
+        Assert.Contains($"start_date={expectedDate}", capturedRequestUri.Query);
+        Assert.Contains($"end_date={expectedDate}", capturedRequestUri.Query);
         Assert.DoesNotContain("past_days=", capturedRequestUri.Query);
     }
 
