@@ -60,41 +60,43 @@ jobs:
         working-directory: src/BikeTracking.Frontend
         run: npm run build
 
-      - name: Install Rust toolchain (for Tauri config check)
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
+      # Tauri steps disabled for now: apt-mirror 404s break Tauri Linux system-lib install in CI.
+      # TODO: re-enable once upstream apt-mirror issue is resolved.
+      # - name: Install Rust toolchain (for Tauri config check)
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
+      #   with:
+      #     toolchain: stable
 
-      - name: Cache Rust build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src/BikeTracking.Frontend/src-tauri/target/
-          key: linux-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: linux-cargo-
+      # - name: Cache Rust build artifacts
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.cargo/bin/
+      #       ~/.cargo/registry/index/
+      #       ~/.cargo/registry/cache/
+      #       ~/.cargo/git/db/
+      #       src/BikeTracking.Frontend/src-tauri/target/
+      #     key: linux-cargo-${{ hashFiles('**/Cargo.lock') }}
+      #     restore-keys: linux-cargo-
 
-      - name: Install Tauri system libraries
-        run: sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+      # - name: Install Tauri system libraries
+      #   run: sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
 
-      - name: Publish API sidecar binary (Linux x64)
-        run: |
-          dotnet publish src/BikeTracking.Api/BikeTracking.Api.csproj \
-            --configuration Release \
-            --self-contained true \
-            --runtime linux-x64 \
-            -p:PublishSingleFile=true \
-            --output src/BikeTracking.Frontend/src-tauri/binaries/
-          mv src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api \
-             src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
-          chmod +x src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
+      # - name: Publish API sidecar binary (Linux x64)
+      #   run: |
+      #     dotnet publish src/BikeTracking.Api/BikeTracking.Api.csproj \
+      #       --configuration Release \
+      #       --self-contained true \
+      #       --runtime linux-x64 \
+      #       -p:PublishSingleFile=true \
+      #       --output src/BikeTracking.Frontend/src-tauri/binaries/
+      #     mv src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api \
+      #        src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
+      #     chmod +x src/BikeTracking.Frontend/src-tauri/binaries/BikeTracking.Api-x86_64-unknown-linux-gnu
 
-      - name: Tauri config check
-        working-directory: src/BikeTracking.Frontend
-        run: npx tauri build --bundles deb --debug --ci
+      # - name: Tauri config check
+      #   working-directory: src/BikeTracking.Frontend
+      #   run: npx tauri build --bundles deb --debug --ci
 
       - name: Frontend unit tests
         working-directory: src/BikeTracking.Frontend
