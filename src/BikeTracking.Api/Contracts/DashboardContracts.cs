@@ -77,10 +77,18 @@ public sealed record DashboardMissingData(
 public sealed record YearStatsDashboardResponse(
     int Year,
     bool HasDataForYear,
+    YearStatsTotals Totals,
     IReadOnlyList<YearStatsMileagePoint> MileageByMonth,
     IReadOnlyList<YearStatsSavingsPoint> SavingsByMonth,
     YearStatsDifficultySection Difficulty,
     YearStatsWindResistanceSection WindResistance
+);
+
+/// <summary>Year-scoped totals shown as a text summary above the year-stats charts.</summary>
+public sealed record YearStatsTotals(
+    decimal TotalMiles,
+    decimal? TotalCombinedSavings,
+    DashboardExpenseSummary ExpenseSummary
 );
 
 public sealed record YearStatsMileagePoint(string MonthKey, string Label, decimal Miles);

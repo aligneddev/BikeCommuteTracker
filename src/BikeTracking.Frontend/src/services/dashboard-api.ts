@@ -150,10 +150,26 @@ export interface YearStatsWindResistanceSection {
   bins: YearStatsWindResistanceBin[];
 }
 
+/** Year-scoped totals shown as a text summary above the year-stats charts. */
+export interface YearStatsExpenseSummary {
+  totalManualExpenses: number;
+  oilChangeSavings: number | null;
+  netExpenses: number | null;
+  oilChangeIntervalCount: number;
+}
+
+/** Year-scoped totals shown as a text summary above the year-stats charts. */
+export interface YearStatsTotals {
+  totalMiles: number;
+  totalCombinedSavings: number | null;
+  expenseSummary: YearStatsExpenseSummary;
+}
+
 /** Full response shape from GET /api/dashboard/year-stats?year={yyyy}. */
 export interface YearStatsDashboardResponse {
   year: number;
   hasDataForYear: boolean;
+  totals: YearStatsTotals;
   mileageByMonth: YearStatsMileagePoint[];
   savingsByMonth: YearStatsSavingsPoint[];
   difficulty: YearStatsDifficultySection;

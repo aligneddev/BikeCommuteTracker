@@ -44,13 +44,75 @@ public sealed class GetYearStatsDashboardService(BikeTrackingDbContext dbContext
 
         var hasDataForYear = rides.Count > 0;
 
+        var settings = await dbContext
+            .UserSettings.AsNoTracking()
+            .SingleOrDefaultAsync(setting => setting.UserId == riderId, cancellationToken);
+
+        var totalManualExpenses =
+            await dbContext
+                .Expenses.Where(e =>
+                    e.RiderId == riderId
+                    && !e.IsDeleted
+                    && e.ExpenseDate >= yearStart
+                    && e.ExpenseDate < nextYearStart
+                )
+                .SumAsync(e => (decimal?)e.Amount, cancellationToken) ?? 0m;
+
         return new YearStatsDashboardResponse(
             Year: year,
             HasDataForYear: hasDataForYear,
+            Totals: BuildTotalsSection(rides, totalManualExpenses, settings?.OilChangePrice),
             MileageByMonth: BuildMileageSeries(rides, year),
             SavingsByMonth: BuildSavingsSeries(rides, year),
             Difficulty: BuildDifficultySection(rides, year),
             WindResistance: BuildWindResistanceSection(rides, year)
+        );
+    }
+
+    private static YearStatsTotals BuildTotalsSection(
+        IReadOnlyList<RideEntity> rides,
+        decimal totalManualExpenses,
+        decimal? oilChangePrice
+    )
+    {
+        var totalMiles = rides.Sum(ride => ride.Miles);
+        var savings = AggregateSavings(rides);
+        decimal? totalCombinedSavings = savings.HasAnySavings
+            ? RoundMoney(savings.MileageRateSavings + savings.FuelCostAvoided)
+            : null;
+
+        return new YearStatsTotals(
+            TotalMiles: totalMiles,
+            TotalCombinedSavings: totalCombinedSavings,
+            ExpenseSummary: CalculateExpenseSummary(totalManualExpenses, totalMiles, oilChangePrice)
+        );
+    }
+
+    private static DashboardExpenseSummary CalculateExpenseSummary(
+        decimal totalManualExpenses,
+        decimal totalMiles,
+        decimal? oilChangePrice
+    )
+    {
+        if (oilChangePrice is null)
+        {
+            return new DashboardExpenseSummary(
+                TotalManualExpenses: totalManualExpenses,
+                OilChangeSavings: null,
+                NetExpenses: null,
+                OilChangeIntervalCount: 0
+            );
+        }
+
+        var intervalCount = (int)Math.Floor(totalMiles / 3000m);
+        var oilChangeSavings = intervalCount * oilChangePrice.Value;
+        var netExpenses = totalManualExpenses - oilChangeSavings;
+
+        return new DashboardExpenseSummary(
+            TotalManualExpenses: totalManualExpenses,
+            OilChangeSavings: oilChangeSavings,
+            NetExpenses: netExpenses,
+            OilChangeIntervalCount: intervalCount
         );
     }
 

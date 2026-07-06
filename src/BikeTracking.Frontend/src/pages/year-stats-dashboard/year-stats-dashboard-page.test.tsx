@@ -40,6 +40,16 @@ function buildYearStatsResponse(
   return {
     year: 2025,
     hasDataForYear: true,
+    totals: {
+      totalMiles: 0,
+      totalCombinedSavings: null,
+      expenseSummary: {
+        totalManualExpenses: 0,
+        oilChangeSavings: null,
+        netExpenses: null,
+        oilChangeIntervalCount: 0,
+      },
+    },
     mileageByMonth: months.map((m) => ({ ...m, miles: 0 })),
     savingsByMonth: months.map((m) => ({
       ...m,
@@ -106,6 +116,44 @@ describe('YearStatsDashboardPage', () => {
       expect(screen.getByTestId('chart-section')).toHaveTextContent('2025')
     })
     expect(screen.getByTestId('difficulty-section')).toBeInTheDocument()
+  })
+
+  it('renders a text summary section with totals and per-month miles above the charts', async () => {
+    mockGetAvailableYears.mockResolvedValue(buildAvailableYears([2025, 2024]))
+    mockGetYearStatsDashboard.mockResolvedValue(
+      buildYearStatsResponse({
+        totals: {
+          totalMiles: 543.2,
+          totalCombinedSavings: 210.5,
+          expenseSummary: {
+            totalManualExpenses: 75,
+            oilChangeSavings: 30,
+            netExpenses: 45,
+            oilChangeIntervalCount: 1,
+          },
+        },
+        mileageByMonth: [
+          { monthKey: '2025-01', label: 'Jan', miles: 100 },
+          { monthKey: '2025-02', label: 'Feb', miles: 50 },
+        ],
+      })
+    )
+
+    const { YearStatsDashboardPage } = await import('./year-stats-dashboard-page')
+    render(
+      <BrowserRouter>
+        <YearStatsDashboardPage />
+      </BrowserRouter>
+    )
+
+    const summary = await screen.findByTestId('year-stats-summary')
+    expect(summary).toHaveTextContent('543.2')
+    expect(summary).toHaveTextContent('210.5')
+    expect(summary).toHaveTextContent('75')
+    expect(summary).toHaveTextContent('Jan')
+    expect(summary).toHaveTextContent('100')
+    expect(summary).toHaveTextContent('Feb')
+    expect(summary).toHaveTextContent('50')
   })
 
   it('re-fetches and re-renders charts in place when the year selector changes', async () => {

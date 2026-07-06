@@ -19,6 +19,17 @@ function pickDefaultYear(years: number[]): number {
   return years.length > 0 ? Math.max(...years) : currentYear
 }
 
+function formatMiles(miles: number): string {
+  return miles.toLocaleString('en-US', { maximumFractionDigits: 1 })
+}
+
+function formatMoney(value: number | null): string {
+  if (value === null) {
+    return '—'
+  }
+  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+}
+
 function adaptDifficultySection(
   data: YearStatsDashboardResponse
 ): AdvancedDashboardDifficultySection {
@@ -149,6 +160,35 @@ export function YearStatsDashboardPage() {
 
       {data && data.hasDataForYear ? (
         <>
+          <section
+            className="year-stats-summary"
+            data-testid="year-stats-summary"
+            aria-label={`Text summary for ${data.year}`}
+          >
+            <dl className="year-stats-summary-totals">
+              <div className="year-stats-summary-item">
+                <dt>Total miles</dt>
+                <dd>{formatMiles(data.totals.totalMiles)}</dd>
+              </div>
+              <div className="year-stats-summary-item">
+                <dt>Total savings</dt>
+                <dd>{formatMoney(data.totals.totalCombinedSavings)}</dd>
+              </div>
+              <div className="year-stats-summary-item">
+                <dt>Total expenses</dt>
+                <dd>{formatMoney(data.totals.expenseSummary.totalManualExpenses)}</dd>
+              </div>
+            </dl>
+
+            <ul className="year-stats-summary-months">
+              {data.mileageByMonth.map((point) => (
+                <li key={point.monthKey}>
+                  {point.label}: {formatMiles(point.miles)} mi
+                </li>
+              ))}
+            </ul>
+          </section>
+
           <DashboardChartSection
             mileageByMonth={data.mileageByMonth}
             savingsByMonth={data.savingsByMonth}

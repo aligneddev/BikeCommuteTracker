@@ -238,6 +238,79 @@ public sealed class GetYearStatsDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetAsync_YearWithRidesAndExpenses_ComputesTotalsSection()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Totals Rider");
+
+        dbContext.Rides.AddRange(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = new DateTime(2025, 1, 10),
+                Miles = 100m,
+                SnapshotMileageRateCents = 50m,
+                SnapshotAverageCarMpg = 20m,
+                GasPricePerGallon = 3m,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = new DateTime(2025, 2, 10),
+                Miles = 50m,
+                SnapshotMileageRateCents = 50m,
+                SnapshotAverageCarMpg = 20m,
+                GasPricePerGallon = 3m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+
+        dbContext.Expenses.Add(
+            new ExpenseEntity
+            {
+                RiderId = rider.UserId,
+                ExpenseDate = new DateTime(2025, 3, 1),
+                Amount = 40m,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        dbContext.Expenses.Add(
+            new ExpenseEntity
+            {
+                RiderId = rider.UserId,
+                ExpenseDate = new DateTime(2024, 12, 1),
+                Amount = 999m,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetYearStatsDashboardService(dbContext);
+        var response = await service.GetAsync(rider.UserId, 2025);
+
+        Assert.Equal(150m, response.Totals.TotalMiles);
+        Assert.Equal(75m + 22.5m, response.Totals.TotalCombinedSavings);
+        Assert.Equal(40m, response.Totals.ExpenseSummary.TotalManualExpenses);
+    }
+
+    [Fact]
+    public async Task GetAsync_YearWithZeroRides_TotalsAreZeroOrNull()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Totals Zero Rider");
+
+        var service = new GetYearStatsDashboardService(dbContext);
+        var response = await service.GetAsync(rider.UserId, 2019);
+
+        Assert.Equal(0m, response.Totals.TotalMiles);
+        Assert.Null(response.Totals.TotalCombinedSavings);
+        Assert.Equal(0m, response.Totals.ExpenseSummary.TotalManualExpenses);
+    }
+
+    [Fact]
     public async Task GetAvailableYearsAsync_RiderWithRidesInMultipleYears_ReturnsDescendingDistinctYears()
     {
         using var dbContext = CreateDbContext();
