@@ -68,7 +68,7 @@ public sealed class GetDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetDashboardService(dbContext);
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
         Assert.Equal(5m, dashboard.Totals.MoneySaved.MileageRateSavings);
@@ -101,7 +101,7 @@ public sealed class GetDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetDashboardService(dbContext);
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
         Assert.Null(dashboard.Totals.MoneySaved.MileageRateSavings);
@@ -149,7 +149,7 @@ public sealed class GetDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetDashboardService(dbContext);
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
         var gallonsSuggestion = dashboard.Suggestions.Single(metric =>
@@ -178,7 +178,7 @@ public sealed class GetDashboardServiceTests
         dbContext.Users.Add(rider);
         await dbContext.SaveChangesAsync();
 
-        var service = new GetDashboardService(dbContext);
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
         Assert.NotNull(dashboard.Totals.ExpenseSummary);
@@ -234,7 +234,7 @@ public sealed class GetDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetDashboardService(dbContext);
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
         Assert.Equal(40.50m, dashboard.Totals.ExpenseSummary.TotalManualExpenses);
@@ -294,7 +294,7 @@ public sealed class GetDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetDashboardService(dbContext);
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
         Assert.Equal(80m, dashboard.Totals.ExpenseSummary.TotalManualExpenses);
@@ -327,7 +327,7 @@ public sealed class GetDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetDashboardService(dbContext);
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
         Assert.Equal(0m, dashboard.Totals.ExpenseSummary.TotalManualExpenses);

@@ -7,7 +7,10 @@ namespace BikeTracking.Api.Application.Rides;
 /// <summary>
 /// Provides query operations for retrieving ride history with filtering, summaries, and pagination.
 /// </summary>
-public sealed class GetRideHistoryService(BikeTrackingDbContext dbContext)
+public sealed class GetRideHistoryService(
+    BikeTrackingDbContext dbContext,
+    TimeProvider timeProvider
+)
 {
     /// <summary>
     /// Retrieves paginated ride history with summary totals for a specific rider.
@@ -50,7 +53,7 @@ public sealed class GetRideHistoryService(BikeTrackingDbContext dbContext)
             .ToListAsync(cancellationToken);
 
         // Calculate period boundaries in local dates (assuming rides are stored in rider's local time)
-        var today = DateOnly.FromDateTime(DateTime.Now);
+        var today = DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
         var firstOfMonth = new DateOnly(today.Year, today.Month, 1);
         var firstOfYear = new DateOnly(today.Year, 1, 1);
 

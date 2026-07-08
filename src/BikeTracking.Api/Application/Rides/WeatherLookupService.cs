@@ -38,7 +38,8 @@ public sealed class OpenMeteoWeatherLookupService(
     BikeTrackingDbContext dbContext,
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
-    ILogger<OpenMeteoWeatherLookupService> logger
+    ILogger<OpenMeteoWeatherLookupService> logger,
+    TimeProvider timeProvider
 ) : IWeatherLookupService
 {
     private const string DataSourceName = "OpenMeteo";
@@ -101,7 +102,7 @@ public sealed class OpenMeteoWeatherLookupService(
         );
 
         // Determine which API to call (forecast vs. archive)
-        var daysDiff = (int)(DateTime.UtcNow.Date - dateTimeUtc.Date).TotalDays;
+        var daysDiff = (int)(timeProvider.GetUtcNow().Date - dateTimeUtc.Date).TotalDays;
         var isHistorical = daysDiff > 92;
         var clientName = isHistorical ? "OpenMeteoArchive" : "OpenMeteoForecast";
         var requestPath = isHistorical ? "/v1/archive" : "/v1/forecast";
@@ -192,7 +193,7 @@ public sealed class OpenMeteoWeatherLookupService(
                 CloudCoverPercent = cloudCover,
                 PrecipitationType = precipType,
                 DataSource = DataSourceName,
-                RetrievedAtUtc = DateTime.UtcNow,
+                RetrievedAtUtc = timeProvider.GetUtcNow().UtcDateTime,
                 Status = "success",
             };
 
@@ -281,7 +282,7 @@ public sealed class OpenMeteoWeatherLookupService(
                 LatitudeRounded = latRounded,
                 LongitudeRounded = lonRounded,
                 DataSource = DataSourceName,
-                RetrievedAtUtc = DateTime.UtcNow,
+                RetrievedAtUtc = timeProvider.GetUtcNow().UtcDateTime,
                 Status = "error",
             };
 

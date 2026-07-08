@@ -42,3 +42,19 @@ internal sealed class DelegatePinHasher(Func<string, bool> verifyPin) : IPinHash
         return verifyPin(pin);
     }
 }
+
+/// <summary>
+/// Deterministic <see cref="TimeProvider"/> for tests. Returns a fixed instant so
+/// calendar-boundary logic (e.g. "this week"/"this month") never depends on wall-clock time.
+/// Local time zone is fixed to UTC so <see cref="GetLocalNow"/> matches <see cref="GetUtcNow"/>.
+/// </summary>
+internal sealed class FakeTimeProvider(DateTimeOffset now) : TimeProvider
+{
+    private DateTimeOffset now = now;
+
+    public override DateTimeOffset GetUtcNow() => now;
+
+    public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
+
+    public void SetNow(DateTimeOffset value) => now = value;
+}

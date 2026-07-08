@@ -17,7 +17,10 @@ namespace BikeTracking.Api.Application.Dashboard;
 /// unchanged, so historical accuracy (FR-006) and existing rolling/all-time behavior
 /// (FR-005) are preserved.
 /// </summary>
-public sealed class GetYearStatsDashboardService(BikeTrackingDbContext dbContext)
+public sealed class GetYearStatsDashboardService(
+    BikeTrackingDbContext dbContext,
+    TimeProvider timeProvider
+)
 {
     /// <summary>
     /// Loads the rider's rides for <paramref name="year"/> and returns the year-scoped
@@ -56,7 +59,8 @@ public sealed class GetYearStatsDashboardService(BikeTrackingDbContext dbContext
                     && e.ExpenseDate >= yearStart
                     && e.ExpenseDate < nextYearStart
                 )
-                .SumAsync(e => (decimal?)e.Amount, cancellationToken) ?? 0m;
+                .SumAsync(e => (decimal?)e.Amount, cancellationToken)
+            ?? 0m;
 
         return new YearStatsDashboardResponse(
             Year: year,
@@ -135,7 +139,7 @@ public sealed class GetYearStatsDashboardService(BikeTrackingDbContext dbContext
         var descendingYears = years.OrderByDescending(y => y).ToList();
 
         return new AvailableYearsResponse(
-            descendingYears.Count > 0 ? descendingYears : [DateTime.Now.Year]
+            descendingYears.Count > 0 ? descendingYears : [timeProvider.GetLocalNow().Year]
         );
     }
 
