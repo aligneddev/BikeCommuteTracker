@@ -12,7 +12,10 @@ namespace BikeTracking.Api.Application.Dashboard;
 /// by weekly, monthly, yearly, and all-time calendar windows, personalised suggestions,
 /// and reminder flags when required user settings are missing.
 /// </summary>
-public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
+public sealed class GetAdvancedDashboardService(
+    BikeTrackingDbContext dbContext,
+    TimeProvider timeProvider
+)
 {
     /// <summary>
     /// Loads all rides, user settings, and gas-price lookups for <paramref name="riderId"/>,
@@ -46,7 +49,7 @@ public sealed class GetAdvancedDashboardService(BikeTrackingDbContext dbContext)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
-        var nowLocal = DateTime.Now;
+        var nowLocal = timeProvider.GetLocalNow().DateTime;
 
         // Calendar-based windows (not rolling) for consistency with the main dashboard.
         // Using calendar periods means "this week" always starts on Monday, "this month"

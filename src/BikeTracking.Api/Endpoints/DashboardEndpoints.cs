@@ -80,6 +80,7 @@ public static class DashboardEndpoints
         HttpContext context,
         [FromQuery] string? year,
         [FromServices] GetYearStatsDashboardService yearStatsDashboardService,
+        [FromServices] TimeProvider timeProvider,
         CancellationToken cancellationToken
     )
     {
@@ -90,7 +91,7 @@ public static class DashboardEndpoints
         }
 
         var minYear = 1900;
-        var maxYear = DateTime.Now.Year + 1;
+        var maxYear = timeProvider.GetLocalNow().Year + 1;
 
         if (!int.TryParse(year, out var parsedYear) || parsedYear < minYear || parsedYear > maxYear)
         {

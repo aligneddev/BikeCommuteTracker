@@ -56,7 +56,7 @@ public sealed class GetYearStatsDashboardServiceTests
         }
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, 2025);
 
         Assert.Equal(2025, response.Year);
@@ -94,7 +94,7 @@ public sealed class GetYearStatsDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, currentYear);
 
         Assert.True(response.HasDataForYear);
@@ -116,7 +116,7 @@ public sealed class GetYearStatsDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Zero Rides Rider");
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, 2019);
 
         Assert.False(response.HasDataForYear);
@@ -165,7 +165,7 @@ public sealed class GetYearStatsDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, 2022);
 
         var june = response.SavingsByMonth[5];
@@ -202,7 +202,7 @@ public sealed class GetYearStatsDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, 2025);
 
         Assert.True(response.Difficulty.HasData);
@@ -229,7 +229,7 @@ public sealed class GetYearStatsDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, 2025);
 
         Assert.True(response.HasDataForYear);
@@ -288,7 +288,7 @@ public sealed class GetYearStatsDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, 2025);
 
         Assert.Equal(150m, response.Totals.TotalMiles);
@@ -302,7 +302,7 @@ public sealed class GetYearStatsDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Totals Zero Rider");
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, 2019);
 
         Assert.Equal(0m, response.Totals.TotalMiles);
@@ -348,7 +348,7 @@ public sealed class GetYearStatsDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAvailableYearsAsync(rider.UserId);
 
         Assert.Equal([2025, 2024, 2023], response.Years);
@@ -360,7 +360,7 @@ public sealed class GetYearStatsDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "No Rides Rider");
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAvailableYearsAsync(rider.UserId);
 
         Assert.Equal([DateTime.Now.Year], response.Years);
@@ -383,7 +383,7 @@ public sealed class GetYearStatsDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAvailableYearsAsync(rider.UserId);
 
         Assert.Equal([2021], response.Years);
@@ -396,7 +396,7 @@ public sealed class GetYearStatsDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Boundary Rider 1900");
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, year);
 
         Assert.Equal(year, response.Year);
@@ -408,7 +408,7 @@ public sealed class GetYearStatsDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Boundary Rider Next Year");
 
-        var service = new GetYearStatsDashboardService(dbContext);
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
         var response = await service.GetAsync(rider.UserId, DateTime.Now.Year + 1);
 
         Assert.Equal(DateTime.Now.Year + 1, response.Year);

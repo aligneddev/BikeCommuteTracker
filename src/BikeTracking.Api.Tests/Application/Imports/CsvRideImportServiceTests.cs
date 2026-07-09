@@ -69,17 +69,17 @@ public sealed class CsvRideImportServiceTests
     public async Task TokenBucketThrottle_WaitsWhenTokensExhausted()
     {
         var throttle = new SemaphoreSlim(1);
-        var releaseTask = Task.Delay(100).ContinueWith(_ => throttle.Release());
-
-        var sw = System.Diagnostics.Stopwatch.StartNew();
         await throttle.WaitAsync();
 
         var waitTask = throttle.WaitAsync();
-        await releaseTask;
-        await waitTask;
-        sw.Stop();
 
-        Assert.True(sw.ElapsedMilliseconds >= 50);
+        // No token has been released yet, so the waiter must still be pending.
+        Assert.False(waitTask.IsCompleted);
+
+        throttle.Release();
+        await waitTask;
+
+        Assert.True(waitTask.IsCompletedSuccessfully);
     }
 
     [Fact]

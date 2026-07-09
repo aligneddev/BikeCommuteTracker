@@ -1,6 +1,7 @@
 using BikeTracking.Api.Application.Dashboard;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using BikeTracking.Api.Tests.TestSupport;
 using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Tests.Application.Dashboard;
@@ -37,7 +38,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // 20 miles / 20 mpg = 1 gallon + 10 miles / 10 mpg = 1 gallon = 2 total
@@ -79,7 +80,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         Assert.True(result.SavingsWindows.AllTime.FuelCostEstimated);
@@ -104,7 +105,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         Assert.True(result.Reminders.MpgReminderRequired);
@@ -129,7 +130,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         Assert.False(result.Reminders.MpgReminderRequired);
@@ -171,7 +172,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // Weekly: only the current-week ride (1 gallon)
@@ -200,7 +201,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // Zero MPG rides should contribute null (not throw)
@@ -216,7 +217,11 @@ public sealed class GetAdvancedDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Consistency Rider");
 
-        var weekStart = DateTime.Now.Date.AddDays(-(((int)DateTime.Now.DayOfWeek - 1 + 7) % 7));
+        // Fixed reference "now" (a Wednesday) removes dependency on wall-clock time so this
+        // test can't flip near a real week boundary.
+        var fixedNow = new DateTime(2026, 1, 14, 12, 0, 0, DateTimeKind.Utc);
+        var timeProvider = new FakeTimeProvider(fixedNow);
+        var weekStart = fixedNow.Date.AddDays(-(((int)fixedNow.DayOfWeek - 1 + 7) % 7));
 
         dbContext.Rides.Add(
             new RideEntity
@@ -229,7 +234,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, timeProvider);
         var result = await service.GetAsync(rider.UserId);
 
         var consistency = result.Suggestions.Single(s => s.SuggestionKey == "consistency");
@@ -255,7 +260,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         var milestone = result.Suggestions.Single(s => s.SuggestionKey == "milestone");
@@ -279,7 +284,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         var comeback = result.Suggestions.Single(s => s.SuggestionKey == "comeback");
@@ -294,7 +299,7 @@ public sealed class GetAdvancedDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "No Rides Rider");
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         Assert.Equal(0, result.SavingsWindows.AllTime.RideCount);
@@ -316,7 +321,7 @@ public sealed class GetAdvancedDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "NoSettings Rider");
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // No UserSettings row means both nulls
@@ -330,7 +335,7 @@ public sealed class GetAdvancedDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "AllSuggestions Rider");
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         Assert.Equal(3, result.Suggestions.Count);
@@ -357,7 +362,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // 10 miles × $0.67 = $6.70
@@ -412,7 +417,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         Assert.Equal(50m, result.SavingsWindows.Monthly.TotalExpenses);
@@ -450,7 +455,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // 100 miles × $0.67 = $67 combined savings - $30 expenses = $37 net
@@ -489,7 +494,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // Net savings should be negative: $6.70 - $20 = -$13.30
@@ -535,7 +540,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         // 3200 miles total — crosses one 3000-mile interval → 1 oil change × $40 = $40
@@ -570,7 +575,7 @@ public sealed class GetAdvancedDashboardServiceTests
         );
         await dbContext.SaveChangesAsync();
 
-        var service = new GetAdvancedDashboardService(dbContext);
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
         Assert.Null(result.SavingsWindows.AllTime.OilChangeSavings);

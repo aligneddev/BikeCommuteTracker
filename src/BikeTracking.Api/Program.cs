@@ -40,6 +40,7 @@ builder.Services.AddSingleton<IPinHasher, PinHasher>();
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<IdentifyService>();
 builder.Services.AddScoped<UserSettingsService>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<GetDashboardService>();
 builder.Services.AddScoped<GetAdvancedDashboardService>();
 builder.Services.AddScoped<GetYearStatsDashboardService>();

@@ -4,6 +4,7 @@ using System.Text;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
+using BikeTracking.Api.Tests.TestSupport;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -75,7 +76,8 @@ public sealed class WeatherLookupServiceTests
             context,
             factory,
             config,
-            NullLogger<OpenMeteoWeatherLookupService>.Instance
+            NullLogger<OpenMeteoWeatherLookupService>.Instance,
+            TimeProvider.System
         );
 
         var result = await service.GetOrFetchAsync(40.7128m, -74.0060m, lookupHour);
@@ -113,7 +115,8 @@ public sealed class WeatherLookupServiceTests
             context,
             factory,
             config,
-            NullLogger<OpenMeteoWeatherLookupService>.Instance
+            NullLogger<OpenMeteoWeatherLookupService>.Instance,
+            TimeProvider.System
         );
 
         var lookupTime = new DateTime(2026, 4, 2, 9, 34, 0, DateTimeKind.Utc);
@@ -159,14 +162,21 @@ public sealed class WeatherLookupServiceTests
         );
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
 
+        // Fixed reference "now" removes dependency on wall-clock time so the forecast/archive
+        // boundary decision (daysDiff > 92) can't shift if the test happens to run near
+        // midnight UTC.
+        var fixedNow = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero);
+        var timeProvider = new FakeTimeProvider(fixedNow);
+
         var service = new OpenMeteoWeatherLookupService(
             context,
             factory,
             config,
-            NullLogger<OpenMeteoWeatherLookupService>.Instance
+            NullLogger<OpenMeteoWeatherLookupService>.Instance,
+            timeProvider
         );
 
-        var lookupDate = DateTime.UtcNow.AddDays(-5).Date;
+        var lookupDate = fixedNow.UtcDateTime.AddDays(-5).Date;
         var lookupTime = new DateTime(
             lookupDate.Year,
             lookupDate.Month,
@@ -221,7 +231,8 @@ public sealed class WeatherLookupServiceTests
             context,
             factory,
             config,
-            NullLogger<OpenMeteoWeatherLookupService>.Instance
+            NullLogger<OpenMeteoWeatherLookupService>.Instance,
+            TimeProvider.System
         );
 
         var lookupTime = new DateTime(2025, 12, 1, 9, 34, 0, DateTimeKind.Utc);
@@ -285,7 +296,8 @@ public sealed class WeatherLookupServiceTests
             restartedContext,
             factory,
             config,
-            NullLogger<OpenMeteoWeatherLookupService>.Instance
+            NullLogger<OpenMeteoWeatherLookupService>.Instance,
+            TimeProvider.System
         );
 
         var result = await restartedService.GetOrFetchAsync(37.7749m, -122.4194m, lookupHour);
@@ -336,7 +348,8 @@ public sealed class WeatherLookupServiceTests
             context,
             factory,
             config,
-            NullLogger<OpenMeteoWeatherLookupService>.Instance
+            NullLogger<OpenMeteoWeatherLookupService>.Instance,
+            TimeProvider.System
         );
 
         var result = await service.GetOrFetchAsync(40.7128m, -74.0060m, lookupHour);

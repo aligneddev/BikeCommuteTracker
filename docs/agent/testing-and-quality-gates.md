@@ -27,5 +27,15 @@ Mandatory test and validation requirements before implementation and merge.
   - Run all impacted commands above
   - `cd src/BikeTracking.Frontend && npm run test:e2e`
 
+## Backend Test Conventions
+- No mocking framework (Moq/NSubstitute) is used in `BikeTracking.Api.Tests`. Use real objects,
+  the EF Core in-memory provider (`TestFactories.CreateDbContext`), and in-process
+  `WebApplication`/`TestServer` hosts instead. This avoids mock-tautology and over-specified
+  mock-interaction anti-patterns and keeps tests coupled to behavior, not implementation.
+- Inject `TimeProvider` (registered as `TimeProvider.System` in `Program.cs`) into any service
+  that needs "now"/"today" instead of calling `DateTime.Now`/`DateTime.UtcNow` directly. Tests
+  pass `TestSupport.FakeTimeProvider` with a fixed instant so calendar-boundary logic (e.g.
+  "this week"/"this month") never depends on wall-clock time.
+
 ## PR Gate
 - E2E tests are required for every PR.

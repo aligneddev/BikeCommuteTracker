@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BikeTracking.Api.Application.Dashboard;
 
-public sealed class GetDashboardService(BikeTrackingDbContext dbContext)
+public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimeProvider timeProvider)
 {
     public async Task<DashboardResponse> GetAsync(
         long riderId,
@@ -23,7 +23,7 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext)
             .UserSettings.AsNoTracking()
             .SingleOrDefaultAsync(setting => setting.UserId == riderId, cancellationToken);
 
-        var nowLocal = DateTime.Now;
+        var nowLocal = timeProvider.GetLocalNow().DateTime;
         var currentMonthStart = new DateTime(nowLocal.Year, nowLocal.Month, 1);
         var nextMonthStart = currentMonthStart.AddMonths(1);
         var currentYearStart = new DateTime(nowLocal.Year, 1, 1);
