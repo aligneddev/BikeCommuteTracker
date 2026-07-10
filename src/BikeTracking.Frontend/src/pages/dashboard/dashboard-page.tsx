@@ -35,7 +35,6 @@ function buildEmptyDashboard(): DashboardResponse {
       moneySaved: {
         mileageRateSavings: null,
         fuelCostAvoided: null,
-        combinedSavings: null,
         qualifiedRideCount: 0,
       },
       expenseSummary: {
@@ -57,7 +56,6 @@ function buildEmptyDashboard(): DashboardResponse {
         label: point.label,
         mileageRateSavings: null,
         fuelCostAvoided: null,
-        combinedSavings: null,
       })),
     },
     suggestions: [],
@@ -204,14 +202,14 @@ export function DashboardPage() {
         />
         <DashboardSummaryCard
           title="Money Saved"
-          eyebrow="Combined"
-          value={formatCurrency(dashboard.totals.moneySaved.combinedSavings)}
+          eyebrow="Split savings"
+          value={formatCurrency(dashboard.totals.moneySaved.mileageRateSavings)}
           detail={`${dashboard.totals.moneySaved.qualifiedRideCount} qualified rides`}
           accentClassName="dashboard-summary-card-accent-savings"
         >
           <div className="dashboard-summary-split">
-            <span>Rate (cents per mile) {formatCurrency(dashboard.totals.moneySaved.mileageRateSavings)}</span>
-            <span>Fuel {formatCurrency(dashboard.totals.moneySaved.fuelCostAvoided)}</span>
+            <span>Mileage rate savings {formatCurrency(dashboard.totals.moneySaved.mileageRateSavings)}</span>
+            <span>Gallons-based savings {formatCurrency(dashboard.totals.moneySaved.fuelCostAvoided)}</span>
           </div>
         </DashboardSummaryCard>
         <ExpenseSummaryCard expenseSummary={dashboard.totals.expenseSummary} />

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
 using BikeTracking.Api.Application.Dashboard;
 using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Contracts;
@@ -29,6 +30,24 @@ public sealed class DashboardEndpointsTests
         var payload = await response.Content.ReadFromJsonAsync<DashboardResponse>();
         Assert.NotNull(payload);
         Assert.Equal(0m, payload.Totals.CurrentMonthMiles.Miles);
+    }
+
+    [Fact]
+    public async Task GetDashboard_MoneySavedContract_ExposesSplitFields_AndOmitsCombinedSavings()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Dashboard Contract Rider", "1234");
+
+        var response = await host.Client.GetWithAuthAsync("/api/dashboard", userId);
+        response.EnsureSuccessStatusCode();
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var moneySaved = json.RootElement.GetProperty("totals").GetProperty("moneySaved");
+
+        Assert.True(moneySaved.TryGetProperty("mileageRateSavings", out _));
+        Assert.True(moneySaved.TryGetProperty("fuelCostAvoided", out _));
+        Assert.True(moneySaved.TryGetProperty("qualifiedRideCount", out _));
+        Assert.False(moneySaved.TryGetProperty("combinedSavings", out _));
     }
 
     [Fact]

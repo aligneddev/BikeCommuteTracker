@@ -159,9 +159,6 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
     private static SavingsComputation CalculateSavings(IReadOnlyCollection<RideEntity> rides)
     {
         var totals = AggregateSavings(rides);
-        decimal? combinedSavings = totals.HasAnySavings
-            ? totals.MileageRateSavings + totals.FuelCostAvoided
-            : null;
 
         return new SavingsComputation(
             new DashboardMoneySaved(
@@ -171,7 +168,6 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
                 FuelCostAvoided: totals.HasFuelCostAvoided
                     ? RoundMoney(totals.FuelCostAvoided)
                     : null,
-                CombinedSavings: RoundMoney(combinedSavings),
                 QualifiedRideCount: totals.QualifiedRideCount
             )
         );
@@ -211,9 +207,6 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
                     .ToList();
 
                 var monthSavings = AggregateSavings(monthRides);
-                decimal? combinedSavings = monthSavings.HasAnySavings
-                    ? monthSavings.MileageRateSavings + monthSavings.FuelCostAvoided
-                    : null;
 
                 return new DashboardSavingsPoint(
                     MonthKey: GetMonthKey(month.Year, month.Month),
@@ -223,8 +216,7 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
                         : null,
                     FuelCostAvoided: monthSavings.HasFuelCostAvoided
                         ? RoundMoney(monthSavings.FuelCostAvoided)
-                        : null,
-                    CombinedSavings: RoundMoney(combinedSavings)
+                        : null
                 );
             })
             .ToList();
@@ -373,7 +365,6 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
         bool HasFuelCostAvoided
     )
     {
-        public bool HasAnySavings => HasMileageRateSavings || HasFuelCostAvoided;
     }
 
     private sealed record SavingsComputation(DashboardMoneySaved Totals);

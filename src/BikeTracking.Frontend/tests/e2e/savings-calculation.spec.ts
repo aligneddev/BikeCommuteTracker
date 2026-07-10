@@ -3,6 +3,8 @@ import { createAndLoginUser, uniqueUser } from "./support/auth-helpers";
 import {
   expenseSummaryCard,
   expenseSummaryRow,
+  moneySavedCard,
+  moneySavedRow,
   recordExpense,
 } from "./support/expense-helpers";
 import { recordRide } from "./support/ride-helpers";
@@ -37,6 +39,26 @@ async function recordMilesForOilInterval(
 }
 
 test.describe("015-savings-calculation e2e", () => {
+  test("dashboard shows split savings rows and no combined savings label", async ({
+    page,
+  }) => {
+    const userName = uniqueUser("e2e-dashboard-split-savings");
+
+    await createAndLoginUser(page, userName, TEST_PIN);
+    await recordRide(page, {
+      rideDateTimeLocal: "2026-04-16T08:00",
+      miles: "10",
+      gasPrice: "3.0000",
+    });
+
+    await page.goto("/dashboard");
+
+    const card = moneySavedCard(page);
+    await expect(moneySavedRow(card, "Mileage rate savings")).toBeVisible();
+    await expect(moneySavedRow(card, "Gallons-based savings")).toBeVisible();
+    await expect(card).not.toContainText(/combined savings/i);
+  });
+
   test("dashboard recalculates net expense total after oil price changes", async ({
     page,
   }) => {

@@ -33,3 +33,15 @@ export function expenseSummaryRow(card: Locator, label: string): Locator {
     hasText: label,
   });
 }
+
+export function moneySavedCard(page: Page): Locator {
+  return page.locator("article", {
+    has: page.getByRole("heading", { name: "Money Saved" }),
+  });
+}
+
+export function moneySavedRow(card: Locator, label: string): Locator {
+  return card.locator(".dashboard-summary-split span", {
+    hasText: label,
+  });
+}
