@@ -6,7 +6,7 @@ Use this to validate spec #27 end-to-end after implementation.
 
 1. Run app stack:
    - `dotnet run --project src/BikeTracking.AppHost`
-2. Have a rider account with ride data containing miles and savings-related snapshot data.
+2. Have rider account with ride data containing miles, plus configured user mileage rate (`MileageRateCents`) in settings.
 
 ## Backend Validation
 

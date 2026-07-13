@@ -20,7 +20,7 @@ As a rider reviewing ride results, I want to see Mileage rate savings and Gallon
 
 **Acceptance Scenarios**:
 
-1. **Given** a ride summary with valid `mileageRate`, `gallonsSaved`, and `miles`, **When** the dashboard/results view renders, **Then** it shows a line labeled "Mileage rate savings" with value `mileageRate * miles`.
+1. **Given** dashboard aggregation for a month/year window with valid configured `mileageRate` and ride `miles`, **When** the dashboard/results view renders, **Then** it shows a line labeled "Mileage rate savings" with value `configuredMileageRate * periodMiles`.
 2. **Given** a ride summary with valid `gallonsSaved` and `miles`, **When** the dashboard/results view renders, **Then** it shows a line labeled "Gallons-based savings" with value `gallonsSaved * miles`.
 3. **Given** both savings lines are displayed, **When** a rider reviews the summary, **Then** the values are not merged into a single total.
 
@@ -66,7 +66,7 @@ As a team maintaining both backend and frontend, we want automated tests and con
 
 ### Functional Requirements
 
-- **FR-001**: System MUST calculate and display "Mileage rate savings" as `mileageRate * miles`. use SnapshotMileageRateCents if set for the current ride
+- **FR-001**: System MUST calculate and display "Mileage rate savings" as `configuredMileageRate * periodMiles` for dashboard month/year aggregations, using current user settings mileage rate (`MileageRateCents`) as rate source.
 - **FR-002**: System MUST calculate and display "Gallons-based savings" as `gallonsSaved * miles`.
 - **FR-003**: System MUST render the two savings metrics as separate lines in the dashboard/results ride summary view.
 - **FR-004**: System MUST NOT combine the two savings metrics into a single displayed total in that view.
@@ -80,7 +80,7 @@ As a team maintaining both backend and frontend, we want automated tests and con
 ### Key Entities
 
 - **Ride Summary Metrics**: The displayed savings values derived from ride inputs and settings for a single ride summary view.
-- **Mileage Rate Savings**: Derived metric computed as `mileageRate * miles`, labeled "Mileage rate savings." 
+- **Mileage Rate Savings**: Derived metric computed as `configuredMileageRate * periodMiles` in dashboard month/year aggregations, labeled "Mileage rate savings."
 - **Gallons-Based Savings**: Derived metric computed as `gallonsSaved * miles`, labeled "Gallons-based savings."
 
 ## Success Criteria *(mandatory)*
@@ -88,13 +88,13 @@ As a team maintaining both backend and frontend, we want automated tests and con
 ### Measurable Outcomes
 
 - **SC-001**: 100% of ride summary screens with valid ride data display two distinct savings lines with the specified labels.
-- **SC-002**: In verification tests, 100% of the defined deterministic fixture matrix (minimum: zero-value, standard-value, snapshot-rate, missing-rate, and historical-ride cases) match expected values for both formulas independently.
+- **SC-002**: In verification tests, 100% of deterministic fixture matrix (minimum: zero-value, standard-value, settings-rate, missing-rate, and historical-ride cases) match expected values for both formulas independently.
 - **SC-003**: 0 instances of merged single-total savings display remain in the dashboard/results ride summary view.
 - **SC-004**: Backend, frontend, and end-to-end test suites each include at least one passing test that verifies both split savings metrics.
 
 ## Assumptions
 
-- Existing ride data already includes the inputs needed to compute both savings metrics.
+- Existing ride data plus user mileage-rate settings include inputs needed to compute both savings metrics.
 - Existing formatting and rounding logic is authoritative and reused unchanged.
 - No new user roles or permissions are needed for showing split savings metrics.
 - This feature is limited to splitting savings presentation and related contract/test alignment, not broader dashboard redesign.

@@ -209,7 +209,7 @@ public sealed class GetAdvancedDashboardService(
 
             if (ride.SnapshotMileageRateCents is decimal rateCents)
             {
-                mileageRateSum += ride.Miles * rateCents / 100m;
+                mileageRateSum += ride.Miles * rateCents;
                 hasMileageRate = true;
             }
         }

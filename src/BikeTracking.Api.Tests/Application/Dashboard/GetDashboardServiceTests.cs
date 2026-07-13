@@ -35,7 +35,7 @@ public sealed class GetDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetDashboardService_UsesRideSnapshotsForSavings_WhenCurrentSettingsChanged()
+    public async Task GetDashboardService_UsesCurrentSettingsMileageRate_ForMileageSavings()
     {
         using var dbContext = CreateDbContext();
         var rider = new UserEntity
@@ -74,7 +74,7 @@ public sealed class GetDashboardServiceTests
         var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
-        Assert.Equal(5m, dashboard.Totals.MoneySaved.MileageRateSavings);
+        Assert.Equal(800m, dashboard.Totals.MoneySaved.MileageRateSavings);
         Assert.Equal(1.5m, dashboard.Totals.MoneySaved.FuelCostAvoided);
     }
 
@@ -349,6 +349,15 @@ public sealed class GetDashboardServiceTests
         dbContext.Users.Add(rider);
         await dbContext.SaveChangesAsync();
 
+        dbContext.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = rider.UserId,
+                MileageRateCents = 100.5m,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+
         dbContext.Rides.Add(
             new RideEntity
             {
@@ -357,7 +366,7 @@ public sealed class GetDashboardServiceTests
                 Miles = 1m,
                 GasPricePerGallon = 201m,
                 SnapshotAverageCarMpg = 200m,
-                SnapshotMileageRateCents = 100.5m,
+                SnapshotMileageRateCents = 40m,
                 CreatedAtUtc = FixedUtc,
             }
         );
@@ -366,12 +375,12 @@ public sealed class GetDashboardServiceTests
         var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
-        Assert.Equal(1.01m, dashboard.Totals.MoneySaved.MileageRateSavings);
+        Assert.Equal(100.5m, dashboard.Totals.MoneySaved.MileageRateSavings);
         Assert.Equal(1.01m, dashboard.Totals.MoneySaved.FuelCostAvoided);
     }
 
     [Fact]
-    public async Task GetDashboardService_ZeroSplitSavings_StillReturnedAsZero()
+    public async Task GetDashboardService_ZeroFuelSavings_StillReturnedAsZero()
     {
         using var dbContext = CreateDbContext();
         var rider = new UserEntity
@@ -400,7 +409,7 @@ public sealed class GetDashboardServiceTests
         var service = new GetDashboardService(dbContext, TimeProvider.System);
         var dashboard = await service.GetAsync(rider.UserId);
 
-        Assert.Equal(0m, dashboard.Totals.MoneySaved.MileageRateSavings);
+        Assert.Null(dashboard.Totals.MoneySaved.MileageRateSavings);
         Assert.Equal(0m, dashboard.Totals.MoneySaved.FuelCostAvoided);
         Assert.Equal(1, dashboard.Totals.MoneySaved.QualifiedRideCount);
     }

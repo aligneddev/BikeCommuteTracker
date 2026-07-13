@@ -6,8 +6,10 @@ No new persisted entities or migrations are required. This feature updates compu
 
 ### `RideEntity` (unchanged schema)
 - `Miles: decimal`
-- `SnapshotMileageRateCents: decimal?`
 - Inputs required to derive gallons-based metric as defined in spec (`gallonsSaved` source from existing ride snapshot-derived data path)
+
+### `UserSettingsEntity` (unchanged schema)
+- `MileageRateCents: decimal?` (rate source for dashboard month/year mileage-rate savings aggregation)
 
 ### `DashboardMoneySaved` projection (`src/BikeTracking.Api/Contracts/DashboardContracts.cs`)
 - `MileageRateSavings: decimal?`
@@ -18,9 +20,9 @@ No new persisted entities or migrations are required. This feature updates compu
 
 ### Mileage Rate Savings
 - **Label**: `Mileage rate savings`
-- **Formula**: `mileageRate * miles`
+- **Formula**: `configuredMileageRate * periodMiles`
 - **Validation/Rules**:
-  - Uses ride snapshot mileage rate for historical correctness when present.
+  - Uses current user settings `MileageRateCents` as rate source for dashboard period totals.
   - Renders as formatted currency with current rounding rules.
   - Zero values still render.
 
@@ -40,4 +42,4 @@ No new persisted entities or migrations are required. This feature updates compu
 
 ## Relationship/Flow
 
-`RideEntity snapshot inputs` → `GetDashboardService` aggregation → `DashboardMoneySaved contract` → `dashboard-api.ts typed model` → `dashboard-page.tsx split metric display`
+`UserSettingsEntity.MileageRateCents` + `RideEntity.Miles` → `GetDashboardService` / `GetYearStatsDashboardService` aggregation → `DashboardMoneySaved` / `YearStatsSavingsPoint` contract → frontend typed model → split metric display

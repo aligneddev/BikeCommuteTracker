@@ -28,7 +28,7 @@ This feature keeps the existing dashboard endpoint and requires the consumer-fac
 
 ## Formula Requirements (Spec Source of Truth)
 
-- Mileage rate savings = `mileageRate * miles`
+- Mileage rate savings = `configuredMileageRate * periodMiles` (rate source: `UserSettings.MileageRateCents` for dashboard aggregations)
 - Gallons-based savings = `gallonsSaved * miles`
 
 Backend contracts and frontend TypeScript models/tests must stay synchronized for these existing fields in the same change.

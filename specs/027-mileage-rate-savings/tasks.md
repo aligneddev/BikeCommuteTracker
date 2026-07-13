@@ -33,12 +33,13 @@
 
 ### Tests for User Story 1
 
-- [X] T005 [P] [US1] Write failing backend tests for `mileageRate * miles` (snapshot-aware) and `gallonsSaved * miles` formulas in src/BikeTracking.Api.Tests/Application/Dashboard/GetDashboardServiceTests.cs
+- [X] T005 [P] [US1] Write failing backend tests for `configuredMileageRate * periodMiles` (settings-based) and `gallonsSaved * miles` formulas in src/BikeTracking.Api.Tests/Application/Dashboard/GetDashboardServiceTests.cs
 - [X] T006 [P] [US1] Write failing dashboard rendering tests for labels "Mileage rate savings" and "Gallons-based savings" with no merged display line in src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.test.tsx
 
 ### Implementation for User Story 1
 
 - [X] T007 [US1] Implement split-savings totals aggregation with spec formulas in src/BikeTracking.Api/Application/Dashboard/GetDashboardService.cs
+- [X] T025 [US1] Align year-stats monthly/year totals mileage-rate math to settings-based period formula in src/BikeTracking.Api/Application/Dashboard/GetYearStatsDashboardService.cs and src/BikeTracking.Api.Tests/Application/Dashboard/GetYearStatsDashboardServiceTests.cs
 - [X] T008 [US1] Render split savings rows and remove merged savings line from the target summary card in src/BikeTracking.Frontend/src/pages/dashboard/dashboard-page.tsx
 - [X] T009 [US1] Align dashboard response consumption for split savings fields in src/BikeTracking.Frontend/src/services/dashboard-api.ts
 

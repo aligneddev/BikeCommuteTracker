@@ -54,7 +54,7 @@ The response includes `FuelCostEstimated = true` for a given time window when an
 
 **Question**: What is the formula and data source for mileage-rate savings?
 
-**Decision**: Mileage-rate savings use **per-ride `SnapshotMileageRateCents`** (already stored as of spec 012). Formula per ride: `miles × snapshotMileageRateCents / 100`. Summed across all rides in a window.
+**Decision**: Mileage-rate savings use **per-ride `SnapshotMileageRateCents`** (already stored as of spec 012). Formula per ride: `miles × snapshotMileageRateCents`. Summed across all rides in a window.
 
 If `SnapshotMileageRateCents IS NULL` for a ride, that ride contributes $0 to mileage-rate savings. If the user's current `MileageRateCents` setting is NULL, the reminder card is shown. The reminder flag is derived from `UserSettings.MileageRateCents IS NULL` — not from ride snapshots (a user may have set it after early rides).
 

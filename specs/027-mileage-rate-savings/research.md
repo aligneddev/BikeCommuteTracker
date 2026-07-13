@@ -9,7 +9,7 @@
 ## Decision 2: Treat spec formulas as authoritative for this feature
 
 - **Decision**: Use the formulas defined in the feature spec as the source of truth:
-  - Mileage rate savings = `mileageRate * miles` (using ride snapshot mileage rate when available).
+  - Mileage rate savings = `configuredMileageRate * periodMiles` (using current user settings mileage rate for dashboard month/year aggregation).
   - Gallons-based savings = `gallonsSaved * miles`.
 - **Rationale**: The user requested that planning stay tight and use formulas already defined in spec #27.
 - **Alternatives considered**: Preserving legacy merged-savings semantics only (rejected because it conflicts with FR-001..FR-004).
@@ -40,6 +40,6 @@ None. Technical context clarifications are resolved for planning scope.
 
 ### Non-Goals Reaffirmed
 
-- No redesign of advanced dashboard or year-stats savings contracts.
+- No redesign of advanced dashboard UX beyond keeping savings formula source aligned with dashboard month/year settings-based aggregation.
 - No schema or migration work for ride-entry persistence.
 - No changes to gas-price/weather collection behavior outside existing ride-entry flows.

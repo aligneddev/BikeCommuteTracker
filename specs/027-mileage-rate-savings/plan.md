@@ -7,7 +7,7 @@
 ## Summary
 
 Split the dashboard/results savings presentation into two explicit metrics and stop presenting a merged single-total savings value in that view. Keep scope limited to savings calculation/display, preserve existing formatting/rounding behavior, and keep backend/frontend tests aligned with the two formulas defined in the spec:
-- Mileage rate savings = `mileageRate * miles` (using `SnapshotMileageRateCents` for historical rides when present)
+- Mileage rate savings = `configuredMileageRate * periodMiles` (using `UserSettings.MileageRateCents` for dashboard period aggregations)
 - Gallons-based savings = `gallonsSaved * miles`
 - Canonical mapping: UI label "Gallons-based savings" -> contract field `totals.moneySaved.fuelCostAvoided`
 
@@ -31,7 +31,7 @@ Split the dashboard/results savings presentation into two explicit metrics and s
 - Do not broaden to unrelated dashboard redesign work
 - Keep currency/unit/rounding behavior unchanged
 - Keep ride-entry and persisted data shape unchanged
-- Preserve historical snapshot behavior for mileage-rate inputs
+- Keep mileage-rate source aligned to current settings for dashboard month/year aggregation logic
 
 **Scale/Scope**: Single dashboard/results savings card/section and its backing aggregation/tests
 

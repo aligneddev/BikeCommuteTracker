@@ -78,7 +78,7 @@ fuel_cost_estimated = any ride in window has GasPricePerGallon IS NULL
 ### Mileage Rate Savings (per window)
 
 ```
-mileage_rate_savings_for_ride = ride.Miles × ride.SnapshotMileageRateCents / 100
+mileage_rate_savings_for_ride = ride.Miles × ride.SnapshotMileageRateCents
 total_mileage_rate_savings     = Σ mileage_rate_savings_for_ride
 
 mileage_rate_savings = null if no rides have SnapshotMileageRateCents set
