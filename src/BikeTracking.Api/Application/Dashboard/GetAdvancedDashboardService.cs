@@ -202,14 +202,22 @@ public sealed class GetAdvancedDashboardService(
 
                 if (gasPrice.HasValue)
                 {
-                    fuelCostSum += gallons * gasPrice.Value;
+                    fuelCostSum += SavingsCalculationRules.CalculateFuelCostAvoided(
+                        ride.Miles,
+                        mpg,
+                        gasPrice.Value
+                    );
                     hasFuelCost = true;
                 }
             }
 
-            if (ride.SnapshotMileageRateCents is decimal rateCents)
+            var rideMileageRateSavings = SavingsCalculationRules.CalculateMileageRateSavings(
+                ride.Miles,
+                ride.SnapshotMileageRateCents
+            );
+            if (rideMileageRateSavings.HasValue)
             {
-                mileageRateSum += ride.Miles * rateCents;
+                mileageRateSum += rideMileageRateSavings.Value;
                 hasMileageRate = true;
             }
         }

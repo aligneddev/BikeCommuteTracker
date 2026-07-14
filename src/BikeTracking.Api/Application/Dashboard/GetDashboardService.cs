@@ -1,4 +1,5 @@
 using System.Globalization;
+using BikeTracking.Api.Application.Dashboard;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
@@ -76,7 +77,9 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
             ),
             Suggestions: BuildSuggestions(settings, gallonsAvoided, yearToDateMiles),
             MissingData: new DashboardMissingData(
-                RidesMissingSavingsSnapshot: rides.Count(ride => ride.SnapshotAverageCarMpg is null),
+                RidesMissingSavingsSnapshot: rides.Count(ride =>
+                    ride.SnapshotAverageCarMpg is null
+                ),
                 RidesMissingGasPrice: rides.Count(ride => ride.GasPricePerGallon is null),
                 RidesMissingTemperature: rides.Count(ride => ride.Temperature is null),
                 RidesMissingDuration: rides.Count(ride => ride.RideMinutes is null)
@@ -237,9 +240,10 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
 
         foreach (var ride in rides)
         {
-            var rideMileageRateSavings = mileageRateCents is decimal rateCents
-                ? ride.Miles * rateCents
-                : (decimal?)null;
+            var rideMileageRateSavings = SavingsCalculationRules.CalculateMileageRateSavings(
+                ride.Miles,
+                mileageRateCents
+            );
             var rideFuelCostAvoided = CalculateFuelCostAvoided(ride);
 
             if (rideMileageRateSavings.HasValue || rideFuelCostAvoided.HasValue)
@@ -339,17 +343,11 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
 
     private static decimal? CalculateFuelCostAvoided(RideEntity ride)
     {
-        if (ride.SnapshotAverageCarMpg is not decimal averageCarMpg || averageCarMpg <= 0m)
-        {
-            return null;
-        }
-
-        if (ride.GasPricePerGallon is not decimal gasPricePerGallon)
-        {
-            return null;
-        }
-
-        return ride.Miles / averageCarMpg * gasPricePerGallon;
+        return SavingsCalculationRules.CalculateFuelCostAvoided(
+            ride.Miles,
+            ride.SnapshotAverageCarMpg,
+            ride.GasPricePerGallon
+        );
     }
 
     private static decimal? RoundMoney(decimal? value)
@@ -363,9 +361,7 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
         int QualifiedRideCount,
         bool HasMileageRateSavings,
         bool HasFuelCostAvoided
-    )
-    {
-    }
+    ) { }
 
     private sealed record SavingsComputation(DashboardMoneySaved Totals);
 }

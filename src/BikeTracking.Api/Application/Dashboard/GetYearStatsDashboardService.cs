@@ -344,20 +344,25 @@ public sealed class GetYearStatsDashboardService(
 
         foreach (var ride in rides)
         {
-            if (mileageRateCents is decimal rateCents)
+            var rideMileageRateSavings = SavingsCalculationRules.CalculateMileageRateSavings(
+                ride.Miles,
+                mileageRateCents
+            );
+            if (rideMileageRateSavings.HasValue)
             {
                 hasMileageRateSavings = true;
-                mileageRateSavings += ride.Miles * rateCents;
+                mileageRateSavings += rideMileageRateSavings.Value;
             }
 
-            if (
-                ride.SnapshotAverageCarMpg is decimal averageCarMpg
-                && averageCarMpg > 0m
-                && ride.GasPricePerGallon is decimal gasPricePerGallon
-            )
+            var rideFuelCostAvoided = SavingsCalculationRules.CalculateFuelCostAvoided(
+                ride.Miles,
+                ride.SnapshotAverageCarMpg,
+                ride.GasPricePerGallon
+            );
+            if (rideFuelCostAvoided.HasValue)
             {
                 hasFuelCostAvoided = true;
-                fuelCostAvoided += ride.Miles / averageCarMpg * gasPricePerGallon;
+                fuelCostAvoided += rideFuelCostAvoided.Value;
             }
         }
 

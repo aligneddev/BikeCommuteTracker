@@ -63,7 +63,7 @@ public sealed class CsvImportDifficultyTests
     {
         var row = MakeRow(difficulty: value);
         var errors = CsvValidationRules.ValidateRow(row);
-        var error = Assert.Single(errors.Where(e => e.Field == "Difficulty"));
+        var error = Assert.Single(errors, e => e.Field == "Difficulty");
         Assert.Equal("INVALID_DIFFICULTY", error.Code);
         Assert.Contains("1", error.Message);
         Assert.Contains("5", error.Message);
@@ -115,7 +115,7 @@ public sealed class CsvImportDifficultyTests
     {
         var row = MakeRow(primaryTravelDirection: value);
         var errors = CsvValidationRules.ValidateRow(row);
-        var error = Assert.Single(errors.Where(e => e.Field == "PrimaryTravelDirection"));
+        var error = Assert.Single(errors, e => e.Field == "PrimaryTravelDirection");
         Assert.Equal("INVALID_DIRECTION", error.Code);
         // Should list accepted values
         Assert.Contains("North", error.Message);
