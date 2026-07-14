@@ -65,7 +65,7 @@ test.describe("012-dashboard-stats e2e", () => {
     await page.goto("/dashboard");
     const card = moneySavedCard(page);
     await expect(moneySavedRow(card, "Mileage rate savings")).toContainText(
-      "$5.00",
+      "$500.00",
     );
     await expect(moneySavedRow(card, "Gallons-based savings")).toContainText(
       "$1.50",
@@ -76,7 +76,7 @@ test.describe("012-dashboard-stats e2e", () => {
 
     await page.goto("/dashboard");
     await expect(moneySavedRow(card, "Mileage rate savings")).toContainText(
-      "$12.00",
+      "$1,400.00",
     );
     await expect(moneySavedRow(card, "Gallons-based savings")).toContainText(
       "$2.25",
