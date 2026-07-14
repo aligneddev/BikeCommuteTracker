@@ -34,7 +34,6 @@ describe("dashboard-api", () => {
             moneySaved: {
               mileageRateSavings: 15,
               fuelCostAvoided: 7,
-              combinedSavings: 22,
               qualifiedRideCount: 3,
             },
           },
@@ -65,5 +64,6 @@ describe("dashboard-api", () => {
       expect.objectContaining({ method: "GET" }),
     );
     expect(result.totals.allTimeMiles.miles).toBe(120);
+    expect("combinedSavings" in result.totals.moneySaved).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { uniqueUser } from "./support/auth-helpers";
+import { moneySavedCard, moneySavedRow } from "./support/expense-helpers";
 
 async function saveDashboardSettings(
   page: import("@playwright/test").Page,
@@ -62,13 +63,24 @@ test.describe("012-dashboard-stats e2e", () => {
     await recordRideWithGasPrice(page, "10", "3.00");
 
     await page.goto("/dashboard");
-    await expect(page.getByText("$6.50", { exact: true })).toBeVisible();
+    const card = moneySavedCard(page);
+    await expect(moneySavedRow(card, "Mileage rate savings")).toContainText(
+      "$500.00",
+    );
+    await expect(moneySavedRow(card, "Gallons-based savings")).toContainText(
+      "$1.50",
+    );
 
     await saveDashboardSettings(page, "40", "70");
     await recordRideWithGasPrice(page, "10", "3.00");
 
     await page.goto("/dashboard");
-    await expect(page.getByText("$14.25", { exact: true })).toBeVisible();
+    await expect(moneySavedRow(card, "Mileage rate savings")).toContainText(
+      "$1,400.00",
+    );
+    await expect(moneySavedRow(card, "Gallons-based savings")).toContainText(
+      "$2.25",
+    );
   });
 
   test("optional metrics appear only after approval", async ({ page }) => {

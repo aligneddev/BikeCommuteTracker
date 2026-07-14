@@ -121,7 +121,7 @@ introducing Tailwind.
 ## Decision 6: Expose two baseline savings calculations plus a combined total
 
 **Decision**: The dashboard money-saved model will include:
-- `MileageRateSavings`: `miles * mileageRateCents / 100`
+- `MileageRateSavings`: `miles * mileageRateCents`
 - `FuelCostAvoided`: `(miles / averageCarMpg) * gasPricePerGallon`
 - `CombinedSavings`: sum of the two only when both components are calculable for the included rides
 

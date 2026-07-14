@@ -247,7 +247,7 @@ public sealed class GetAdvancedDashboardServiceTests
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Milestone Rider");
 
-        // Mileage rate savings: 100 miles × $0.67 = $67 > $50
+        // Mileage rate savings: 100 miles × 67 = 6700 > 50
         dbContext.Rides.Add(
             new RideEntity
             {
@@ -365,8 +365,8 @@ public sealed class GetAdvancedDashboardServiceTests
         var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
-        // 10 miles × $0.67 = $6.70
-        Assert.Equal(6.70m, result.SavingsWindows.AllTime.MileageRateSavings);
+        // 10 miles × 67 = 670
+        Assert.Equal(670m, result.SavingsWindows.AllTime.MileageRateSavings);
     }
 
     // ── US5: Expenses in Savings Breakdown ────────────────────────────────
@@ -458,10 +458,10 @@ public sealed class GetAdvancedDashboardServiceTests
         var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
-        // 100 miles × $0.67 = $67 combined savings - $30 expenses = $37 net
-        Assert.Equal(67m, result.SavingsWindows.AllTime.CombinedSavings);
+        // 100 miles × 67 = 6700 combined savings - 30 expenses = 6670 net
+        Assert.Equal(6700m, result.SavingsWindows.AllTime.CombinedSavings);
         Assert.Equal(30m, result.SavingsWindows.AllTime.TotalExpenses);
-        Assert.Equal(37m, result.SavingsWindows.AllTime.NetSavings);
+        Assert.Equal(6670m, result.SavingsWindows.AllTime.NetSavings);
     }
 
     [Fact]
@@ -480,13 +480,13 @@ public sealed class GetAdvancedDashboardServiceTests
                 CreatedAtUtc = DateTime.UtcNow,
             }
         );
-        // $20 expense — more than the $6.70 in savings
+        // 700 expense exceeds 10 × 67 = 670 savings
         dbContext.Expenses.Add(
             new ExpenseEntity
             {
                 RiderId = rider.UserId,
                 ExpenseDate = DateTime.Now.AddMonths(-1),
-                Amount = 20m,
+                Amount = 700m,
                 IsDeleted = false,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow,
@@ -497,7 +497,7 @@ public sealed class GetAdvancedDashboardServiceTests
         var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
-        // Net savings should be negative: $6.70 - $20 = -$13.30
+        // Net savings should be negative: 670 - 700 = -30
         Assert.NotNull(result.SavingsWindows.AllTime.NetSavings);
         Assert.True(result.SavingsWindows.AllTime.NetSavings < 0m);
     }

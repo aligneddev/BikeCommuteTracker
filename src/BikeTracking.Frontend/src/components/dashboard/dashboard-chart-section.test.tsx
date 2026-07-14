@@ -8,8 +8,8 @@ const mileageByMonth = [
 ]
 
 const savingsByMonth = [
-  { monthKey: '2025-01', label: 'Jan', mileageRateSavings: 1, fuelCostAvoided: 2, combinedSavings: 3 },
-  { monthKey: '2025-02', label: 'Feb', mileageRateSavings: 4, fuelCostAvoided: 5, combinedSavings: 9 },
+  { monthKey: '2025-01', label: 'Jan', mileageRateSavings: 1, fuelCostAvoided: 2 },
+  { monthKey: '2025-02', label: 'Feb', mileageRateSavings: 4, fuelCostAvoided: 5 },
 ]
 
 describe('DashboardChartSection', () => {

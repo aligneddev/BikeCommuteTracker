@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Endpoints;
@@ -34,6 +35,25 @@ public sealed partial class RidesEndpointsTests
         Assert.True(payload.RideId > 0);
         Assert.Equal(userId, payload.RiderId);
         Assert.NotEqual(DateTime.MinValue, payload.SavedAtUtc);
+    }
+
+    [Fact]
+    public async Task PostRecordRide_ResponseShape_RemainsRideEntryFocused()
+    {
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Ride Shape");
+
+        var request = new RecordRideRequest(RideDateTimeLocal: DateTime.Now, Miles: 7.5m);
+        var response = await host.Client.PostWithAuthAsync("/api/rides", request, userId);
+        response.EnsureSuccessStatusCode();
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = json.RootElement;
+        Assert.True(root.TryGetProperty("rideId", out _));
+        Assert.True(root.TryGetProperty("riderId", out _));
+        Assert.True(root.TryGetProperty("savedAtUtc", out _));
+        Assert.False(root.TryGetProperty("moneySaved", out _));
+        Assert.False(root.TryGetProperty("combinedSavings", out _));
     }
 
     [Fact]

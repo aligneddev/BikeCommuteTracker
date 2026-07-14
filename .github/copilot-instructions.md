@@ -137,5 +137,5 @@ From `src/BikeTracking.Frontend`:
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-[specs/026-year-stats-dashboard/plan.md](../specs/026-year-stats-dashboard/plan.md)
+[specs/027-mileage-rate-savings/plan.md](../specs/027-mileage-rate-savings/plan.md)
 <!-- SPECKIT END -->

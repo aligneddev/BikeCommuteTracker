@@ -38,6 +38,14 @@ public sealed class GetYearStatsDashboardServiceTests
     {
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Full Year Rider");
+        dbContext.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = rider.UserId,
+                MileageRateCents = 50m,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
 
         for (var month = 1; month <= 12; month++)
         {
@@ -71,7 +79,7 @@ public sealed class GetYearStatsDashboardServiceTests
             Assert.Equal(10m * month, point.Miles);
 
             var savingsPoint = response.SavingsByMonth[month - 1];
-            Assert.Equal(5m * month, savingsPoint.MileageRateSavings);
+            Assert.Equal(500m * month, savingsPoint.MileageRateSavings);
             Assert.NotNull(savingsPoint.FuelCostAvoided);
         }
     }
@@ -136,7 +144,7 @@ public sealed class GetYearStatsDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_UsesRideSnapshotsForSavings_WhenCurrentSettingsChanged()
+    public async Task GetAsync_UsesCurrentSettingsMileageRate_ForMileageSavings()
     {
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Snapshot Rider");
@@ -169,9 +177,9 @@ public sealed class GetYearStatsDashboardServiceTests
         var response = await service.GetAsync(rider.UserId, 2022);
 
         var june = response.SavingsByMonth[5];
-        Assert.Equal(5m, june.MileageRateSavings);
+        Assert.Equal(800m, june.MileageRateSavings);
         Assert.Equal(1.5m, june.FuelCostAvoided);
-        Assert.Equal(6.5m, june.CombinedSavings);
+        Assert.Equal(801.5m, june.CombinedSavings);
     }
 
     [Fact]
@@ -242,6 +250,14 @@ public sealed class GetYearStatsDashboardServiceTests
     {
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "Totals Rider");
+        dbContext.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = rider.UserId,
+                MileageRateCents = 50m,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
 
         dbContext.Rides.AddRange(
             new RideEntity
@@ -292,7 +308,7 @@ public sealed class GetYearStatsDashboardServiceTests
         var response = await service.GetAsync(rider.UserId, 2025);
 
         Assert.Equal(150m, response.Totals.TotalMiles);
-        Assert.Equal(75m + 22.5m, response.Totals.TotalCombinedSavings);
+        Assert.Equal(7500m + 22.5m, response.Totals.TotalCombinedSavings);
         Assert.Equal(40m, response.Totals.ExpenseSummary.TotalManualExpenses);
     }
 

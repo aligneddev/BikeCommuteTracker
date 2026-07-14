@@ -13,9 +13,8 @@ namespace BikeTracking.Api.Application.Dashboard;
 /// Returns mileage, savings, difficulty, and wind-resistance analytics scoped to a single
 /// calendar year (Jan-Dec), rather than a rolling window (<see cref="GetDashboardService"/>)
 /// or an all-time/calendar-window breakdown (<see cref="GetAdvancedDashboardService"/>).
-/// Reuses the same per-ride snapshot fields and F# domain calculations as those services,
-/// unchanged, so historical accuracy (FR-006) and existing rolling/all-time behavior
-/// (FR-005) are preserved.
+/// Reuses difficulty/wind F# calculations while keeping savings aggregation aligned with
+/// current dashboard settings and monthly/yearly mileage totals.
 /// </summary>
 public sealed class GetYearStatsDashboardService(
     BikeTrackingDbContext dbContext,
@@ -65,9 +64,14 @@ public sealed class GetYearStatsDashboardService(
         return new YearStatsDashboardResponse(
             Year: year,
             HasDataForYear: hasDataForYear,
-            Totals: BuildTotalsSection(rides, totalManualExpenses, settings?.OilChangePrice),
+            Totals: BuildTotalsSection(
+                rides,
+                totalManualExpenses,
+                settings?.OilChangePrice,
+                settings?.MileageRateCents
+            ),
             MileageByMonth: BuildMileageSeries(rides, year),
-            SavingsByMonth: BuildSavingsSeries(rides, year),
+            SavingsByMonth: BuildSavingsSeries(rides, year, settings?.MileageRateCents),
             Difficulty: BuildDifficultySection(rides, year),
             WindResistance: BuildWindResistanceSection(rides, year)
         );
@@ -76,11 +80,12 @@ public sealed class GetYearStatsDashboardService(
     private static YearStatsTotals BuildTotalsSection(
         IReadOnlyList<RideEntity> rides,
         decimal totalManualExpenses,
-        decimal? oilChangePrice
+        decimal? oilChangePrice,
+        decimal? mileageRateCents
     )
     {
         var totalMiles = rides.Sum(ride => ride.Miles);
-        var savings = AggregateSavings(rides);
+        var savings = AggregateSavings(rides, mileageRateCents);
         decimal? totalCombinedSavings = savings.HasAnySavings
             ? RoundMoney(savings.MileageRateSavings + savings.FuelCostAvoided)
             : null;
@@ -169,7 +174,8 @@ public sealed class GetYearStatsDashboardService(
 
     private static IReadOnlyList<YearStatsSavingsPoint> BuildSavingsSeries(
         IReadOnlyList<RideEntity> rides,
-        int year
+        int year,
+        decimal? mileageRateCents
     )
     {
         return EnumerateMonthsOfYear(year)
@@ -179,7 +185,7 @@ public sealed class GetYearStatsDashboardService(
                     .Where(ride => IsWithinMonth(ride.RideDateTimeLocal, year, month))
                     .ToList();
 
-                var savings = AggregateSavings(monthRides);
+                var savings = AggregateSavings(monthRides, mileageRateCents);
                 decimal? combinedSavings = savings.HasAnySavings
                     ? savings.MileageRateSavings + savings.FuelCostAvoided
                     : null;
@@ -326,7 +332,10 @@ public sealed class GetYearStatsDashboardService(
             _ => $"{(rating > 0 ? "+" : "")}{rating}",
         };
 
-    private static SavingsAggregate AggregateSavings(IEnumerable<RideEntity> rides)
+    private static SavingsAggregate AggregateSavings(
+        IEnumerable<RideEntity> rides,
+        decimal? mileageRateCents
+    )
     {
         var mileageRateSavings = 0m;
         var fuelCostAvoided = 0m;
@@ -335,20 +344,25 @@ public sealed class GetYearStatsDashboardService(
 
         foreach (var ride in rides)
         {
-            if (ride.SnapshotMileageRateCents is decimal rateCents)
+            var rideMileageRateSavings = SavingsCalculationRules.CalculateMileageRateSavings(
+                ride.Miles,
+                mileageRateCents
+            );
+            if (rideMileageRateSavings.HasValue)
             {
                 hasMileageRateSavings = true;
-                mileageRateSavings += ride.Miles * rateCents / 100m;
+                mileageRateSavings += rideMileageRateSavings.Value;
             }
 
-            if (
-                ride.SnapshotAverageCarMpg is decimal averageCarMpg
-                && averageCarMpg > 0m
-                && ride.GasPricePerGallon is decimal gasPricePerGallon
-            )
+            var rideFuelCostAvoided = SavingsCalculationRules.CalculateFuelCostAvoided(
+                ride.Miles,
+                ride.SnapshotAverageCarMpg,
+                ride.GasPricePerGallon
+            );
+            if (rideFuelCostAvoided.HasValue)
             {
                 hasFuelCostAvoided = true;
-                fuelCostAvoided += ride.Miles / averageCarMpg * gasPricePerGallon;
+                fuelCostAvoided += rideFuelCostAvoided.Value;
             }
         }
 

@@ -22,7 +22,6 @@ public sealed record DashboardMileageMetric(decimal Miles, int RideCount, string
 public sealed record DashboardMoneySaved(
     decimal? MileageRateSavings,
     decimal? FuelCostAvoided,
-    decimal? CombinedSavings,
     int QualifiedRideCount
 );
 
@@ -43,8 +42,7 @@ public sealed record DashboardSavingsPoint(
     string MonthKey,
     string Label,
     decimal? MileageRateSavings,
-    decimal? FuelCostAvoided,
-    decimal? CombinedSavings
+    decimal? FuelCostAvoided
 );
 
 public sealed record DashboardMetricSuggestion(

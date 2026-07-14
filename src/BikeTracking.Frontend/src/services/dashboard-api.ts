@@ -8,7 +8,6 @@ export interface DashboardMileageMetric {
 export interface DashboardMoneySaved {
   mileageRateSavings: number | null;
   fuelCostAvoided: number | null;
-  combinedSavings: number | null;
   qualifiedRideCount: number;
 }
 
@@ -40,7 +39,6 @@ export interface DashboardCharts {
     label: string;
     mileageRateSavings: number | null;
     fuelCostAvoided: number | null;
-    combinedSavings: number | null;
   }>;
 }
 

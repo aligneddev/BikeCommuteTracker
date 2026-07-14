@@ -85,7 +85,7 @@ let calculateMileageRateSavings (rides: RideSnapshot list) : decimal option =
         rides
         |> List.choose (fun r ->
             match r.SnapshotMileageRateCents with
-            | Some rateCents -> Some(r.Miles * rateCents / 100m)
+            | Some rateCents -> Some(r.Miles * rateCents)
             | None -> None)
 
     match qualifiedRides with
