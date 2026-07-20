@@ -426,7 +426,8 @@ public sealed class GetAdvancedDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetAdvancedDashboardService_WithExpenses_NetSavingsIsCombinedMinusExpenses()
+    public async Task
+        GetAdvancedDashboardService_WithFuelCostAndMileageRate_NetSavingsUsesFuelCostOnly()
     {
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "NetSavings Rider");
@@ -437,6 +438,8 @@ public sealed class GetAdvancedDashboardServiceTests
                 RiderId = rider.UserId,
                 RideDateTimeLocal = DateTime.Now.AddMonths(-3),
                 Miles = 100m,
+                SnapshotAverageCarMpg = 20m,
+                GasPricePerGallon = 3m,
                 SnapshotMileageRateCents = 67m,
                 CreatedAtUtc = DateTime.UtcNow,
             }
@@ -458,10 +461,13 @@ public sealed class GetAdvancedDashboardServiceTests
         var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
         var result = await service.GetAsync(rider.UserId);
 
-        // 100 miles × 67 = 6700 combined savings - 30 expenses = 6670 net
-        Assert.Equal(6700m, result.SavingsWindows.AllTime.CombinedSavings);
+        // 100 miles / 20 mpg × $3 = $15 fuel cost avoided - $30 expenses = -$15 net
+        // Mileage-rate savings still exists, but it does not feed net savings.
+        Assert.Equal(15m, result.SavingsWindows.AllTime.FuelCostAvoided);
+        Assert.Equal(6700m, result.SavingsWindows.AllTime.MileageRateSavings);
+        Assert.Equal(6715m, result.SavingsWindows.AllTime.CombinedSavings);
         Assert.Equal(30m, result.SavingsWindows.AllTime.TotalExpenses);
-        Assert.Equal(6670m, result.SavingsWindows.AllTime.NetSavings);
+        Assert.Equal(-15m, result.SavingsWindows.AllTime.NetSavings);
     }
 
     [Fact]

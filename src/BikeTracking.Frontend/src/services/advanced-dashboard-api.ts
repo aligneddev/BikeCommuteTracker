@@ -23,8 +23,8 @@ export interface AdvancedSavingsWindow {
    */
   oilChangeSavings: number | null;
   /**
-   * Net financial position: combinedSavings + oilChangeSavings − totalExpenses.
-   * Null only when all savings are null and expenses are zero. Can be negative.
+   * Net financial position: fuelCostAvoided + oilChangeSavings − totalExpenses.
+   * Null only when fuel/oil savings are unavailable and expenses are zero. Can be negative.
    */
   netSavings: number | null;
 }

@@ -88,8 +88,8 @@ public sealed record AdvancedSavingsWindow(
     /// </summary>
     decimal? OilChangeSavings,
     /// <summary>
-    /// Net financial position: (FuelCostAvoided ?? 0) + (MileageRateSavings ?? 0) + (OilChangeSavings ?? 0) − TotalExpenses.
-    /// Null only when all savings components are null and expenses are zero.
+    /// Net financial position: (FuelCostAvoided ?? 0) + (OilChangeSavings ?? 0) − TotalExpenses.
+    /// Null only when fuel/oil savings are unavailable and expenses are zero.
     /// Can be negative when expenses exceed savings.
     /// </summary>
     decimal? NetSavings
