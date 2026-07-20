@@ -253,15 +253,12 @@ public sealed class GetAdvancedDashboardService(
             oilChangeSavings = crossings > 0 ? RoundTo2(crossings * oilChangePrice.Value) : 0m;
         }
 
-        // Net savings: gross savings + oil-change offset − expenses.
-        // Null only when all savings are unavailable and there are no expenses.
+        // Net savings: fuel-cost avoided plus oil-change offset minus expenses.
         decimal? netSavings = null;
-        bool hasSavingsData = combinedSavings.HasValue || oilChangeSavings.HasValue;
+        bool hasSavingsData = fuelCostAvoided.HasValue || oilChangeSavings.HasValue;
         if (hasSavingsData || totalExpenses > 0m)
         {
-            netSavings = RoundTo2(
-                (combinedSavings ?? 0m) + (oilChangeSavings ?? 0m) - totalExpenses
-            );
+            netSavings = RoundTo2((fuelCostAvoided ?? 0m) + (oilChangeSavings ?? 0m) - totalExpenses);
         }
 
         return new AdvancedSavingsWindow(
