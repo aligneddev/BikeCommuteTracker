@@ -59,9 +59,6 @@ function WindowRow({ window: w }: WindowRowProps) {
         ) : null}
       </td>
       <td className="savings-windows-cell">{formatCurrency(w.mileageRateSavings)}</td>
-      <td className="savings-windows-cell savings-windows-combined">
-        {formatCurrency(w.combinedSavings)}
-      </td>
       <td className="savings-windows-cell">{formatCurrency(w.totalExpenses)}</td>
       <td className="savings-windows-cell">{formatCurrency(w.oilChangeSavings)}</td>
       <td
@@ -96,7 +93,6 @@ export function SavingsWindowsTable({
             <th className="savings-windows-cell savings-windows-header">Gallons Saved</th>
             <th className="savings-windows-cell savings-windows-header">Fuel Cost Avoided</th>
             <th className="savings-windows-cell savings-windows-header">Mileage Rate</th>
-            <th className="savings-windows-cell savings-windows-header">Combined Savings</th>
             <th className="savings-windows-cell savings-windows-header">Expenses</th>
             <th className="savings-windows-cell savings-windows-header">Oil Change Savings</th>
             <th className="savings-windows-cell savings-windows-header">Net Savings</th>

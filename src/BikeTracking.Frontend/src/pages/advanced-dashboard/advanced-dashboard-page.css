@@ -150,11 +150,6 @@
   color: var(--adv-ink);
 }
 
-.savings-windows-combined {
-  font-weight: 700;
-  color: #065f46;
-}
-
 .savings-windows-row:last-child .savings-windows-cell {
   border-bottom: none;
 }
