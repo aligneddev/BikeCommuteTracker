@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 using BikeTracking.Api.Application.Imports;
 using BikeTracking.Api.Infrastructure.Persistence;
