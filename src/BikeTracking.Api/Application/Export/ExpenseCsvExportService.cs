@@ -8,35 +8,32 @@ namespace BikeTracking.Api.Application.Export;
 /// RFC 4180-compliant CSV string with header row.
 /// </summary>
 /// <remarks>
-/// Output columns: ExpenseId, Date, Amount, Notes, CreatedAtUtc
+/// Output columns: Date, Amount, Notes, CreatedAtUtc
 /// Filter: WHERE RiderId = @riderId AND IsDeleted = false ORDER BY ExpenseDate DESC
 /// </remarks>
 public sealed class ExpenseCsvExportService(BikeTrackingDbContext db)
 {
-    private static readonly string[] Headers =
-        ["ExpenseId", "Date", "Amount", "Notes", "CreatedAtUtc"];
+    private static readonly string[] Headers = ["Date", "Amount", "Notes", "CreatedAtUtc"];
 
     /// <summary>
     /// Generates the full CSV content as a UTF-8 string.
     /// Returns a header-only CSV when the rider has no expenses.
     /// </summary>
-    public async Task<string> ExportAsync(long riderId, CancellationToken cancellationToken = default)
+    public async Task<string> ExportAsync(
+        long riderId,
+        CancellationToken cancellationToken = default
+    )
     {
-        var expenses = await db.Expenses
-            .Where(e => e.RiderId == riderId && !e.IsDeleted)
+        var expenses = await db
+            .Expenses.Where(e => e.RiderId == riderId && !e.IsDeleted)
             .OrderByDescending(e => e.ExpenseDate)
             .ToListAsync(cancellationToken);
 
-        var lines = new List<string>(expenses.Count + 1)
-        {
-            CsvRowBuilder.BuildHeader(Headers)
-        };
+        var lines = new List<string>(expenses.Count + 1) { CsvRowBuilder.BuildHeader(Headers) };
 
         foreach (var expense in expenses)
         {
-            var row = CsvRowBuilder.BuildRow(
-            [
-                expense.Id.ToString(),
+            var row = CsvRowBuilder.BuildRow([
                 expense.ExpenseDate.ToString("yyyy-MM-dd"),
                 expense.Amount.ToString("G29"),
                 expense.Notes,

@@ -72,7 +72,7 @@ public sealed class RideExportEndpointTests
 
         // Only header row
         Assert.Single(lines);
-        Assert.StartsWith("RideId,", lines[0]);
+        Assert.StartsWith("Date,", lines[0]);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ public sealed class RideExportEndpointTests
         var firstLine = await reader.ReadLineAsync();
 
         Assert.NotNull(firstLine);
-        Assert.StartsWith("RideId,Date,Miles,RideMinutes", firstLine);
+        Assert.StartsWith("Date,Miles,RideMinutes", firstLine);
         Assert.EndsWith(",CreatedAtUtc", firstLine);
     }
 

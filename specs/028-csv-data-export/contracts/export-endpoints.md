@@ -32,16 +32,15 @@ Content-Disposition: attachment; filename="expenses-export.csv"
 **Body**: UTF-8 CSV file with BOM-free encoding.
 
 ```
-ExpenseId,Date,Amount,Notes,CreatedAtUtc
-101,2026-01-15,49.95,Chain replacement,2026-01-15T10:23:00Z
-102,2026-02-03,12.00,,2026-02-03T08:00:00Z
-103,2026-03-10,7.50,"Tyre, inner tube",2026-03-10T12:00:00Z
+Date,Amount,Notes,CreatedAtUtc
+2026-01-15,49.95,Chain replacement,2026-01-15T10:23:00Z
+2026-02-03,12.00,,2026-02-03T08:00:00Z
+2026-03-10,7.50,"Tyre, inner tube",2026-03-10T12:00:00Z
 ```
 
 **Column definitions**:
 | Column       | Format                        | Nullable |
 |--------------|-------------------------------|----------|
-| `ExpenseId`  | Integer                       | No       |
 | `Date`       | `yyyy-MM-dd`                  | No       |
 | `Amount`     | Decimal (no currency symbol)  | No       |
 | `Notes`      | String, RFC 4180 quoted       | Yes (blank) |
@@ -93,15 +92,14 @@ ride-history-export.zip
 
 Each per-year CSV format:
 ```
-RideId,Date,Miles,RideMinutes,Temperature,GasPricePerGallon,WindSpeedMph,WindDirectionDeg,RelativeHumidityPercent,CloudCoverPercent,PrecipitationType,Note,WeatherUserOverridden,Difficulty,PrimaryTravelDirection,WindResistanceRating,ImportSource,SnapshotAverageCarMpg,SnapshotMileageRateCents,SnapshotYearlyGoalMiles,SnapshotOilChangePrice,CreatedAtUtc
-1,2025-06-15T07:30:00,12.5,45,68.0,3.459,8.2,45,55,10,,Morning commute,false,3,NE,2,,25.0,6700,2000,79.00,2025-06-15T12:35:00Z
-2,2025-06-16T07:28:00,12.5,43,71.0,,,,,,,,"Windy, tough ride",false,5,North,4,,,,,2025-06-16T12:30:00Z
+Date,Miles,RideMinutes,Temperature,GasPricePerGallon,WindSpeedMph,WindDirectionDeg,RelativeHumidityPercent,CloudCoverPercent,PrecipitationType,Note,WeatherUserOverridden,Difficulty,PrimaryTravelDirection,WindResistanceRating,ImportSource,SnapshotAverageCarMpg,SnapshotMileageRateCents,SnapshotYearlyGoalMiles,SnapshotOilChangePrice,CreatedAtUtc
+2025-06-15T07:30:00,12.5,45,68.0,3.459,8.2,45,55,10,,Morning commute,false,3,NE,2,,25.0,6700,2000,79.00,2025-06-15T12:35:00Z
+2025-06-16T07:28:00,12.5,43,71.0,,,,,,,,"Windy, tough ride",false,5,North,4,,,,,2025-06-16T12:30:00Z
 ```
 
 **Column definitions**:
 | Column                    | Format                         | Nullable      |
 |---------------------------|--------------------------------|---------------|
-| `RideId`                  | Integer                        | No            |
 | `Date`                    | `yyyy-MM-ddTHH:mm:ss`          | No            |
 | `Miles`                   | Decimal                        | No            |
 | `RideMinutes`             | Integer                        | Yes (blank)   |

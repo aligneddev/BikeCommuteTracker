@@ -18,22 +18,40 @@ public sealed class RideHistoryCsvExportService(BikeTrackingDbContext db)
 {
     private static readonly string[] Headers =
     [
-        "RideId", "Date", "Miles", "RideMinutes", "Temperature", "GasPricePerGallon",
-        "WindSpeedMph", "WindDirectionDeg", "RelativeHumidityPercent", "CloudCoverPercent",
-        "PrecipitationType", "Note", "WeatherUserOverridden", "Difficulty",
-        "PrimaryTravelDirection", "WindResistanceRating", "ImportSource",
-        "SnapshotAverageCarMpg", "SnapshotMileageRateCents", "SnapshotYearlyGoalMiles",
-        "SnapshotOilChangePrice", "CreatedAtUtc",
+        "Date",
+        "Miles",
+        "RideMinutes",
+        "Temperature",
+        "GasPricePerGallon",
+        "WindSpeedMph",
+        "WindDirectionDeg",
+        "RelativeHumidityPercent",
+        "CloudCoverPercent",
+        "PrecipitationType",
+        "Note",
+        "WeatherUserOverridden",
+        "Difficulty",
+        "PrimaryTravelDirection",
+        "WindResistanceRating",
+        "ImportSource",
+        "SnapshotAverageCarMpg",
+        "SnapshotMileageRateCents",
+        "SnapshotYearlyGoalMiles",
+        "SnapshotOilChangePrice",
+        "CreatedAtUtc",
     ];
 
     /// <summary>
     /// Generates the ride history ZIP archive and returns a sealed <see cref="MemoryStream"/>.
     /// The caller is responsible for disposing the returned stream.
     /// </summary>
-    public async Task<MemoryStream> ExportAsync(long riderId, CancellationToken cancellationToken = default)
+    public async Task<MemoryStream> ExportAsync(
+        long riderId,
+        CancellationToken cancellationToken = default
+    )
     {
-        var rides = await db.Rides
-            .Where(r => r.RiderId == riderId)
+        var rides = await db
+            .Rides.Where(r => r.RiderId == riderId)
             .OrderByDescending(r => r.RideDateTimeLocal)
             .ToListAsync(cancellationToken);
 
@@ -76,9 +94,7 @@ public sealed class RideHistoryCsvExportService(BikeTrackingDbContext db)
 
         foreach (var ride in rides)
         {
-            var row = CsvRowBuilder.BuildRow(
-            [
-                ride.Id.ToString(),
+            var row = CsvRowBuilder.BuildRow([
                 ride.RideDateTimeLocal.ToString("yyyy-MM-ddTHH:mm:ss"),
                 ride.Miles.ToString("G29"),
                 ride.RideMinutes?.ToString(),

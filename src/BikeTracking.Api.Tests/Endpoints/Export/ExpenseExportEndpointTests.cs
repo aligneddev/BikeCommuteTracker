@@ -68,7 +68,7 @@ public sealed class ExpenseExportEndpointTests
         var lines = body.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         Assert.True(lines.Length >= 1);
-        Assert.Equal("ExpenseId,Date,Amount,Notes,CreatedAtUtc", lines[0]);
+        Assert.Equal("Date,Amount,Notes,CreatedAtUtc", lines[0]);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ public sealed class ExpenseExportEndpointTests
         var lines = body.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         Assert.Single(lines);
-        Assert.Equal("ExpenseId,Date,Amount,Notes,CreatedAtUtc", lines[0]);
+        Assert.Equal("Date,Amount,Notes,CreatedAtUtc", lines[0]);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -99,9 +99,21 @@ public sealed class ExpenseExportEndpointTests
         await using var host = await ExportApiHost.StartAsync();
         var userId = await host.SeedUserAsync("export-multi");
 
-        await host.SeedExpenseAsync(userId, new DateTime(2026, 1, 15), 49.95m, "Chain replacement", false);
+        await host.SeedExpenseAsync(
+            userId,
+            new DateTime(2026, 1, 15),
+            49.95m,
+            "Chain replacement",
+            false
+        );
         await host.SeedExpenseAsync(userId, new DateTime(2026, 2, 3), 12.00m, null, false);
-        await host.SeedExpenseAsync(userId, new DateTime(2026, 3, 10), 7.50m, "Tyre, inner tube", false);
+        await host.SeedExpenseAsync(
+            userId,
+            new DateTime(2026, 3, 10),
+            7.50m,
+            "Tyre, inner tube",
+            false
+        );
 
         var response = await host.Client.GetWithExportAuthAsync("/api/exports/expenses", userId);
         var body = await response.Content.ReadAsStringAsync();
@@ -117,7 +129,13 @@ public sealed class ExpenseExportEndpointTests
         await using var host = await ExportApiHost.StartAsync();
         var userId = await host.SeedUserAsync("export-fields");
 
-        await host.SeedExpenseAsync(userId, new DateTime(2026, 1, 15), 49.95m, "Chain replacement", false);
+        await host.SeedExpenseAsync(
+            userId,
+            new DateTime(2026, 1, 15),
+            49.95m,
+            "Chain replacement",
+            false
+        );
 
         var response = await host.Client.GetWithExportAuthAsync("/api/exports/expenses", userId);
         var body = await response.Content.ReadAsStringAsync();
@@ -140,7 +158,13 @@ public sealed class ExpenseExportEndpointTests
         await using var host = await ExportApiHost.StartAsync();
         var userId = await host.SeedUserAsync("export-quoted");
 
-        await host.SeedExpenseAsync(userId, new DateTime(2026, 3, 10), 7.50m, "Tyre, inner tube", false);
+        await host.SeedExpenseAsync(
+            userId,
+            new DateTime(2026, 3, 10),
+            7.50m,
+            "Tyre, inner tube",
+            false
+        );
 
         var response = await host.Client.GetWithExportAuthAsync("/api/exports/expenses", userId);
         var body = await response.Content.ReadAsStringAsync();
@@ -165,7 +189,7 @@ public sealed class ExpenseExportEndpointTests
         Assert.Equal(2, lines.Length);
         // Notes cell is blank — row ends with two commas before CreatedAtUtc or empty Notes cell
         var fields = SplitCsvRow(lines[1]);
-        Assert.Equal(string.Empty, fields[3]); // Notes is index 3
+        Assert.Equal(string.Empty, fields[2]); // Notes is index 2
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -179,8 +203,20 @@ public sealed class ExpenseExportEndpointTests
         var riderA = await host.SeedUserAsync("scope-rider-a");
         var riderB = await host.SeedUserAsync("scope-rider-b");
 
-        await host.SeedExpenseAsync(riderA, new DateTime(2026, 1, 1), 10m, "Rider A expense", false);
-        await host.SeedExpenseAsync(riderB, new DateTime(2026, 1, 2), 99m, "Rider B expense", false);
+        await host.SeedExpenseAsync(
+            riderA,
+            new DateTime(2026, 1, 1),
+            10m,
+            "Rider A expense",
+            false
+        );
+        await host.SeedExpenseAsync(
+            riderB,
+            new DateTime(2026, 1, 2),
+            99m,
+            "Rider B expense",
+            false
+        );
 
         var response = await host.Client.GetWithExportAuthAsync("/api/exports/expenses", riderA);
         var body = await response.Content.ReadAsStringAsync();
@@ -349,17 +385,19 @@ internal sealed class ExportApiHost(WebApplication app) : IAsyncDisposable
         using var scope = App.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
 
-        dbContext.Expenses.Add(new ExpenseEntity
-        {
-            RiderId = riderId,
-            ExpenseDate = expenseDate,
-            Amount = amount,
-            Notes = notes,
-            IsDeleted = isDeleted,
-            Version = 1,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
-        });
+        dbContext.Expenses.Add(
+            new ExpenseEntity
+            {
+                RiderId = riderId,
+                ExpenseDate = expenseDate,
+                Amount = amount,
+                Notes = notes,
+                IsDeleted = isDeleted,
+                Version = 1,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
 
         await dbContext.SaveChangesAsync();
     }
@@ -374,16 +412,18 @@ internal sealed class ExportApiHost(WebApplication app) : IAsyncDisposable
         using var scope = App.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
 
-        dbContext.Rides.Add(new RideEntity
-        {
-            RiderId = riderId,
-            RideDateTimeLocal = rideDateTimeLocal,
-            Miles = miles,
-            Notes = notes,
-            WeatherUserOverridden = false,
-            Version = 1,
-            CreatedAtUtc = DateTime.UtcNow,
-        });
+        dbContext.Rides.Add(
+            new RideEntity
+            {
+                RiderId = riderId,
+                RideDateTimeLocal = rideDateTimeLocal,
+                Miles = miles,
+                Notes = notes,
+                WeatherUserOverridden = false,
+                Version = 1,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
 
         await dbContext.SaveChangesAsync();
     }
