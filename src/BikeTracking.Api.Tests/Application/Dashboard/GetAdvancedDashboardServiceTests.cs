@@ -426,8 +426,7 @@ public sealed class GetAdvancedDashboardServiceTests
     }
 
     [Fact]
-    public async Task
-        GetAdvancedDashboardService_WithFuelCostAndMileageRate_NetSavingsUsesFuelCostOnly()
+    public async Task GetAdvancedDashboardService_WithFuelCostAndMileageRate_NetSavingsUsesFuelCostOnly()
     {
         using var dbContext = CreateDbContext();
         var rider = await CreateRiderAsync(dbContext, "NetSavings Rider");

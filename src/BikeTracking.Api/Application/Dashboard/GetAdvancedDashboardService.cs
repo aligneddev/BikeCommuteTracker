@@ -258,7 +258,9 @@ public sealed class GetAdvancedDashboardService(
         bool hasSavingsData = fuelCostAvoided.HasValue || oilChangeSavings.HasValue;
         if (hasSavingsData || totalExpenses > 0m)
         {
-            netSavings = RoundTo2((fuelCostAvoided ?? 0m) + (oilChangeSavings ?? 0m) - totalExpenses);
+            netSavings = RoundTo2(
+                (fuelCostAvoided ?? 0m) + (oilChangeSavings ?? 0m) - totalExpenses
+            );
         }
 
         return new AdvancedSavingsWindow(
