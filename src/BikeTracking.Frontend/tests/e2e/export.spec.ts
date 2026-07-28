@@ -41,7 +41,7 @@ test.describe("028-csv-data-export e2e", () => {
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
 
     // Header row
-    expect(lines[0]).toBe("ExpenseId,Date,Amount,Notes,CreatedAtUtc");
+    expect(lines[0]).toBe("Date,Amount,Notes,CreatedAtUtc");
 
     // At least one data row
     expect(lines.length).toBeGreaterThanOrEqual(2);
@@ -75,7 +75,7 @@ test.describe("028-csv-data-export e2e", () => {
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
 
     expect(lines).toHaveLength(1);
-    expect(lines[0]).toBe("ExpenseId,Date,Amount,Notes,CreatedAtUtc");
+    expect(lines[0]).toBe("Date,Amount,Notes,CreatedAtUtc");
   });
 
   // ─────────────────────────────────────────────────────────────────────────
