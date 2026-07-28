@@ -18,6 +18,7 @@ import {
 } from '../../services/ridesService'
 import { PERIOD_TAG_DEFAULT_DIRECTIONS } from '../../services/ridesService'
 import { getPwaSnapshot, promptPwaInstall, subscribePwaSnapshot } from '../../services/pwa/bootstrap'
+import { fetchExpensesCsv, fetchRideHistoryZip } from '../../services/export-api'
 import './SettingsPage.css'
 
 interface SettingsFormSnapshot {
@@ -99,6 +100,10 @@ export function SettingsPage() {
   const [saving, setSaving] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
   const [success, setSuccess] = useState<string>('')
+  const [exportingExpenses, setExportingExpenses] = useState<boolean>(false)
+  const [exportExpensesError, setExportExpensesError] = useState<string>('')
+  const [exportingRides, setExportingRides] = useState<boolean>(false)
+  const [exportRidesError, setExportRidesError] = useState<string>('')
   const [ridePresets, setRidePresets] = useState<RidePreset[]>([])
   const [editingPresetId, setEditingPresetId] = useState<number | null>(null)
   const [presetName, setPresetName] = useState<string>('')
@@ -391,6 +396,50 @@ export function SettingsPage() {
             Import Rides from CSV
           </Link>
         </p>
+
+        <section aria-label="Export data">
+          <h2>Export Data</h2>
+          <div className="settings-actions">
+            <button
+              type="button"
+              className="settings-secondary-action"
+              disabled={exportingExpenses}
+              onClick={() => {
+                setExportingExpenses(true)
+                setExportExpensesError('')
+                fetchExpensesCsv()
+                  .catch(() => setExportExpensesError('Export failed. Please try again.'))
+                  .finally(() => setExportingExpenses(false))
+              }}
+            >
+              {exportingExpenses ? 'Exporting…' : 'Export Expenses'}
+            </button>
+            {exportExpensesError && (
+              <p className="settings-error" role="alert">
+                {exportExpensesError}
+              </p>
+            )}
+            <button
+              type="button"
+              className="settings-secondary-action"
+              disabled={exportingRides}
+              onClick={() => {
+                setExportingRides(true)
+                setExportRidesError('')
+                fetchRideHistoryZip()
+                  .catch(() => setExportRidesError('Export failed. Please try again.'))
+                  .finally(() => setExportingRides(false))
+              }}
+            >
+              {exportingRides ? 'Exporting…' : 'Export Ride History'}
+            </button>
+            {exportRidesError && (
+              <p className="settings-error" role="alert">
+                {exportRidesError}
+              </p>
+            )}
+          </div>
+        </section>
 
         <section className="settings-install-card" aria-label="App installation">
           <h2>Install App</h2>

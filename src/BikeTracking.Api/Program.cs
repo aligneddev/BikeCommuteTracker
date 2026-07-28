@@ -1,5 +1,6 @@
 ﻿using BikeTracking.Api.Application.Dashboard;
 using BikeTracking.Api.Application.Events;
+using BikeTracking.Api.Application.Export;
 using BikeTracking.Api.Application.ExpenseImports;
 using BikeTracking.Api.Application.Expenses;
 using BikeTracking.Api.Application.Imports;
@@ -64,7 +65,10 @@ builder.Services.AddScoped<DeleteExpenseService>();
 builder.Services.AddScoped<CsvExpenseParser>();
 builder.Services.AddScoped<ExpenseDuplicateDetector>();
 builder.Services.AddScoped<CsvExpenseImportService>();
+builder.Services.AddScoped<ExpenseCsvExportService>();
+builder.Services.AddScoped<RideHistoryCsvExportService>();
 builder.Services.AddScoped<IReceiptStorage, FileSystemReceiptStorage>();
+
 builder.Services.AddScoped<ICsvRideImportService, CsvRideImportService>();
 builder.Services.AddScoped<IMonthlySummaryImportService, MonthlySummaryImportService>();
 builder.Services.AddScoped<IDuplicateResolutionService, DuplicateResolutionService>();
@@ -167,6 +171,7 @@ app.MapDashboardEndpoints();
 app.MapUsersEndpoints();
 app.MapRidesEndpoints();
 app.MapExpensesEndpoints();
+app.MapExportEndpoints();
 app.MapExpenseImportEndpoints();
 app.MapImportEndpoints();
 app.MapMonthlyImportEndpoints();

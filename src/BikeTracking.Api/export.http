@@ -1,0 +1,16 @@
+@ApiService_HostAddress = http://localhost:5436
+@RiderId = 1
+
+### Export expenses as CSV
+### Downloads all expense records for the authenticated rider as expenses-export.csv
+GET {{ApiService_HostAddress}}/api/exports/expenses
+X-User-Id: {{RiderId}}
+
+###
+
+### Export ride history as ZIP
+### Downloads all ride records as a per-year ZIP archive: ride-history-export.zip
+GET {{ApiService_HostAddress}}/api/exports/rides
+X-User-Id: {{RiderId}}
+
+###

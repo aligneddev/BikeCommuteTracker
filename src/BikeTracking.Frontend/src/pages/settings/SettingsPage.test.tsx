@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { SettingsPage } from './SettingsPage'
 import * as usersApi from '../../services/users-api'
 import * as ridesService from '../../services/ridesService'
+import * as exportApi from '../../services/export-api'
 import { disposePwaBootstrap } from '../../services/pwa/bootstrap'
 
 vi.mock('../../services/users-api', () => ({
@@ -20,10 +21,17 @@ vi.mock('../../services/ridesService', () => ({
   deleteRidePreset: vi.fn(),
 }))
 
+vi.mock('../../services/export-api', () => ({
+  fetchExpensesCsv: vi.fn(),
+  fetchRideHistoryZip: vi.fn(),
+}))
+
 const mockGetUserSettings = vi.mocked(usersApi.getUserSettings)
 const mockSaveUserSettings = vi.mocked(usersApi.saveUserSettings)
 const mockGetRidePresets = vi.mocked(ridesService.getRidePresets)
 const mockCreateRidePreset = vi.mocked(ridesService.createRidePreset)
+const mockFetchExpensesCsv = vi.mocked(exportApi.fetchExpensesCsv)
+const mockFetchRideHistoryZip = vi.mocked(exportApi.fetchRideHistoryZip)
 const mockUpdateRidePreset = vi.mocked(ridesService.updateRidePreset)
 const mockDeleteRidePreset = vi.mocked(ridesService.deleteRidePreset)
 
@@ -767,4 +775,132 @@ describe('SettingsPage', () => {
       )
     })
   })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Export Expenses button (US1)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  it('renders an Export Expenses button', async () => {
+    mockGetUserSettings.mockResolvedValue(buildDefaultSettings())
+    mockGetRidePresets.mockResolvedValue({ presets: [], generatedAtUtc: '2026-01-01T00:00:00Z' })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /export expenses/i })).toBeInTheDocument()
+    })
+  })
+
+  it('calls fetchExpensesCsv when Export Expenses button is clicked', async () => {
+    mockGetUserSettings.mockResolvedValue(buildDefaultSettings())
+    mockGetRidePresets.mockResolvedValue({ presets: [], generatedAtUtc: '2026-01-01T00:00:00Z' })
+    mockFetchExpensesCsv.mockResolvedValue(undefined)
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    const exportBtn = await screen.findByRole('button', { name: /export expenses/i })
+    fireEvent.click(exportBtn)
+
+    await waitFor(() => {
+      expect(mockFetchExpensesCsv).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Export Ride History button (US2)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  it('renders an Export Ride History button', async () => {
+    mockGetUserSettings.mockResolvedValue(buildDefaultSettings())
+    mockGetRidePresets.mockResolvedValue({ presets: [], generatedAtUtc: '2026-01-01T00:00:00Z' })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /export ride history/i })).toBeInTheDocument()
+    })
+  })
+
+  it('calls fetchRideHistoryZip when Export Ride History button is clicked', async () => {
+    mockGetUserSettings.mockResolvedValue(buildDefaultSettings())
+    mockGetRidePresets.mockResolvedValue({ presets: [], generatedAtUtc: '2026-01-01T00:00:00Z' })
+    mockFetchRideHistoryZip.mockResolvedValue(undefined)
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    const exportBtn = await screen.findByRole('button', { name: /export ride history/i })
+    fireEvent.click(exportBtn)
+
+    await waitFor(() => {
+      expect(mockFetchRideHistoryZip).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('Export Expenses and Export Ride History buttons operate independently', async () => {
+    mockGetUserSettings.mockResolvedValue(buildDefaultSettings())
+    mockGetRidePresets.mockResolvedValue({ presets: [], generatedAtUtc: '2026-01-01T00:00:00Z' })
+    mockFetchExpensesCsv.mockResolvedValue(undefined)
+    mockFetchRideHistoryZip.mockResolvedValue(undefined)
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    const expensesBtn = await screen.findByRole('button', { name: /export expenses/i })
+    const ridesBtn = await screen.findByRole('button', { name: /export ride history/i })
+
+    fireEvent.click(expensesBtn)
+
+    await waitFor(() => {
+      expect(mockFetchExpensesCsv).toHaveBeenCalledTimes(1)
+      expect(mockFetchRideHistoryZip).not.toHaveBeenCalled()
+    })
+
+    fireEvent.click(ridesBtn)
+
+    await waitFor(() => {
+      expect(mockFetchRideHistoryZip).toHaveBeenCalledTimes(1)
+      expect(mockFetchExpensesCsv).toHaveBeenCalledTimes(1) // still only 1
+    })
+  })
 })
+
+// ─────────────────────────────────────────────────────────────────────────
+// Shared helpers
+// ─────────────────────────────────────────────────────────────────────────
+
+function buildDefaultSettings() {
+  return {
+    settings: {
+      averageCarMpg: null,
+      yearlyGoalMiles: null,
+      oilChangePrice: null,
+      mileageRateCents: null,
+      locationLabel: null,
+      latitude: null,
+      longitude: null,
+      dashboardGallonsAvoidedEnabled: true,
+      dashboardGoalProgressEnabled: true,
+      weatherApiKey: null,
+      eiaGasApiKey: null,
+    },
+  }
+}
