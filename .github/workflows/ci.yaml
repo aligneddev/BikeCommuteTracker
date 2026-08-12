@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 20
     name: E2E Tests
     container:
-      image: mcr.microsoft.com/playwright:v1.61.0-noble
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
     env:
       CI: "true"
       DOTNET_NOLOGO: "true"
