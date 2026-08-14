@@ -72,3 +72,15 @@ src/BikeTracking.Frontend/playwright-report/
 
 # Tauri: Rust build artifacts (Cargo.lock IS committed — app crate convention)
 src/BikeTracking.Frontend/src-tauri/target/
+
+# CodeValid — auto-added
+.next/
+out/
+.turbo/
+__pycache__/
+.pytest_cache/
+.venv/
+.codevalid/ui/Dockerfile
+.codevalid/ui/playwright.config.js
+.codevalid/ui/helper/
+.codevalid/ui/helpers/
