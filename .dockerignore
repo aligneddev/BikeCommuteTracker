@@ -1,0 +1,37 @@
+# ── .dockerignore ─────────────────────────────────────────────────────────────
+# Build context is the repo root.
+# Exclude heavy or irrelevant directories so `COPY . .` stays fast.
+
+# Node dependencies (will be installed inside the image)
+node_modules/
+src/BikeTracking.Frontend/node_modules/
+
+# Framework / Vite build output
+dist/
+src/BikeTracking.Frontend/dist/
+
+# .NET / IDE artefacts
+bin/
+obj/
+*.user
+*.suo
+.idea/
+.vs/
+
+# Tauri native build output
+src-tauri/target/
+
+# Git metadata
+.git/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# CodeValid recordings (generated at test runtime, not needed at build time)
+.codevalid/ui/recording/
+.codevalid/ui/run-results/
+
+# Wrong lockfile: this is an npm repo (package-lock.json)
+pnpm-lock.yaml
+yarn.lock
