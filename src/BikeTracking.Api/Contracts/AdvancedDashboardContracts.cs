@@ -11,14 +11,14 @@ public sealed record AdvancedDashboardResponse(
     AdvancedDashboardReminders Reminders,
     /// <summary>UTC timestamp when the response was generated (useful for caching/staleness checks).</summary>
     DateTime GeneratedAtUtc,
-    /// <summary>Difficulty analytics section. Null when no qualifying ride data exists.</summary>
-    AdvancedDashboardDifficultySection? DifficultySection = null,
     /// <summary>
     /// Fixed CO2-saved-per-mile figure in pounds (0.90 lb/mile — EPA average passenger-vehicle
     /// emission factor). This is a response-level constant, not per-window, and does not vary
     /// by user MPG/vehicle settings (FR-007).
     /// </summary>
-    decimal Co2SavedPerMileLbs = 0.90m
+    decimal Co2SavedPerMileLbs,
+    /// <summary>Difficulty analytics section. Null when no qualifying ride data exists.</summary>
+    AdvancedDashboardDifficultySection? DifficultySection = null
 );
 
 /// <summary>
