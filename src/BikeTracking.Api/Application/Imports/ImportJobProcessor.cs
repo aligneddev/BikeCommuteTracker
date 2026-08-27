@@ -305,6 +305,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
                 distinctWeeks,
                 dbContext,
                 gasLookupService,
+                ResolveGasGradeOrDefault(userSettings?.GasGrade),
                 userSettings?.EiaGasApiKey,
                 cancellationToken
             );
@@ -335,6 +336,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
         IReadOnlyList<DateOnly> distinctWeeks,
         BikeTrackingDbContext dbContext,
         IGasPriceLookupService gasLookupService,
+        string gasGrade,
         string? eiaGasApiKey,
         CancellationToken cancellationToken
     )
@@ -348,7 +350,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
 
         var gasRows = await dbContext.GasPriceLookups.AsNoTracking().ToListAsync(cancellationToken);
         var cachedGas = gasRows
-            .Where(x => distinctWeeks.Contains(x.WeekStartDate))
+            .Where(x => distinctWeeks.Contains(x.WeekStartDate) && x.Grade == gasGrade)
             .GroupBy(static x => x.WeekStartDate)
             .ToDictionary(
                 static group => group.Key,
@@ -373,6 +375,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
                     await gasLookupService.GetOrFetchAsync(
                         representativeDate,
                         weekStart,
+                        gasGrade,
                         eiaGasApiKey,
                         ct
                     ),
@@ -382,6 +385,13 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
         }
 
         return gasByWeek;
+    }
+
+    private static string ResolveGasGradeOrDefault(string? gasGrade)
+    {
+        return gasGrade?.Equals("Premium", StringComparison.OrdinalIgnoreCase) == true
+            ? "Premium"
+            : "Regular";
     }
 
     private static async Task<Dictionary<DateOnly, WeatherData?>> LoadWeatherLookupAsync(

@@ -53,7 +53,8 @@ public sealed record GasPriceResponse(
     string Date,
     decimal? PricePerGallon,
     bool IsAvailable,
-    string? DataSource
+    string? DataSource,
+    string Grade = "Regular"
 );
 
 public sealed record RideWeatherResponse(

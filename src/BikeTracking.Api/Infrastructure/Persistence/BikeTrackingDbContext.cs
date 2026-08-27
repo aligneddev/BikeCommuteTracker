@@ -365,13 +365,13 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
 
             entity.Property(static x => x.PriceDate).IsRequired();
             entity.Property(static x => x.WeekStartDate).IsRequired();
+            entity.Property(static x => x.Grade).HasMaxLength(20);
             entity.Property(static x => x.PricePerGallon).IsRequired().HasPrecision(10, 4);
             entity.Property(static x => x.DataSource).IsRequired().HasMaxLength(64);
             entity.Property(static x => x.EiaPeriodDate).IsRequired();
             entity.Property(static x => x.RetrievedAtUtc).IsRequired();
 
-            entity.HasIndex(static x => x.PriceDate).IsUnique();
-            entity.HasIndex(static x => x.WeekStartDate).IsUnique();
+            entity.HasIndex(static x => new { x.WeekStartDate, x.Grade }).IsUnique();
         });
 
         modelBuilder.Entity<MonthlySummaryAuditLogEntity>(static entity =>
@@ -451,6 +451,10 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                         "CK_UserSettings_Longitude_Range",
                         "\"Longitude\" IS NULL OR (CAST(\"Longitude\" AS REAL) >= -180 AND CAST(\"Longitude\" AS REAL) <= 180)"
                     );
+                    tableBuilder.HasCheckConstraint(
+                        "CK_UserSettings_GasGrade_Valid",
+                        "\"GasGrade\" IN ('Regular', 'Premium')"
+                    );
                 }
             );
 
@@ -470,6 +474,11 @@ public sealed class BikeTrackingDbContext(DbContextOptions<BikeTrackingDbContext
                 .Property(static x => x.DashboardGoalProgressEnabled)
                 .IsRequired()
                 .HasDefaultValue(false);
+            entity
+                .Property(static x => x.GasGrade)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("Regular");
             entity.Property(static x => x.UpdatedAtUtc).IsRequired();
 
             entity

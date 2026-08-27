@@ -33,6 +33,7 @@ interface SettingsFormSnapshot {
   dashboardGoalProgressEnabled: boolean
   weatherApiKey: string | null
   eiaGasApiKey: string | null
+  gasGrade: 'Regular' | 'Premium'
 }
 
 function toSnapshot(response: UserSettingsResponse): SettingsFormSnapshot {
@@ -48,6 +49,7 @@ function toSnapshot(response: UserSettingsResponse): SettingsFormSnapshot {
     dashboardGoalProgressEnabled: response.settings.dashboardGoalProgressEnabled,
     weatherApiKey: response.settings.weatherApiKey ?? null,
     eiaGasApiKey: response.settings.eiaGasApiKey ?? null,
+    gasGrade: response.settings.gasGrade ?? 'Regular',
   }
 }
 
@@ -81,6 +83,7 @@ export function SettingsPage() {
   const [dashboardGoalProgressEnabled, setDashboardGoalProgressEnabled] = useState<boolean>(false)
   const [weatherApiKey, setWeatherApiKey] = useState<string>('')
   const [eiaGasApiKey, setEiaGasApiKey] = useState<string>('')
+  const [gasGrade, setGasGrade] = useState<'Regular' | 'Premium'>('Regular')
   const [locating, setLocating] = useState<boolean>(false)
   const [initialSnapshot, setInitialSnapshot] = useState<SettingsFormSnapshot>({
     averageCarMpg: null,
@@ -94,6 +97,7 @@ export function SettingsPage() {
     dashboardGoalProgressEnabled: false,
     weatherApiKey: null,
     eiaGasApiKey: null,
+    gasGrade: 'Regular',
   })
 
   const [loading, setLoading] = useState<boolean>(true)
@@ -144,6 +148,7 @@ export function SettingsPage() {
           setDashboardGoalProgressEnabled(settings.dashboardGoalProgressEnabled)
           setWeatherApiKey(settings.weatherApiKey ?? '')
           setEiaGasApiKey(settings.eiaGasApiKey ?? '')
+          setGasGrade(settings.gasGrade ?? 'Regular')
           setInitialSnapshot(toSnapshot(settingsResponse.data))
           setRidePresets(presetsResponse.presets)
         } else {
@@ -303,6 +308,7 @@ export function SettingsPage() {
       dashboardGoalProgressEnabled,
       weatherApiKey: weatherApiKey === '' ? null : weatherApiKey,
       eiaGasApiKey: eiaGasApiKey === '' ? null : eiaGasApiKey,
+      gasGrade,
     }
 
     const payload: UserSettingsUpsertRequest = {}
@@ -336,6 +342,8 @@ export function SettingsPage() {
       payload.weatherApiKey = currentSnapshot.weatherApiKey
     if (currentSnapshot.eiaGasApiKey !== initialSnapshot.eiaGasApiKey)
       payload.eiaGasApiKey = currentSnapshot.eiaGasApiKey
+    if (currentSnapshot.gasGrade !== initialSnapshot.gasGrade)
+      payload.gasGrade = currentSnapshot.gasGrade
 
     if (Object.keys(payload).length === 0) {
       setSaving(false)
@@ -358,6 +366,7 @@ export function SettingsPage() {
         setDashboardGoalProgressEnabled(settings.dashboardGoalProgressEnabled)
         setWeatherApiKey(settings.weatherApiKey ?? '')
         setEiaGasApiKey(settings.eiaGasApiKey ?? '')
+        setGasGrade(settings.gasGrade ?? 'Regular')
         setInitialSnapshot(toSnapshot(response.data))
         setSuccess('Settings saved successfully.')
       } else {
@@ -523,6 +532,18 @@ export function SettingsPage() {
                   setMileageRateCents(e.target.value === '' ? '' : Number(e.target.value))
                 }
               />
+            </div>
+
+            <div className="settings-field">
+              <label htmlFor="gasGrade">Gas Grade</label>
+              <select
+                id="gasGrade"
+                value={gasGrade}
+                onChange={(event) => setGasGrade(event.target.value as 'Regular' | 'Premium')}
+              >
+                <option value="Regular">Regular</option>
+                <option value="Premium">Premium</option>
+              </select>
             </div>
 
             <div className="settings-field">

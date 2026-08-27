@@ -47,6 +47,7 @@ export interface UserSettingsUpsertRequest {
   dashboardGoalProgressEnabled?: boolean | null;
   weatherApiKey?: string | null;
   eiaGasApiKey?: string | null;
+  gasGrade?: "Regular" | "Premium" | null;
 }
 
 export interface UserSettingsView {
@@ -62,6 +63,7 @@ export interface UserSettingsView {
   updatedAtUtc: string | null;
   weatherApiKey: string | null;
   eiaGasApiKey: string | null;
+  gasGrade: "Regular" | "Premium";
 }
 
 export interface UserSettingsResponse {

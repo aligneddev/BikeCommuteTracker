@@ -8,6 +8,113 @@ namespace BikeTracking.Api.Tests.Application.Users;
 public sealed class UserSettingsServiceTests
 {
     [Fact]
+    public async Task GetAsync_WithoutSettingsRow_DefaultsGasGradeToRegular()
+    {
+        using var dbContext = TestFactories.CreateDbContext();
+        var user = await SeedUserAsync(dbContext, "Settings User Gas Grade Default");
+        var service = new UserSettingsService(dbContext);
+
+        var result = await service.GetAsync(user.UserId, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Response);
+        Assert.False(result.Response.HasSettings);
+        Assert.Equal("Regular", result.Response.Settings.GasGrade);
+    }
+
+    [Fact]
+    public async Task SaveAsync_GasGrade_PersistsAndRoundTrips()
+    {
+        using var dbContext = TestFactories.CreateDbContext();
+        var user = await SeedUserAsync(dbContext, "Settings User Gas Grade Save");
+        var service = new UserSettingsService(dbContext);
+
+        var savePremium = await service.SaveAsync(
+            user.UserId,
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: null,
+                YearlyGoalMiles: null,
+                OilChangePrice: null,
+                MileageRateCents: null,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null,
+                DashboardGallonsAvoidedEnabled: null,
+                DashboardGoalProgressEnabled: null,
+                WeatherApiKey: null,
+                EiaGasApiKey: null,
+                GasGrade: "Premium"
+            ),
+            CancellationToken.None
+        );
+
+        Assert.True(savePremium.IsSuccess);
+        Assert.NotNull(savePremium.Response);
+        Assert.Equal("Premium", savePremium.Response.Settings.GasGrade);
+
+        var saveRegular = await service.SaveAsync(
+            user.UserId,
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: null,
+                YearlyGoalMiles: null,
+                OilChangePrice: null,
+                MileageRateCents: null,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null,
+                DashboardGallonsAvoidedEnabled: null,
+                DashboardGoalProgressEnabled: null,
+                WeatherApiKey: null,
+                EiaGasApiKey: null,
+                GasGrade: "Regular"
+            ),
+            CancellationToken.None,
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "gasGrade" }
+        );
+
+        Assert.True(saveRegular.IsSuccess);
+        Assert.NotNull(saveRegular.Response);
+        Assert.Equal("Regular", saveRegular.Response.Settings.GasGrade);
+
+        var loaded = await service.GetAsync(user.UserId, CancellationToken.None);
+        Assert.True(loaded.IsSuccess);
+        Assert.NotNull(loaded.Response);
+        Assert.Equal("Regular", loaded.Response.Settings.GasGrade);
+    }
+
+    [Fact]
+    public async Task SaveAsync_RejectsInvalidGasGrade()
+    {
+        using var dbContext = TestFactories.CreateDbContext();
+        var user = await SeedUserAsync(dbContext, "Settings User Gas Grade Invalid");
+        var service = new UserSettingsService(dbContext);
+
+        var result = await service.SaveAsync(
+            user.UserId,
+            new UserSettingsUpsertRequest(
+                AverageCarMpg: null,
+                YearlyGoalMiles: null,
+                OilChangePrice: null,
+                MileageRateCents: null,
+                LocationLabel: null,
+                Latitude: null,
+                Longitude: null,
+                DashboardGallonsAvoidedEnabled: null,
+                DashboardGoalProgressEnabled: null,
+                WeatherApiKey: null,
+                EiaGasApiKey: null,
+                GasGrade: "Midgrade"
+            ),
+            CancellationToken.None,
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "gasGrade" }
+        );
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Error);
+        Assert.Equal(UsersErrorCodes.ValidationFailed, result.Error.Code);
+    }
+
+    [Fact]
     public async Task SaveAsync_CreatesSettingsProfile_ForFirstSave()
     {
         using var dbContext = TestFactories.CreateDbContext();

@@ -30,4 +30,33 @@ test.describe("009-settings e2e", () => {
     await expect(page.locator("#averageCarMpg")).toHaveValue("");
     await expect(page.locator("#yearlyGoalMiles")).toHaveValue("");
   });
+
+  test("saving gas grade preference is reflected in ride-form gas lookup", async ({
+    page,
+  }) => {
+    const rider = uniqueUser("e2e-settings-gas-grade");
+    await createAndLoginUser(page, rider, TEST_PIN);
+
+    await page.goto("/settings");
+    await page.locator("#gasGrade").selectOption("Premium");
+    await page.getByRole("button", { name: "Save Settings" }).click();
+    await expect(page.getByText(/settings saved successfully/i)).toBeVisible();
+
+    await page.goto("/rides/record");
+    const response = await page.waitForResponse((candidate) =>
+      candidate.url().includes("/api/rides/gas-price"),
+    );
+
+    const payload = (await response.json()) as {
+      grade?: string;
+      isAvailable?: boolean;
+      pricePerGallon?: number | null;
+    };
+
+    expect(payload.grade).toBe("Premium");
+
+    if (payload.isAvailable && payload.pricePerGallon !== null) {
+      await expect(page.locator("#gasPrice")).toHaveValue(payload.pricePerGallon.toString());
+    }
+  });
 });

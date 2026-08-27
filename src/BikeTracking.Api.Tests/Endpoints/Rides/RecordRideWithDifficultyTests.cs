@@ -267,6 +267,7 @@ internal sealed class NullGasPriceLookupService : IGasPriceLookupService
 {
     public Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<decimal?>(null);
@@ -274,6 +275,7 @@ internal sealed class NullGasPriceLookupService : IGasPriceLookupService
     public Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<decimal?>(null);

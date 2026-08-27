@@ -31,7 +31,7 @@ Web application layout per plan.md:
 
 **Purpose**: No new project scaffolding is required — this feature extends existing entities/services in place. This phase only confirms the workspace builds/tests cleanly before changes begin.
 
-- [ ] T001 Run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit` to confirm a clean baseline before starting (no code changes)
+- [X] T001 Run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit` to confirm a clean baseline before starting (no code changes)
 
 ---
 
@@ -41,14 +41,14 @@ Web application layout per plan.md:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 [P] Add nullable `Grade` (`string?`) property to `GasPriceLookupEntity` in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/GasPriceLookupEntity.cs` (per data-model.md; legacy rows keep `Grade = NULL`)
-- [ ] T003 [P] Add non-nullable `GasGrade` (`string`, CLR default `"Regular"`) property to `UserSettingsEntity` in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/UserSettingsEntity.cs` (per data-model.md Decision 6)
-- [ ] T004 In `src/BikeTracking.Api/Infrastructure/Persistence/BikeTrackingDbContext.cs`: drop the unique indexes on `GasPriceLookupEntity.PriceDate` and `GasPriceLookupEntity.WeekStartDate`, add a unique composite index on `(WeekStartDate, Grade)`, and configure the `CK_UserSettings_GasGrade_Valid` CHECK constraint (`GasGrade IN ('Regular','Premium')`) for `UserSettingsEntity` (depends on T002, T003)
-- [ ] T005 Generate EF Core migration `AddGasGradeAndCacheRefreshPolicy` in `src/BikeTracking.Api/Infrastructure/Persistence/Migrations/` (via `dotnet ef migrations add`) that: adds nullable `Grade` to `GasPriceLookups`, drops the two prior unique indexes and creates the new composite unique index, adds non-nullable `GasGrade` to `UserSettings` with a migration-time `UPDATE ... SET "GasGrade" = 'Premium'` backfill for all pre-existing rows, and adds the `CK_UserSettings_GasGrade_Valid` CHECK constraint (depends on T004)
-- [ ] T006 [P] Add `Grade: string` field to `GasPriceResponse` and add optional `grade` query parameter handling scaffolding to the `GetGasPrice` route signature in `src/BikeTracking.Api/Contracts/RidesContracts.cs` (per contract; field always present even when `IsAvailable` is false)
-- [ ] T007 [P] Add `GasGrade: string?` field to `UserSettingsUpsertRequest` and `GasGrade: string` field to `UserSettingsView` in `src/BikeTracking.Api/Contracts/UsersContracts.cs` (per contract)
-- [ ] T008 [P] Add `NEW: GasPriceRefreshCoordinator` skeleton class (constructor + `RunExclusiveAsync<T>((DateOnly weekStart, string grade) key, Func<Task<T>> refresh)` signature, `ConcurrentDictionary<(DateOnly, string), SemaphoreSlim>`-backed, no callers yet) in `src/BikeTracking.Api/Application/Rides/GasPriceRefreshCoordinator.cs` (per research.md Decision 3)
-- [ ] T009 Register `GasPriceRefreshCoordinator` as a singleton in `src/BikeTracking.Api/Program.cs` (depends on T008)
+- [X] T002 [P] Add nullable `Grade` (`string?`) property to `GasPriceLookupEntity` in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/GasPriceLookupEntity.cs` (per data-model.md; legacy rows keep `Grade = NULL`)
+- [X] T003 [P] Add non-nullable `GasGrade` (`string`, CLR default `"Regular"`) property to `UserSettingsEntity` in `src/BikeTracking.Api/Infrastructure/Persistence/Entities/UserSettingsEntity.cs` (per data-model.md Decision 6)
+- [X] T004 In `src/BikeTracking.Api/Infrastructure/Persistence/BikeTrackingDbContext.cs`: drop the unique indexes on `GasPriceLookupEntity.PriceDate` and `GasPriceLookupEntity.WeekStartDate`, add a unique composite index on `(WeekStartDate, Grade)`, and configure the `CK_UserSettings_GasGrade_Valid` CHECK constraint (`GasGrade IN ('Regular','Premium')`) for `UserSettingsEntity` (depends on T002, T003)
+- [X] T005 Generate EF Core migration `AddGasGradeAndCacheRefreshPolicy` in `src/BikeTracking.Api/Infrastructure/Persistence/Migrations/` (via `dotnet ef migrations add`) that: adds nullable `Grade` to `GasPriceLookups`, drops the two prior unique indexes and creates the new composite unique index, adds non-nullable `GasGrade` to `UserSettings` with a migration-time `UPDATE ... SET "GasGrade" = 'Premium'` backfill for all pre-existing rows, and adds the `CK_UserSettings_GasGrade_Valid` CHECK constraint (depends on T004)
+- [X] T006 [P] Add `Grade: string` field to `GasPriceResponse` and add optional `grade` query parameter handling scaffolding to the `GetGasPrice` route signature in `src/BikeTracking.Api/Contracts/RidesContracts.cs` (per contract; field always present even when `IsAvailable` is false)
+- [X] T007 [P] Add `GasGrade: string?` field to `UserSettingsUpsertRequest` and `GasGrade: string` field to `UserSettingsView` in `src/BikeTracking.Api/Contracts/UsersContracts.cs` (per contract)
+- [X] T008 [P] Add `NEW: GasPriceRefreshCoordinator` skeleton class (constructor + `RunExclusiveAsync<T>((DateOnly weekStart, string grade) key, Func<Task<T>> refresh)` signature, `ConcurrentDictionary<(DateOnly, string), SemaphoreSlim>`-backed, no callers yet) in `src/BikeTracking.Api/Application/Rides/GasPriceRefreshCoordinator.cs` (per research.md Decision 3)
+- [X] T009 Register `GasPriceRefreshCoordinator` as a singleton in `src/BikeTracking.Api/Program.cs` (depends on T008)
 
 **Checkpoint**: Foundation ready — schema, entities, contracts, and the coordinator skeleton exist. User story implementation can now begin.
 
@@ -62,30 +62,30 @@ Web application layout per plan.md:
 
 ### Tests for User Story 1 (write first — MUST fail before implementation) ⚠️
 
-- [ ] T010 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`: a rider with no settings row reads `GasGrade` as `"Regular"` on `GetAsync`
-- [ ] T011 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`: saving a valid `GasGrade` (`"Regular"`/`"Premium"`) via `SaveAsync` persists and round-trips
-- [ ] T012 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`: saving an invalid `GasGrade` value is rejected with the existing `UsersErrorCodes.ValidationFailed` shape
-- [ ] T013 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: requesting `Regular` and `Premium` for the same week produces two independent cache rows (verifying the `(WeekStartDate, Grade)` composite key)
-- [ ] T014 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: the EIA HTTP request uses product facet `EPMR` for `Regular` and `EPMP` for `Premium` (not legacy `EPM0`)
-- [ ] T015 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a pre-feature `Grade = NULL` legacy row is never returned for any grade-aware query and a fresh external fetch is performed instead, writing a new graded row
-- [ ] T016 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: `GET /api/rides/gas-price` with no `grade` query param uses the rider's saved `GasGrade` preference
-- [ ] T017 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: `GET /api/rides/gas-price?grade=Premium` overrides the saved preference for that call only, without persisting it to `UserSettingsEntity`
-- [ ] T018 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: an invalid `grade` query-param value returns `400 INVALID_REQUEST`
-- [ ] T019 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: the `GasPriceResponse` always includes `grade`, even when `isAvailable` is `false`
-- [ ] T020 [P] [US1] Add test to `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx`: the Gas Grade selector renders, defaults to the resolved `gasGrade` from `GET /api/users/settings` (`"Regular"` for no-settings-row, `"Premium"` for pre-existing rows), and saves via `PUT /api/users/settings` on change
-- [ ] T021 [P] [US1] Add test to `src/BikeTracking.Frontend/src/services/users-api.test.ts`: `gasGrade` is included in the settings request/response payload types and round-trips through the client
-- [ ] T022 [P] [US1] Add test to `src/BikeTracking.Frontend/src/services/ridesService.test.ts`: `getGasPrice` accepts an optional `grade` parameter and includes it as a query param when provided
+- [X] T010 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`: a rider with no settings row reads `GasGrade` as `"Regular"` on `GetAsync`
+- [X] T011 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`: saving a valid `GasGrade` (`"Regular"`/`"Premium"`) via `SaveAsync` persists and round-trips
+- [X] T012 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/Users/UserSettingsServiceTests.cs`: saving an invalid `GasGrade` value is rejected with the existing `UsersErrorCodes.ValidationFailed` shape
+- [X] T013 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: requesting `Regular` and `Premium` for the same week produces two independent cache rows (verifying the `(WeekStartDate, Grade)` composite key)
+- [X] T014 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: the EIA HTTP request uses product facet `EPMR` for `Regular` and `EPMP` for `Premium` (not legacy `EPM0`)
+- [X] T015 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a pre-feature `Grade = NULL` legacy row is never returned for any grade-aware query and a fresh external fetch is performed instead, writing a new graded row
+- [X] T016 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: `GET /api/rides/gas-price` with no `grade` query param uses the rider's saved `GasGrade` preference
+- [X] T017 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: `GET /api/rides/gas-price?grade=Premium` overrides the saved preference for that call only, without persisting it to `UserSettingsEntity`
+- [X] T018 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: an invalid `grade` query-param value returns `400 INVALID_REQUEST`
+- [X] T019 [P] [US1] Add test to `src/BikeTracking.Api.Tests/Endpoints/RidesEndpointsTests.cs`: the `GasPriceResponse` always includes `grade`, even when `isAvailable` is `false`
+- [X] T020 [P] [US1] Add test to `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.test.tsx`: the Gas Grade selector renders, defaults to the resolved `gasGrade` from `GET /api/users/settings` (`"Regular"` for no-settings-row, `"Premium"` for pre-existing rows), and saves via `PUT /api/users/settings` on change
+- [X] T021 [P] [US1] Add test to `src/BikeTracking.Frontend/src/services/users-api.test.ts`: `gasGrade` is included in the settings request/response payload types and round-trips through the client
+- [X] T022 [P] [US1] Add test to `src/BikeTracking.Frontend/src/services/ridesService.test.ts`: `getGasPrice` accepts an optional `grade` parameter and includes it as a query param when provided
 
 ### Implementation for User Story 1
 
-- [ ] T023 [US1] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs` / `IGasPriceLookupService`: add a `grade` parameter to `GetOrFetchAsync`, validate it is `"Regular"`/`"Premium"`, query the cache with `WHERE WeekStartDate = @week AND Grade = @grade` (never matching legacy `NULL` rows), and map `grade` to the EIA `product` facet (`EPMR`/`EPMP`) replacing the current `EPM0` selection (depends on T002, T005; makes T013, T014, T015 pass)
-- [ ] T024 [US1] In `src/BikeTracking.Api/Application/Users/UserSettingsService.cs`: read/write `GasGrade` following the existing partial-update (`providedFields`) convention, validating against `{"Regular","Premium"}`, defaulting to `"Regular"` for a rider with no settings row (depends on T003, T005; makes T010, T011, T012 pass)
-- [ ] T025 [US1] In `src/BikeTracking.Api/Endpoints/RidesEndpoints.cs`: resolve effective grade as `grade` query-param override → saved `UserSettingsEntity.GasGrade` → `"Regular"` default, pass it to `IGasPriceLookupService.GetOrFetchAsync`, and populate `GasPriceResponse.Grade` (depends on T006, T023; makes T016, T017, T019 pass)
-- [ ] T026 [US1] In `src/BikeTracking.Api/Endpoints/RidesEndpoints.cs`: validate the `grade` query parameter (case-insensitive `"Regular"`/`"Premium"`) and return `400 INVALID_REQUEST` for any other value (depends on T025; makes T018 pass)
-- [ ] T027 [P] [US1] In `src/BikeTracking.Frontend/src/services/users-api.ts`: add `gasGrade` to the settings request/response TypeScript types (depends on T007; makes T021 pass)
-- [ ] T028 [P] [US1] In `src/BikeTracking.Frontend/src/services/ridesService.ts`: add an optional `grade` parameter to `getGasPrice`, forwarded as a query param when present (makes T022 pass)
-- [ ] T029 [US1] In `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx`: add a Regular/Premium Gas Grade selector alongside existing rider-level preferences, defaulted from `gasGrade`, saved via `users-api.ts` (depends on T027; makes T020 pass)
-- [ ] T030 [US1] Extend `src/BikeTracking.Frontend/tests/e2e/settings.spec.ts` to cover setting a gas grade preference in Settings and confirm it is reflected in the ride form's suggested gas price (per plan.md E2E requirement)
+- [X] T023 [US1] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs` / `IGasPriceLookupService`: add a `grade` parameter to `GetOrFetchAsync`, validate it is `"Regular"`/`"Premium"`, query the cache with `WHERE WeekStartDate = @week AND Grade = @grade` (never matching legacy `NULL` rows), and map `grade` to the EIA `product` facet (`EPMR`/`EPMP`) replacing the current `EPM0` selection (depends on T002, T005; makes T013, T014, T015 pass)
+- [X] T024 [US1] In `src/BikeTracking.Api/Application/Users/UserSettingsService.cs`: read/write `GasGrade` following the existing partial-update (`providedFields`) convention, validating against `{"Regular","Premium"}`, defaulting to `"Regular"` for a rider with no settings row (depends on T003, T005; makes T010, T011, T012 pass)
+- [X] T025 [US1] In `src/BikeTracking.Api/Endpoints/RidesEndpoints.cs`: resolve effective grade as `grade` query-param override → saved `UserSettingsEntity.GasGrade` → `"Regular"` default, pass it to `IGasPriceLookupService.GetOrFetchAsync`, and populate `GasPriceResponse.Grade` (depends on T006, T023; makes T016, T017, T019 pass)
+- [X] T026 [US1] In `src/BikeTracking.Api/Endpoints/RidesEndpoints.cs`: validate the `grade` query parameter (case-insensitive `"Regular"`/`"Premium"`) and return `400 INVALID_REQUEST` for any other value (depends on T025; makes T018 pass)
+- [X] T027 [P] [US1] In `src/BikeTracking.Frontend/src/services/users-api.ts`: add `gasGrade` to the settings request/response TypeScript types (depends on T007; makes T021 pass)
+- [X] T028 [P] [US1] In `src/BikeTracking.Frontend/src/services/ridesService.ts`: add an optional `grade` parameter to `getGasPrice`, forwarded as a query param when present (makes T022 pass)
+- [X] T029 [US1] In `src/BikeTracking.Frontend/src/pages/settings/SettingsPage.tsx`: add a Regular/Premium Gas Grade selector alongside existing rider-level preferences, defaulted from `gasGrade`, saved via `users-api.ts` (depends on T027; makes T020 pass)
+- [X] T030 [US1] Extend `src/BikeTracking.Frontend/tests/e2e/settings.spec.ts` to cover setting a gas grade preference in Settings and confirm it is reflected in the ride form's suggested gas price (per plan.md E2E requirement)
 
 **Checkpoint**: User Story 1 is fully functional and independently testable — grade selection, grade-aware cache key, legacy-row inertness, endpoint override, and Settings UI all work end-to-end.
 
@@ -99,18 +99,18 @@ Web application layout per plan.md:
 
 ### Tests for User Story 2 (write first — MUST fail before implementation) ⚠️
 
-- [ ] T031 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a cached `(week, grade)` row younger than 3 days (per injected `TimeProvider`) is returned with zero HTTP calls
-- [ ] T032 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a cached row 3+ days old triggers a fresh external call and replaces the stored price/`RetrievedAtUtc` on success
-- [ ] T033 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a failed refresh attempt (simulated HTTP error/invalid price) returns the prior stale price unchanged rather than `null`, and does not overwrite the existing valid cache row
-- [ ] T034 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: multiple concurrent callers requesting the same stale `(week, grade)` result in exactly one external HTTP call (via `GasPriceRefreshCoordinator` de-duplication), with all callers receiving the refreshed (or consistently stale-fallback) result
-- [ ] T035 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: the freshness boundary is measured via injected `TimeProvider.GetUtcNow()` (not `DateTime.UtcNow`), confirming the 3-day window survives a simulated process restart (new service instance, same durable `RetrievedAtUtc`)
+- [X] T031 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a cached `(week, grade)` row younger than 3 days (per injected `TimeProvider`) is returned with zero HTTP calls
+- [X] T032 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a cached row 3+ days old triggers a fresh external call and replaces the stored price/`RetrievedAtUtc` on success
+- [X] T033 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: a failed refresh attempt (simulated HTTP error/invalid price) returns the prior stale price unchanged rather than `null`, and does not overwrite the existing valid cache row
+- [X] T034 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: multiple concurrent callers requesting the same stale `(week, grade)` result in exactly one external HTTP call (via `GasPriceRefreshCoordinator` de-duplication), with all callers receiving the refreshed (or consistently stale-fallback) result
+- [X] T035 [P] [US2] Add test to `src/BikeTracking.Api.Tests/Application/GasPriceLookupServiceTests.cs`: the freshness boundary is measured via injected `TimeProvider.GetUtcNow()` (not `DateTime.UtcNow`), confirming the 3-day window survives a simulated process restart (new service instance, same durable `RetrievedAtUtc`)
 
 ### Implementation for User Story 2
 
-- [ ] T036 [US2] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs`: inject `TimeProvider` via constructor and compute staleness as `timeProvider.GetUtcNow().UtcDateTime - cached.RetrievedAtUtc >= TimeSpan.FromDays(3)`, returning the cached value as-is when fresh (depends on T023; makes T031, T035 pass)
-- [ ] T037 [US2] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs`: when a cache row is stale, route the refresh through `GasPriceRefreshCoordinator.RunExclusiveAsync` keyed by `(WeekStartDate, Grade)`, performing the EIA HTTP call and upserting the row (same `GasPriceLookupId`, updated `PricePerGallon`/`DataSource`/`EiaPeriodDate`/`RetrievedAtUtc`) on success (depends on T008, T009, T036; makes T032, T034 pass)
-- [ ] T038 [US2] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs`: on a failed/invalid refresh (non-positive price or HTTP failure) for a stale row, return the prior stale cached value unchanged without overwriting it, reusing the existing non-positive-price rejection validation (depends on T037; makes T033 pass)
-- [ ] T039 [US2] Implement the full `GasPriceRefreshCoordinator.RunExclusiveAsync<T>` body in `src/BikeTracking.Api/Application/Rides/GasPriceRefreshCoordinator.cs` (per-key `SemaphoreSlim` acquire/release, removing the semaphore entry once no longer in-flight) (depends on T008; makes T034 pass)
+- [X] T036 [US2] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs`: inject `TimeProvider` via constructor and compute staleness as `timeProvider.GetUtcNow().UtcDateTime - cached.RetrievedAtUtc >= TimeSpan.FromDays(3)`, returning the cached value as-is when fresh (depends on T023; makes T031, T035 pass)
+- [X] T037 [US2] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs`: when a cache row is stale, route the refresh through `GasPriceRefreshCoordinator.RunExclusiveAsync` keyed by `(WeekStartDate, Grade)`, performing the EIA HTTP call and upserting the row (same `GasPriceLookupId`, updated `PricePerGallon`/`DataSource`/`EiaPeriodDate`/`RetrievedAtUtc`) on success (depends on T008, T009, T036; makes T032, T034 pass)
+- [X] T038 [US2] In `src/BikeTracking.Api/Application/Rides/GasPriceLookupService.cs`: on a failed/invalid refresh (non-positive price or HTTP failure) for a stale row, return the prior stale cached value unchanged without overwriting it, reusing the existing non-positive-price rejection validation (depends on T037; makes T033 pass)
+- [X] T039 [US2] Implement the full `GasPriceRefreshCoordinator.RunExclusiveAsync<T>` body in `src/BikeTracking.Api/Application/Rides/GasPriceRefreshCoordinator.cs` (per-key `SemaphoreSlim` acquire/release, removing the semaphore entry once no longer in-flight) (depends on T008; makes T034 pass)
 
 **Checkpoint**: User Stories 1 AND 2 both work independently and together — grade-aware, freshness-aware, de-duplicated cache is fully functional.
 
@@ -120,10 +120,10 @@ Web application layout per plan.md:
 
 **Purpose**: Final verification spanning both user stories
 
-- [ ] T040 [P] Run `dotnet test BikeTracking.slnx` and confirm all new/extended tests (T010–T019, T031–T035) pass
-- [ ] T041 [P] Run `cd src/BikeTracking.Frontend && npm run lint && npm run build && npm run test:unit` and confirm all new/extended tests (T020–T022) pass
-- [ ] T042 Run `cd src/BikeTracking.Frontend && npm run test:e2e` and confirm the extended `settings.spec.ts` (T030) passes
-- [ ] T043 Execute the manual verification steps in `specs/030-gas-price-grade-cache/quickstart.md` (Manual Check section) against a locally seeded pre-feature database to confirm the `"Premium"` backfill, `"Regular"` new-row default, legacy-row inertness, and 3-day refresh/fallback behavior
+- [X] T040 [P] Run `dotnet test BikeTracking.slnx` and confirm all new/extended tests (T010–T019, T031–T035) pass
+- [X] T041 [P] Run `cd src/BikeTracking.Frontend && npm run lint && npm run build && npm run test:unit` and confirm all new/extended tests (T020–T022) pass
+- [X] T042 Run `cd src/BikeTracking.Frontend && npm run test:e2e` and confirm the extended `settings.spec.ts` (T030) passes
+- [X] T043 Execute the manual verification steps in `specs/030-gas-price-grade-cache/quickstart.md` (Manual Check section) against a locally seeded pre-feature database to confirm the `"Premium"` backfill, `"Regular"` new-row default, legacy-row inertness, and 3-day refresh/fallback behavior
 
 ---
 

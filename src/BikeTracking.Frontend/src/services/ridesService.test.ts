@@ -92,6 +92,29 @@ describe("ridesService", () => {
     await expect(ridesService.recordRide(request)).rejects.toThrow();
   });
 
+  it("getGasPrice includes optional grade query parameter when provided", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          date: "2026-03-31",
+          pricePerGallon: 3.486,
+          isAvailable: true,
+          dataSource: "Source: U.S. Energy Information Administration (EIA)",
+          grade: "Premium",
+        },
+        true,
+      ),
+    );
+
+    const result = await ridesService.getGasPrice("2026-03-31", "Premium");
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("/api/rides/gas-price");
+    expect(url).toContain("date=2026-03-31");
+    expect(url).toContain("grade=Premium");
+    expect(result.grade).toBe("Premium");
+  });
+
   it("should return ride presets from GET /api/rides/presets", async () => {
     const response = {
       presets: [

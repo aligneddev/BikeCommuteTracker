@@ -12,6 +12,8 @@ public sealed class GasPriceLookupEntity
     /// </summary>
     public DateOnly WeekStartDate { get; set; }
 
+    public string? Grade { get; set; }
+
     public decimal PricePerGallon { get; set; }
 
     public required string DataSource { get; set; }

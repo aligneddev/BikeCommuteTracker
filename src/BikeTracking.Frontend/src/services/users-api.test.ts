@@ -221,6 +221,44 @@ describe("users-api transport", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("saveUserSettings includes gasGrade in payload and response", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          hasSettings: true,
+          settings: {
+            averageCarMpg: 31.5,
+            yearlyGoalMiles: 1800,
+            oilChangePrice: 89.99,
+            mileageRateCents: 67.5,
+            locationLabel: null,
+            latitude: null,
+            longitude: null,
+            dashboardGallonsAvoidedEnabled: true,
+            dashboardGoalProgressEnabled: true,
+            weatherApiKey: null,
+            eiaGasApiKey: null,
+            gasGrade: "Premium",
+            updatedAtUtc: "2026-03-30T10:00:00Z",
+          },
+        },
+        200,
+      ),
+    );
+
+    const result = await saveUserSettings({ gasGrade: "Premium" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${url}/users/me/settings`,
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({ gasGrade: "Premium" }),
+      }),
+    );
+    expect(result.ok).toBe(true);
+    expect(result.data?.settings.gasGrade).toBe("Premium");
+  });
+
   it("settings requests include auth header when session user exists", async () => {
     sessionStorage.setItem(
       "bike_tracking_auth_session",

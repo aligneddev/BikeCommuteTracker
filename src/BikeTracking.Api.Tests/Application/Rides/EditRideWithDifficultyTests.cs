@@ -376,6 +376,7 @@ file sealed class EditDifficultyNullGasPriceLookupService : IGasPriceLookupServi
 {
     public Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<decimal?>(null);
@@ -383,6 +384,7 @@ file sealed class EditDifficultyNullGasPriceLookupService : IGasPriceLookupServi
     public Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     ) => Task.FromResult<decimal?>(null);
