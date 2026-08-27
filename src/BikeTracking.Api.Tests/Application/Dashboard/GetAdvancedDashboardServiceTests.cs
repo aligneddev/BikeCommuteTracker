@@ -1,4 +1,5 @@
 using BikeTracking.Api.Application.Dashboard;
+using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using BikeTracking.Api.Tests.TestSupport;
@@ -584,6 +585,180 @@ public sealed class GetAdvancedDashboardServiceTests
         var result = await service.GetAsync(rider.UserId);
 
         Assert.Null(result.SavingsWindows.AllTime.OilChangeSavings);
+    }
+
+    // ── CO2 Savings (Feature 029) ───────────────────────────────────────────
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_WithRidesAcrossWindows_ReturnsCo2SavedEqualToTotalMilesTimesFactorOnAllFourWindows()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Co2 Windows Rider");
+
+        var now = DateTime.Now;
+        var weekStart = now.Date.AddDays(-(((int)now.DayOfWeek - 1 + 7) % 7));
+
+        dbContext.Rides.AddRange(
+            // This week (also counts toward month/year/all-time)
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = weekStart,
+                Miles = 10m,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            // Earlier this year but before this week (counts toward year/all-time only)
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = new DateTime(now.Year, 1, 1),
+                Miles = 5m,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            // Last year (all-time only)
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = new DateTime(now.Year - 1, 6, 1),
+                Miles = 20m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
+        var result = await service.GetAsync(rider.UserId);
+
+        var windows = result.SavingsWindows;
+        AssertCo2SavedMatchesMiles(windows.Weekly);
+        AssertCo2SavedMatchesMiles(windows.Monthly);
+        AssertCo2SavedMatchesMiles(windows.Yearly);
+        AssertCo2SavedMatchesMiles(windows.AllTime);
+
+        static void AssertCo2SavedMatchesMiles(AdvancedSavingsWindow window)
+        {
+            var expected = Math.Round(window.TotalMiles * 0.90m, 2, MidpointRounding.AwayFromZero);
+            Assert.Equal(expected, window.Co2Saved, 2);
+        }
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_ZeroMileWindow_ReturnsCo2SavedZeroNotNull()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Co2 ZeroMile Rider");
+
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
+        var result = await service.GetAsync(rider.UserId);
+
+        // No rides at all — every window has zero miles.
+        Assert.Equal(0.00m, result.SavingsWindows.Weekly.Co2Saved);
+        Assert.Equal(0.00m, result.SavingsWindows.Monthly.Co2Saved);
+        Assert.Equal(0.00m, result.SavingsWindows.Yearly.Co2Saved);
+        Assert.Equal(0.00m, result.SavingsWindows.AllTime.Co2Saved);
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_RiderMpgAndMileageRateSettingsChange_DoesNotAffectCo2Saved()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Co2 SettingsIndependent Rider");
+
+        dbContext.Rides.Add(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = DateTime.Now,
+                Miles = 10m,
+                // No MPG/mileage-rate snapshot at all — CO2 must still be computed from miles.
+                SnapshotAverageCarMpg = null,
+                SnapshotMileageRateCents = null,
+                GasPricePerGallon = null,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var serviceWithoutSettings = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
+        var resultWithoutSettings = await serviceWithoutSettings.GetAsync(rider.UserId);
+
+        dbContext.UserSettings.Add(
+            new UserSettingsEntity
+            {
+                UserId = rider.UserId,
+                AverageCarMpg = 45m,
+                MileageRateCents = 70m,
+                UpdatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var serviceWithSettings = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
+        var resultWithSettings = await serviceWithSettings.GetAsync(rider.UserId);
+
+        Assert.Equal(9.00m, resultWithoutSettings.SavingsWindows.AllTime.Co2Saved);
+        Assert.Equal(
+            resultWithoutSettings.SavingsWindows.AllTime.Co2Saved,
+            resultWithSettings.SavingsWindows.AllTime.Co2Saved
+        );
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_ZeroRides_ReturnsCo2SavedPerMileLbsOfNinetyHundredths()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Co2 PerMile ZeroRides Rider");
+
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
+        var result = await service.GetAsync(rider.UserId);
+
+        Assert.Equal(0.90m, result.Co2SavedPerMileLbs);
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_ForEachWindow_Co2SavedEqualsPerMileFactorTimesTotalMiles()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Co2 CrossCheck Rider");
+
+        dbContext.Rides.AddRange(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = DateTime.Now,
+                Miles = 7.3m,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = new DateTime(DateTime.Now.Year - 1, 3, 1),
+                Miles = 13.6m,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
+        var result = await service.GetAsync(rider.UserId);
+
+        foreach (
+            var window in new[]
+            {
+                result.SavingsWindows.Weekly,
+                result.SavingsWindows.Monthly,
+                result.SavingsWindows.Yearly,
+                result.SavingsWindows.AllTime,
+            }
+        )
+        {
+            var expected = Math.Round(
+                result.Co2SavedPerMileLbs * window.TotalMiles,
+                2,
+                MidpointRounding.AwayFromZero
+            );
+            Assert.Equal(expected, window.Co2Saved, 2);
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

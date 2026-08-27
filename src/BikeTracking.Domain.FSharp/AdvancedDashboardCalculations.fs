@@ -42,6 +42,16 @@ type WindResistanceBin =
     { Rating: int
       RideCount: int }
 
+/// Fixed EPA average passenger-vehicle CO2 emission factor, in pounds of CO2 per mile.
+/// This is a constant — it does not vary by user MPG or vehicle settings (FR-007).
+let Co2PerMileLbs = 0.90m
+
+/// Calculates total CO2 saved (in pounds) for a given total mileage, using the fixed
+/// Co2PerMileLbs factor. Pure and total: zero miles returns 0.00m rather than an
+/// exception, null, or NaN.
+let calculateCo2Saved (totalMiles: decimal) : decimal =
+    Math.Round(totalMiles * Co2PerMileLbs, 2, MidpointRounding.AwayFromZero)
+
 /// Calculates total gallons saved across a set of rides.
 /// Returns None when no rides have a valid MPG snapshot.
 let calculateGallonsSaved (rides: RideSnapshot list) : decimal option =

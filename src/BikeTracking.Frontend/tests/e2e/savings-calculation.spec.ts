@@ -99,4 +99,41 @@ test.describe("015-savings-calculation e2e", () => {
       "-$10.00",
     );
   });
+
+  test("advanced dashboard shows CO2 totals for all four windows and the fixed per-mile figure", async ({
+    page,
+  }) => {
+    const userName = uniqueUser("e2e-dashboard-co2-savings");
+
+    await createAndLoginUser(page, userName, TEST_PIN);
+    await recordRide(page, {
+      rideDateTimeLocal: "2026-04-16T08:00",
+      miles: "10",
+      gasPrice: "3.0000",
+    });
+
+    await page.goto("/dashboard/advanced");
+
+    // Fixed per-mile figure is visible once, regardless of ride count.
+    await expect(page.getByText(/0\.90 lb co2\/mile/i)).toBeVisible();
+
+    // CO2 Saved column header and all four window rows render a CO2 value.
+    await expect(page.getByText(/co2 saved/i).first()).toBeVisible();
+    await expect(page.getByText("9.00 lb").first()).toBeVisible();
+  });
+
+  test("advanced dashboard shows 0.00 lb CO2 for a zero-ride rider while the per-mile figure still displays", async ({
+    page,
+  }) => {
+    const userName = uniqueUser("e2e-dashboard-co2-zero-rides");
+
+    await createAndLoginUser(page, userName, TEST_PIN);
+
+    await page.goto("/dashboard/advanced");
+
+    await expect(page.getByText(/0\.90 lb co2\/mile/i)).toBeVisible();
+    const zeroCo2Cells = page.getByText("0.00 lb");
+    await expect(zeroCo2Cells.first()).toBeVisible();
+    await expect(zeroCo2Cells).toHaveCount(4);
+  });
 });

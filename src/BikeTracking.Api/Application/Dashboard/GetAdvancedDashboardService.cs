@@ -142,7 +142,8 @@ public sealed class GetAdvancedDashboardService(
             Suggestions: suggestions,
             Reminders: reminders,
             GeneratedAtUtc: DateTime.UtcNow,
-            DifficultySection: difficultySection
+            DifficultySection: difficultySection,
+            Co2SavedPerMileLbs: AdvancedDashboardCalculations.Co2PerMileLbs
         );
     }
 
@@ -263,6 +264,8 @@ public sealed class GetAdvancedDashboardService(
             );
         }
 
+        var co2Saved = AdvancedDashboardCalculations.calculateCo2Saved(totalMiles);
+
         return new AdvancedSavingsWindow(
             Period: period,
             RideCount: rideCount,
@@ -274,7 +277,8 @@ public sealed class GetAdvancedDashboardService(
             CombinedSavings: combinedSavings,
             TotalExpenses: totalExpenses,
             OilChangeSavings: oilChangeSavings,
-            NetSavings: netSavings
+            NetSavings: netSavings,
+            Co2Saved: co2Saved
         );
     }
 

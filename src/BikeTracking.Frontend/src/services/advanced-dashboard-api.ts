@@ -27,6 +27,12 @@ export interface AdvancedSavingsWindow {
    * Null only when fuel/oil savings are unavailable and expenses are zero. Can be negative.
    */
   netSavings: number | null;
+  /**
+   * Total CO2 saved (in pounds) for this window, computed as totalMiles × 0.90 lb/mile,
+   * rounded to 2 decimal places. Always present (never null) — a zero-mile window
+   * yields 0.
+   */
+  co2Saved: number;
 }
 
 /** Four calendar time-window savings breakdown returned by the advanced dashboard endpoint. */
@@ -87,6 +93,11 @@ export interface AdvancedDashboardResponse {
   reminders: AdvancedDashboardReminders;
   generatedAtUtc: string;
   difficultySection: AdvancedDashboardDifficultySection | null;
+  /**
+   * Fixed CO2-saved-per-mile figure in pounds (0.90 lb/mile). A response-level
+   * constant, not per-window; does not vary by user MPG/vehicle settings.
+   */
+  co2SavedPerMileLbs: number;
 }
 
 

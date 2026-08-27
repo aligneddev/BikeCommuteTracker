@@ -19,6 +19,7 @@ function buildWindow(
     totalExpenses: 0,
     oilChangeSavings: null,
     netSavings: null,
+    co2Saved: 0,
     ...overrides,
   }
 }
@@ -116,6 +117,24 @@ describe('SavingsWindowsTable', () => {
     const negativeCell = screen.getByText('-$40.00')
     expect(negativeCell).toBeInTheDocument()
     expect(negativeCell.closest('td')?.className).toContain('savings-windows-negative')
+  })
+
+  it('SavingsWindowsTable_WithCo2SavedValues_RendersCo2SavedColumnForAllFourWindows', () => {
+    render(
+      <SavingsWindowsTable
+        weekly={buildWindow('weekly', { totalMiles: 10, co2Saved: 9 })}
+        monthly={buildWindow('monthly', { totalMiles: 24.5, co2Saved: 22.05 })}
+        yearly={buildWindow('yearly', { totalMiles: 100, co2Saved: 90 })}
+        allTime={buildWindow('allTime', { totalMiles: 0, co2Saved: 0 })}
+      />
+    )
+
+    expect(screen.getByText(/co2 saved/i)).toBeInTheDocument()
+    expect(screen.getByText('9.00 lb')).toBeInTheDocument()
+    expect(screen.getByText('22.05 lb')).toBeInTheDocument()
+    expect(screen.getByText('90.00 lb')).toBeInTheDocument()
+    // Zero-mile window shows "0.00 lb", never blank or "—"
+    expect(screen.getByText('0.00 lb')).toBeInTheDocument()
   })
 })
 

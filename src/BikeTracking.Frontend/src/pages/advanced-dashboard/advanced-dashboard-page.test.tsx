@@ -31,6 +31,7 @@ function buildWindow(
     totalExpenses: 0,
     oilChangeSavings: null,
     netSavings: null,
+    co2Saved: 0,
     ...overrides,
   }
 }
@@ -56,6 +57,7 @@ function buildResponse(
     },
     generatedAtUtc: new Date().toISOString(),
     difficultySection: null,
+    co2SavedPerMileLbs: 0.9,
     ...overrides,
   }
 }
@@ -202,5 +204,33 @@ describe('AdvancedDashboardPage', () => {
     )
 
     expect(screen.getByRole('link', { name: /view advanced stats/i })).toBeInTheDocument()
+  })
+
+  it('AdvancedDashboardPage_Co2SavedPerMile_RendersOnceEvenWithZeroRides', async () => {
+    mockGetAdvancedDashboard.mockResolvedValue(
+      buildResponse({
+        savingsWindows: {
+          weekly: buildWindow('weekly'),
+          monthly: buildWindow('monthly'),
+          yearly: buildWindow('yearly'),
+          allTime: buildWindow('allTime'),
+        },
+        co2SavedPerMileLbs: 0.9,
+      })
+    )
+
+    const { AdvancedDashboardPage } = await import('./advanced-dashboard-page')
+    render(
+      <BrowserRouter>
+        <AdvancedDashboardPage />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/0\.90 lb co2\/mile/i)).toBeInTheDocument()
+    })
+
+    // Must render exactly once — not once per window row.
+    expect(screen.getAllByText(/0\.90 lb co2\/mile/i)).toHaveLength(1)
   })
 })

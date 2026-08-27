@@ -31,7 +31,7 @@ description: "Task list for CO2 Savings on Advanced Dashboard"
 
 **Purpose**: Confirm the working tree builds cleanly before making changes (no new projects/dependencies needed — this feature only touches existing files).
 
-- [ ] T001 Confirm baseline build/test health: run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit`, confirming both pass before any CO2 changes are made (no code changes in this task)
+- [X] T001 Confirm baseline build/test health: run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit`, confirming both pass before any CO2 changes are made (no code changes in this task)
 
 **Checkpoint**: Baseline green — safe to start foundational work.
 
@@ -43,8 +43,8 @@ description: "Task list for CO2 Savings on Advanced Dashboard"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T002 [P] Write failing F# calculation tests for `calculateCo2Saved` and `Co2PerMileLbs` in `src/BikeTracking.Api.Tests/Application/Dashboard/AdvancedDashboardCalculationsTests.cs` (new file), asserting: `calculateCo2Saved` returns `totalMiles * 0.90m` rounded to 2 decimal places (`MidpointRounding.AwayFromZero`); zero miles returns `0.00m` (not an exception, null, or NaN); `Co2PerMileLbs` equals `0.90m`
-- [ ] T003 Add `Co2PerMileLbs = 0.90m` constant and `calculateCo2Saved (totalMiles: decimal) : decimal` pure function to `src/BikeTracking.Domain.FSharp/AdvancedDashboardCalculations.fs`, computing `Math.Round(totalMiles * Co2PerMileLbs, 2, MidpointRounding.AwayFromZero)`; run T002's tests and confirm they now pass
+- [X] T002 [P] Write failing F# calculation tests for `calculateCo2Saved` and `Co2PerMileLbs` in `src/BikeTracking.Api.Tests/Application/Dashboard/AdvancedDashboardCalculationsTests.cs` (new file), asserting: `calculateCo2Saved` returns `totalMiles * 0.90m` rounded to 2 decimal places (`MidpointRounding.AwayFromZero`); zero miles returns `0.00m` (not an exception, null, or NaN); `Co2PerMileLbs` equals `0.90m`
+- [X] T003 Add `Co2PerMileLbs = 0.90m` constant and `calculateCo2Saved (totalMiles: decimal) : decimal` pure function to `src/BikeTracking.Domain.FSharp/AdvancedDashboardCalculations.fs`, computing `Math.Round(totalMiles * Co2PerMileLbs, 2, MidpointRounding.AwayFromZero)`; run T002's tests and confirm they now pass
 
 **Checkpoint**: Pure CO2 calculation exists and is unit-tested — User Story 1 and User Story 2 implementation can now begin.
 
@@ -60,18 +60,18 @@ description: "Task list for CO2 Savings on Advanced Dashboard"
 
 > Write these tests FIRST, ensure they FAIL before implementation
 
-- [ ] T004 [P] [US1] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting `co2Saved`/`Co2Saved` is present and non-null on all four windows (weekly, monthly, yearly, allTime) and equals `totalMiles * 0.90` (within 0.01) for a rider with rides across multiple windows
-- [ ] T005 [P] [US1] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting a window with zero ride miles returns `Co2Saved == 0.00m` (not null, exception, or NaN)
-- [ ] T006 [P] [US1] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting `Co2Saved` does not change when a rider's `AverageCarMpg`/`MileageRateCents` settings change (only ride miles affect it)
-- [ ] T007 [P] [US1] Write failing test in `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.test.tsx` asserting a "CO2 Saved" value renders for each of the four window rows, formatted to 2 decimal places with a unit label (e.g., `"22.05 lb"`), including `"0.00 lb"` for a zero-mile window (not blank/`"—"`)
+- [X] T004 [P] [US1] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting `co2Saved`/`Co2Saved` is present and non-null on all four windows (weekly, monthly, yearly, allTime) and equals `totalMiles * 0.90` (within 0.01) for a rider with rides across multiple windows
+- [X] T005 [P] [US1] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting a window with zero ride miles returns `Co2Saved == 0.00m` (not null, exception, or NaN)
+- [X] T006 [P] [US1] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting `Co2Saved` does not change when a rider's `AverageCarMpg`/`MileageRateCents` settings change (only ride miles affect it)
+- [X] T007 [P] [US1] Write failing test in `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.test.tsx` asserting a "CO2 Saved" value renders for each of the four window rows, formatted to 2 decimal places with a unit label (e.g., `"22.05 lb"`), including `"0.00 lb"` for a zero-mile window (not blank/`"—"`)
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Add `Co2Saved: decimal` (non-nullable) field to the `AdvancedSavingsWindow` record in `src/BikeTracking.Api/Contracts/AdvancedDashboardContracts.cs`, documented as always-present (never null, unlike `GallonsSaved`/`FuelCostAvoided`) per FR-006/data-model.md
-- [ ] T009 [US1] Wire `AdvancedDashboardCalculations.calculateCo2Saved` into `BuildWindow` in `src/BikeTracking.Api/Application/Dashboard/GetAdvancedDashboardService.cs`, passing `totalMiles` and setting the new `Co2Saved` field on the returned `AdvancedSavingsWindow` for all four windows (weekly, monthly, yearly, allTime) — depends on T008
-- [ ] T010 [US1] Add `co2Saved: number` (non-nullable) field to the `AdvancedSavingsWindow` TypeScript interface in `src/BikeTracking.Frontend/src/services/advanced-dashboard-api.ts`
-- [ ] T011 [US1] Add a `formatCo2` helper (formats to `"{value.toFixed(2)} lb"`, never `"—"`) and a new "CO2 Saved" column (header + per-row cell) to `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.tsx`, rendering `co2Saved` for all four window rows — depends on T010
-- [ ] T012 [US1] Run T004–T007 and confirm they now pass; run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit` to confirm no regressions
+- [X] T008 [US1] Add `Co2Saved: decimal` (non-nullable) field to the `AdvancedSavingsWindow` record in `src/BikeTracking.Api/Contracts/AdvancedDashboardContracts.cs`, documented as always-present (never null, unlike `GallonsSaved`/`FuelCostAvoided`) per FR-006/data-model.md
+- [X] T009 [US1] Wire `AdvancedDashboardCalculations.calculateCo2Saved` into `BuildWindow` in `src/BikeTracking.Api/Application/Dashboard/GetAdvancedDashboardService.cs`, passing `totalMiles` and setting the new `Co2Saved` field on the returned `AdvancedSavingsWindow` for all four windows (weekly, monthly, yearly, allTime) — depends on T008
+- [X] T010 [US1] Add `co2Saved: number` (non-nullable) field to the `AdvancedSavingsWindow` TypeScript interface in `src/BikeTracking.Frontend/src/services/advanced-dashboard-api.ts`
+- [X] T011 [US1] Add a `formatCo2` helper (formats to `"{value.toFixed(2)} lb"`, never `"—"`) and a new "CO2 Saved" column (header + per-row cell) to `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.tsx`, rendering `co2Saved` for all four window rows — depends on T010
+- [X] T012 [US1] Run T004–T007 and confirm they now pass; run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit` to confirm no regressions
 
 **Checkpoint**: User Story 1 is fully functional and independently testable — CO2 totals visible on all four savings windows.
 
@@ -87,17 +87,17 @@ description: "Task list for CO2 Savings on Advanced Dashboard"
 
 > Write these tests FIRST, ensure they FAIL before implementation
 
-- [ ] T013 [P] [US2] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting `Co2SavedPerMileLbs` is present on the response and equals `0.90m`, including for a rider with zero rides across all windows
-- [ ] T014 [P] [US2] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting, for each of the four windows, `window.Co2Saved == Round(response.Co2SavedPerMileLbs * window.TotalMiles, 2)` within 0.01 (SC-003 cross-check)
-- [ ] T015 [P] [US2] Write failing test in `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.test.tsx` (or a new `advanced-dashboard-page.test.tsx` case, whichever component ends up owning the caption) asserting the per-mile figure ("0.90 lb CO2/mile") renders once, not per row, including when all windows have zero rides
+- [X] T013 [P] [US2] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting `Co2SavedPerMileLbs` is present on the response and equals `0.90m`, including for a rider with zero rides across all windows
+- [X] T014 [P] [US2] Write failing test in `src/BikeTracking.Api.Tests/Application/Dashboard/GetAdvancedDashboardServiceTests.cs` asserting, for each of the four windows, `window.Co2Saved == Round(response.Co2SavedPerMileLbs * window.TotalMiles, 2)` within 0.01 (SC-003 cross-check)
+- [X] T015 [P] [US2] Write failing test in `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.test.tsx` (or a new `advanced-dashboard-page.test.tsx` case, whichever component ends up owning the caption) asserting the per-mile figure ("0.90 lb CO2/mile") renders once, not per row, including when all windows have zero rides
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Add `Co2SavedPerMileLbs: decimal` field to `AdvancedDashboardResponse` in `src/BikeTracking.Api/Contracts/AdvancedDashboardContracts.cs`, documented as a fixed response-level constant (not per-window)
-- [ ] T017 [US2] Set `Co2SavedPerMileLbs: AdvancedDashboardCalculations.Co2PerMileLbs` on the `AdvancedDashboardResponse` returned from `GetAsync` in `src/BikeTracking.Api/Application/Dashboard/GetAdvancedDashboardService.cs` — depends on T016
-- [ ] T018 [US2] Add `co2SavedPerMileLbs: number` field to the `AdvancedDashboardResponse` TypeScript interface in `src/BikeTracking.Frontend/src/services/advanced-dashboard-api.ts`
-- [ ] T019 [US2] Render the per-mile figure once (e.g., `"0.90 lb CO2/mile"`) near the CO2 totals — add a `co2SavedPerMile` prop to `SavingsWindowsTable` (or a caption in `advanced-dashboard-page.tsx`, whichever fits the existing layout best) in `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.tsx` and wire it from `src/BikeTracking.Frontend/src/pages/advanced-dashboard/advanced-dashboard-page.tsx` — depends on T018
-- [ ] T020 [US2] Run T013–T015 and confirm they now pass; run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit` to confirm no regressions
+- [X] T016 [US2] Add `Co2SavedPerMileLbs: decimal` field to `AdvancedDashboardResponse` in `src/BikeTracking.Api/Contracts/AdvancedDashboardContracts.cs`, documented as a fixed response-level constant (not per-window)
+- [X] T017 [US2] Set `Co2SavedPerMileLbs: AdvancedDashboardCalculations.Co2PerMileLbs` on the `AdvancedDashboardResponse` returned from `GetAsync` in `src/BikeTracking.Api/Application/Dashboard/GetAdvancedDashboardService.cs` — depends on T016
+- [X] T018 [US2] Add `co2SavedPerMileLbs: number` field to the `AdvancedDashboardResponse` TypeScript interface in `src/BikeTracking.Frontend/src/services/advanced-dashboard-api.ts`
+- [X] T019 [US2] Render the per-mile figure once (e.g., `"0.90 lb CO2/mile"`) near the CO2 totals — add a `co2SavedPerMile` prop to `SavingsWindowsTable` (or a caption in `advanced-dashboard-page.tsx`, whichever fits the existing layout best) in `src/BikeTracking.Frontend/src/pages/advanced-dashboard/SavingsWindowsTable.tsx` and wire it from `src/BikeTracking.Frontend/src/pages/advanced-dashboard/advanced-dashboard-page.tsx` — depends on T018
+- [X] T020 [US2] Run T013–T015 and confirm they now pass; run `dotnet test BikeTracking.slnx` and `cd src/BikeTracking.Frontend && npm run test:unit` to confirm no regressions
 
 **Checkpoint**: User Stories 1 AND 2 both work independently — CO2 totals per window and the per-mile figure are both visible and cross-validated.
 
@@ -107,9 +107,9 @@ description: "Task list for CO2 Savings on Advanced Dashboard"
 
 **Purpose**: End-to-end validation and final consistency checks across both stories.
 
-- [ ] T021 [P] Extend `src/BikeTracking.Frontend/tests/e2e/savings-calculation.spec.ts` (or add a CO2-focused e2e spec in the same directory) to assert: CO2 totals render on the advanced dashboard for all four windows, the per-mile figure ("0.90 lb CO2/mile") is visible, and a zero-ride rider sees `"0.00 lb"` per window while the per-mile figure still displays
-- [ ] T022 Run the full quickstart.md validation matrix: `dotnet test BikeTracking.slnx`, `cd src/BikeTracking.Frontend && npm run test:unit`, `cd src/BikeTracking.Frontend && npm run test:e2e`, and the manual dashboard check described in `specs/029-co2-savings-dashboard/quickstart.md`
-- [ ] T023 Re-verify the Constitution Check post-implementation gates in `specs/029-co2-savings-dashboard/plan.md` still hold (no new persistence, CO2 not cached/stored, pure F# calculation, TDD followed) and update `plan.md`'s Post-Design re-check notes if anything changed during implementation
+- [X] T021 [P] Extend `src/BikeTracking.Frontend/tests/e2e/savings-calculation.spec.ts` (or add a CO2-focused e2e spec in the same directory) to assert: CO2 totals render on the advanced dashboard for all four windows, the per-mile figure ("0.90 lb CO2/mile") is visible, and a zero-ride rider sees `"0.00 lb"` per window while the per-mile figure still displays
+- [X] T022 Run the full quickstart.md validation matrix: `dotnet test BikeTracking.slnx`, `cd src/BikeTracking.Frontend && npm run test:unit`, `cd src/BikeTracking.Frontend && npm run test:e2e`, and the manual dashboard check described in `specs/029-co2-savings-dashboard/quickstart.md`
+- [X] T023 Re-verify the Constitution Check post-implementation gates in `specs/029-co2-savings-dashboard/plan.md` still hold (no new persistence, CO2 not cached/stored, pure F# calculation, TDD followed) and update `plan.md`'s Post-Design re-check notes if anything changed during implementation
 
 ---
 

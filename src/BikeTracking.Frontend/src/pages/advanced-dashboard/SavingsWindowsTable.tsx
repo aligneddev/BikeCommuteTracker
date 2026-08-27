@@ -5,6 +5,8 @@ interface SavingsWindowsTableProps {
   monthly: AdvancedSavingsWindow
   yearly: AdvancedSavingsWindow
   allTime: AdvancedSavingsWindow
+  /** Fixed CO2-saved-per-mile figure in pounds, rendered once near the totals. */
+  co2SavedPerMile?: number
 }
 
 /** Formats a dollar amount as USD currency, or "—" when null. */
@@ -26,6 +28,11 @@ function formatGallons(value: number | null): string {
 /** Formats a mileage value to 1 decimal place. */
 function formatMiles(value: number): string {
   return `${value.toFixed(1)} mi`
+}
+
+/** Formats a CO2 value to 2 decimal places with a "lb" unit label. Never "—". */
+function formatCo2(value: number): string {
+  return `${value.toFixed(2)} lb`
 }
 
 const WINDOW_LABELS: Record<string, string> = {
@@ -61,6 +68,7 @@ function WindowRow({ window: w }: WindowRowProps) {
       <td className="savings-windows-cell">{formatCurrency(w.mileageRateSavings)}</td>
       <td className="savings-windows-cell">{formatCurrency(w.totalExpenses)}</td>
       <td className="savings-windows-cell">{formatCurrency(w.oilChangeSavings)}</td>
+      <td className="savings-windows-cell">{formatCo2(w.co2Saved)}</td>
       <td
         className={`savings-windows-cell savings-windows-net${isNegativeNet ? ' savings-windows-negative' : ''}`}
       >
@@ -81,9 +89,15 @@ export function SavingsWindowsTable({
   monthly,
   yearly,
   allTime,
+  co2SavedPerMile,
 }: SavingsWindowsTableProps) {
   return (
     <div className="savings-windows-table-wrap">
+      {co2SavedPerMile !== undefined ? (
+        <p className="savings-windows-co2-per-mile">
+          {co2SavedPerMile.toFixed(2)} lb CO2/mile
+        </p>
+      ) : null}
       <table className="savings-windows-table">
         <thead>
           <tr>
@@ -95,6 +109,7 @@ export function SavingsWindowsTable({
             <th className="savings-windows-cell savings-windows-header">Mileage Rate</th>
             <th className="savings-windows-cell savings-windows-header">Expenses</th>
             <th className="savings-windows-cell savings-windows-header">Oil Change Savings</th>
+            <th className="savings-windows-cell savings-windows-header">CO2 Saved</th>
             <th className="savings-windows-cell savings-windows-header">Net Savings</th>
           </tr>
         </thead>
