@@ -8,6 +8,13 @@
 
 **Input**: User description: "Add a Carbon (CO2) saved value to the advanced dashboard's overall/yearly saved section, for the current year chosen on the dashboard. This should be calculated on demand (not stored/precomputed). Also show the CO2 saved per mile so the user can understand their per-mile environmental impact."
 
+## Clarifications
+
+### Session 2026-08-27
+
+- Q: What exact CO2 emission factor should be used per mile of biking (replacing an equivalent mile of driving)? → A: 0.90 lb CO2 per mile (EPA average passenger vehicle, ~404g/mile)
+- Q: What decimal precision should be used when displaying CO2 saved totals and the per-mile figure? → A: 2 decimal places (e.g., "245.32 lb"), consistent with existing $ and gallons metrics
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - View Total CO2 Saved for the Current Year (Priority: P1)
@@ -37,8 +44,8 @@ The user wants to understand their per-mile environmental impact, not just a cum
 
 **Acceptance Scenarios**:
 
-1. **Given** the advanced dashboard is displaying savings windows, **When** the user views the CO2 section, **Then** they see a per-mile CO2 saved value (e.g., "0.90 lb CO2/mile") displayed alongside the total CO2 saved figures.
-2. **Given** the per-mile value and a window's total miles, **When** the values are compared, **Then** total CO2 saved for that window equals the per-mile value multiplied by the window's total miles (within rounding).
+1. **Given** the advanced dashboard is displaying savings windows, **When** the user views the CO2 section, **Then** they see a per-mile CO2 saved value of "0.90 lb CO2/mile" (EPA average passenger vehicle emission factor, ~404g/mile) displayed alongside the total CO2 saved figures.
+2. **Given** the per-mile value and a window's total miles, **When** the values are compared, **Then** total CO2 saved for that window equals the per-mile value multiplied by the window's total miles (within 0.01 lb, per the 2-decimal-place rounding convention).
 3. **Given** the user has no rides at all, **When** they view the CO2 per-mile value, **Then** it still displays the fixed per-mile factor (since it does not depend on ride count), while totals show as zero.
 
 ---
@@ -62,11 +69,12 @@ The user wants to understand their per-mile environmental impact, not just a cum
 - **FR-006**: System MUST return a CO2 saved value of zero (not null, error, or NaN) for any window with zero qualifying ride miles.
 - **FR-007**: System MUST NOT vary the CO2-per-mile emission factor based on user-configured MPG or vehicle settings; the factor MUST be a fixed constant representing average-vehicle emissions.
 - **FR-008**: System MUST express the CO2 saved values with a clearly labeled unit (e.g., pounds or kilograms of CO2) both for totals and for the per-mile figure.
+- **FR-009**: System MUST round CO2 saved totals and the per-mile figure to 2 decimal places (e.g., "245.32 lb"), consistent with the existing rounding convention used for gallons saved, fuel cost avoided, and mileage-rate savings.
 
 ### Key Entities
 
 - **CO2 Savings Window Metric**: A derived, request-time-only value representing the estimated mass of CO2 emissions avoided for a given savings window (weekly, monthly, yearly, all-time), computed as `windowTotalMiles * co2PerMileFactor`. Not persisted.
-- **CO2 Per-Mile Factor**: A fixed constant (mass of CO2 per mile) representing the average passenger-vehicle emissions avoided by biking one mile instead of driving it. Used to compute all window totals and displayed directly to the user.
+- **CO2 Per-Mile Factor**: A fixed constant of 0.90 lb CO2 per mile (EPA average passenger-vehicle emission factor, ~404g/mile) representing the average passenger-vehicle emissions avoided by biking one mile instead of driving it. Used to compute all window totals and displayed directly to the user.
 
 ## Success Criteria *(mandatory)*
 
@@ -74,12 +82,12 @@ The user wants to understand their per-mile environmental impact, not just a cum
 
 - **SC-001**: 100% of advanced dashboard views for a year with recorded rides display a non-blank, non-error CO2 saved value in the yearly window.
 - **SC-002**: Users can identify their CO2 saved per mile within 5 seconds of viewing the advanced dashboard's savings section, without needing to compute it manually.
-- **SC-003**: For every savings window, CO2 saved total equals (within rounding) the displayed per-mile factor multiplied by that window's total miles, verified in 100% of automated test cases.
+- **SC-003**: For every savings window, CO2 saved total equals (within 0.01 lb, per the 2-decimal-place rounding convention) the displayed per-mile factor multiplied by that window's total miles, verified in 100% of automated test cases.
 - **SC-004**: 0 instances of CO2 saved values are found stored in the database or cached between requests; the value is recomputed on every dashboard load.
 
 ## Assumptions
 
-- A fixed, documented CO2-per-mile emission factor (e.g., based on published average passenger-vehicle emissions per mile) is an acceptable approximation; per-user vehicle-specific emissions are out of scope for this feature.
+- A fixed, documented CO2-per-mile emission factor of 0.90 lb CO2/mile (EPA average passenger-vehicle emissions, ~404g/mile) is an acceptable approximation; per-user vehicle-specific emissions are out of scope for this feature.
 - The CO2 metric reuses the same window/period boundaries (weekly, monthly, yearly-selected, all-time) already established by the existing advanced dashboard savings feature.
 - "Currently selected year" refers to the year selector already present on the advanced dashboard for the yearly window; this feature does not introduce a new year selector.
 - Units for display (pounds vs. kilograms of CO2) will follow the same locale/unit convention as the rest of the dashboard (assumed US customary units, i.e., pounds, consistent with miles/gallons already used).
