@@ -24,7 +24,8 @@ public sealed record UserSettingsUpsertRequest(
     bool? DashboardGallonsAvoidedEnabled = null,
     bool? DashboardGoalProgressEnabled = null,
     string? WeatherApiKey = null,
-    string? EiaGasApiKey = null
+    string? EiaGasApiKey = null,
+    string? GasGrade = null
 );
 
 public sealed record UserSettingsView(
@@ -39,7 +40,8 @@ public sealed record UserSettingsView(
     bool DashboardGoalProgressEnabled = false,
     DateTime? UpdatedAtUtc = null,
     string? WeatherApiKey = null,
-    string? EiaGasApiKey = null
+    string? EiaGasApiKey = null,
+    string GasGrade = "Regular"
 );
 
 public sealed record UserSettingsResponse(bool HasSettings, UserSettingsView Settings);

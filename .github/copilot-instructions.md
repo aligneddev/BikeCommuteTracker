@@ -137,5 +137,5 @@ From `src/BikeTracking.Frontend`:
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-[specs/029-co2-savings-dashboard/plan.md](../specs/029-co2-savings-dashboard/plan.md)
+[specs/030-gas-price-grade-cache/plan.md](../specs/030-gas-price-grade-cache/plan.md)
 <!-- SPECKIT END -->

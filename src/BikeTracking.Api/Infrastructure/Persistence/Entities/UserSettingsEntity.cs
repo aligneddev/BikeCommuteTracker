@@ -26,5 +26,7 @@ public sealed class UserSettingsEntity
 
     public string? EiaGasApiKey { get; set; }
 
+    public string GasGrade { get; set; } = "Regular";
+
     public DateTime UpdatedAtUtc { get; set; }
 }

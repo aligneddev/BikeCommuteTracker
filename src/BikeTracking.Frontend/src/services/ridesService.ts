@@ -50,6 +50,7 @@ export interface GasPriceResponse {
   pricePerGallon: number | null;
   isAvailable: boolean;
   dataSource: string | null;
+  grade: "Regular" | "Premium";
 }
 
 export interface RideWeatherResponse {
@@ -295,14 +296,19 @@ export async function recordRide(
   return response.json();
 }
 
-export async function getGasPrice(date: string): Promise<GasPriceResponse> {
-  const response = await fetch(
-    `${getApiBaseUrl()}/api/rides/gas-price?date=${encodeURIComponent(date)}`,
-    {
-      method: "GET",
-      headers: getAuthHeaders(),
-    },
-  );
+export async function getGasPrice(
+  date: string,
+  grade?: "Regular" | "Premium",
+): Promise<GasPriceResponse> {
+  const params = new URLSearchParams({ date });
+  if (grade) {
+    params.set("grade", grade);
+  }
+
+  const response = await fetch(`${getApiBaseUrl()}/api/rides/gas-price?${params.toString()}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error(

@@ -130,6 +130,7 @@ public sealed partial class RidesEndpointsTests
     [Fact]
     public async Task GetGasPrice_WithValidDate_ReturnsShape()
     {
+        StubGasPriceLookupService.Reset();
         await using var host = await RecordRideApiHost.StartAsync();
         var userId = await host.SeedUserAsync("GasPriceUser");
 
@@ -144,11 +145,13 @@ public sealed partial class RidesEndpointsTests
         Assert.NotNull(payload);
         Assert.Equal("2026-03-31", payload.Date);
         Assert.Equal("Source: U.S. Energy Information Administration (EIA)", payload.DataSource);
+        Assert.Equal("Regular", payload.Grade);
     }
 
     [Fact]
     public async Task GetGasPrice_WithInvalidDate_Returns400()
     {
+        StubGasPriceLookupService.Reset();
         await using var host = await RecordRideApiHost.StartAsync();
         var userId = await host.SeedUserAsync("GasPriceBadDate");
 
@@ -163,11 +166,100 @@ public sealed partial class RidesEndpointsTests
     [Fact]
     public async Task GetGasPrice_WithoutAuth_Returns401()
     {
+        StubGasPriceLookupService.Reset();
         await using var host = await RecordRideApiHost.StartAsync();
 
         var response = await host.Client.GetAsync("/api/rides/gas-price?date=2026-03-31");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetGasPrice_WithoutGradeOverride_UsesSavedGasGradePreference()
+    {
+        StubGasPriceLookupService.Reset();
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceSavedGrade");
+        await host.SeedUserSettingsAsync(userId, gasGrade: "Premium");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/gas-price?date=2026-03-31",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<GasPriceResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("Premium", payload.Grade);
+        Assert.Equal("Premium", StubGasPriceLookupService.LastRequestedGrade);
+    }
+
+    [Fact]
+    public async Task GetGasPrice_WithGradeOverride_UsesOverrideWithoutPersistingPreference()
+    {
+        StubGasPriceLookupService.Reset();
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceOverride");
+        await host.SeedUserSettingsAsync(userId, gasGrade: "Regular");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/gas-price?date=2026-03-31&grade=Premium",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<GasPriceResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("Premium", payload.Grade);
+        Assert.Equal("Premium", StubGasPriceLookupService.LastRequestedGrade);
+
+        using var scope = host.App.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+        var settings = await dbContext.UserSettings.SingleAsync(x => x.UserId == userId);
+        Assert.Equal("Regular", settings.GasGrade);
+    }
+
+    [Fact]
+    public async Task GetGasPrice_WithInvalidGradeOverride_Returns400InvalidRequest()
+    {
+        StubGasPriceLookupService.Reset();
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceInvalidGrade");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/gas-price?date=2026-03-31&grade=midgrade",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("INVALID_REQUEST", payload.Code);
+    }
+
+    [Fact]
+    public async Task GetGasPrice_ResponseIncludesGradeWhenPriceUnavailable()
+    {
+        StubGasPriceLookupService.Reset();
+        StubGasPriceLookupService.ReturnNullPrice = true;
+        await using var host = await RecordRideApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("GasPriceUnavailableGrade");
+
+        var response = await host.Client.GetWithAuthAsync(
+            "/api/rides/gas-price?date=2026-03-31&grade=Premium",
+            userId
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<GasPriceResponse>();
+        Assert.NotNull(payload);
+        Assert.False(payload.IsAvailable);
+        Assert.Null(payload.PricePerGallon);
+        Assert.Equal("Premium", payload.Grade);
+
+        StubGasPriceLookupService.ReturnNullPrice = false;
     }
 
     [Fact]
@@ -379,7 +471,12 @@ public sealed partial class RidesEndpointsTests
             return user.UserId;
         }
 
-        public async Task SeedUserSettingsAsync(long userId, decimal latitude, decimal longitude)
+        public async Task SeedUserSettingsAsync(
+            long userId,
+            decimal? latitude = null,
+            decimal? longitude = null,
+            string gasGrade = "Regular"
+        )
         {
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
@@ -388,6 +485,7 @@ public sealed partial class RidesEndpointsTests
                 new UserSettingsEntity
                 {
                     UserId = userId,
+                    GasGrade = gasGrade,
                     Latitude = latitude,
                     Longitude = longitude,
                     UpdatedAtUtc = DateTime.UtcNow,
@@ -513,12 +611,33 @@ internal static class HttpClientExtensions
 
 internal sealed class StubGasPriceLookupService : IGasPriceLookupService
 {
+    public static bool ReturnNullPrice { get; set; }
+    public static string LastRequestedGrade { get; private set; } = "Regular";
+
+    public static void Reset()
+    {
+        ReturnNullPrice = false;
+        LastRequestedGrade = "Regular";
+    }
+
     public Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
+        LastRequestedGrade = grade;
+        if (ReturnNullPrice)
+        {
+            return Task.FromResult<decimal?>(null);
+        }
+
+        if (grade.Equals("Premium", StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult<decimal?>(3.4860m);
+        }
+
         if (date == new DateOnly(2026, 3, 31))
         {
             return Task.FromResult<decimal?>(3.1860m);
@@ -530,12 +649,13 @@ internal sealed class StubGasPriceLookupService : IGasPriceLookupService
     public Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
         // Delegate to the single-date overload for stub behavior
-        return GetOrFetchAsync(priceDate, apiKey, cancellationToken);
+        return GetOrFetchAsync(priceDate, grade, apiKey, cancellationToken);
     }
 }
 

@@ -284,6 +284,74 @@ describe('SettingsPage', () => {
     })
   })
 
+  it('renders gas grade selector, defaults from settings, and saves updates', async () => {
+    mockGetUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: true,
+        settings: {
+          averageCarMpg: null,
+          yearlyGoalMiles: null,
+          oilChangePrice: null,
+          mileageRateCents: null,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Premium',
+          updatedAtUtc: '2026-03-30T10:00:00Z',
+        },
+      },
+    })
+
+    mockSaveUserSettings.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        hasSettings: true,
+        settings: {
+          averageCarMpg: null,
+          yearlyGoalMiles: null,
+          oilChangePrice: null,
+          mileageRateCents: null,
+          locationLabel: null,
+          latitude: null,
+          longitude: null,
+          dashboardGallonsAvoidedEnabled: false,
+          dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
+          updatedAtUtc: '2026-03-30T10:00:00Z',
+        },
+      },
+    })
+
+    render(
+      <BrowserRouter>
+        <SettingsPage />
+      </BrowserRouter>
+    )
+
+    const gradeSelect = await screen.findByLabelText(/gas grade/i)
+    expect(gradeSelect).toHaveValue('Premium')
+
+    fireEvent.change(gradeSelect, { target: { value: 'Regular' } })
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
+
+    await waitFor(() => {
+      expect(mockSaveUserSettings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gasGrade: 'Regular',
+        })
+      )
+    })
+  })
+
   it('loads and saves location picker values with coordinates', async () => {
     mockGetUserSettings.mockResolvedValue({
       ok: true,

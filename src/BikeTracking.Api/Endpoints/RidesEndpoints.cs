@@ -324,6 +324,7 @@ public static class RidesEndpoints
     private static async Task<IResult> GetGasPrice(
         HttpContext context,
         [FromQuery] string? date,
+        [FromQuery] string? grade,
         [FromServices] IGasPriceLookupService gasPriceLookupService,
         [FromServices] BikeTrackingDbContext dbContext,
         CancellationToken cancellationToken
@@ -343,14 +344,29 @@ public static class RidesEndpoints
             );
         }
 
+        if (!TryResolveRequestedGasGrade(grade, out var requestedGrade))
+        {
+            return Results.BadRequest(
+                new ErrorResponse(
+                    "INVALID_REQUEST",
+                    "grade query parameter, if provided, must be 'Regular' or 'Premium'."
+                )
+            );
+        }
+
         var userSettings = await dbContext
             .UserSettings.AsNoTracking()
             .SingleOrDefaultAsync(settings => settings.UserId == riderId, cancellationToken);
+
+        var effectiveGrade =
+            requestedGrade
+            ?? ResolveSavedGasGradeOrDefault(userSettings?.GasGrade);
 
         try
         {
             var price = await gasPriceLookupService.GetOrFetchAsync(
                 parsedDate,
+                effectiveGrade,
                 userSettings?.EiaGasApiKey,
                 cancellationToken
             );
@@ -359,7 +375,8 @@ public static class RidesEndpoints
                     Date: parsedDate.ToString("yyyy-MM-dd"),
                     PricePerGallon: price,
                     IsAvailable: price.HasValue,
-                    DataSource: price.HasValue ? EiaGasPriceSource : null
+                    DataSource: price.HasValue ? EiaGasPriceSource : null,
+                    Grade: effectiveGrade
                 )
             );
         }
@@ -370,10 +387,42 @@ public static class RidesEndpoints
                     Date: parsedDate.ToString("yyyy-MM-dd"),
                     PricePerGallon: null,
                     IsAvailable: false,
-                    DataSource: null
+                    DataSource: null,
+                    Grade: effectiveGrade
                 )
             );
         }
+    }
+
+    private static bool TryResolveRequestedGasGrade(string? grade, out string? resolvedGrade)
+    {
+        if (string.IsNullOrWhiteSpace(grade))
+        {
+            resolvedGrade = null;
+            return true;
+        }
+
+        if (grade.Equals("Regular", StringComparison.OrdinalIgnoreCase))
+        {
+            resolvedGrade = "Regular";
+            return true;
+        }
+
+        if (grade.Equals("Premium", StringComparison.OrdinalIgnoreCase))
+        {
+            resolvedGrade = "Premium";
+            return true;
+        }
+
+        resolvedGrade = null;
+        return false;
+    }
+
+    private static string ResolveSavedGasGradeOrDefault(string? gasGrade)
+    {
+        return gasGrade?.Equals("Premium", StringComparison.OrdinalIgnoreCase) == true
+            ? "Premium"
+            : "Regular";
     }
 
     private static async Task<IResult> GetRideWeather(

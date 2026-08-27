@@ -7,6 +7,9 @@ namespace BikeTracking.Api.Application.Users;
 
 public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
 {
+    private const string RegularGasGrade = "Regular";
+    private const string PremiumGasGrade = "Premium";
+
     private static readonly string[] AllSettingsFields =
     [
         "averagecarmpg",
@@ -20,6 +23,7 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
         "dashboardgoalprogressenabled",
         "weatherapikey",
         "eiagasapikey",
+        "gasgrade",
     ];
 
     private readonly BikeTrackingDbContext _dbContext = dbContext;
@@ -46,7 +50,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                         LocationLabel: null,
                         Latitude: null,
                         Longitude: null,
-                        UpdatedAtUtc: null
+                        UpdatedAtUtc: null,
+                        GasGrade: RegularGasGrade
                     )
                 )
             );
@@ -124,6 +129,19 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
             request.EiaGasApiKey,
             normalizedFields.Contains("eiagasapikey")
         );
+        var gasGradeCandidate = ResolveGasGrade(
+            existing?.GasGrade,
+            request.GasGrade,
+            normalizedFields.Contains("gasgrade")
+        );
+
+        if (!TryNormalizeGasGrade(gasGradeCandidate, out var normalizedGasGrade))
+        {
+            return UserSettingsResult.Failure(
+                UsersErrorCodes.ValidationFailed,
+                "Gas grade must be either 'Regular' or 'Premium'."
+            );
+        }
 
         if (averageCarMpg is <= 0)
             return UserSettingsResult.Failure(
@@ -186,6 +204,7 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                 DashboardGoalProgressEnabled = dashboardGoalProgressEnabled,
                 WeatherApiKey = weatherApiKey,
                 EiaGasApiKey = eiaGasApiKey,
+                GasGrade = normalizedGasGrade,
                 UpdatedAtUtc = DateTime.UtcNow,
             };
 
@@ -204,6 +223,7 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
             existing.DashboardGoalProgressEnabled = dashboardGoalProgressEnabled;
             existing.WeatherApiKey = weatherApiKey;
             existing.EiaGasApiKey = eiaGasApiKey;
+            existing.GasGrade = normalizedGasGrade;
             existing.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -227,7 +247,8 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                 DashboardGoalProgressEnabled: entity.DashboardGoalProgressEnabled,
                 UpdatedAtUtc: entity.UpdatedAtUtc,
                 WeatherApiKey: entity.WeatherApiKey,
-                EiaGasApiKey: entity.EiaGasApiKey
+                EiaGasApiKey: entity.EiaGasApiKey,
+                GasGrade: NormalizeGasGradeForRead(entity.GasGrade)
             )
         );
     }
@@ -266,6 +287,35 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
     private static bool ResolveBoolean(bool existing, bool? requested, bool isProvided)
     {
         return isProvided ? requested ?? false : existing;
+    }
+
+    private static string ResolveGasGrade(string? existing, string? requested, bool isProvided)
+    {
+        var candidate = isProvided ? requested : existing;
+        return string.IsNullOrWhiteSpace(candidate) ? RegularGasGrade : candidate.Trim();
+    }
+
+    private static bool TryNormalizeGasGrade(string? gasGrade, out string normalized)
+    {
+        if (string.Equals(gasGrade, RegularGasGrade, StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = RegularGasGrade;
+            return true;
+        }
+
+        if (string.Equals(gasGrade, PremiumGasGrade, StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = PremiumGasGrade;
+            return true;
+        }
+
+        normalized = string.Empty;
+        return false;
+    }
+
+    private static string NormalizeGasGradeForRead(string? gasGrade)
+    {
+        return TryNormalizeGasGrade(gasGrade, out var normalized) ? normalized : RegularGasGrade;
     }
 }
 

@@ -75,6 +75,7 @@ builder.Services.AddScoped<IDuplicateResolutionService, DuplicateResolutionServi
 builder.Services.AddScoped<IImportProgressNotifier, ImportProgressNotifier>();
 builder.Services.AddScoped<IImportJobRepository, EfImportJobRepository>();
 builder.Services.AddSingleton<IImportJobProcessor, ImportJobProcessor>();
+builder.Services.AddSingleton<GasPriceRefreshCoordinator>();
 builder.Services.AddScoped<IGasPriceLookupService, EiaGasPriceLookupService>();
 builder.Services.AddScoped<IWeatherLookupService, OpenMeteoWeatherLookupService>();
 

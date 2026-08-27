@@ -35,3 +35,10 @@ Thumbs.db
 # Wrong lockfile: this is an npm repo (package-lock.json)
 pnpm-lock.yaml
 yarn.lock
+
+# Docker and env artifacts
+Dockerfile*
+.dockerignore
+*.log*
+.env*
+coverage/

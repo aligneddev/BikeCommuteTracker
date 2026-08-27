@@ -11,17 +11,19 @@ public interface IGasPriceLookupService
 {
     Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     );
 
     /// <summary>
-    /// Get or fetch gas price using the ISO week start date as the cache key.
-    /// Multiple dates within the same week share the same cached entry.
+    /// Get or fetch gas price using the ISO week start date + grade as the cache key.
+    /// Multiple dates within the same week share the same grade-specific cached entry.
     /// </summary>
     Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     );
@@ -31,55 +33,172 @@ public sealed class EiaGasPriceLookupService(
     BikeTrackingDbContext dbContext,
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
-    ILogger<EiaGasPriceLookupService> logger
+    ILogger<EiaGasPriceLookupService> logger,
+    GasPriceRefreshCoordinator refreshCoordinator,
+    TimeProvider timeProvider
 ) : IGasPriceLookupService
 {
-    private const string DataSourceName = "EIA_EPM0_NUS_Weekly";
+    private const string RegularGrade = "Regular";
+    private const string PremiumGrade = "Premium";
+    private static readonly TimeSpan CacheFreshnessWindow = TimeSpan.FromDays(3);
 
     public async Task<decimal?> GetOrFetchAsync(
         DateOnly date,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
         var weekStartDate = GasPriceWeekKeyHelper.GetWeekStartDate(date);
-        return await GetOrFetchAsync(date, weekStartDate, apiKey, cancellationToken);
+        return await GetOrFetchAsync(date, weekStartDate, grade, apiKey, cancellationToken);
     }
 
     public async Task<decimal?> GetOrFetchAsync(
         DateOnly priceDate,
         DateOnly weekStartDate,
+        string grade,
         string? apiKey = null,
         CancellationToken cancellationToken = default
     )
     {
-        // First, try to find by week start date (cache key)
+        if (!TryNormalizeGrade(grade, out var normalizedGrade))
+        {
+            throw new ArgumentException(
+                "grade must be either 'Regular' or 'Premium'.",
+                nameof(grade)
+            );
+        }
+
         var cached = await dbContext
             .GasPriceLookups.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.WeekStartDate == weekStartDate, cancellationToken);
+            .SingleOrDefaultAsync(
+                x => x.WeekStartDate == weekStartDate && x.Grade == normalizedGrade,
+                cancellationToken
+            );
 
-        if (cached is not null)
+        if (cached is not null && IsFresh(cached.RetrievedAtUtc))
         {
             return cached.PricePerGallon;
         }
 
-        var resolvedApiKey = string.IsNullOrWhiteSpace(apiKey)
-            ? configuration["GasPriceLookup:EiaApiKey"]
-            : apiKey;
-        if (string.IsNullOrWhiteSpace(resolvedApiKey))
-        {
-            logger.LogWarning(
-                "EIA API key missing; skipping gas price lookup for {Date}",
-                priceDate
-            );
-            return null;
-        }
+        return await refreshCoordinator.RunExclusiveAsync(
+            (weekStartDate, normalizedGrade),
+            async () =>
+            {
+                var current = await dbContext.GasPriceLookups.SingleOrDefaultAsync(
+                    x => x.WeekStartDate == weekStartDate && x.Grade == normalizedGrade,
+                    cancellationToken
+                );
 
-        var client = httpClientFactory.CreateClient("EiaGasPrice");
+                if (current is not null && IsFresh(current.RetrievedAtUtc))
+                {
+                    return current.PricePerGallon;
+                }
+
+                var staleValue = current?.PricePerGallon;
+                var resolvedApiKey = ResolveApiKey(apiKey);
+
+                if (string.IsNullOrWhiteSpace(resolvedApiKey))
+                {
+                    logger.LogWarning(
+                        "EIA API key missing; skipping gas price lookup for {Date} ({Grade})",
+                        priceDate,
+                        normalizedGrade
+                    );
+                    return staleValue;
+                }
+
+                var fetched = await TryFetchLatestPriceAsync(
+                    priceDate,
+                    normalizedGrade,
+                    resolvedApiKey,
+                    cancellationToken
+                );
+
+                if (fetched is null || fetched.PricePerGallon <= 0)
+                {
+                    return staleValue;
+                }
+
+                var retrievedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+                if (current is null)
+                {
+                    var entry = new GasPriceLookupEntity
+                    {
+                        PriceDate = priceDate,
+                        WeekStartDate = weekStartDate,
+                        Grade = normalizedGrade,
+                        PricePerGallon = fetched.PricePerGallon,
+                        DataSource = fetched.DataSource,
+                        EiaPeriodDate = fetched.EiaPeriodDate,
+                        RetrievedAtUtc = retrievedAtUtc,
+                    };
+
+                    dbContext.GasPriceLookups.Add(entry);
+                    try
+                    {
+                        await dbContext.SaveChangesAsync(cancellationToken);
+                    }
+                    catch (DbUpdateException)
+                    {
+                        var existing = await dbContext
+                            .GasPriceLookups.AsNoTracking()
+                            .SingleOrDefaultAsync(
+                                x => x.WeekStartDate == weekStartDate && x.Grade == normalizedGrade,
+                                cancellationToken
+                            );
+
+                        if (existing is not null)
+                        {
+                            return existing.PricePerGallon;
+                        }
+
+                        throw;
+                    }
+                }
+                else
+                {
+                    current.PriceDate = priceDate;
+                    current.PricePerGallon = fetched.PricePerGallon;
+                    current.DataSource = fetched.DataSource;
+                    current.EiaPeriodDate = fetched.EiaPeriodDate;
+                    current.RetrievedAtUtc = retrievedAtUtc;
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                }
+
+                return fetched.PricePerGallon;
+            }
+        );
+    }
+
+    private bool IsFresh(DateTime retrievedAtUtc)
+    {
+        var age = timeProvider.GetUtcNow().UtcDateTime - retrievedAtUtc;
+        return age < CacheFreshnessWindow;
+    }
+
+    private string? ResolveApiKey(string? apiKey)
+    {
+        return string.IsNullOrWhiteSpace(apiKey) ? configuration["GasPriceLookup:EiaApiKey"] : apiKey;
+    }
+
+    private async Task<FetchedGasPrice?> TryFetchLatestPriceAsync(
+        DateOnly priceDate,
+        string normalizedGrade,
+        string apiKey,
+        CancellationToken cancellationToken
+    )
+    {
+        var (productFacet, dataSource) = normalizedGrade switch
+        {
+            PremiumGrade => ("EPMP", "EIA_EPMP_NUS_Weekly"),
+            _ => ("EPMR", "EIA_EPMR_NUS_Weekly"),
+        };
+
         var requestUri =
-            $"/v2/petroleum/pri/gnd/data?api_key={Uri.EscapeDataString(resolvedApiKey)}&data[]=value"
+            $"/v2/petroleum/pri/gnd/data?api_key={Uri.EscapeDataString(apiKey)}&data[]=value"
             + "&facets[duoarea][]=NUS"
-            + "&facets[product][]=EPM0"
+            + $"&facets[product][]={productFacet}"
             + "&frequency=weekly"
             + $"&end={priceDate:yyyy-MM-dd}"
             + "&sort[0][column]=period"
@@ -88,12 +207,15 @@ public sealed class EiaGasPriceLookupService(
 
         try
         {
+            var client = httpClientFactory.CreateClient("EiaGasPrice");
             using var response = await client.GetAsync(requestUri, cancellationToken);
+
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
-                    "EIA lookup failed for {Date} with status {StatusCode}",
+                    "EIA lookup failed for {Date} ({Grade}) with status {StatusCode}",
                     priceDate,
+                    normalizedGrade,
                     response.StatusCode
                 );
                 return null;
@@ -113,43 +235,31 @@ public sealed class EiaGasPriceLookupService(
                 return null;
             }
 
-            var entry = new GasPriceLookupEntity
-            {
-                PriceDate = priceDate,
-                WeekStartDate = weekStartDate,
-                PricePerGallon = pricePerGallon,
-                DataSource = DataSourceName,
-                EiaPeriodDate = eiaPeriodDate,
-                RetrievedAtUtc = DateTime.UtcNow,
-            };
-
-            dbContext.GasPriceLookups.Add(entry);
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateException)
-            {
-                // Another request may have inserted the same week concurrently.
-                var existing = await dbContext
-                    .GasPriceLookups.AsNoTracking()
-                    .SingleOrDefaultAsync(x => x.WeekStartDate == weekStartDate, cancellationToken);
-
-                if (existing is not null)
-                {
-                    return existing.PricePerGallon;
-                }
-
-                throw;
-            }
-
-            return pricePerGallon;
+            return new FetchedGasPrice(eiaPeriodDate, pricePerGallon, dataSource);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "EIA lookup threw for {Date}", priceDate);
+            logger.LogWarning(ex, "EIA lookup threw for {Date} ({Grade})", priceDate, normalizedGrade);
             return null;
         }
+    }
+
+    private static bool TryNormalizeGrade(string? grade, out string normalizedGrade)
+    {
+        if (string.Equals(grade, RegularGrade, StringComparison.OrdinalIgnoreCase))
+        {
+            normalizedGrade = RegularGrade;
+            return true;
+        }
+
+        if (string.Equals(grade, PremiumGrade, StringComparison.OrdinalIgnoreCase))
+        {
+            normalizedGrade = PremiumGrade;
+            return true;
+        }
+
+        normalizedGrade = string.Empty;
+        return false;
     }
 
     private static bool TryReadPrice(
@@ -197,4 +307,10 @@ public sealed class EiaGasPriceLookupService(
 
         return true;
     }
+
+    private sealed record FetchedGasPrice(
+        DateOnly EiaPeriodDate,
+        decimal PricePerGallon,
+        string DataSource
+    );
 }

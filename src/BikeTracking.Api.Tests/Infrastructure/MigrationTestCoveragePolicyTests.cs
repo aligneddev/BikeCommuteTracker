@@ -54,6 +54,8 @@ public sealed class MigrationTestCoveragePolicyTests
                 "Added test: migration removes OutboxEvents table; tests updated to reflect CRUD-only behavior (no outbox rows).",
             ["20260625155629_AddMonthlySummaryImport"] =
                 "Added test: monthly summary import coverage validates ImportSource, ImportType, and MonthlySummaryAuditLogs schema after migration.",
+            ["20260827203956_AddGasGradeAndCacheRefreshPolicy"] =
+                "Updated test: gas lookup, rides endpoint, and user settings service coverage validates grade-aware cache key/index, GasGrade defaults/validation, and stale-refresh behavior.",
         };
 
     [Fact]
