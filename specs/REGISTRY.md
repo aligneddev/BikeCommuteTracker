@@ -43,6 +43,7 @@ This file is the canonical index for feature spec folders in this repository.
 | 020 | `020-improve-ride-preset-options` | Active | Preset-based ride entry |
 | 021 | `021-reserved-slot` | Reserved | Intentionally unassigned |
 | 022 | `022-pwa-local-install` | Active | Local install/PWA |
+| 029 | `029-co2-savings-dashboard` | Active | CO2 saved on advanced dashboard |
 
 ## Maintenance Rules
 
