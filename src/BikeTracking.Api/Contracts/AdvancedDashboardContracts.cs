@@ -11,6 +11,12 @@ public sealed record AdvancedDashboardResponse(
     AdvancedDashboardReminders Reminders,
     /// <summary>UTC timestamp when the response was generated (useful for caching/staleness checks).</summary>
     DateTime GeneratedAtUtc,
+    /// <summary>
+    /// Fixed CO2-saved-per-mile figure in pounds (0.90 lb/mile — EPA average passenger-vehicle
+    /// emission factor). This is a response-level constant, not per-window, and does not vary
+    /// by user MPG/vehicle settings (FR-007).
+    /// </summary>
+    decimal Co2SavedPerMileLbs,
     /// <summary>Difficulty analytics section. Null when no qualifying ride data exists.</summary>
     AdvancedDashboardDifficultySection? DifficultySection = null
 );
@@ -92,7 +98,14 @@ public sealed record AdvancedSavingsWindow(
     /// Null only when fuel/oil savings are unavailable and expenses are zero.
     /// Can be negative when expenses exceed savings.
     /// </summary>
-    decimal? NetSavings
+    decimal? NetSavings,
+    /// <summary>
+    /// Total CO2 saved (in pounds) for this window, computed as TotalMiles × 0.90 lb/mile
+    /// (fixed EPA average passenger-vehicle emission factor), rounded to 2 decimal places.
+    /// Always present (never null, unlike GallonsSaved/FuelCostAvoided) — a zero-mile
+    /// window yields 0.00m rather than null. Never persisted or cached; recomputed every request.
+    /// </summary>
+    decimal Co2Saved
 );
 
 /// <summary>

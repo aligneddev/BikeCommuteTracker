@@ -107,6 +107,7 @@ export function AdvancedDashboardPage() {
               monthly={data.savingsWindows.monthly}
               yearly={data.savingsWindows.yearly}
               allTime={data.savingsWindows.allTime}
+              co2SavedPerMile={data.co2SavedPerMileLbs}
             />
           </section>
 
