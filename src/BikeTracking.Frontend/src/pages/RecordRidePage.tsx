@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { CompassDirection, RidePreset, RecordRideRequest } from '../services/ridesService'
 import {
   getGasPrice,
@@ -340,7 +341,7 @@ export function RecordRidePage() {
   return (
     <div className="record-ride-page">
       <h1>Record a Ride</h1>
-      <p>Do you repeat rides often? Setup a <a href="/rides/presets">Ride Preset</a>.</p>
+      <p>Do you repeat rides often? Setup a <Link to="/settings">Ride Preset</Link>.</p>
       <p>
         Need to add past rides in bulk? <a href="/rides/import">Import rides from CSV</a>.
       </p>
