@@ -142,6 +142,17 @@ describe('RecordRidePage', () => {
     })
   })
 
+  it('links Ride Preset setup to the settings page route', async () => {
+    render(
+      <BrowserRouter>
+        <RecordRidePage />
+      </BrowserRouter>
+    )
+
+    const link = await screen.findByRole('link', { name: /ride preset/i })
+    expect(link).toHaveAttribute('href', '/settings')
+  })
+
   it('loads ride presets and does not render legacy quick options section', async () => {
     mockGetRidePresets.mockResolvedValue({
       presets: [
