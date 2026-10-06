@@ -24,6 +24,8 @@ export interface DashboardTotals {
   allTimeMiles: DashboardMileageMetric;
   moneySaved: DashboardMoneySaved;
   expenseSummary: DashboardExpenseSummary;
+  /** All-time sum of recorded ride minutes; rides without a duration are excluded. */
+  totalRideMinutes: number;
 }
 
 export interface DashboardAverages {
@@ -161,6 +163,8 @@ export interface YearStatsTotals {
   totalMiles: number;
   totalCombinedSavings: number | null;
   expenseSummary: YearStatsExpenseSummary;
+  /** Sum of recorded ride minutes in the selected year; rides without a duration are excluded. */
+  totalRideMinutes: number;
 }
 
 /** Full response shape from GET /api/dashboard/year-stats?year={yyyy}. */

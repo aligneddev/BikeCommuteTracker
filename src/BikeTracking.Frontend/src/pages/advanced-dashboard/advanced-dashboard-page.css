@@ -105,6 +105,11 @@
   color: var(--adv-ink);
 }
 
+.advanced-dashboard-riding-time {
+  margin: 0 0 0.75rem;
+  color: var(--adv-ink);
+}
+
 .advanced-dashboard-loading {
   color: var(--adv-muted);
   font-size: 0.9rem;

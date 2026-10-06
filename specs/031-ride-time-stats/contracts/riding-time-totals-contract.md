@@ -98,6 +98,6 @@ All values are **total minutes** (`int`, `>= 0`), summed over the rider's rides 
 
 | Surface | Element | Accessible name / text | Value |
 |---------|---------|------------------------|-------|
-| Main dashboard (`/dashboard`) | `DashboardSummaryCard` in "Dashboard summary cards" region | title "Riding Time", eyebrow "All time" | `formatHoursMinutes(totals.totalRideMinutes)`; detail = "1 ride missing duration" / "{n} rides missing duration" when `missingData.ridesMissingDuration > 0`, else all-time ride count |
+| Main dashboard (`/dashboard`) | `DashboardSummaryCard` in "Dashboard summary cards" region | title "Riding Time", eyebrow "Duration" | `formatHoursMinutes(totals.totalRideMinutes)`; detail = "1 ride missing duration" / "{n} rides missing duration" when `missingData.ridesMissingDuration > 0`, else all-time ride count |
 | Advanced dashboard (`/dashboard/advanced`) | line in "Savings breakdown by time window" section | "All-time riding time" | `formatHoursMinutes(totalRideMinutes)` |
 | Year stats (`/dashboard/year-stats`) | `<dt>`/`<dd>` in `year-stats-summary` | `dt` "Total riding time" | `formatHoursMinutes(totals.totalRideMinutes)`; rendered only when `hasDataForYear` |

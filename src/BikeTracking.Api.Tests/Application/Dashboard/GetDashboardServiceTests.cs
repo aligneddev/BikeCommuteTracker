@@ -414,6 +414,68 @@ public sealed class GetDashboardServiceTests
         Assert.Equal(1, dashboard.Totals.MoneySaved.QualifiedRideCount);
     }
 
+    [Fact]
+    public async Task GetDashboardService_TotalRideMinutes_SumsRecordedDurationsForRiderOnly()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = new UserEntity
+        {
+            DisplayName = "Riding Time Rider",
+            NormalizedName = "riding time rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        var otherRider = new UserEntity
+        {
+            DisplayName = "Other Riding Time Rider",
+            NormalizedName = "other riding time rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        dbContext.Users.AddRange(rider, otherRider);
+        await dbContext.SaveChangesAsync();
+
+        foreach (var rideMinutes in new int?[] { 45, 30, 90, null })
+        {
+            dbContext.Rides.Add(CreateRide(rider.UserId, rideMinutes));
+        }
+        dbContext.Rides.Add(CreateRide(otherRider.UserId, 500));
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
+        var dashboard = await service.GetAsync(rider.UserId);
+
+        Assert.Equal(165, dashboard.Totals.TotalRideMinutes);
+        Assert.Equal(1, dashboard.MissingData.RidesMissingDuration);
+    }
+
+    [Fact]
+    public async Task GetDashboardService_TotalRideMinutes_WithNoRides_ReturnsZero()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = new UserEntity
+        {
+            DisplayName = "No Rides Riding Time Rider",
+            NormalizedName = "no rides riding time rider",
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+        dbContext.Users.Add(rider);
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetDashboardService(dbContext, TimeProvider.System);
+        var dashboard = await service.GetAsync(rider.UserId);
+
+        Assert.Equal(0, dashboard.Totals.TotalRideMinutes);
+    }
+
+    private static RideEntity CreateRide(long riderId, int? rideMinutes) =>
+        new()
+        {
+            RiderId = riderId,
+            RideDateTimeLocal = FixedLocal,
+            Miles = 5m,
+            RideMinutes = rideMinutes,
+            CreatedAtUtc = FixedUtc,
+        };
+
     private static BikeTrackingDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<BikeTrackingDbContext>()

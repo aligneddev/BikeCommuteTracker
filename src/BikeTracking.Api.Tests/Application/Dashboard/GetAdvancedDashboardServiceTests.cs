@@ -761,6 +761,72 @@ public sealed class GetAdvancedDashboardServiceTests
         }
     }
 
+    // ── Riding time ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_TotalRideMinutes_SumsAllTimeRecordedDurations()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Riding Time Rider");
+        var otherRider = await CreateRiderAsync(dbContext, "Other Riding Time Rider");
+
+        var fixedNow = new DateTime(2026, 1, 14, 12, 0, 0, DateTimeKind.Utc);
+        var timeProvider = new FakeTimeProvider(fixedNow);
+
+        dbContext.Rides.AddRange(
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = fixedNow.Date,
+                Miles = 5m,
+                RideMinutes = 45,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = fixedNow.Date,
+                Miles = 5m,
+                RideMinutes = null,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = rider.UserId,
+                RideDateTimeLocal = new DateTime(2023, 6, 1),
+                Miles = 5m,
+                RideMinutes = 90,
+                CreatedAtUtc = DateTime.UtcNow,
+            },
+            new RideEntity
+            {
+                RiderId = otherRider.UserId,
+                RideDateTimeLocal = fixedNow.Date,
+                Miles = 5m,
+                RideMinutes = 500,
+                CreatedAtUtc = DateTime.UtcNow,
+            }
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetAdvancedDashboardService(dbContext, timeProvider);
+        var result = await service.GetAsync(rider.UserId);
+
+        Assert.Equal(135, result.TotalRideMinutes);
+    }
+
+    [Fact]
+    public async Task GetAdvancedDashboardService_TotalRideMinutes_WithNoRides_ReturnsZero()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "No Rides Riding Time Rider");
+
+        var service = new GetAdvancedDashboardService(dbContext, TimeProvider.System);
+        var result = await service.GetAsync(rider.UserId);
+
+        Assert.Equal(0, result.TotalRideMinutes);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private static async Task<UserEntity> CreateRiderAsync(

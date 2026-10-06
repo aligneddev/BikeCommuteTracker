@@ -148,6 +148,48 @@ public sealed class DashboardEndpointsTests
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task TotalRideMinutes_AgreesAcrossDashboardEndpoints()
+    {
+        await using var host = await DashboardApiHost.StartAsync();
+        var userId = await host.SeedUserAsync("Riding Time Consistency Rider", "1234");
+        var currentYear = DateTime.Now.Year;
+
+        await host.SeedRideAsync(userId, new DateTime(currentYear - 1, 12, 31, 8, 0, 0), 10m, 45);
+        await host.SeedRideAsync(userId, new DateTime(currentYear, 1, 1, 8, 0, 0), 10m, 30);
+        await host.SeedRideAsync(userId, DateTime.Now, 10m, 90);
+        await host.SeedRideAsync(userId, DateTime.Now, 5m);
+
+        using var dashboard = await GetJsonAsync(host, "/api/dashboard", userId);
+        using var advanced = await GetJsonAsync(host, "/api/dashboard/advanced", userId);
+        using var yearStats = await GetJsonAsync(
+            host,
+            $"/api/dashboard/year-stats?year={currentYear}",
+            userId
+        );
+
+        Assert.Equal(
+            165,
+            dashboard.RootElement.GetProperty("totals").GetProperty("totalRideMinutes").GetInt32()
+        );
+        Assert.Equal(165, advanced.RootElement.GetProperty("totalRideMinutes").GetInt32());
+        Assert.Equal(
+            120,
+            yearStats.RootElement.GetProperty("totals").GetProperty("totalRideMinutes").GetInt32()
+        );
+    }
+
+    private static async Task<JsonDocument> GetJsonAsync(
+        DashboardApiHost host,
+        string url,
+        long userId
+    )
+    {
+        var response = await host.Client.GetWithAuthAsync(url, userId);
+        response.EnsureSuccessStatusCode();
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    }
+
     private sealed class DashboardApiHost(WebApplication app) : IAsyncDisposable
     {
         public HttpClient Client { get; } = app.GetTestClient();
@@ -165,6 +207,7 @@ public sealed class DashboardEndpointsTests
             builder.Services.AddSingleton<IPinHasher, PinHasher>();
             builder.Services.AddScoped<UserSettingsService>();
             builder.Services.AddScoped<GetDashboardService>();
+            builder.Services.AddScoped<GetAdvancedDashboardService>();
             builder.Services.AddScoped<GetYearStatsDashboardService>();
             builder
                 .Services.AddAuthentication(UserIdHeaderAuthenticationHandler.SchemeName)
@@ -217,6 +260,28 @@ public sealed class DashboardEndpointsTests
 
             await dbContext.SaveChangesAsync();
             return user.UserId;
+        }
+
+        public async Task SeedRideAsync(
+            long riderId,
+            DateTime rideDateTimeLocal,
+            decimal miles,
+            int? rideMinutes = null
+        )
+        {
+            using var scope = app.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<BikeTrackingDbContext>();
+            dbContext.Rides.Add(
+                new RideEntity
+                {
+                    RiderId = riderId,
+                    RideDateTimeLocal = rideDateTimeLocal,
+                    Miles = miles,
+                    RideMinutes = rideMinutes,
+                    CreatedAtUtc = DateTime.UtcNow,
+                }
+            );
+            await dbContext.SaveChangesAsync();
         }
 
         public async ValueTask DisposeAsync()

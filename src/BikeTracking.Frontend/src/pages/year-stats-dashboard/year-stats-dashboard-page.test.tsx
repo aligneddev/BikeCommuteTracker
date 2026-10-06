@@ -49,6 +49,7 @@ function buildYearStatsResponse(
         netExpenses: null,
         oilChangeIntervalCount: 0,
       },
+      totalRideMinutes: 0,
     },
     mileageByMonth: months.map((m) => ({ ...m, miles: 0 })),
     savingsByMonth: months.map((m) => ({
@@ -131,6 +132,7 @@ describe('YearStatsDashboardPage', () => {
             netExpenses: 45,
             oilChangeIntervalCount: 1,
           },
+          totalRideMinutes: 0,
         },
         mileageByMonth: [
           { monthKey: '2025-01', label: 'Jan', miles: 100 },
@@ -198,5 +200,74 @@ describe('YearStatsDashboardPage', () => {
     })
 
     expect(screen.queryByTestId('chart-section')).not.toBeInTheDocument()
+    expect(screen.queryByText('Total riding time')).not.toBeInTheDocument()
+  })
+
+  function buildTotalsWithRideMinutes(
+    totalRideMinutes: number
+  ): YearStatsDashboardResponse['totals'] {
+    return { ...buildYearStatsResponse().totals, totalRideMinutes }
+  }
+
+  async function findRidingTimeValue(): Promise<HTMLElement> {
+    const term = await screen.findByText('Total riding time', { selector: 'dt' })
+    return term.nextElementSibling as HTMLElement
+  }
+
+  it('renders the selected year total riding time in hours and minutes', async () => {
+    mockGetAvailableYears.mockResolvedValue(buildAvailableYears([2025]))
+    mockGetYearStatsDashboard.mockResolvedValue(
+      buildYearStatsResponse({ totals: buildTotalsWithRideMinutes(6015) })
+    )
+
+    const { YearStatsDashboardPage } = await import('./year-stats-dashboard-page')
+    render(
+      <BrowserRouter>
+        <YearStatsDashboardPage />
+      </BrowserRouter>
+    )
+
+    expect(await findRidingTimeValue()).toHaveTextContent('100h 15m')
+  })
+
+  it('renders 0h 0m riding time for a year with rides but no durations', async () => {
+    mockGetAvailableYears.mockResolvedValue(buildAvailableYears([2025]))
+    mockGetYearStatsDashboard.mockResolvedValue(
+      buildYearStatsResponse({ totals: buildTotalsWithRideMinutes(0) })
+    )
+
+    const { YearStatsDashboardPage } = await import('./year-stats-dashboard-page')
+    render(
+      <BrowserRouter>
+        <YearStatsDashboardPage />
+      </BrowserRouter>
+    )
+
+    expect(await findRidingTimeValue()).toHaveTextContent('0h 0m')
+  })
+
+  it('updates total riding time when the selected year changes', async () => {
+    mockGetAvailableYears.mockResolvedValue(buildAvailableYears([2025, 2024]))
+    mockGetYearStatsDashboard.mockResolvedValue(
+      buildYearStatsResponse({ totals: buildTotalsWithRideMinutes(120) })
+    )
+
+    const { YearStatsDashboardPage } = await import('./year-stats-dashboard-page')
+    render(
+      <BrowserRouter>
+        <YearStatsDashboardPage />
+      </BrowserRouter>
+    )
+
+    expect(await findRidingTimeValue()).toHaveTextContent('2h 0m')
+
+    mockGetYearStatsDashboard.mockResolvedValue(
+      buildYearStatsResponse({ year: 2024, totals: buildTotalsWithRideMinutes(45) })
+    )
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '2024' } })
+
+    await waitFor(async () => {
+      expect(await findRidingTimeValue()).toHaveTextContent('0h 45m')
+    })
   })
 })

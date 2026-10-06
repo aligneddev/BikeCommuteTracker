@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { uniqueUser } from "./support/auth-helpers";
+import { recordRide } from "./support/ride-helpers";
 
 async function signupAndLogin(page: import("@playwright/test").Page, userName: string) {
   await page.goto("/signup");
@@ -86,5 +87,39 @@ test.describe("026-year-stats-dashboard e2e", () => {
 
     await page.goto("/dashboard");
     await expect(page.getByText("Rolling 12 months").first()).toBeVisible();
+  });
+
+  test("total riding time is scoped to the selected year and updates on year change", async ({
+    page,
+  }) => {
+    const userName = uniqueUser("e2e-year-stats-riding-time");
+    await signupAndLogin(page, userName);
+
+    const currentYear = new Date().getFullYear();
+    const lastYear = currentYear - 1;
+    await recordRide(page, {
+      rideDateTimeLocal: `${lastYear}-12-31T08:00`,
+      miles: "10",
+      rideMinutes: "45",
+    });
+    await recordRide(page, {
+      rideDateTimeLocal: `${currentYear}-01-01T08:00`,
+      miles: "10",
+      rideMinutes: "30",
+    });
+    await recordRide(page, { miles: "10", rideMinutes: "90" });
+
+    await page.goto("/dashboard/year-stats");
+    const ridingTime = page
+      .locator(".year-stats-summary-item", { hasText: "Total riding time" })
+      .locator("dd");
+
+    await expect(page.getByRole("combobox")).toHaveValue(currentYear.toString());
+    await expect(ridingTime).toHaveText("2h 0m");
+
+    await page.getByRole("combobox").selectOption({ label: lastYear.toString() });
+
+    await expect(page).toHaveURL("/dashboard/year-stats");
+    await expect(ridingTime).toHaveText("0h 45m");
   });
 });

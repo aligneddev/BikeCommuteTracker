@@ -140,6 +140,10 @@
   background: linear-gradient(180deg, #9a3412, #fb923c);
 }
 
+.dashboard-summary-card-accent-riding-time {
+  background: linear-gradient(180deg, #6d28d9, #a78bfa);
+}
+
 .dashboard-summary-card-accent-savings {
   background: linear-gradient(180deg, #854d0e, #facc15);
 }
