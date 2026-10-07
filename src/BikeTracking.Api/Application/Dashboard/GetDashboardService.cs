@@ -64,7 +64,8 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
                 YearToDateMiles: CreateMileageMetric(currentYearRides, "thisYear"),
                 AllTimeMiles: CreateMileageMetric(rides, "allTime"),
                 MoneySaved: savings.Totals,
-                ExpenseSummary: expenseSummary
+                ExpenseSummary: expenseSummary,
+                TotalRideMinutes: RidingTimeRules.SumRecordedRideMinutes(rides)
             ),
             Averages: new DashboardAverages(
                 AverageTemperature: CalculateAverageTemperature(rides),

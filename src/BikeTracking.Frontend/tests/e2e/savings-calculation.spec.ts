@@ -136,4 +136,23 @@ test.describe("015-savings-calculation e2e", () => {
     await expect(zeroCo2Cells.first()).toBeVisible();
     await expect(zeroCo2Cells).toHaveCount(4);
   });
+
+  test("advanced dashboard shows all-time riding time from recorded durations", async ({
+    page,
+  }) => {
+    const userName = uniqueUser("e2e-advanced-riding-time");
+
+    await createAndLoginUser(page, userName, TEST_PIN);
+    await recordRide(page, {
+      rideDateTimeLocal: "2025-12-31T08:00",
+      miles: "10",
+      rideMinutes: "45",
+    });
+    await recordRide(page, { miles: "10", rideMinutes: "90" });
+    await recordRide(page, { miles: "5" });
+
+    await page.goto("/dashboard/advanced");
+
+    await expect(page.getByText(/all-time riding time/i)).toContainText("2h 15m");
+  });
 });

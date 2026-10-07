@@ -1,5 +1,5 @@
 import { BrowserRouter } from 'react-router-dom'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 vi.mock('../../services/advanced-dashboard-api', () => ({
@@ -58,6 +58,7 @@ function buildResponse(
     generatedAtUtc: new Date().toISOString(),
     difficultySection: null,
     co2SavedPerMileLbs: 0.9,
+    totalRideMinutes: 0,
     ...overrides,
   }
 }
@@ -232,5 +233,34 @@ describe('AdvancedDashboardPage', () => {
 
     // Must render exactly once — not once per window row.
     expect(screen.getAllByText(/0\.90 lb co2\/mile/i)).toHaveLength(1)
+  })
+
+  it('AdvancedDashboardPage_TotalRideMinutes_RendersAllTimeRidingTime', async () => {
+    mockGetAdvancedDashboard.mockResolvedValue(buildResponse({ totalRideMinutes: 2535 }))
+
+    const { AdvancedDashboardPage } = await import('./advanced-dashboard-page')
+    render(
+      <BrowserRouter>
+        <AdvancedDashboardPage />
+      </BrowserRouter>
+    )
+
+    const section = await screen.findByRole('region', { name: /savings breakdown by time window/i })
+    const line = within(section).getByText(/all-time riding time/i)
+    expect(within(line).getByText('42h 15m')).toBeInTheDocument()
+  })
+
+  it('AdvancedDashboardPage_ZeroRideMinutes_Renders0h0m', async () => {
+    mockGetAdvancedDashboard.mockResolvedValue(buildResponse({ totalRideMinutes: 0 }))
+
+    const { AdvancedDashboardPage } = await import('./advanced-dashboard-page')
+    render(
+      <BrowserRouter>
+        <AdvancedDashboardPage />
+      </BrowserRouter>
+    )
+
+    const line = await screen.findByText(/all-time riding time/i)
+    expect(within(line).getByText('0h 0m')).toBeInTheDocument()
   })
 })

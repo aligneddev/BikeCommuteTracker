@@ -430,6 +430,72 @@ public sealed class GetYearStatsDashboardServiceTests
         Assert.Equal(DateTime.Now.Year + 1, response.Year);
     }
 
+    [Fact]
+    public async Task GetAsync_TotalRideMinutes_IsScopedToCalendarYear()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Riding Time Year Rider");
+        var otherRider = await CreateRiderAsync(dbContext, "Other Riding Time Year Rider");
+
+        dbContext.Rides.AddRange(
+            CreateRide(rider.UserId, new DateTime(2024, 12, 31, 23, 30, 0), 45),
+            CreateRide(rider.UserId, new DateTime(2025, 1, 1, 0, 15, 0), 30),
+            CreateRide(rider.UserId, new DateTime(2025, 6, 15, 8, 0, 0), 90),
+            CreateRide(rider.UserId, new DateTime(2025, 6, 16, 8, 0, 0), null),
+            CreateRide(otherRider.UserId, new DateTime(2025, 6, 15, 8, 0, 0), 500)
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
+        var year2025 = await service.GetAsync(rider.UserId, 2025);
+        var year2024 = await service.GetAsync(rider.UserId, 2024);
+
+        Assert.Equal(120, year2025.Totals.TotalRideMinutes);
+        Assert.Equal(45, year2024.Totals.TotalRideMinutes);
+    }
+
+    [Fact]
+    public async Task GetAsync_YearWithRidesButNoDurations_HasDataAndZeroRideMinutes()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "No Duration Year Rider");
+
+        dbContext.Rides.AddRange(
+            CreateRide(rider.UserId, new DateTime(2025, 3, 1, 8, 0, 0), null),
+            CreateRide(rider.UserId, new DateTime(2025, 3, 2, 8, 0, 0), null)
+        );
+        await dbContext.SaveChangesAsync();
+
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
+        var response = await service.GetAsync(rider.UserId, 2025);
+
+        Assert.True(response.HasDataForYear);
+        Assert.Equal(0, response.Totals.TotalRideMinutes);
+    }
+
+    [Fact]
+    public async Task GetAsync_YearWithZeroRides_TotalRideMinutesIsZero()
+    {
+        using var dbContext = CreateDbContext();
+        var rider = await CreateRiderAsync(dbContext, "Empty Year Riding Time Rider");
+
+        var service = new GetYearStatsDashboardService(dbContext, TimeProvider.System);
+        var response = await service.GetAsync(rider.UserId, 2025);
+
+        Assert.False(response.HasDataForYear);
+        Assert.Equal(0, response.Totals.TotalRideMinutes);
+    }
+
+    private static RideEntity CreateRide(long riderId, DateTime rideDateTimeLocal, int? rideMinutes) =>
+        new()
+        {
+            RiderId = riderId,
+            RideDateTimeLocal = rideDateTimeLocal,
+            Miles = 5m,
+            RideMinutes = rideMinutes,
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+
     private static async Task<UserEntity> CreateRiderAsync(
         BikeTrackingDbContext dbContext,
         string displayName

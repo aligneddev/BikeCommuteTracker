@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { uniqueUser } from "./support/auth-helpers";
+import { createAndLoginUser, uniqueUser } from "./support/auth-helpers";
 import { moneySavedCard, moneySavedRow } from "./support/expense-helpers";
+import { recordRide } from "./support/ride-helpers";
 
 async function saveDashboardSettings(
   page: import("@playwright/test").Page,
@@ -115,5 +116,23 @@ test.describe("012-dashboard-stats e2e", () => {
     await expect(
       page.getByText("More metrics are available"),
     ).not.toBeVisible();
+  });
+
+  test("riding time card sums recorded durations and flags rides missing duration", async ({
+    page,
+  }) => {
+    const userName = uniqueUser("e2e-dashboard-riding-time");
+    await createAndLoginUser(page, userName, "12345678");
+
+    await recordRide(page, { miles: "10", rideMinutes: "45" });
+    await recordRide(page, { miles: "10", rideMinutes: "90" });
+    await recordRide(page, { miles: "5" });
+
+    await page.goto("/dashboard");
+    const card = page.locator("article.dashboard-summary-card", {
+      has: page.getByRole("heading", { name: "Riding Time" }),
+    });
+    await expect(card).toContainText("2h 15m");
+    await expect(card).toContainText("1 ride missing duration");
   });
 });

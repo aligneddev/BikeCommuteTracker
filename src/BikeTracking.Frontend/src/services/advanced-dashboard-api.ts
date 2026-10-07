@@ -98,6 +98,11 @@ export interface AdvancedDashboardResponse {
    * constant, not per-window; does not vary by user MPG/vehicle settings.
    */
   co2SavedPerMileLbs: number;
+  /**
+   * All-time sum of recorded ride minutes. Rides without a duration are
+   * excluded; 0 when none qualify. Not broken down per savings window.
+   */
+  totalRideMinutes: number;
 }
 
 

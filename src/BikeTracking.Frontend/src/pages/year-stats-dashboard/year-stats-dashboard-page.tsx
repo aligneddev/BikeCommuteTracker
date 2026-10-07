@@ -8,6 +8,7 @@ import { YearSelector } from '../../components/dashboard/year-selector'
 import { DashboardChartSection } from '../../components/dashboard/dashboard-chart-section'
 import { DifficultyAnalyticsSection } from '../advanced-dashboard/DifficultyAnalyticsSection'
 import type { AdvancedDashboardDifficultySection } from '../../services/advanced-dashboard-api'
+import { formatHoursMinutes } from '../../utils/ridingTime'
 import './year-stats-dashboard-page.css'
 
 function pickDefaultYear(years: number[]): number {
@@ -169,6 +170,10 @@ export function YearStatsDashboardPage() {
               <div className="year-stats-summary-item">
                 <dt>Total miles</dt>
                 <dd>{formatMiles(data.totals.totalMiles)}</dd>
+              </div>
+              <div className="year-stats-summary-item">
+                <dt>Total riding time</dt>
+                <dd>{formatHoursMinutes(data.totals.totalRideMinutes)}</dd>
               </div>
               <div className="year-stats-summary-item">
                 <dt>Total savings</dt>

@@ -93,7 +93,8 @@ public sealed class GetYearStatsDashboardService(
         return new YearStatsTotals(
             TotalMiles: totalMiles,
             TotalCombinedSavings: totalCombinedSavings,
-            ExpenseSummary: CalculateExpenseSummary(totalManualExpenses, totalMiles, oilChangePrice)
+            ExpenseSummary: CalculateExpenseSummary(totalManualExpenses, totalMiles, oilChangePrice),
+            TotalRideMinutes: RidingTimeRules.SumRecordedRideMinutes(rides)
         );
     }
 

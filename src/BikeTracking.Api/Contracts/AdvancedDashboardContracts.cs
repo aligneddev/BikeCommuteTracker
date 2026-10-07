@@ -17,6 +17,10 @@ public sealed record AdvancedDashboardResponse(
     /// by user MPG/vehicle settings (FR-007).
     /// </summary>
     decimal Co2SavedPerMileLbs,
+    /// <summary>
+    /// All-time sum of recorded ride minutes. Rides without a duration are excluded; <c>0</c> when none.
+    /// </summary>
+    int TotalRideMinutes,
     /// <summary>Difficulty analytics section. Null when no qualifying ride data exists.</summary>
     AdvancedDashboardDifficultySection? DifficultySection = null
 );

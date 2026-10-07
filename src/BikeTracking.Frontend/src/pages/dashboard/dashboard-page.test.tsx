@@ -1,5 +1,5 @@
 import { BrowserRouter } from 'react-router-dom'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 
 vi.mock('../../components/dashboard/dashboard-chart-section', () => ({
@@ -41,6 +41,7 @@ function buildDashboardResponse(
         netExpenses: null,
         oilChangeIntervalCount: 0,
       },
+      totalRideMinutes: 0,
     },
     averages: {
       averageTemperature: null,
@@ -232,6 +233,72 @@ describe('DashboardPage', () => {
     } finally {
       sessionStorage.removeItem('bike_tracking_auth_session')
     }
+  })
+
+  async function renderRidingTimeCard(): Promise<HTMLElement> {
+    const module = await import('./dashboard-page')
+    const DashboardPage = module.DashboardPage
+
+    render(
+      <BrowserRouter>
+        <DashboardPage />
+      </BrowserRouter>
+    )
+
+    const heading = await screen.findByRole('heading', { name: 'Riding Time' })
+    return heading.closest('article') as HTMLElement
+  }
+
+  it('renders the all-time riding time card in hours and minutes', async () => {
+    mockGetDashboard.mockResolvedValue(
+      buildDashboardResponse({
+        totals: { ...buildDashboardResponse().totals, totalRideMinutes: 2535 },
+      })
+    )
+    sessionStorage.setItem('bike_tracking_auth_session', JSON.stringify({ userId: 1 }))
+
+    const card = await renderRidingTimeCard()
+
+    expect(await within(card).findByText('42h 15m')).toBeInTheDocument()
+    expect(within(card).getByText('12 rides')).toBeInTheDocument()
+  })
+
+  it('flags rides missing duration on the riding time card', async () => {
+    mockGetDashboard.mockResolvedValue(
+      buildDashboardResponse({
+        missingData: {
+          ...buildDashboardResponse().missingData,
+          ridesMissingDuration: 2,
+        },
+      })
+    )
+    sessionStorage.setItem('bike_tracking_auth_session', JSON.stringify({ userId: 1 }))
+
+    const card = await renderRidingTimeCard()
+
+    expect(await within(card).findByText('2 rides missing duration')).toBeInTheDocument()
+  })
+
+  it('uses singular wording when one ride is missing duration', async () => {
+    mockGetDashboard.mockResolvedValue(
+      buildDashboardResponse({
+        missingData: {
+          ...buildDashboardResponse().missingData,
+          ridesMissingDuration: 1,
+        },
+      })
+    )
+    sessionStorage.setItem('bike_tracking_auth_session', JSON.stringify({ userId: 1 }))
+
+    const card = await renderRidingTimeCard()
+
+    expect(await within(card).findByText('1 ride missing duration')).toBeInTheDocument()
+  })
+
+  it('renders 0h 0m riding time for the empty dashboard state', async () => {
+    const card = await renderRidingTimeCard()
+
+    expect(within(card).getByText('0h 0m')).toBeInTheDocument()
   })
 
   afterEach(() => {

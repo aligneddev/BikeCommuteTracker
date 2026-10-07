@@ -4,6 +4,7 @@ import { DashboardStatusPanel } from '../../components/dashboard/dashboard-statu
 import { DashboardSummaryCard } from '../../components/dashboard/dashboard-summary-card'
 import { ExpenseSummaryCard } from './ExpenseSummaryCard'
 import { getDashboard, type DashboardResponse } from '../../services/dashboard-api'
+import { formatHoursMinutes } from '../../utils/ridingTime'
 import './dashboard-page.css'
 
 const SESSION_KEY = 'bike_tracking_auth_session'
@@ -43,6 +44,7 @@ function buildEmptyDashboard(): DashboardResponse {
         netExpenses: null,
         oilChangeIntervalCount: 0,
       },
+      totalRideMinutes: 0,
     },
     averages: {
       averageTemperature: null,
@@ -75,6 +77,10 @@ function formatMiles(value: number): string {
 
 function formatRideCount(rideCount: number): string {
   return rideCount === 1 ? '1 ride' : `${rideCount} rides`
+}
+
+function formatMissingDuration(count: number): string {
+  return count === 1 ? '1 ride missing duration' : `${count} rides missing duration`
 }
 
 function formatAverage(value: number | null, suffix: string): string {
@@ -199,6 +205,17 @@ export function DashboardPage() {
           value={formatMiles(dashboard.totals.allTimeMiles.miles)}
           detail={formatRideCount(dashboard.totals.allTimeMiles.rideCount)}
           accentClassName="dashboard-summary-card-accent-all-time"
+        />
+        <DashboardSummaryCard
+          title="Riding Time"
+          eyebrow="Duration"
+          value={formatHoursMinutes(dashboard.totals.totalRideMinutes)}
+          detail={
+            dashboard.missingData.ridesMissingDuration > 0
+              ? formatMissingDuration(dashboard.missingData.ridesMissingDuration)
+              : formatRideCount(dashboard.totals.allTimeMiles.rideCount)
+          }
+          accentClassName="dashboard-summary-card-accent-riding-time"
         />
         <DashboardSummaryCard
           title="Money Saved"

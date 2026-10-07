@@ -14,7 +14,8 @@ public sealed record DashboardTotals(
     DashboardMileageMetric YearToDateMiles,
     DashboardMileageMetric AllTimeMiles,
     DashboardMoneySaved MoneySaved,
-    DashboardExpenseSummary ExpenseSummary
+    DashboardExpenseSummary ExpenseSummary,
+    int TotalRideMinutes
 );
 
 public sealed record DashboardMileageMetric(decimal Miles, int RideCount, string Period);
@@ -82,11 +83,16 @@ public sealed record YearStatsDashboardResponse(
     YearStatsWindResistanceSection WindResistance
 );
 
-/// <summary>Year-scoped totals shown as a text summary above the year-stats charts.</summary>
+/// <summary>
+/// Year-scoped totals shown as a text summary above the year-stats charts.
+/// <c>TotalRideMinutes</c> sums recorded ride durations for the year; rides without a duration
+/// are excluded and <c>0</c> means nothing to sum.
+/// </summary>
 public sealed record YearStatsTotals(
     decimal TotalMiles,
     decimal? TotalCombinedSavings,
-    DashboardExpenseSummary ExpenseSummary
+    DashboardExpenseSummary ExpenseSummary,
+    int TotalRideMinutes
 );
 
 public sealed record YearStatsMileagePoint(string MonthKey, string Label, decimal Miles);

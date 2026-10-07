@@ -7,6 +7,7 @@ import {
 import { SavingsWindowsTable } from './SavingsWindowsTable'
 import { AdvancedSuggestionsPanel } from './AdvancedSuggestionsPanel'
 import { DifficultyAnalyticsSection } from './DifficultyAnalyticsSection'
+import { formatHoursMinutes } from '../../utils/ridingTime'
 import './advanced-dashboard-page.css'
 
 /**
@@ -102,6 +103,9 @@ export function AdvancedDashboardPage() {
         <>
           <section aria-label="Savings breakdown by time window">
             <h2 className="advanced-dashboard-section-heading">Savings Breakdown</h2>
+            <p className="advanced-dashboard-riding-time">
+              All-time riding time: <strong>{formatHoursMinutes(data.totalRideMinutes)}</strong>
+            </p>
             <SavingsWindowsTable
               weekly={data.savingsWindows.weekly}
               monthly={data.savingsWindows.monthly}

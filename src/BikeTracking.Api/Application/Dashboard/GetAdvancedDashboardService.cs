@@ -143,7 +143,8 @@ public sealed class GetAdvancedDashboardService(
             Reminders: reminders,
             GeneratedAtUtc: DateTime.UtcNow,
             DifficultySection: difficultySection,
-            Co2SavedPerMileLbs: AdvancedDashboardCalculations.Co2PerMileLbs
+            Co2SavedPerMileLbs: AdvancedDashboardCalculations.Co2PerMileLbs,
+            TotalRideMinutes: RidingTimeRules.SumRecordedRideMinutes(rides)
         );
     }
 
