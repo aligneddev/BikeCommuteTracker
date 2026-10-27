@@ -55,6 +55,7 @@ describe('RecordRidePage', () => {
       pricePerGallon: null,
       isAvailable: false,
       dataSource: null,
+      grade: 'Regular',
     })
     mockGetRidePresets.mockResolvedValue({
       presets: [],
@@ -191,6 +192,7 @@ describe('RecordRidePage', () => {
       pricePerGallon: 3.55,
       isAvailable: true,
       dataSource: 'Source: U.S. Energy Information Administration (EIA)',
+      grade: 'Regular',
     })
     mockGetRidePresets.mockResolvedValue({
       presets: [
@@ -261,6 +263,7 @@ describe('RecordRidePage', () => {
       pricePerGallon: 3.2222,
       isAvailable: true,
       dataSource: 'Source: U.S. Energy Information Administration (EIA)',
+      grade: 'Regular',
     })
 
     render(

@@ -31,6 +31,7 @@ describe('HistoryPage', () => {
       pricePerGallon: null,
       isAvailable: false,
       dataSource: null,
+      grade: 'Regular',
     })
     mockDeleteRide.mockResolvedValue({
       ok: true,
@@ -489,6 +490,7 @@ describe('HistoryPage', () => {
       pricePerGallon: 3.9999,
       isAvailable: true,
       dataSource: 'Source: U.S. Energy Information Administration (EIA)',
+      grade: 'Regular',
     })
 
     render(<HistoryPage />)

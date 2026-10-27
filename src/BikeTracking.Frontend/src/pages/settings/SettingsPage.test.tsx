@@ -122,6 +122,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: null,
         },
       },
@@ -153,6 +156,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: null,
         },
       },
@@ -187,6 +193,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -222,6 +231,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: null,
         },
       },
@@ -242,6 +254,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -368,6 +383,9 @@ describe('SettingsPage', () => {
           longitude: -71.0589,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -388,6 +406,9 @@ describe('SettingsPage', () => {
           longitude: -87.6,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: '2026-03-30T10:10:00Z',
         },
       },
@@ -444,6 +465,9 @@ describe('SettingsPage', () => {
           longitude: -87.623,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: '2026-03-30T10:00:00Z',
         },
       },
@@ -464,6 +488,9 @@ describe('SettingsPage', () => {
           longitude: -87.623,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: '2026-03-30T10:05:00Z',
         },
       },
@@ -508,6 +535,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: null,
         },
       },
@@ -557,6 +587,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: null,
         },
       },
@@ -585,6 +618,7 @@ describe('SettingsPage', () => {
       status: 200,
       data: {
         hasSettings: true,
+        // @ts-expect-error fixture omits key fields on purpose: the save-payload assertion below relies on it
         settings: {
           averageCarMpg: 30,
           yearlyGoalMiles: 1600,
@@ -605,6 +639,7 @@ describe('SettingsPage', () => {
       status: 200,
       data: {
         hasSettings: true,
+        // @ts-expect-error fixture omits key fields on purpose: the save-payload assertion below relies on it
         settings: {
           averageCarMpg: 30,
           yearlyGoalMiles: 1600,
@@ -640,6 +675,7 @@ describe('SettingsPage', () => {
         expect.objectContaining({
           dashboardGallonsAvoidedEnabled: true,
           dashboardGoalProgressEnabled: true,
+
         })
       )
     })
@@ -661,6 +697,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: null,
         },
       },
@@ -694,6 +733,9 @@ describe('SettingsPage', () => {
           longitude: null,
           dashboardGallonsAvoidedEnabled: false,
           dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular',
           updatedAtUtc: null,
         },
       },
@@ -723,7 +765,10 @@ describe('SettingsPage', () => {
           averageCarMpg: null, yearlyGoalMiles: null, oilChangePrice: null,
           mileageRateCents: null, locationLabel: null, latitude: null,
           longitude: null, dashboardGallonsAvoidedEnabled: false,
-          dashboardGoalProgressEnabled: false, updatedAtUtc: null,
+          dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular', updatedAtUtc: null,
         },
       },
     })
@@ -757,7 +802,10 @@ describe('SettingsPage', () => {
           averageCarMpg: null, yearlyGoalMiles: null, oilChangePrice: null,
           mileageRateCents: null, locationLabel: null, latitude: null,
           longitude: null, dashboardGallonsAvoidedEnabled: false,
-          dashboardGoalProgressEnabled: false, updatedAtUtc: null,
+          dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular', updatedAtUtc: null,
         },
       },
     })
@@ -791,7 +839,10 @@ describe('SettingsPage', () => {
           averageCarMpg: null, yearlyGoalMiles: null, oilChangePrice: null,
           mileageRateCents: null, locationLabel: null, latitude: null,
           longitude: null, dashboardGallonsAvoidedEnabled: false,
-          dashboardGoalProgressEnabled: false, updatedAtUtc: null,
+          dashboardGoalProgressEnabled: false,
+          weatherApiKey: null,
+          eiaGasApiKey: null,
+          gasGrade: 'Regular', updatedAtUtc: null,
         },
       },
     })
@@ -955,6 +1006,7 @@ describe('SettingsPage', () => {
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────
 
+// Not a valid ApiResult (no ok/status); kept as-is because the tests rely on the page's fallback to defaults.
 function buildDefaultSettings() {
   return {
     settings: {
@@ -970,5 +1022,5 @@ function buildDefaultSettings() {
       weatherApiKey: null,
       eiaGasApiKey: null,
     },
-  }
+  } as unknown as Awaited<ReturnType<typeof usersApi.getUserSettings>>
 }

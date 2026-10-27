@@ -108,7 +108,8 @@ jobs:
     timeout-minutes: 20
     name: E2E Tests
     container:
-      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      # keep tag equal to @playwright/test version in src/BikeTracking.Frontend/package.json
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
     env:
       CI: "true"
       DOTNET_NOLOGO: "true"

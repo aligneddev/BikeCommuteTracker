@@ -94,9 +94,9 @@ describe('RideDeleteDialog', () => {
   it('should disable confirm button and show loading state during API call', async () => {
     const onConfirm = vi.fn(
       () =>
-        new Promise((resolve) =>
+        new Promise<void>((resolve) =>
           setTimeout(() => {
-            resolve(undefined)
+            resolve()
           }, 100)
         )
     )

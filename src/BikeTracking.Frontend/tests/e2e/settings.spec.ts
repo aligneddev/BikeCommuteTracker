@@ -55,7 +55,7 @@ test.describe("009-settings e2e", () => {
 
     expect(payload.grade).toBe("Premium");
 
-    if (payload.isAvailable && payload.pricePerGallon !== null) {
+    if (payload.isAvailable && payload.pricePerGallon != null) {
       await expect(page.locator("#gasPrice")).toHaveValue(payload.pricePerGallon.toString());
     }
   });
