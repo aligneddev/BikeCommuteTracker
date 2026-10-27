@@ -1,6 +1,6 @@
 {
   "type": "module",
   "devDependencies": {
-    "skills": "^1.5.13"
+    "skills": "^1.7.4"
   }
 }
