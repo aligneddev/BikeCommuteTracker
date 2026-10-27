@@ -15,11 +15,13 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '../ui/chart'
-import type { DashboardMileagePoint, DashboardSavingsPoint } from '../../services/dashboard-api'
+import type { YearStatsMileagePoint, YearStatsSavingsPoint } from '../../services/dashboard-api'
+
+type SavingsChartPoint = Omit<YearStatsSavingsPoint, 'combinedSavings'>
 
 interface DashboardChartSectionProps {
-  mileageByMonth: DashboardMileagePoint[]
-  savingsByMonth: DashboardSavingsPoint[]
+  mileageByMonth: YearStatsMileagePoint[]
+  savingsByMonth: SavingsChartPoint[]
   /** Optional label rendered instead of the default "Rolling 12 months" copy (e.g. "Calendar year 2025"). */
   seriesLabel?: string
 }

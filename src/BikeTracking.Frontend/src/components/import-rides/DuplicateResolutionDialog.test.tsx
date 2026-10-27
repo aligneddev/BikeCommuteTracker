@@ -2,8 +2,9 @@ import userEvent from '@testing-library/user-event'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { DuplicateResolutionDialog } from './DuplicateResolutionDialog'
+import type { ImportPreviewRow } from '../../services/import-api'
 
-const duplicateRows = [
+const duplicateRows: ImportPreviewRow[] = [
   {
     rowNumber: 1,
     date: '2026-04-01',
@@ -40,7 +41,7 @@ const duplicateRows = [
       },
     ],
   },
-] as const
+]
 
 describe('DuplicateResolutionDialog', () => {
   it('does not render when closed', () => {

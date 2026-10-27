@@ -56,7 +56,8 @@ describe('ExpenseEntryPage', () => {
   it('submits valid form data via recordExpense', async () => {
     mockRecordExpense.mockResolvedValue({
       ok: true,
-      value: {
+      status: 200,
+      data: {
         expenseId: 12,
         riderId: 1,
         savedAtUtc: '2026-04-17T12:00:00Z',

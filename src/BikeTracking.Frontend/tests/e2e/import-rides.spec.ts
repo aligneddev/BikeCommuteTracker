@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { createAndLoginUser, uniqueUser } from "./support/auth-helpers";
 import { recordRide } from "./support/ride-helpers";
 
@@ -22,9 +22,7 @@ function buildCsvRows(startDateIso: string, count: number): string {
   return rows.join("\n");
 }
 
-async function installSignalRDisconnectHarness(page: {
-  addInitScript: (script: () => void) => Promise<void>;
-}): Promise<void> {
+async function installSignalRDisconnectHarness(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const originalWebSocket = window.WebSocket;
     const trackedSockets: WebSocket[] = [];
@@ -78,9 +76,7 @@ async function installSignalRDisconnectHarness(page: {
   });
 }
 
-async function installSlowPollingHarness(page: {
-  addInitScript: (script: () => void) => Promise<void>;
-}): Promise<void> {
+async function installSlowPollingHarness(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const originalSetInterval = window.setInterval.bind(window);
     const adjustedSetInterval = (
