@@ -17,7 +17,7 @@
     "@aws-sdk/client-s3": "^3.1156.0",
     "@aws-sdk/lib-storage": "^3.1156.0",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "1.64.1",
     "@tauri-apps/api": "^2.12.4",
     "@tauri-apps/cli": "^2.12.4",
     "@testing-library/dom": "^10.4.2",
