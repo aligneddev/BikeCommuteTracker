@@ -117,7 +117,7 @@ flowchart TB
             Payloads["Ride*EventPayload.Create"]
             NameNorm["UserNameNormalizer"]
             PinPolicy["PinPolicyValidator"]
-            Groups["ImportProgressGroups / HubAuth"]
+            Groups["ImportProgressGroups"]
         end
         subgraph L2fs["F# domain"]
             Wind["WindResistance"]
@@ -542,7 +542,7 @@ flowchart TB
         Miles["ImportProgressEstimator.GetReachedMilestones"]
         Week["GasPriceWeekKeyHelper.GetWeekStartDate"]
         Grp["ImportProgressGroups.RiderJob"]
-        HAuth["ImportProgressHubAuth.TryGetRiderId"]
+        HAuth["RiderClaims.TryGetRiderId"]
     end
 
     subgraph IN["L1 · Infrastructure"]
@@ -790,18 +790,23 @@ The L2 calculation layer is small and stable, as it should be:
 - `SavingsCalculationRules` and `RidingTimeRules` are shared by all three dashboard
   services.
 
-Several helpers are **duplicated across services instead of moved down to L2**. These are
-candidates to promote into a shared rules class:
+The graphs above were drawn before the duplicated helpers below were **moved down a layer**
+into shared rules. Each row shows where the copies used to live and where the single
+version lives now:
 
-| Duplicated function | Found in |
-|---|---|
-| `GetMonthKey`, `IsWithinMonth`, `RoundMoney`, `AggregateSavings`, `CalculateExpenseSummary` | `GetDashboardService`, `GetYearStatsDashboardService` |
-| `GetWindResistanceLabel`, `BuildDifficultySection` | `GetAdvancedDashboardService`, `GetYearStatsDashboardService` |
-| Gas grade normalization (`TryNormalizeGrade`, `TryNormalizeGasGrade`, `ResolveGasGradeOrDefault`, `ResolveSavedGasGradeOrDefault`, `TryResolveRequestedGasGrade`) | `EiaGasPriceLookupService`, `UserSettingsService`, `ImportJobProcessor`, `RidesEndpoints` |
-| CSV line splitting (`SplitCsvLine`, `NormalizeHeader`) | `CsvParser`, `CsvExpenseParser` |
-| Byte-to-text decoding (`DecodeCsvText`, `DecodeText`) | `CsvRideImportService`, `MonthlySummaryImportService` |
-| `ResolveDuplicates`, `StartAsync`, `GetStatusAsync`, `CancelAsync` (near-identical bodies) | `CsvRideImportService`, `MonthlySummaryImportService` |
-| `TryGetRiderId` / `context.User.FindFirst("sub")` | All 8 endpoint files (40 call sites) |
+| Helper | Previously duplicated in | Now lives in |
+|---|---|---|
+| `AggregateSavings`, `RoundMoney` (and `RoundTo2`), `CalculateExpenseSummary`, the 3000-mile oil-change interval | `GetDashboardService`, `GetYearStatsDashboardService`, `GetAdvancedDashboardService` | `SavingsCalculationRules` (L2) |
+| `GetMonthKey`, `IsWithinMonth` | `GetDashboardService`, `GetYearStatsDashboardService` | `DashboardMonthRules` (L2) |
+| `GetWindResistanceLabel`, the ride to F# `RideDifficultySnapshot` projection (3 copies) | `GetAdvancedDashboardService`, `GetYearStatsDashboardService` | `RideDifficultyRules` (L2) |
+| Gas grade normalization (`TryNormalizeGrade`, `TryNormalizeGasGrade`, `NormalizeGasGradeForRead`, `ResolveGasGradeOrDefault`, `ResolveSavedGasGradeOrDefault`) | `EiaGasPriceLookupService`, `UserSettingsService`, `ImportJobProcessor`, `RidesEndpoints` | `GasGradeRules` (L2) |
+| CSV parsing (`SplitCsvLine`, `NormalizeHeader`, line splitting) and byte decoding (`DecodeCsvText`, `DecodeText`) | `CsvParser`, `CsvExpenseParser`, `MonthlySummaryParser`, `CsvRideImportService`, `MonthlySummaryImportService` | `ImportText` (L2) |
+| `StartAsync`, `GetStatusAsync`, `CancelAsync`, `ResolveDuplicates` | `CsvRideImportService`, `MonthlySummaryImportService` | `ImportJobLifecycle` (between L6 and L5) |
+| Rider id claim parsing (`TryGetRiderId`, `FindFirst("sub")`, `ImportProgressHubAuth`) | All 8 endpoint files and `ImportProgressHub` | `RiderClaims.TryGetRiderId` extension (L1, next to the auth handler that writes the claim) |
+
+`BuildDifficultySection` is still written separately in the advanced and year-stats
+services because each returns a different contract type. Only their shared snapshot
+projection and labels were moved down.
 
 ### Pattern 4: Comfortable layers
 

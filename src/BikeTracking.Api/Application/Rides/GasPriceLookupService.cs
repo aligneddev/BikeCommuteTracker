@@ -38,8 +38,6 @@ public sealed class EiaGasPriceLookupService(
     TimeProvider timeProvider
 ) : IGasPriceLookupService
 {
-    private const string RegularGrade = "Regular";
-    private const string PremiumGrade = "Premium";
     private static readonly TimeSpan CacheFreshnessWindow = TimeSpan.FromDays(3);
 
     public async Task<decimal?> GetOrFetchAsync(
@@ -61,7 +59,7 @@ public sealed class EiaGasPriceLookupService(
         CancellationToken cancellationToken = default
     )
     {
-        if (!TryNormalizeGrade(grade, out var normalizedGrade))
+        if (!GasGradeRules.TryNormalize(grade, out var normalizedGrade))
         {
             throw new ArgumentException(
                 "grade must be either 'Regular' or 'Premium'.",
@@ -191,7 +189,7 @@ public sealed class EiaGasPriceLookupService(
     {
         var (productFacet, dataSource) = normalizedGrade switch
         {
-            PremiumGrade => ("EPMP", "EIA_EPMP_NUS_Weekly"),
+            GasGradeRules.Premium => ("EPMP", "EIA_EPMP_NUS_Weekly"),
             _ => ("EPMR", "EIA_EPMR_NUS_Weekly"),
         };
 
@@ -242,24 +240,6 @@ public sealed class EiaGasPriceLookupService(
             logger.LogWarning(ex, "EIA lookup threw for {Date} ({Grade})", priceDate, normalizedGrade);
             return null;
         }
-    }
-
-    private static bool TryNormalizeGrade(string? grade, out string normalizedGrade)
-    {
-        if (string.Equals(grade, RegularGrade, StringComparison.OrdinalIgnoreCase))
-        {
-            normalizedGrade = RegularGrade;
-            return true;
-        }
-
-        if (string.Equals(grade, PremiumGrade, StringComparison.OrdinalIgnoreCase))
-        {
-            normalizedGrade = PremiumGrade;
-            return true;
-        }
-
-        normalizedGrade = string.Empty;
-        return false;
     }
 
     private static bool TryReadPrice(

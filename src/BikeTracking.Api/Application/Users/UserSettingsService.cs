@@ -1,3 +1,4 @@
+using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
@@ -7,9 +8,6 @@ namespace BikeTracking.Api.Application.Users;
 
 public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
 {
-    private const string RegularGasGrade = "Regular";
-    private const string PremiumGasGrade = "Premium";
-
     private static readonly string[] AllSettingsFields =
     [
         "averagecarmpg",
@@ -51,7 +49,7 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                         Latitude: null,
                         Longitude: null,
                         UpdatedAtUtc: null,
-                        GasGrade: RegularGasGrade
+                        GasGrade: GasGradeRules.Regular
                     )
                 )
             );
@@ -135,7 +133,7 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
             normalizedFields.Contains("gasgrade")
         );
 
-        if (!TryNormalizeGasGrade(gasGradeCandidate, out var normalizedGasGrade))
+        if (!GasGradeRules.TryNormalize(gasGradeCandidate, out var normalizedGasGrade))
         {
             return UserSettingsResult.Failure(
                 UsersErrorCodes.ValidationFailed,
@@ -248,7 +246,7 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
                 UpdatedAtUtc: entity.UpdatedAtUtc,
                 WeatherApiKey: entity.WeatherApiKey,
                 EiaGasApiKey: entity.EiaGasApiKey,
-                GasGrade: NormalizeGasGradeForRead(entity.GasGrade)
+                GasGrade: GasGradeRules.NormalizeOrDefault(entity.GasGrade)
             )
         );
     }
@@ -292,30 +290,7 @@ public sealed class UserSettingsService(BikeTrackingDbContext dbContext)
     private static string ResolveGasGrade(string? existing, string? requested, bool isProvided)
     {
         var candidate = isProvided ? requested : existing;
-        return string.IsNullOrWhiteSpace(candidate) ? RegularGasGrade : candidate.Trim();
-    }
-
-    private static bool TryNormalizeGasGrade(string? gasGrade, out string normalized)
-    {
-        if (string.Equals(gasGrade, RegularGasGrade, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = RegularGasGrade;
-            return true;
-        }
-
-        if (string.Equals(gasGrade, PremiumGasGrade, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = PremiumGasGrade;
-            return true;
-        }
-
-        normalized = string.Empty;
-        return false;
-    }
-
-    private static string NormalizeGasGradeForRead(string? gasGrade)
-    {
-        return TryNormalizeGasGrade(gasGrade, out var normalized) ? normalized : RegularGasGrade;
+        return string.IsNullOrWhiteSpace(candidate) ? GasGradeRules.Regular : candidate.Trim();
     }
 }
 

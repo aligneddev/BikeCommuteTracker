@@ -42,9 +42,7 @@ public static class MonthlySummaryParser
             return new ParsedMonthlySummaryDocument(false, []);
         }
 
-        var lines = text.Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace('\r', '\n')
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var lines = ImportText.SplitLines(text);
 
         if (lines.Length == 0)
         {

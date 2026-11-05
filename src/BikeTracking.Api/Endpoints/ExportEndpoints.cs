@@ -1,4 +1,5 @@
 using BikeTracking.Api.Application.Export;
+using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace BikeTracking.Api.Endpoints;
@@ -32,8 +33,7 @@ public static class ExportEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -54,8 +54,7 @@ public static class ExportEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }

@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
@@ -34,7 +33,7 @@ public sealed class MonthlySummaryImportService(
             throw new ArgumentException("Monthly summary file must be 5 MB or smaller.");
         }
 
-        var text = DecodeText(decodedBytes);
+        var text = ImportText.Decode(decodedBytes);
         if (string.IsNullOrWhiteSpace(text))
         {
             throw new ArgumentException("Monthly summary content is required.");
@@ -176,134 +175,46 @@ public sealed class MonthlySummaryImportService(
         );
     }
 
-    public async Task<ImportStartResponse> StartAsync(
+    public Task<ImportStartResponse> StartAsync(
         long riderId,
         ImportStartRequest request,
         CancellationToken cancellationToken
     )
     {
-        var hasActiveImport = await importJobRepository.HasActiveImportAsync(
+        return ImportJobLifecycle.StartAsync(
+            importJobRepository,
+            importJobProcessor,
             riderId,
-            request.ImportJobId,
+            request,
             cancellationToken
         );
-
-        if (hasActiveImport)
-        {
-            throw new ImportConflictException("An import is already in progress.");
-        }
-
-        var job = await importJobRepository.GetJobAsync(
-            riderId,
-            request.ImportJobId,
-            cancellationToken
-        );
-
-        if (job is null)
-        {
-            throw new InvalidOperationException("Import job was not found.");
-        }
-
-        if (job.Status != "awaiting-confirmation")
-        {
-            throw new ArgumentException("Import job is not ready to start.");
-        }
-
-        var jobRows = await importJobRepository.GetJobRowsAsync(job.Id, cancellationToken);
-        ResolveDuplicates(job, jobRows, request);
-
-        job.OverrideAllDuplicates = request.OverrideAllDuplicates;
-        job.Status = "processing";
-        job.StartedAtUtc = DateTime.UtcNow;
-        job.EtaMinutesRounded = ImportProgressEstimator.CalculateEtaMinutesRounded(
-            job.TotalRows,
-            job.ProcessedRows,
-            job.StartedAtUtc,
-            DateTime.UtcNow
-        );
-
-        await importJobRepository.SaveChangesAsync(cancellationToken);
-        importJobProcessor.Enqueue(riderId, job.Id);
-
-        return new ImportStartResponse(job.Id, job.Status, job.StartedAtUtc.Value);
     }
 
-    public async Task<ImportStatusResponse?> GetStatusAsync(
+    public Task<ImportStatusResponse?> GetStatusAsync(
         long riderId,
         long importJobId,
         CancellationToken cancellationToken
     )
     {
-        var job = await importJobRepository.GetJobReadOnlyAsync(
+        return ImportJobLifecycle.GetStatusAsync(
+            importJobRepository,
             riderId,
             importJobId,
             cancellationToken
         );
-
-        if (job is null)
-        {
-            return null;
-        }
-
-        var percentComplete = ImportProgressEstimator.CalculatePercentComplete(
-            job.TotalRows,
-            job.ProcessedRows
-        );
-        var etaMinutesRounded =
-            job.EtaMinutesRounded
-            ?? ImportProgressEstimator.CalculateEtaMinutesRounded(
-                job.TotalRows,
-                job.ProcessedRows,
-                job.StartedAtUtc,
-                DateTime.UtcNow
-            );
-
-        return new ImportStatusResponse(
-            ImportJobId: job.Id,
-            Status: job.Status,
-            TotalRows: job.TotalRows,
-            ProcessedRows: job.ProcessedRows,
-            ImportedRows: job.ImportedRows,
-            SkippedRows: job.SkippedRows,
-            FailedRows: job.FailedRows,
-            PercentComplete: percentComplete,
-            EtaMinutesRounded: etaMinutesRounded,
-            CreatedAtUtc: job.CreatedAtUtc,
-            StartedAtUtc: job.StartedAtUtc,
-            CompletedAtUtc: job.CompletedAtUtc,
-            LastError: job.LastError
-        );
     }
 
-    public async Task<ImportCancelResponse?> CancelAsync(
+    public Task<ImportCancelResponse?> CancelAsync(
         long riderId,
         long importJobId,
         CancellationToken cancellationToken
     )
     {
-        var job = await importJobRepository.GetJobAsync(riderId, importJobId, cancellationToken);
-
-        if (job is null)
-        {
-            return null;
-        }
-
-        if (job.Status is not "completed" and not "failed" and not "cancelled")
-        {
-            job.Status = "cancelled";
-            job.CompletedAtUtc = DateTime.UtcNow;
-            job.EtaMinutesRounded = null;
-            await importJobRepository.SaveChangesAsync(cancellationToken);
-        }
-
-        return new ImportCancelResponse(
-            ImportJobId: job.Id,
-            Status: job.Status,
-            ProcessedRows: job.ProcessedRows,
-            ImportedRows: job.ImportedRows,
-            SkippedRows: job.SkippedRows,
-            FailedRows: job.FailedRows,
-            CancelledAtUtc: job.CompletedAtUtc ?? DateTime.UtcNow
+        return ImportJobLifecycle.CancelAsync(
+            importJobRepository,
+            riderId,
+            importJobId,
+            cancellationToken
         );
     }
 
@@ -350,69 +261,11 @@ public sealed class MonthlySummaryImportService(
         return assignedRows;
     }
 
-    private static void ResolveDuplicates(
-        ImportJobEntity job,
-        IReadOnlyList<ImportRowEntity> jobRows,
-        ImportStartRequest request
-    )
-    {
-        var resolutionLookup = (request.Resolutions ?? []).ToDictionary(
-            static x => x.RowNumber,
-            static x => x.Action,
-            EqualityComparer<int>.Default
-        );
-
-        foreach (var row in jobRows.Where(x => x.DuplicateStatus == "duplicate"))
-        {
-            if (request.OverrideAllDuplicates)
-            {
-                row.DuplicateResolution = "override-all";
-                row.DuplicateStatus = "resolved";
-                continue;
-            }
-
-            if (!resolutionLookup.TryGetValue(row.RowNumber, out var action))
-            {
-                throw new ArgumentException(
-                    $"Duplicate row {row.RowNumber} requires a resolution or override-all."
-                );
-            }
-
-            if (action is not ("keep-existing" or "replace-with-import"))
-            {
-                throw new ArgumentException(
-                    $"Duplicate row {row.RowNumber} has an invalid resolution action."
-                );
-            }
-
-            row.DuplicateResolution = action;
-            row.DuplicateStatus = "resolved";
-
-            if (action == "keep-existing")
-            {
-                row.ProcessingStatus = "skipped";
-                job.SkippedRows += 1;
-                job.ProcessedRows += 1;
-            }
-        }
-    }
-
     private static void ValidateYear(int startYear)
     {
         if (startYear < 2000 || startYear > 2100)
         {
             throw new ArgumentException("Start year must be between 2000 and 2100.");
         }
-    }
-
-    private static string DecodeText(byte[] bytes)
-    {
-        using var stream = new MemoryStream(bytes);
-        using var reader = new StreamReader(
-            stream,
-            Encoding.UTF8,
-            detectEncodingFromByteOrderMarks: true
-        );
-        return reader.ReadToEnd();
     }
 }

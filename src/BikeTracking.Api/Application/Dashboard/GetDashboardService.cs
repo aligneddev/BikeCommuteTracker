@@ -52,7 +52,7 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
                 .SumAsync(e => (decimal?)e.Amount, cancellationToken)
             ?? 0m;
 
-        var expenseSummary = CalculateExpenseSummary(
+        var expenseSummary = SavingsCalculationRules.CalculateExpenseSummary(
             totalManualExpenses,
             rides.Sum(r => r.Miles),
             settings?.OilChangePrice
@@ -86,34 +86,6 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
                 RidesMissingDuration: rides.Count(ride => ride.RideMinutes is null)
             ),
             GeneratedAtUtc: DateTime.UtcNow
-        );
-    }
-
-    private static DashboardExpenseSummary CalculateExpenseSummary(
-        decimal totalManualExpenses,
-        decimal totalMiles,
-        decimal? oilChangePrice
-    )
-    {
-        if (oilChangePrice is null)
-        {
-            return new DashboardExpenseSummary(
-                TotalManualExpenses: totalManualExpenses,
-                OilChangeSavings: null,
-                NetExpenses: null,
-                OilChangeIntervalCount: 0
-            );
-        }
-
-        var intervalCount = (int)Math.Floor(totalMiles / 3000m);
-        var oilChangeSavings = intervalCount * oilChangePrice.Value;
-        var netExpenses = totalManualExpenses - oilChangeSavings;
-
-        return new DashboardExpenseSummary(
-            TotalManualExpenses: totalManualExpenses,
-            OilChangeSavings: oilChangeSavings,
-            NetExpenses: netExpenses,
-            OilChangeIntervalCount: intervalCount
         );
     }
 
@@ -163,15 +135,15 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
         decimal? mileageRateCents
     )
     {
-        var totals = AggregateSavings(rides, mileageRateCents);
+        var totals = SavingsCalculationRules.AggregateSavings(rides, mileageRateCents);
 
         return new SavingsComputation(
             new DashboardMoneySaved(
                 MileageRateSavings: totals.HasMileageRateSavings
-                    ? RoundMoney(totals.MileageRateSavings)
+                    ? SavingsCalculationRules.RoundMoney(totals.MileageRateSavings)
                     : null,
                 FuelCostAvoided: totals.HasFuelCostAvoided
-                    ? RoundMoney(totals.FuelCostAvoided)
+                    ? SavingsCalculationRules.RoundMoney(totals.FuelCostAvoided)
                     : null,
                 QualifiedRideCount: totals.QualifiedRideCount
             )
@@ -187,11 +159,11 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
             .Select(month =>
             {
                 var monthMiles = rides
-                    .Where(ride => IsWithinMonth(ride.RideDateTimeLocal, month.Year, month.Month))
+                    .Where(ride => DashboardMonthRules.IsWithinMonth(ride.RideDateTimeLocal, month.Year, month.Month))
                     .Sum(ride => ride.Miles);
 
                 return new DashboardMileagePoint(
-                    MonthKey: GetMonthKey(month.Year, month.Month),
+                    MonthKey: DashboardMonthRules.GetMonthKey(month.Year, month.Month),
                     Label: month.ToString("MMM", CultureInfo.InvariantCulture),
                     Miles: monthMiles
                 );
@@ -209,69 +181,23 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
             .Select(month =>
             {
                 var monthRides = rides
-                    .Where(ride => IsWithinMonth(ride.RideDateTimeLocal, month.Year, month.Month))
+                    .Where(ride => DashboardMonthRules.IsWithinMonth(ride.RideDateTimeLocal, month.Year, month.Month))
                     .ToList();
 
-                var monthSavings = AggregateSavings(monthRides, mileageRateCents);
+                var monthSavings = SavingsCalculationRules.AggregateSavings(monthRides, mileageRateCents);
 
                 return new DashboardSavingsPoint(
-                    MonthKey: GetMonthKey(month.Year, month.Month),
+                    MonthKey: DashboardMonthRules.GetMonthKey(month.Year, month.Month),
                     Label: month.ToString("MMM", CultureInfo.InvariantCulture),
                     MileageRateSavings: monthSavings.HasMileageRateSavings
-                        ? RoundMoney(monthSavings.MileageRateSavings)
+                        ? SavingsCalculationRules.RoundMoney(monthSavings.MileageRateSavings)
                         : null,
                     FuelCostAvoided: monthSavings.HasFuelCostAvoided
-                        ? RoundMoney(monthSavings.FuelCostAvoided)
+                        ? SavingsCalculationRules.RoundMoney(monthSavings.FuelCostAvoided)
                         : null
                 );
             })
             .ToList();
-    }
-
-    private static SavingsAggregate AggregateSavings(
-        IEnumerable<RideEntity> rides,
-        decimal? mileageRateCents
-    )
-    {
-        var mileageRateSavings = 0m;
-        var fuelCostAvoided = 0m;
-        var qualifiedRideCount = 0;
-        var hasMileageRateSavings = false;
-        var hasFuelCostAvoided = false;
-
-        foreach (var ride in rides)
-        {
-            var rideMileageRateSavings = SavingsCalculationRules.CalculateMileageRateSavings(
-                ride.Miles,
-                mileageRateCents
-            );
-            var rideFuelCostAvoided = CalculateFuelCostAvoided(ride);
-
-            if (rideMileageRateSavings.HasValue || rideFuelCostAvoided.HasValue)
-            {
-                qualifiedRideCount++;
-            }
-
-            if (rideMileageRateSavings.HasValue)
-            {
-                hasMileageRateSavings = true;
-                mileageRateSavings += rideMileageRateSavings.Value;
-            }
-
-            if (rideFuelCostAvoided.HasValue)
-            {
-                hasFuelCostAvoided = true;
-                fuelCostAvoided += rideFuelCostAvoided.Value;
-            }
-        }
-
-        return new SavingsAggregate(
-            MileageRateSavings: mileageRateSavings,
-            FuelCostAvoided: fuelCostAvoided,
-            QualifiedRideCount: qualifiedRideCount,
-            HasMileageRateSavings: hasMileageRateSavings,
-            HasFuelCostAvoided: hasFuelCostAvoided
-        );
     }
 
     private static IReadOnlyList<DashboardMetricSuggestion> BuildSuggestions(
@@ -331,38 +257,6 @@ public sealed class GetDashboardService(BikeTrackingDbContext dbContext, TimePro
             yield return start.AddMonths(offset);
         }
     }
-
-    private static bool IsWithinMonth(DateTime value, int year, int month)
-    {
-        return value.Year == year && value.Month == month;
-    }
-
-    private static string GetMonthKey(int year, int month)
-    {
-        return $"{year:D4}-{month:D2}";
-    }
-
-    private static decimal? CalculateFuelCostAvoided(RideEntity ride)
-    {
-        return SavingsCalculationRules.CalculateFuelCostAvoided(
-            ride.Miles,
-            ride.SnapshotAverageCarMpg,
-            ride.GasPricePerGallon
-        );
-    }
-
-    private static decimal? RoundMoney(decimal? value)
-    {
-        return value.HasValue ? decimal.Round(value.Value, 2, MidpointRounding.AwayFromZero) : null;
-    }
-
-    private sealed record SavingsAggregate(
-        decimal MileageRateSavings,
-        decimal FuelCostAvoided,
-        int QualifiedRideCount,
-        bool HasMileageRateSavings,
-        bool HasFuelCostAvoided
-    ) { }
 
     private sealed record SavingsComputation(DashboardMoneySaved Totals);
 }

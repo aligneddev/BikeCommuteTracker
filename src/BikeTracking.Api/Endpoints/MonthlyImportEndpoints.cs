@@ -1,5 +1,6 @@
 using BikeTracking.Api.Application.Imports;
 using BikeTracking.Api.Contracts;
+using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BikeTracking.Api.Endpoints;
@@ -62,7 +63,7 @@ public static class MonthlyImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -105,7 +106,7 @@ public static class MonthlyImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -139,7 +140,7 @@ public static class MonthlyImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -157,7 +158,7 @@ public static class MonthlyImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -166,11 +167,5 @@ public static class MonthlyImportEndpoints
         return response is null
             ? Results.NotFound(new ErrorResponse("NOT_FOUND", "Import job was not found."))
             : Results.Ok(response);
-    }
-
-    private static bool TryGetRiderId(HttpContext context, out long riderId)
-    {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        return long.TryParse(userIdString, out riderId) && riderId > 0;
     }
 }

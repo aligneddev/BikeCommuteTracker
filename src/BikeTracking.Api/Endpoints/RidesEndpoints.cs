@@ -2,6 +2,7 @@ using BikeTracking.Api.Application.Imports;
 using BikeTracking.Api.Application.Rides;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
+using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -127,8 +128,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         var response = await ridePresetService.ListAsync(riderId, cancellationToken);
@@ -142,8 +142,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         var normalizedRequest = NormalizePresetRequest(request);
@@ -174,8 +173,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         var normalizedRequest = NormalizePresetRequest(request);
@@ -208,8 +206,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         var result = await ridePresetService.DeleteAsync(riderId, presetId, cancellationToken);
@@ -290,8 +287,7 @@ public static class RidesEndpoints
         try
         {
             // Get authenticated user ID from context
-            var userIdString = context.User.FindFirst("sub")?.Value;
-            if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            if (!context.User.TryGetRiderId(out var riderId))
                 return Results.Unauthorized();
 
             var (rideId, eventPayload) = await recordRideService.ExecuteAsync(
@@ -330,8 +326,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         if (string.IsNullOrWhiteSpace(date) || !DateOnly.TryParse(date, out var parsedDate))
@@ -360,7 +355,7 @@ public static class RidesEndpoints
 
         var effectiveGrade =
             requestedGrade
-            ?? ResolveSavedGasGradeOrDefault(userSettings?.GasGrade);
+            ?? GasGradeRules.NormalizeOrDefault(userSettings?.GasGrade);
 
         try
         {
@@ -402,27 +397,9 @@ public static class RidesEndpoints
             return true;
         }
 
-        if (grade.Equals("Regular", StringComparison.OrdinalIgnoreCase))
-        {
-            resolvedGrade = "Regular";
-            return true;
-        }
-
-        if (grade.Equals("Premium", StringComparison.OrdinalIgnoreCase))
-        {
-            resolvedGrade = "Premium";
-            return true;
-        }
-
-        resolvedGrade = null;
-        return false;
-    }
-
-    private static string ResolveSavedGasGradeOrDefault(string? gasGrade)
-    {
-        return gasGrade?.Equals("Premium", StringComparison.OrdinalIgnoreCase) == true
-            ? "Premium"
-            : "Regular";
+        var isSupported = GasGradeRules.TryNormalize(grade, out var normalizedGrade);
+        resolvedGrade = isSupported ? normalizedGrade : null;
+        return isSupported;
     }
 
     private static async Task<IResult> GetRideWeather(
@@ -433,8 +410,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         if (
@@ -525,8 +501,7 @@ public static class RidesEndpoints
     {
         try
         {
-            var userIdString = context.User.FindFirst("sub")?.Value;
-            if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+            if (!context.User.TryGetRiderId(out var riderId))
                 return Results.Unauthorized();
 
             // Parse date query parameters
@@ -570,8 +545,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         try
@@ -638,8 +612,7 @@ public static class RidesEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         try
