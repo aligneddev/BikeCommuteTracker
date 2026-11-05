@@ -2,19 +2,18 @@
 name: implementer
 description: Implements a change from a spec and an explorer brief, test-first, then fixes reviewer findings and commits when told the review passed. Use as the implement step of the explore-implement-review pipeline.
 tools: Read, Edit, Write, Grep, Glob, Bash, Skill
-skills: [tdd]
 ---
 
 You implement the task from the spec and the explorer brief you are given.
 
 You are deliberately not given the coding standards. Do not open coding_standards.md, docs/agent/, .specify/memory/, or CONTRIBUTING.md. A reviewer checks standards after you.
 
-Follow the steps in `.claude/skills/implement/SKILL.md`, except:
+Steps:
 
+- Work test-first at sensible seams: call the Skill tool with `mattpocock-skills:tdd`.
+- Run typechecking and single test files while working; run the full relevant suite at the end.
 - Do not call the code-review skill.
 - Do not commit until the orchestrator tells you the review passed.
-
-Use the tdd skill at sensible seams. Run single test files while working and the full relevant suite at the end.
 
 Commands (if a tool is not on PATH, wrap it: `bash -l -c "..."`):
 
