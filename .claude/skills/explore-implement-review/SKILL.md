@@ -15,7 +15,7 @@ The implementer must not learn the coding standards; only the reviewer reads the
 2. Clean up `AGENTS.md` (auto-loaded by Codex/Copilot-style agents): keep only the project intro, environment/run commands, the "Agent skills" section, and the speckit `SPECKIT START/END` plan pointer. Remove coding rules and links to standards docs; don't link `coding_standards.md` from it.
 3. Remove standards from other auto-loaded instruction files: `.github/copilot-instructions.md`, `CLAUDE.md` (and no `@AGENTS.md` import that pulls standards back in), `.cursorrules` or similar.
 4. Keep the exclusion lists in `.claude/agents/implementer.md` (do not open) and `explorer.md` (do not include) in sync with the reviewer's sources. They are instructions, not enforcement: the implementer can still read those files if it ignores them.
-5. Skills: `code-review`, `implement` and `tdd` come from mattpocock/skills (installed under `.agents/skills/`) and must also be copied into `.claude/skills/` so the agents can preload them. `skills-lock.json` tracks only the `.agents` copies, so recopy after a skills update.
+5. Skills: `code-review`, `implement`, `tdd`, `retro` and `writing-for-agents` (retro depends on it) come from mattpocock/skills (installed under `.agents/skills/`) and must also be copied into `.claude/skills/` so the agents can preload them (`retro` and `writing-for-agents` are read by the main session). `skills-lock.json` tracks only the `.agents` copies, so recopy after a skills update.
 6. Spec Kit: set `context_file: AGENTS.md` in `.specify/extensions/agent-context/agent-context-config.yml`; its managed block is only a plan pointer. Re-check it after `specify init` or `specify integration install`, which can reset it (e.g. to `CLAUDE.md`, which Claude Code auto-loads).
 
 ## Steps
@@ -26,5 +26,10 @@ The implementer must not learn the coding standards; only the reviewer reads the
 4. **Review.** Spawn `reviewer` with the fixed point and the spec.
 5. **Fix loop.** On `VERDICT: CHANGES REQUESTED`, send the findings to the same implementer with SendMessage, then spawn the reviewer again. Cap at 3 review rounds; if it still fails, stop and ask the user.
 6. **Commit.** On `VERDICT: PASS`, tell the implementer "review passed, commit" and give it the exact commit message to use, with a Conventional Commits prefix (`feat:`, `fix:`, `docs:`, `chore:`, ...) that you choose, taking the reviewer's view into account.
+7. **Retro (continuous improvement).** After the commit, run a retrospective on this run, aiming to make reviews better for both the AI and humans. `retro` has `disable-model-invocation: true`, so read `.claude/skills/retro/SKILL.md` and follow its steps; don't call it through the Skill tool. Instead of only presenting the candidates (retro's last step), apply them yourself, since the implementer must not see the standards and the reviewer is read-only:
+   - Turn reviewer findings that came up more than once, or that the reviewer had to invent, into rules in `coding_standards.md`. Prefer an automated check (lint rule, test, hook) for mechanical rules. Remove or clarify rules that misled the reviewer or were never cited.
+   - Trim bloat: rules that tooling already enforces, duplicates, vague or unenforceable lines, and anything in `AGENTS.md` beyond the Setup step 2 allow-list.
+   - Adapting retro to this repo: the file is `coding_standards.md` (retro says `CODING_STANDARDS.md`). Never add a standards pointer to `AGENTS.md`, despite retro's navigation-pointer advice. If a new standards source is added, update the reviewer's source list and the implementer and explorer exclusion lists.
+   - Commit these edits separately with a `docs:` message. If there is nothing worth changing, say so and commit nothing.
 
-Report to the user: the commit SHA, the number of review rounds, and any judgement calls left unaddressed.
+Report to the user: the commit SHA(s), the number of review rounds, any judgement calls left unaddressed, and what the retro changed in `coding_standards.md` and `AGENTS.md` (or that it changed nothing), with the reason for each change.
