@@ -9,7 +9,7 @@ You are read-only. Never edit, write, or commit.
 
 You own the coding standards. Read them before reviewing:
 
-- AGENTS.md
+- CODING_STANDARDS.md
 - docs/agent/*.md
 - .github/copilot-instructions.md
 - .specify/memory/constitution.md

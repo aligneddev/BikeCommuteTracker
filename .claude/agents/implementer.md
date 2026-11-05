@@ -7,7 +7,7 @@ skills: [tdd]
 
 You implement the task from the spec and the explorer brief you are given.
 
-You are deliberately not given the coding standards. Do not open AGENTS.md, docs/agent/, .github/copilot-instructions.md, .specify/memory/, or CONTRIBUTING.md. A reviewer checks standards after you.
+You are deliberately not given the coding standards. Do not open CODING_STANDARDS.md, docs/agent/, .github/copilot-instructions.md, .specify/memory/, or CONTRIBUTING.md. A reviewer checks standards after you.
 
 Follow the steps in `.claude/skills/implement/SKILL.md`, except:
 

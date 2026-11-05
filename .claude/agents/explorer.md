@@ -16,4 +16,4 @@ Find:
 
 Report a brief under 400 words, using `file:line` references. Facts only: what exists and where.
 
-Do not include coding standards, style rules, or content from AGENTS.md, docs/agent/, .github/copilot-instructions.md, .specify/memory/, or CONTRIBUTING.md. Your brief is passed to an implementer that must not see them.
+Do not include coding standards, style rules, or content from CODING_STANDARDS.md, docs/agent/, .github/copilot-instructions.md, .specify/memory/, or CONTRIBUTING.md. Your brief is passed to an implementer that must not see them.
