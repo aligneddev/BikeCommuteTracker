@@ -109,12 +109,6 @@
       "skillPath": "skills/deprecated/request-refactor-plan/SKILL.md",
       "computedHash": "176cf1d0c4dc4fc4d958c4bc4ed67f222f2656bda2f3f15e3a3e98b2e5edaf2f"
     },
-    "retro": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "skillPath": "skills/engineering/retro/SKILL.md",
-      "computedHash": "b8d55851a2909e26c2dbb2e8563719c87b3b700559f604e4df344f8c27e21047"
-    },
     "review": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -168,12 +162,6 @@
       "sourceType": "github",
       "skillPath": "skills/productivity/write-a-skill/SKILL.md",
       "computedHash": "3b58a16bde08f84ed490cd449ecdc40289216d660e070c485f53bc2d1ed2b843"
-    },
-    "writing-for-agents": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "skillPath": "skills/productivity/writing-for-agents/SKILL.md",
-      "computedHash": "95da47fc97af998e85b7d7e6d57b3ac76727c1e290cfe9ea09005aacb826959f"
     },
     "writing-great-skills": {
       "source": "mattpocock/skills",
