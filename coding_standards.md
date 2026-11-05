@@ -20,20 +20,23 @@ Existing code that breaks a rule is known debt (see the last section): do not co
 - **B3** Return expected business, validation and conflict outcomes as Result-style values; throw only for unexpected failures (docs/agent/domain-and-error-handling.md, .specify/memory/constitution.md).
 - **B4** Inject `TimeProvider` wherever "now" is needed; never call `DateTime.Now` or `DateTime.UtcNow` (docs/agent/testing-and-quality-gates.md).
 - **B5** Declare services as `sealed class` with a primary constructor (observed).
-- **B6** F# domain code uses discriminated unions, `Result<'T,'E>` and immutable records (.github/copilot-instructions.md).
+- **B6** F# domain code uses discriminated unions, `Result<'T,'E>` and immutable records whose constructors enforce invariants (project rule).
+- **B7** Register services for dependency injection in `Program.cs` (project rule).
 
 ## Frontend (React / TypeScript)
 
-- **F1** No `any`; explicitly type props, hooks, refs, events and service return types; use `unknown` plus type guards for untyped data (.github/copilot-instructions.md).
+- **F1** No `any`; explicitly type props, hooks, refs, events and service return types; use `unknown` plus type guards for untyped data (project rule).
 - **F2** Function components only, declared as named `export function X` (observed).
-- **F3** No inline CSS (`style={...}`); each component imports its own `.css` file (.github/copilot-instructions.md).
-- **F4** One component per file, with a colocated `X.test.tsx` (.github/copilot-instructions.md).
+- **F3** No inline CSS (`style={...}`); each component imports its own `.css` file (project rule).
+- **F4** One component per file, with a colocated `X.test.tsx` (project rule).
 - **F5** Match the file naming convention of sibling files in the same folder (the repo mixes kebab-case and PascalCase); component identifiers are PascalCase (observed).
 - **F6** API calls live in `src/services/*-api.ts`, not in components (observed).
-- **F7** Client-side validation mirrors the server-side rules for the same field (docs/agent/frontend-and-ux.md).
+- **F7** Client-side validation mirrors the server-side rules for the same field (docs/agent/frontend-and-ux.md), and forms validate before submit (project rule).
 - **F8** Meet WCAG 2.1 AA and design mobile-first (docs/agent/frontend-and-ux.md).
 - **F9** Use design tokens defined in `:root` of `src/index.css`; add new tokens there rather than hard-coding values (docs/agent/frontend-and-ux.md).
-- **F10** Store auth tokens in `sessionStorage` only (.github/copilot-instructions.md).
+- **F10** Store auth tokens in `sessionStorage` only (project rule).
+- **F11** TypeScript types for API contracts match the backend DTOs (project rule).
+- **F12** Model state variants as TypeScript discriminated unions (project rule).
 
 ## Tests
 
@@ -43,6 +46,7 @@ Existing code that breaks a rule is known debt (see the last section): do not co
 - **T4** Frontend unit tests may use `vi.mock` (observed).
 - **T5** Backend tests use xUnit `[Fact]`/`[Theory]` with `Assert.*`, in `public sealed class XTests`, named `Method_Condition_Expected` (observed).
 - **T6** Run E2E tests (Playwright, `src/BikeTracking.Frontend/tests/e2e/*.spec.ts`) for every PR (.specify/memory/constitution.md, docs/agent/testing-and-quality-gates.md); add/update them for user-facing changes (observed).
+- **T7** E2E tests use a SQLite database and throw the data away after each test (project rule).
 
 ## Data & migrations
 
