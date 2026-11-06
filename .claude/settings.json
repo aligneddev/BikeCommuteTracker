@@ -1,6 +1,12 @@
 {
+  "extraKnownMarketplaces": {
+    "aligneddev-skills": {
+      "source": { "source": "github", "repo": "aligneddev/Skills" }
+    }
+  },
   "enabledPlugins": {
     "ponytail@ponytail": true,
-    "mattpocock-skills@claude-plugins-official": true
+    "mattpocock-skills@claude-plugins-official": true,
+    "explore-implement-review@aligneddev-skills": true
   }
 }
