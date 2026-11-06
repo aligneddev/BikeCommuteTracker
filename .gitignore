@@ -84,3 +84,5 @@ __pycache__/
 .codevalid/ui/playwright.config.js
 .codevalid/ui/helper/
 .codevalid/ui/helpers/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
