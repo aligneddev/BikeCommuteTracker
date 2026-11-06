@@ -3,14 +3,10 @@
 Bike Tracking is a local-first commuter app that records rides and computes savings using a .NET Minimal API, F# domain logic, and a React TypeScript frontend.
 
 ## Always Applies
-- Work inside the DevContainer only.
+- Work inside the DevContainer; in any other Linux sandbox, run `scripts/sandbox-setup.sh` once.
 - Run the app with `dotnet run --project src/BikeTracking.AppHost`.
 
 ## Agent skills
-
-### Browser checks
-
-When a change affects visuals, check it in a browser with the `playwright-cli` skill (desktop and phone width) and attach the screenshots to the PR. See `.claude/skills/playwright-cli/references/pr-attachments.md`.
 
 ### Issue tracker
 

@@ -37,7 +37,7 @@ Existing code that breaks a rule is known debt (see the last section): do not co
 - **F10** Store auth tokens in `sessionStorage` only (project rule).
 - **F11** TypeScript types for API contracts match the backend DTOs (project rule).
 - **F12** Model state variants as TypeScript discriminated unions (project rule).
-- **F13** Visual changes are checked in a real browser with the `playwright-cli` skill at desktop and ~390px phone width, with screenshots as evidence; flag it if the implementer reports none (project rule).
+- **F13** Visual changes are checked in a real browser with the `playwright-cli` skill at desktop and ~390px phone width (`scripts/preview-ui.sh`), with screenshots as evidence; flag it if the implementer reports none (project rule).
 
 ## Tests
 
@@ -46,7 +46,7 @@ Existing code that breaks a rule is known debt (see the last section): do not co
 - **T3** Control time in backend tests with `FakeTimeProvider` from `TestSupport/TestFactories.cs` (docs/agent/testing-and-quality-gates.md).
 - **T4** Frontend unit tests may use `vi.mock` (observed).
 - **T5** Backend tests use xUnit `[Fact]`/`[Theory]` with `Assert.*`, in `public sealed class XTests`, named `Method_Condition_Expected` (observed).
-- **T6** Run E2E tests (Playwright, `src/BikeTracking.Frontend/tests/e2e/*.spec.ts`) for every PR (.specify/memory/constitution.md, docs/agent/testing-and-quality-gates.md); add/update them for user-facing changes (observed).
+- **T6** Run E2E tests (Playwright, `src/BikeTracking.Frontend/tests/e2e/*.spec.ts`) for every PR (.specify/memory/constitution.md, docs/agent/testing-and-quality-gates.md); add/update them for user-facing changes (observed). CI's `e2e` job runs them, so a local "not run, API unavailable" is acceptable when the implementer says so; a missing new/updated E2E test is still a finding.
 - **T7** E2E tests use a SQLite database and throw the data away after each test (project rule).
 
 ## Data & migrations
