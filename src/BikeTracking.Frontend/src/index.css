@@ -4,6 +4,21 @@
   font-weight: 400;
   color: #0f172a;
   background-color: #f8fafc;
+
+  /* Main dashboard palette */
+  --dashboard-road: #0b3b4a;
+  --dashboard-river: #115e59;
+  --dashboard-trail: #166534;
+  --dashboard-sun: #f97316;
+  --dashboard-sun-hover: #fb923c;
+  --dashboard-on-sun: #1c1917;
+  --dashboard-sunrise: #fde68a;
+  --dashboard-lime: #bef264;
+  --dashboard-hero-text: #d1fae5;
+  --dashboard-hero-text-strong: #ecfdf5;
+  --dashboard-mint-border: #99d5c9;
+  --dashboard-mint-surface: #f0fdfa;
+  --dashboard-mint-surface-hover: #ccfbf1;
 }
 
 * {

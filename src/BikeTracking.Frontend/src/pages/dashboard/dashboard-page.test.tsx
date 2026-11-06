@@ -301,6 +301,35 @@ describe('DashboardPage', () => {
     expect(within(card).getByText('0h 0m')).toBeInTheDocument()
   })
 
+  it('leads with this month\'s miles as the hero stat', async () => {
+    sessionStorage.setItem('bike_tracking_auth_session', JSON.stringify({ userId: 1 }))
+    const module = await import('./dashboard-page')
+
+    render(
+      <BrowserRouter>
+        <module.DashboardPage />
+      </BrowserRouter>
+    )
+
+    const hero = screen.getByRole('group', { name: 'Miles this month' })
+    expect(await within(hero).findByText('10.0 mi')).toBeInTheDocument()
+    expect(within(hero).getByText(/1 ride this month/i)).toBeInTheDocument()
+  })
+
+  it('cheers the rider on when no rides are logged this month', async () => {
+    const module = await import('./dashboard-page')
+
+    render(
+      <BrowserRouter>
+        <module.DashboardPage />
+      </BrowserRouter>
+    )
+
+    const hero = screen.getByRole('group', { name: 'Miles this month' })
+    expect(within(hero).getByText('0.0 mi')).toBeInTheDocument()
+    expect(within(hero).getByText(/open road/i)).toBeInTheDocument()
+  })
+
   afterEach(() => {
     vi.clearAllMocks()
     sessionStorage.removeItem('bike_tracking_auth_session')
