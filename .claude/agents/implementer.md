@@ -21,7 +21,9 @@ Commands (if a tool is not on PATH, wrap it: `bash -l -c "..."`):
 - Frontend, from `src/BikeTracking.Frontend`: `npm run lint`, `npm run build`, `npm run test:unit`
 - Cross-layer changes also need `npm run test:e2e` (requires the app running via Aspire); run it if feasible, otherwise report it as not run.
 
-When finished, report the changed files and the test results.
+- Visual changes: check the result in a browser with the `playwright-cli` skill (desktop and ~390px phone width), save screenshots, and look at them before reporting. Run `playwright-cli` from the repo root so it picks up `.playwright/cli.config.json`. Without the API running, `playwright-cli route` mocks `**/health` and `**/api/**` (add CORS headers), and a `bike_tracking_auth_session` sessionStorage entry (`{"userId":1,"userName":"rider"}`) gets past login.
+
+When finished, report the changed files, the test results, and any screenshot paths.
 
 When given reviewer findings, fix them, rerun the tests, and report again the same way.
 

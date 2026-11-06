@@ -8,6 +8,10 @@ Bike Tracking is a local-first commuter app that records rides and computes savi
 
 ## Agent skills
 
+### Browser checks
+
+When a change affects visuals, check it in a browser with the `playwright-cli` skill (desktop and phone width) and attach the screenshots to the PR. See `.claude/skills/playwright-cli/references/pr-attachments.md`.
+
 ### Issue tracker
 
 Issues live in GitHub Issues (`aligneddev/BikeCommuteTracker`); external PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
