@@ -37,6 +37,7 @@ Existing code that breaks a rule is known debt (see the last section): do not co
 - **F10** Store auth tokens in `sessionStorage` only (project rule).
 - **F11** TypeScript types for API contracts match the backend DTOs (project rule).
 - **F12** Model state variants as TypeScript discriminated unions (project rule).
+- **F13** Visual changes are checked in a real browser with the `playwright-cli` skill at desktop and ~390px phone width, with screenshots as evidence; flag it if the implementer reports none (project rule).
 
 ## Tests
 
@@ -61,6 +62,7 @@ Existing code that breaks a rule is known debt (see the last section): do not co
 - **G2** Changes land via PR only, never a direct push to `main`, and the PR links an issue (docs/agent/delivery-and-git-workflow.md).
 - **G3** Never commit version bumps; release-please owns them (docs/agent/delivery-and-git-workflow.md).
 - **G4** In-progress work merged to `main` sits behind a feature flag (docs/agent/delivery-and-git-workflow.md).
+- **G5** PRs that change visuals attach screenshots (desktop and phone width) via `gh pr create --attach` (project rule; see `.claude/skills/playwright-cli/references/pr-attachments.md`).
 
 ## Known debt (do not copy)
 
