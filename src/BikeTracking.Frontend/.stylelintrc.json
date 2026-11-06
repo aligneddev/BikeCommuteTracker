@@ -1,3 +1,32 @@
 {
-  "extends": ["stylelint-config-standard"]
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "color-no-hex": [true, { "message": "Use a design token from :root in src/index.css (add one there if needed)" }]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/index.css",
+        "src/styles.css",
+        "src/components/RideDeleteDialog/RideDeleteDialog.css",
+        "src/components/app-header/app-header.css",
+        "src/components/import-rides/DuplicateResolutionDialog.css",
+        "src/components/mileage-summary-card/mileage-summary-card.css",
+        "src/pages/HistoryPage.css",
+        "src/pages/advanced-dashboard/advanced-dashboard-page.css",
+        "src/pages/dashboard/ExpenseSummaryCard.css",
+        "src/pages/dashboard/dashboard-page.css",
+        "src/pages/expenses/ExpenseEntryPage.css",
+        "src/pages/expenses/ExpenseHistoryPage.css",
+        "src/pages/expenses/ExpenseImportPage.css",
+        "src/pages/import-rides/ImportRidesPage.css",
+        "src/pages/login/login-page.css",
+        "src/pages/miles/miles-shell-page.css",
+        "src/pages/settings/SettingsPage.css",
+        "src/pages/signup/signup-page.css",
+        "src/pages/year-stats-dashboard/year-stats-dashboard-page.css"
+      ],
+      "rules": { "color-no-hex": null }
+    }
+  ]
 }
