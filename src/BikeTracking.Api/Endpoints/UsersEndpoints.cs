@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using BikeTracking.Api.Application.Users;
 using BikeTracking.Api.Contracts;
+using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BikeTracking.Api.Endpoints;
@@ -116,8 +117,7 @@ public static class UsersEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         var result = await userSettingsService.GetAsync(riderId, cancellationToken);
@@ -137,8 +137,7 @@ public static class UsersEndpoints
         CancellationToken cancellationToken
     )
     {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
             return Results.Unauthorized();
 
         if (requestBody.ValueKind is not JsonValueKind.Object)

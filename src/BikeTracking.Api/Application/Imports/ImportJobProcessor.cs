@@ -305,7 +305,7 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
                 distinctWeeks,
                 dbContext,
                 gasLookupService,
-                ResolveGasGradeOrDefault(userSettings?.GasGrade),
+                GasGradeRules.NormalizeOrDefault(userSettings?.GasGrade),
                 userSettings?.EiaGasApiKey,
                 cancellationToken
             );
@@ -385,13 +385,6 @@ public sealed class ImportJobProcessor(IServiceScopeFactory serviceScopeFactory)
         }
 
         return gasByWeek;
-    }
-
-    private static string ResolveGasGradeOrDefault(string? gasGrade)
-    {
-        return gasGrade?.Equals("Premium", StringComparison.OrdinalIgnoreCase) == true
-            ? "Premium"
-            : "Regular";
     }
 
     private static async Task<Dictionary<DateOnly, WeatherData?>> LoadWeatherLookupAsync(

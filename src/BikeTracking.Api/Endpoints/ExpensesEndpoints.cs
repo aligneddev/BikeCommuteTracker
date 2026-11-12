@@ -1,6 +1,7 @@
 using BikeTracking.Api.Application.Expenses;
 using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
+using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
@@ -108,8 +109,7 @@ public static class ExpensesEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -225,8 +225,7 @@ public static class ExpensesEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -321,8 +320,7 @@ public static class ExpensesEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -378,8 +376,7 @@ public static class ExpensesEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -425,8 +422,7 @@ public static class ExpensesEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -528,8 +524,7 @@ public static class ExpensesEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -579,8 +574,7 @@ public static class ExpensesEndpoints
     )
     {
         var logger = loggerFactory.CreateLogger("ExpensesEndpoints");
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        if (!long.TryParse(userIdString, out var riderId) || riderId <= 0)
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }

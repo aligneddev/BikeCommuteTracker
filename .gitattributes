@@ -1,0 +1,2 @@
+# Windows npm writes CRLF; keep the lockfile LF so diffs show real changes only
+package-lock.json text eol=lf

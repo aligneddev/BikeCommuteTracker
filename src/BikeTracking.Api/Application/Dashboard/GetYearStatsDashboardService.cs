@@ -4,7 +4,6 @@ using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Api.Infrastructure.Persistence.Entities;
 using BikeTracking.Domain.FSharp;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 
 namespace BikeTracking.Api.Application.Dashboard;
@@ -85,44 +84,16 @@ public sealed class GetYearStatsDashboardService(
     )
     {
         var totalMiles = rides.Sum(ride => ride.Miles);
-        var savings = AggregateSavings(rides, mileageRateCents);
+        var savings = SavingsCalculationRules.AggregateSavings(rides, mileageRateCents);
         decimal? totalCombinedSavings = savings.HasAnySavings
-            ? RoundMoney(savings.MileageRateSavings + savings.FuelCostAvoided)
+            ? SavingsCalculationRules.RoundMoney(savings.MileageRateSavings + savings.FuelCostAvoided)
             : null;
 
         return new YearStatsTotals(
             TotalMiles: totalMiles,
             TotalCombinedSavings: totalCombinedSavings,
-            ExpenseSummary: CalculateExpenseSummary(totalManualExpenses, totalMiles, oilChangePrice),
+            ExpenseSummary: SavingsCalculationRules.CalculateExpenseSummary(totalManualExpenses, totalMiles, oilChangePrice),
             TotalRideMinutes: RidingTimeRules.SumRecordedRideMinutes(rides)
-        );
-    }
-
-    private static DashboardExpenseSummary CalculateExpenseSummary(
-        decimal totalManualExpenses,
-        decimal totalMiles,
-        decimal? oilChangePrice
-    )
-    {
-        if (oilChangePrice is null)
-        {
-            return new DashboardExpenseSummary(
-                TotalManualExpenses: totalManualExpenses,
-                OilChangeSavings: null,
-                NetExpenses: null,
-                OilChangeIntervalCount: 0
-            );
-        }
-
-        var intervalCount = (int)Math.Floor(totalMiles / 3000m);
-        var oilChangeSavings = intervalCount * oilChangePrice.Value;
-        var netExpenses = totalManualExpenses - oilChangeSavings;
-
-        return new DashboardExpenseSummary(
-            TotalManualExpenses: totalManualExpenses,
-            OilChangeSavings: oilChangeSavings,
-            NetExpenses: netExpenses,
-            OilChangeIntervalCount: intervalCount
         );
     }
 
@@ -158,11 +129,11 @@ public sealed class GetYearStatsDashboardService(
             .Select(month =>
             {
                 var monthMiles = rides
-                    .Where(ride => IsWithinMonth(ride.RideDateTimeLocal, year, month))
+                    .Where(ride => DashboardMonthRules.IsWithinMonth(ride.RideDateTimeLocal, year, month))
                     .Sum(ride => ride.Miles);
 
                 return new YearStatsMileagePoint(
-                    MonthKey: GetMonthKey(year, month),
+                    MonthKey: DashboardMonthRules.GetMonthKey(year, month),
                     Label: new DateTime(year, month, 1).ToString(
                         "MMM",
                         CultureInfo.InvariantCulture
@@ -183,27 +154,27 @@ public sealed class GetYearStatsDashboardService(
             .Select(month =>
             {
                 var monthRides = rides
-                    .Where(ride => IsWithinMonth(ride.RideDateTimeLocal, year, month))
+                    .Where(ride => DashboardMonthRules.IsWithinMonth(ride.RideDateTimeLocal, year, month))
                     .ToList();
 
-                var savings = AggregateSavings(monthRides, mileageRateCents);
+                var savings = SavingsCalculationRules.AggregateSavings(monthRides, mileageRateCents);
                 decimal? combinedSavings = savings.HasAnySavings
                     ? savings.MileageRateSavings + savings.FuelCostAvoided
                     : null;
 
                 return new YearStatsSavingsPoint(
-                    MonthKey: GetMonthKey(year, month),
+                    MonthKey: DashboardMonthRules.GetMonthKey(year, month),
                     Label: new DateTime(year, month, 1).ToString(
                         "MMM",
                         CultureInfo.InvariantCulture
                     ),
                     MileageRateSavings: savings.HasMileageRateSavings
-                        ? RoundMoney(savings.MileageRateSavings)
+                        ? SavingsCalculationRules.RoundMoney(savings.MileageRateSavings)
                         : null,
                     FuelCostAvoided: savings.HasFuelCostAvoided
-                        ? RoundMoney(savings.FuelCostAvoided)
+                        ? SavingsCalculationRules.RoundMoney(savings.FuelCostAvoided)
                         : null,
-                    CombinedSavings: RoundMoney(combinedSavings)
+                    CombinedSavings: SavingsCalculationRules.RoundMoney(combinedSavings)
                 );
             })
             .ToList();
@@ -214,28 +185,7 @@ public sealed class GetYearStatsDashboardService(
         int year
     )
     {
-        var snapshots = rides
-            .Select(ride => new AdvancedDashboardCalculations.RideDifficultySnapshot(
-                RideDate: ride.RideDateTimeLocal,
-                Difficulty: ride.Difficulty.HasValue
-                    ? FSharpOption<int>.Some(ride.Difficulty.Value)
-                    : FSharpOption<int>.None,
-                WindResistanceRating: ride.WindResistanceRating.HasValue
-                    ? FSharpOption<int>.Some(ride.WindResistanceRating.Value)
-                    : FSharpOption<int>.None,
-                WindSpeedMph: ride.WindSpeedMph.HasValue
-                    ? FSharpOption<decimal>.Some(ride.WindSpeedMph.Value)
-                    : FSharpOption<decimal>.None,
-                PrimaryTravelDirection: ride.PrimaryTravelDirection is not null
-                    ? FSharpOption<string>.Some(ride.PrimaryTravelDirection)
-                    : FSharpOption<string>.None,
-                WindDirectionDeg: ride.WindDirectionDeg.HasValue
-                    ? FSharpOption<int>.Some(ride.WindDirectionDeg.Value)
-                    : FSharpOption<int>.None
-            ))
-            .ToList();
-
-        var fsharpList = ListModule.OfSeq(snapshots);
+        var fsharpList = RideDifficultyRules.ToSnapshots(rides);
 
         var overallAverage = AdvancedDashboardCalculations.calculateOverallAverageDifficulty(
             fsharpList
@@ -244,7 +194,7 @@ public sealed class GetYearStatsDashboardService(
 
         var byMonth = byMonthSeq
             .Select(result => new YearStatsDifficultyByMonthPoint(
-                MonthKey: GetMonthKey(year, result.MonthNumber),
+                MonthKey: DashboardMonthRules.GetMonthKey(year, result.MonthNumber),
                 Label: result.MonthName.Length >= 3 ? result.MonthName[..3] : result.MonthName,
                 AverageDifficulty: result.AverageDifficulty
             ))
@@ -281,28 +231,7 @@ public sealed class GetYearStatsDashboardService(
             return new YearStatsWindResistanceSection(HasData: false, Bins: []);
         }
 
-        var snapshots = rides
-            .Select(ride => new AdvancedDashboardCalculations.RideDifficultySnapshot(
-                RideDate: ride.RideDateTimeLocal,
-                Difficulty: ride.Difficulty.HasValue
-                    ? FSharpOption<int>.Some(ride.Difficulty.Value)
-                    : FSharpOption<int>.None,
-                WindResistanceRating: ride.WindResistanceRating.HasValue
-                    ? FSharpOption<int>.Some(ride.WindResistanceRating.Value)
-                    : FSharpOption<int>.None,
-                WindSpeedMph: ride.WindSpeedMph.HasValue
-                    ? FSharpOption<decimal>.Some(ride.WindSpeedMph.Value)
-                    : FSharpOption<decimal>.None,
-                PrimaryTravelDirection: ride.PrimaryTravelDirection is not null
-                    ? FSharpOption<string>.Some(ride.PrimaryTravelDirection)
-                    : FSharpOption<string>.None,
-                WindDirectionDeg: ride.WindDirectionDeg.HasValue
-                    ? FSharpOption<int>.Some(ride.WindDirectionDeg.Value)
-                    : FSharpOption<int>.None
-            ))
-            .ToList();
-
-        var fsharpList = ListModule.OfSeq(snapshots);
+        var fsharpList = RideDifficultyRules.ToSnapshots(rides);
         var distributionSeq = AdvancedDashboardCalculations.calculateWindResistanceDistribution(
             fsharpList
         );
@@ -310,69 +239,12 @@ public sealed class GetYearStatsDashboardService(
         var bins = distributionSeq
             .Where(bin => bin.RideCount > 0)
             .Select(bin => new YearStatsWindResistanceBin(
-                Label: GetWindResistanceLabel(bin.Rating),
+                Label: RideDifficultyRules.GetWindResistanceLabel(bin.Rating),
                 Count: bin.RideCount
             ))
             .ToList();
 
         return new YearStatsWindResistanceSection(HasData: true, Bins: bins);
-    }
-
-    private static string GetWindResistanceLabel(int rating) =>
-        rating switch
-        {
-            -4 => "\u22124 (strong tailwind)",
-            -3 => "\u22123 (tailwind)",
-            -2 => "\u22122 (tailwind)",
-            -1 => "\u22121 (light tailwind)",
-            0 => "0 (neutral)",
-            1 => "+1 (light headwind)",
-            2 => "+2 (headwind)",
-            3 => "+3 (headwind)",
-            4 => "+4 (strong headwind)",
-            _ => $"{(rating > 0 ? "+" : "")}{rating}",
-        };
-
-    private static SavingsAggregate AggregateSavings(
-        IEnumerable<RideEntity> rides,
-        decimal? mileageRateCents
-    )
-    {
-        var mileageRateSavings = 0m;
-        var fuelCostAvoided = 0m;
-        var hasMileageRateSavings = false;
-        var hasFuelCostAvoided = false;
-
-        foreach (var ride in rides)
-        {
-            var rideMileageRateSavings = SavingsCalculationRules.CalculateMileageRateSavings(
-                ride.Miles,
-                mileageRateCents
-            );
-            if (rideMileageRateSavings.HasValue)
-            {
-                hasMileageRateSavings = true;
-                mileageRateSavings += rideMileageRateSavings.Value;
-            }
-
-            var rideFuelCostAvoided = SavingsCalculationRules.CalculateFuelCostAvoided(
-                ride.Miles,
-                ride.SnapshotAverageCarMpg,
-                ride.GasPricePerGallon
-            );
-            if (rideFuelCostAvoided.HasValue)
-            {
-                hasFuelCostAvoided = true;
-                fuelCostAvoided += rideFuelCostAvoided.Value;
-            }
-        }
-
-        return new SavingsAggregate(
-            MileageRateSavings: mileageRateSavings,
-            FuelCostAvoided: fuelCostAvoided,
-            HasMileageRateSavings: hasMileageRateSavings,
-            HasFuelCostAvoided: hasFuelCostAvoided
-        );
     }
 
     private static IEnumerable<int> EnumerateMonthsOfYear(int year)
@@ -382,30 +254,5 @@ public sealed class GetYearStatsDashboardService(
         {
             yield return month;
         }
-    }
-
-    private static bool IsWithinMonth(DateTime value, int year, int month)
-    {
-        return value.Year == year && value.Month == month;
-    }
-
-    private static string GetMonthKey(int year, int month)
-    {
-        return $"{year:D4}-{month:D2}";
-    }
-
-    private static decimal? RoundMoney(decimal? value)
-    {
-        return value.HasValue ? decimal.Round(value.Value, 2, MidpointRounding.AwayFromZero) : null;
-    }
-
-    private sealed record SavingsAggregate(
-        decimal MileageRateSavings,
-        decimal FuelCostAvoided,
-        bool HasMileageRateSavings,
-        bool HasFuelCostAvoided
-    )
-    {
-        public bool HasAnySavings => HasMileageRateSavings || HasFuelCostAvoided;
     }
 }

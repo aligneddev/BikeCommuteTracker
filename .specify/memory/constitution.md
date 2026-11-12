@@ -17,9 +17,9 @@ Bike Tracking is a local-first commuter application that records rides and compu
 8. Local-first runtime and observability posture is the default; cloud deployment remains a supported profile.
 
 ## Operational Instruction Packs
-Detailed rules are maintained in the AGENTS progressive-disclosure tree:
+Detailed rules are maintained in coding_standards.md and these packs:
 
-- [Root Agent Guide](../../AGENTS.md)
+- [Coding Standards](../../coding_standards.md)
 - [Architecture Principles](../../docs/agent/architecture-principles.md)
 - [Domain And Error Handling](../../docs/agent/domain-and-error-handling.md)
 - [Testing And Quality Gates](../../docs/agent/testing-and-quality-gates.md)

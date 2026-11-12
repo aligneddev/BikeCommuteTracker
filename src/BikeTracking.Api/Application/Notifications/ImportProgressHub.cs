@@ -1,3 +1,4 @@
+using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.SignalR;
 
 namespace BikeTracking.Api.Application.Notifications;
@@ -13,7 +14,7 @@ public sealed class ImportProgressHub : Hub
     public async Task SubscribeToImportJob(long importJobId)
     {
         var user = Context.User;
-        if (user is null || !ImportProgressHubAuth.TryGetRiderId(user, out var riderId))
+        if (user is null || !user.TryGetRiderId(out var riderId))
         {
             throw new HubException("Unauthorized rider context.");
         }
@@ -27,7 +28,7 @@ public sealed class ImportProgressHub : Hub
     public async Task UnsubscribeFromImportJob(long importJobId)
     {
         var user = Context.User;
-        if (user is null || !ImportProgressHubAuth.TryGetRiderId(user, out var riderId))
+        if (user is null || !user.TryGetRiderId(out var riderId))
         {
             throw new HubException("Unauthorized rider context.");
         }

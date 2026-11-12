@@ -1,6 +1,7 @@
 using System.Text;
 using BikeTracking.Api.Application.ExpenseImports;
 using BikeTracking.Api.Contracts;
+using BikeTracking.Api.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BikeTracking.Api.Endpoints;
@@ -97,7 +98,7 @@ public static class ExpenseImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -157,7 +158,7 @@ public static class ExpenseImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -174,7 +175,7 @@ public static class ExpenseImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
@@ -189,19 +190,13 @@ public static class ExpenseImportEndpoints
         CancellationToken cancellationToken
     )
     {
-        if (!TryGetRiderId(context, out var riderId))
+        if (!context.User.TryGetRiderId(out var riderId))
         {
             return Results.Unauthorized();
         }
 
         var result = await importService.DeleteAsync(riderId, jobId, cancellationToken);
         return result.IsSuccess ? Results.NoContent() : ErrorToResult(result.Error!);
-    }
-
-    private static bool TryGetRiderId(HttpContext context, out long riderId)
-    {
-        var userIdString = context.User.FindFirst("sub")?.Value;
-        return long.TryParse(userIdString, out riderId) && riderId > 0;
     }
 
     private static IResult ToResult<T>(CsvExpenseImportService.OperationResult<T> result)

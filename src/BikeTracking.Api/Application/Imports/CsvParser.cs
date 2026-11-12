@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace BikeTracking.Api.Application.Imports;
 
 public sealed record ParsedCsvRow(
@@ -24,18 +22,15 @@ public static class CsvParser
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(csvText);
 
-        var lines = csvText
-            .Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace('\r', '\n')
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var lines = ImportText.SplitLines(csvText);
 
         if (lines.Length == 0)
         {
             return new ParsedCsvDocument([]);
         }
 
-        var headers = SplitCsvLine(lines[0])
-            .Select(static value => NormalizeHeader(value))
+        var headers = ImportText.SplitCsvLine(lines[0])
+            .Select(static value => ImportText.NormalizeHeader(value))
             .ToArray();
 
         var missingRequired = RequiredColumns
@@ -58,7 +53,7 @@ public static class CsvParser
         var rows = new List<ParsedCsvRow>();
         for (var lineIndex = 1; lineIndex < lines.Length; lineIndex++)
         {
-            var values = SplitCsvLine(lines[lineIndex]);
+            var values = ImportText.SplitCsvLine(lines[lineIndex]);
 
             string? GetValue(string header)
             {
@@ -121,61 +116,5 @@ public static class CsvParser
         }
 
         return new ParsedCsvDocument(rows);
-    }
-
-    private static string NormalizeHeader(string value) =>
-        value.Trim().Trim('\uFEFF').ToUpperInvariant();
-
-    /// <summary>
-    /// Splits a single CSV line into fields, honoring RFC 4180 double-quote
-    /// rules so that quoted fields may contain commas (e.g. "W-1, min13.5, avg16.8")
-    /// and escaped quotes ("" within a quoted field represents a literal ").
-    /// </summary>
-    private static string[] SplitCsvLine(string line)
-    {
-        var fields = new List<string>();
-        var current = new StringBuilder();
-        var inQuotes = false;
-
-        for (var i = 0; i < line.Length; i++)
-        {
-            var c = line[i];
-
-            if (inQuotes)
-            {
-                if (c == '"')
-                {
-                    if (i + 1 < line.Length && line[i + 1] == '"')
-                    {
-                        current.Append('"');
-                        i++;
-                    }
-                    else
-                    {
-                        inQuotes = false;
-                    }
-                }
-                else
-                {
-                    current.Append(c);
-                }
-            }
-            else if (c == '"' && current.Length == 0)
-            {
-                inQuotes = true;
-            }
-            else if (c == ',')
-            {
-                fields.Add(current.ToString());
-                current.Clear();
-            }
-            else
-            {
-                current.Append(c);
-            }
-        }
-
-        fields.Add(current.ToString());
-        return [.. fields];
     }
 }

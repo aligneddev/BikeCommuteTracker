@@ -13,15 +13,22 @@
 
 .dashboard-hero {
   display: grid;
-  grid-template-columns: 1.6fr minmax(14rem, 0.8fr);
-  gap: 1.25rem;
-  padding: 1.4rem;
-  border: 1px solid #bfd2ea;
-  border-radius: 1.5rem;
+  grid-template-columns: 1.4fr minmax(16rem, 1fr);
+  grid-template-areas:
+    "copy stat"
+    "actions stat";
+  gap: 1.25rem 2rem;
+  padding: 1.75rem;
+  border-radius: 1.75rem;
+  color: #fff;
   background:
-    radial-gradient(circle at top left, rgb(29 78 216 / 18%), transparent 40%),
-    linear-gradient(135deg, #f8fbff 0%, #edf5ff 100%);
+    radial-gradient(circle at 92% 8%, rgb(249 115 22 / 45%), transparent 32%),
+    linear-gradient(135deg, var(--dashboard-road) 0%, var(--dashboard-river) 55%, var(--dashboard-trail) 100%);
   box-shadow: var(--dashboard-shadow);
+}
+
+.dashboard-hero-copy {
+  grid-area: copy;
 }
 
 .dashboard-kicker,
@@ -36,6 +43,10 @@
   font-weight: 700;
 }
 
+.dashboard-hero .dashboard-kicker {
+  color: var(--dashboard-sunrise);
+}
+
 .dashboard-hero h1 {
   margin: 0;
   font-size: clamp(2rem, 4vw, 3.4rem);
@@ -45,35 +56,97 @@
 .dashboard-intro {
   max-width: 44rem;
   margin: 0.9rem 0 0;
-  color: var(--dashboard-muted);
-  font-size: 1rem;
+  color: var(--dashboard-hero-text);
+  font-size: 1.05rem;
+}
+
+.dashboard-hero-stat {
+  grid-area: stat;
+  align-self: center;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 10%);
+}
+
+.dashboard-hero-stat p {
+  margin: 0;
+}
+
+.dashboard-hero-stat-label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  color: var(--dashboard-sunrise);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.dashboard-hero-stat-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashboard-hero-stat-value {
+  color: var(--dashboard-lime);
+  font-size: clamp(3rem, 9vw, 4.75rem);
+  font-weight: 900;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-hero-stat-line {
+  color: var(--dashboard-hero-text-strong);
+  font-weight: 600;
 }
 
 .dashboard-hero-actions {
-  align-self: stretch;
-  display: grid;
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
-  align-content: end;
+  align-items: center;
 }
 
 .dashboard-primary-action,
 .dashboard-secondary-action {
   text-decoration: none;
   border-radius: 999px;
-  padding: 0.8rem 1rem;
+  padding: 0.8rem 1.4rem;
   text-align: center;
   font-weight: 700;
 }
 
 .dashboard-primary-action {
-  background: #133d91;
-  color: #fff;
+  background: var(--dashboard-sun);
+  color: var(--dashboard-on-sun);
+  font-size: 1.05rem;
+  box-shadow: 0 8px 20px rgb(249 115 22 / 35%);
+}
+
+.dashboard-primary-action:hover {
+  background: var(--dashboard-sun-hover);
 }
 
 .dashboard-secondary-action {
-  background: #fff;
-  color: #173866;
-  border: 1px solid #adc4e5;
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 60%);
+}
+
+.dashboard-secondary-action:hover {
+  background: rgb(255 255 255 / 12%);
+}
+
+.dashboard-hero a:focus-visible {
+  outline: 3px solid var(--dashboard-sunrise);
+  outline-offset: 2px;
 }
 
 .dashboard-banner {
@@ -231,6 +304,15 @@
 @media (width <= 720px) {
   .dashboard-hero {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "copy"
+      "stat"
+      "actions";
+    padding: 1.25rem;
+  }
+
+  .dashboard-hero-actions > a {
+    flex: 1 1 10rem;
   }
 
   .dashboard-chart-card-header {
@@ -252,10 +334,10 @@
 .dashboard-advanced-link {
   display: inline-block;
   padding: 0.5rem 1.25rem;
-  border: 1px solid #bfd2ea;
-  border-radius: 0.5rem;
-  background: #f8fbff;
-  color: #1e3a5f;
+  border: 1px solid var(--dashboard-mint-border);
+  border-radius: 999px;
+  background: var(--dashboard-mint-surface);
+  color: var(--dashboard-road);
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
@@ -263,5 +345,66 @@
 }
 
 .dashboard-advanced-link:hover {
-  background: #e8f1fc;
+  background: var(--dashboard-mint-surface-hover);
+}
+
+/* Main-dashboard-only overrides: the shared card components are also used by
+   the advanced and year-stats pages, so their base rules above stay as-is. */
+.dashboard-page .dashboard-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-page .dashboard-summary-card {
+  padding: 0.85rem;
+  gap: 0.35rem;
+  box-shadow: 0 6px 18px rgb(18 32 51 / 6%);
+}
+
+.dashboard-page .dashboard-summary-card:hover {
+  border-color: var(--dashboard-mint-border);
+  box-shadow: 0 12px 28px rgb(11 59 74 / 14%);
+}
+
+.dashboard-page .dashboard-summary-card-accent {
+  width: 0.6rem;
+  height: 2.2rem;
+}
+
+.dashboard-page .dashboard-summary-card-value {
+  font-size: 1.5rem;
+}
+
+.dashboard-page .dashboard-averages-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-page .dashboard-averages-grid .dashboard-average-card {
+  padding: 0.7rem 1rem;
+  border-left: 4px solid var(--dashboard-sun);
+  box-shadow: none;
+}
+
+.dashboard-page .dashboard-averages-grid .dashboard-average-value {
+  font-size: 1.35rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-page .dashboard-summary-card,
+  .dashboard-primary-action,
+  .dashboard-secondary-action {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+  }
+
+  .dashboard-page .dashboard-summary-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .dashboard-primary-action:hover {
+    transform: translateY(-2px);
+  }
 }

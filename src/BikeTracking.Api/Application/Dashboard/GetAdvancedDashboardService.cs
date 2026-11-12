@@ -2,7 +2,6 @@ using BikeTracking.Api.Contracts;
 using BikeTracking.Api.Infrastructure.Persistence;
 using BikeTracking.Domain.FSharp;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
 
 namespace BikeTracking.Api.Application.Dashboard;
@@ -224,12 +223,12 @@ public sealed class GetAdvancedDashboardService(
             }
         }
 
-        decimal? gallonsSaved = hasGallons ? RoundTo2(gallonsSum) : null;
-        decimal? fuelCostAvoided = hasFuelCost ? RoundTo2(fuelCostSum) : null;
-        decimal? mileageRateSavings = hasMileageRate ? RoundTo2(mileageRateSum) : null;
+        decimal? gallonsSaved = hasGallons ? SavingsCalculationRules.RoundMoney(gallonsSum) : null;
+        decimal? fuelCostAvoided = hasFuelCost ? SavingsCalculationRules.RoundMoney(fuelCostSum) : null;
+        decimal? mileageRateSavings = hasMileageRate ? SavingsCalculationRules.RoundMoney(mileageRateSum) : null;
         decimal? combinedSavings =
             fuelCostAvoided.HasValue || mileageRateSavings.HasValue
-                ? RoundTo2((fuelCostAvoided ?? 0m) + (mileageRateSavings ?? 0m))
+                ? SavingsCalculationRules.RoundMoney((fuelCostAvoided ?? 0m) + (mileageRateSavings ?? 0m))
                 : null;
 
         // Expenses within this window (filtered by ExpenseDate; null bounds = all-time)
@@ -239,7 +238,7 @@ public sealed class GetAdvancedDashboardService(
                 && (windowEnd is null || e.ExpenseDate < windowEnd.Value)
             )
             .Sum(e => e.Amount);
-        totalExpenses = RoundTo2(totalExpenses);
+        totalExpenses = SavingsCalculationRules.RoundMoney(totalExpenses);
 
         // Oil-change savings for this window: count 3000-mile intervals crossed during the window.
         // A crossing occurs when cumulative miles at window end passes a multiple of 3000
@@ -249,10 +248,10 @@ public sealed class GetAdvancedDashboardService(
         {
             var milesInWindow = windowRides.Sum(r => r.Miles);
             var cumulativeAtEnd = cumulativeMilesBeforeWindow + milesInWindow;
-            var intervalsBefore = (int)Math.Floor(cumulativeMilesBeforeWindow / 3000m);
-            var intervalsAtEnd = (int)Math.Floor(cumulativeAtEnd / 3000m);
+            var intervalsBefore = (int)Math.Floor(cumulativeMilesBeforeWindow / SavingsCalculationRules.OilChangeIntervalMiles);
+            var intervalsAtEnd = (int)Math.Floor(cumulativeAtEnd / SavingsCalculationRules.OilChangeIntervalMiles);
             var crossings = intervalsAtEnd - intervalsBefore;
-            oilChangeSavings = crossings > 0 ? RoundTo2(crossings * oilChangePrice.Value) : 0m;
+            oilChangeSavings = crossings > 0 ? SavingsCalculationRules.RoundMoney(crossings * oilChangePrice.Value) : 0m;
         }
 
         // Net savings: fuel-cost avoided plus oil-change offset minus expenses.
@@ -260,7 +259,7 @@ public sealed class GetAdvancedDashboardService(
         bool hasSavingsData = fuelCostAvoided.HasValue || oilChangeSavings.HasValue;
         if (hasSavingsData || totalExpenses > 0m)
         {
-            netSavings = RoundTo2(
+            netSavings = SavingsCalculationRules.RoundMoney(
                 (fuelCostAvoided ?? 0m) + (oilChangeSavings ?? 0m) - totalExpenses
             );
         }
@@ -345,10 +344,6 @@ public sealed class GetAdvancedDashboardService(
         ];
     }
 
-    /// <summary>Rounds a decimal value to 2 places using standard rounding (0.5 rounds up).</summary>
-    private static decimal RoundTo2(decimal value) =>
-        decimal.Round(value, 2, MidpointRounding.AwayFromZero);
-
     /// <summary>
     /// Builds the difficulty analytics section from all rides.
     /// Projects rides to RideDifficultySnapshot, calls F# calculation functions,
@@ -358,28 +353,7 @@ public sealed class GetAdvancedDashboardService(
         IReadOnlyList<Infrastructure.Persistence.Entities.RideEntity> rides
     )
     {
-        var snapshots = rides
-            .Select(r => new AdvancedDashboardCalculations.RideDifficultySnapshot(
-                RideDate: r.RideDateTimeLocal,
-                Difficulty: r.Difficulty.HasValue
-                    ? FSharpOption<int>.Some(r.Difficulty.Value)
-                    : FSharpOption<int>.None,
-                WindResistanceRating: r.WindResistanceRating.HasValue
-                    ? FSharpOption<int>.Some(r.WindResistanceRating.Value)
-                    : FSharpOption<int>.None,
-                WindSpeedMph: r.WindSpeedMph.HasValue
-                    ? FSharpOption<decimal>.Some(r.WindSpeedMph.Value)
-                    : FSharpOption<decimal>.None,
-                PrimaryTravelDirection: r.PrimaryTravelDirection is not null
-                    ? FSharpOption<string>.Some(r.PrimaryTravelDirection)
-                    : FSharpOption<string>.None,
-                WindDirectionDeg: r.WindDirectionDeg.HasValue
-                    ? FSharpOption<int>.Some(r.WindDirectionDeg.Value)
-                    : FSharpOption<int>.None
-            ))
-            .ToList();
-
-        var fsharpList = ListModule.OfSeq(snapshots);
+        var fsharpList = RideDifficultyRules.ToSnapshots(rides);
 
         var overallAverage = AdvancedDashboardCalculations.calculateOverallAverageDifficulty(
             fsharpList
@@ -407,7 +381,7 @@ public sealed class GetAdvancedDashboardService(
             .Select(b => new WindResistanceBin(
                 Rating: b.Rating,
                 RideCount: b.RideCount,
-                Label: GetWindResistanceLabel(b.Rating),
+                Label: RideDifficultyRules.GetWindResistanceLabel(b.Rating),
                 IsAssisted: b.Rating < 0
             ))
             .ToList();
@@ -424,19 +398,4 @@ public sealed class GetAdvancedDashboardService(
             IsEmpty: isEmpty
         );
     }
-
-    private static string GetWindResistanceLabel(int rating) =>
-        rating switch
-        {
-            -4 => "\u22124 (strong tailwind)",
-            -3 => "\u22123 (tailwind)",
-            -2 => "\u22122 (tailwind)",
-            -1 => "\u22121 (light tailwind)",
-            0 => "0 (neutral)",
-            1 => "+1 (light headwind)",
-            2 => "+2 (headwind)",
-            3 => "+3 (headwind)",
-            4 => "+4 (strong headwind)",
-            _ => $"{(rating > 0 ? "+" : "")}{rating}",
-        };
 }

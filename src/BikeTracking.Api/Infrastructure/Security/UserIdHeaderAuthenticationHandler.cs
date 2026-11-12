@@ -44,7 +44,7 @@ public sealed class UserIdHeaderAuthenticationHandler
             return Task.FromResult(AuthenticateResult.Fail("Invalid X-User-Id header."));
         }
 
-        var claims = new[] { new Claim("sub", userId.ToString()) };
+        var claims = new[] { new Claim(RiderClaims.RiderIdClaimType, userId.ToString()) };
         var identity = new ClaimsIdentity(claims, SchemeName);
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, SchemeName);

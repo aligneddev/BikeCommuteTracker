@@ -79,6 +79,12 @@ function formatRideCount(rideCount: number): string {
   return rideCount === 1 ? '1 ride' : `${rideCount} rides`
 }
 
+function formatHeroLine(rideCount: number): string {
+  return rideCount === 0
+    ? 'Fresh month, open road. Let’s roll!'
+    : `${formatRideCount(rideCount)} this month. Keep those wheels spinning!`
+}
+
 function formatMissingDuration(count: number): string {
   return count === 1 ? '1 ride missing duration' : `${count} rides missing duration`
 }
@@ -155,17 +161,29 @@ export function DashboardPage() {
   }, [hasSession])
 
   const hasRides = dashboard.totals.allTimeMiles.rideCount > 0
+  const currentMonth = dashboard.totals.currentMonthMiles
   const enabledSuggestions = dashboard.suggestions.filter((suggestion) => suggestion.isEnabled)
 
   return (
     <main className="dashboard-page">
       <section className="dashboard-hero">
-        <div>
+        <div className="dashboard-hero-copy">
           <p className="dashboard-kicker">Main dashboard</p>
           <h1>Your riding story, one screen.</h1>
-          <p className="dashboard-intro">
-            Track mileage, savings, and ride quality without leaving the main page.
+          <p className="dashboard-intro">Every pedal stroke counts. Here is where yours add up.</p>
+        </div>
+
+        <div className="dashboard-hero-stat" role="group" aria-label="Miles this month">
+          <p className="dashboard-hero-stat-label">
+            <svg className="dashboard-hero-stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5.5" cy="17" r="3.5" />
+              <circle cx="18.5" cy="17" r="3.5" />
+              <path d="M5.5 17 9 9h6l3.5 8M9 9l3 8 3-8M8 6h3" />
+            </svg>
+            This month
           </p>
+          <p className="dashboard-hero-stat-value">{formatMiles(currentMonth.miles)}</p>
+          <p className="dashboard-hero-stat-line">{formatHeroLine(currentMonth.rideCount)}</p>
         </div>
 
         <div className="dashboard-hero-actions">

@@ -3,22 +3,8 @@
 Bike Tracking is a local-first commuter app that records rides and computes savings using a .NET Minimal API, F# domain logic, and a React TypeScript frontend.
 
 ## Always Applies
-- Work inside the DevContainer only.
+- Work inside the DevContainer; in any other Linux sandbox, run `scripts/sandbox-setup.sh` once.
 - Run the app with `dotnet run --project src/BikeTracking.AppHost`.
-- Use TDD with mandatory failing-test proof before implementation.
-- E2E tests are required for every PR.
-- Run the post-change verification matrix before merge.
-
-## Instruction Packs
-- [Architecture Principles](docs/agent/architecture-principles.md)
-- [Domain And Error Handling](docs/agent/domain-and-error-handling.md)
-- [Testing And Quality Gates](docs/agent/testing-and-quality-gates.md)
-- [Frontend And UX](docs/agent/frontend-and-ux.md)
-- [Data Events And Projections](docs/agent/data-events-and-projections.md)
-- [Delivery And Git Workflow](docs/agent/delivery-and-git-workflow.md)
-- [Runtime And Observability](docs/agent/runtime-and-observability.md)
-- [Stack And Environment](docs/agent/stack-and-environment.md)
-- [Flagged For Deletion](docs/agent/flagged-for-deletion.md)
 
 ## Agent skills
 
@@ -33,3 +19,9 @@ Default label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `read
 ### Domain docs
 
 Single-context layout — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan:
+[specs/031-ride-time-stats/plan.md](specs/031-ride-time-stats/plan.md)
+<!-- SPECKIT END -->
