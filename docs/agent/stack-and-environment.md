@@ -5,7 +5,7 @@ Tooling and stack constraints that apply across tasks.
 
 ## Required
 - Develop inside the DevContainer.
-- Backend stack: .NET 10 Minimal API with C# and F# domain layer.
+- Backend stack: .NET 11 Minimal API with C# and F# domain layer.
 - Frontend stack: React + TypeScript + Vite.
 - Local-first data profile uses SQLite by default.
 - Keep package dependencies maintained with regular update reviews.

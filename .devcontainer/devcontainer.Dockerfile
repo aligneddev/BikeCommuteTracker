@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble
+FROM mcr.microsoft.com/devcontainers/dotnet:1-11.0-noble
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -8,7 +8,7 @@ WORKDIR /workspaces/neCodeBikeTracking
 
 ENV PATH="/usr/local/share/dotnet-tools:/root/.dotnet/tools:${PATH}"
 
-ARG REQUIRED_DOTNET_SDK_VERSION=10.0.200
+ARG REQUIRED_DOTNET_SDK_VERSION=11.0.100
 
 # Install podman and Node.js 24 in a single layer.
 # NodeSource nodejs already includes npm; installing distro npm causes conflicts.
