@@ -1,6 +1,8 @@
 ---
 name: csharp-15
 description: Write, review and modernize C# 15 (.NET 11) code correctly. Covers every C# 15 feature - collection expression arguments (`[with(...), ...]`), union types (`union`, `[Union]`, `IUnion`, custom unions), closed class hierarchies (`closed`), extension indexers, labeled `break`/`continue`, non-virtual static interface members on runtimes without default interface methods, and the preview memory-safety model (`unsafe(expr)`, `safe`, requires-unsafe members). Use when code targets net11.0 or LangVersion 15/preview, when the user mentions any of these features, when replacing marker interfaces, OneOf-style results, `goto`/flag loop exits or capacity/comparer boilerplate, or when the build reports CS8121, CS8509, CS8655, CS8510, CS0121/CS0411 on a `with(...)` element, CS9370, CS9380 or CS9363.
+This was dowloaded from Nick Chaspas video 
+https://www.youtube.com/redirect?event=video_description&redir_token=QUlxb01IWndpX3lKWEdrdUs0RnZNbF9zSnJwaHxBQnJ0NjluS2U5dXk3YlZiQlQ1UFpmRi1IdWJUUTJRUmRpR2ZiWUZ2OUJOb09KbHRJY3ZEYmh1d1dIaW5FVnR2dFRBb2pNbmw4akFoOTJVaHNfUTlOcmhyZFJYbk9sQTFVR0Nj&q=https%3A%2F%2Fdometrain.com%2Ffree%2Fdownload-assets-union-types-are-finally-in-net-but-who-cares%2F&v=N4fR1RfTOVA
 ---
 
 # C# 15
