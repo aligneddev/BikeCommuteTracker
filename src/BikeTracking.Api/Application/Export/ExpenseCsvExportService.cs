@@ -29,7 +29,7 @@ public sealed class ExpenseCsvExportService(BikeTrackingDbContext db)
             .OrderByDescending(e => e.ExpenseDate)
             .ToListAsync(cancellationToken);
 
-        var lines = new List<string>(expenses.Count + 1) { CsvRowBuilder.BuildHeader(Headers) };
+        List<string> lines = [with(capacity: expenses.Count + 1), CsvRowBuilder.BuildHeader(Headers)];
 
         foreach (var expense in expenses)
         {

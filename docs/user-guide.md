@@ -8,7 +8,7 @@
 |----------|---------|
 | Windows  | Windows 10 or later |
 | macOS    | macOS 12 Monterey or later |
-| Linux    | Any modern distribution with .NET 10 runtime |
+| Linux    | Any modern distribution with .NET 11 runtime |
 
 ### Steps
 

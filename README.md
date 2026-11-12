@@ -1,6 +1,6 @@
 # Commute Bike Tracker
 
-Local-first Bike Tracking application built with .NET Aspire orchestration, .NET 10 Minimal API, F# domain modules, and a React frontend.
+Local-first Bike Tracking application built with .NET Aspire orchestration, .NET 11 Minimal API, F# domain modules, and a React frontend.
 
 ## Current Feature Slice
 
@@ -32,7 +32,7 @@ Local-first Bike Tracking application built with .NET Aspire orchestration, .NET
 3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS), type "Dev Containers: Open Folder in Container", and select it
 4. VS Code will build and start the DevContainer (first run takes ~2-3 minutes)
 5. Once connected, all dependencies are ready:
-   - .NET 10 SDK
+   - .NET 11 SDK
    - Node.js 24+ with npm
    - CSharpier for code formatting
    - Recommended VS Code extensions pre-installed
@@ -325,7 +325,7 @@ Outputs:
 - **tauri-plugin-shell ^2**: Sidecar spawn/kill lifecycle
 - **Rust 1.80+**: Minimal shell binary (`src-tauri/src/lib.rs`)
 - **WebKit2GTK 4.1** (Linux): WebView renderer
-- **.NET 10**: Compiled into sidecar binary (self-contained — not required on user machine)
+- **.NET 11**: Compiled into sidecar binary (self-contained — not required on user machine)
 
 See `package.json` + `src-tauri/Cargo.toml` for locked versions.
 

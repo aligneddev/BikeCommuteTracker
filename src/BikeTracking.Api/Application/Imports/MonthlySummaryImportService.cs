@@ -223,7 +223,7 @@ public sealed class MonthlySummaryImportService(
         int startYear
     )
     {
-        var assignedRows = new List<MonthlySummaryRow>(rows.Count);
+        List<MonthlySummaryRow> assignedRows = [with(capacity: rows.Count)];
         var year = startYear;
         int? previousMonth = null;
 
